@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0d12;
+  --background: #080a0e;
   --foreground: #f1f5f9;
   --primary-gold: #f6c72f;
   --primary-gold-hover: #ffd43f;
-  --surface-card: #131720;
-  --surface-elevated: #1a202c;
-  --border-subtle: #222938;
-  --border-bright: #333d52;
+  --surface-card: #11151e;
+  --surface-elevated: #161c27;
+  --border-subtle: #202735;
+  --border-bright: #354054;
 }
 
 @theme inline {
@@ -21,7 +21,7 @@
 }
 
 body {
-  background: #0a0d12;
+  background: #080a0e;
   color: #f1f5f9;
   min-height: 100vh;
   overflow-x: hidden;
@@ -30,36 +30,155 @@ body {
 /* Industrial Grid Background */
 .industrial-grid {
   background-image: 
-    linear-gradient(to right, rgba(246, 199, 47, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(246, 199, 47, 0.03) 1px, transparent 1px);
-  background-size: 36px 36px;
+    linear-gradient(to right, rgba(246, 199, 47, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(246, 199, 47, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
-/* Subtle amber radial glow */
-.amber-glow-radial {
-  background: radial-gradient(circle at 50% 30%, rgba(246, 199, 47, 0.12) 0%, rgba(10, 13, 18, 0) 70%);
+/* Multi-layer Ambient Lighting Orbs */
+.ambient-lighting-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
 }
 
-/* Glassmorphism panel */
-.glass-panel {
-  background: rgba(19, 23, 32, 0.78);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+.amber-spotlight {
+  position: absolute;
+  top: 15%;
+  left: 20%;
+  width: 650px;
+  height: 650px;
+  background: radial-gradient(circle, rgba(246, 199, 47, 0.16) 0%, rgba(246, 199, 47, 0.04) 45%, rgba(8, 10, 14, 0) 70%);
+  filter: blur(60px);
+  animation: float-glow 14s ease-in-out infinite alternate;
 }
 
-.glass-panel-gold {
-  background: rgba(19, 23, 32, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(246, 199, 47, 0.22);
+.cyan-rim-light {
+  position: absolute;
+  bottom: 10%;
+  right: 15%;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0.02) 50%, rgba(8, 10, 14, 0) 70%);
+  filter: blur(70px);
+  animation: float-glow-reverse 18s ease-in-out infinite alternate;
+}
+
+@keyframes float-glow {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(40px, -30px) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-30px, 30px) scale(0.95);
+    opacity: 0.85;
+  }
+}
+
+@keyframes float-glow-reverse {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-35px, 25px) scale(1.08);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(25px, -20px) scale(0.92);
+    opacity: 0.75;
+  }
+}
+
+/* Glowing Border & Surface Effects */
+.neon-glow-amber {
+  box-shadow: 
+    0 0 0 1px rgba(246, 199, 47, 0.28),
+    0 10px 30px -10px rgba(0, 0, 0, 0.8),
+    0 0 35px -5px rgba(246, 199, 47, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.neon-glow-amber-lg {
+  box-shadow: 
+    0 0 0 1px rgba(246, 199, 47, 0.35),
+    0 20px 60px -15px rgba(0, 0, 0, 0.9),
+    0 0 50px -10px rgba(246, 199, 47, 0.22),
+    inset 0 1px 1px rgba(246, 199, 47, 0.15);
+}
+
+.neon-glow-card {
+  box-shadow: 
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 15px 45px -10px rgba(0, 0, 0, 0.85),
+    0 0 25px -5px rgba(246, 199, 47, 0.08);
+}
+
+/* Glowing Action Button */
+.glow-btn-amber {
+  background: linear-gradient(135deg, #ffd338 0%, #f6c72f 50%, #e0b020 100%);
+  box-shadow: 
+    0 0 20px rgba(246, 199, 47, 0.45),
+    0 0 45px rgba(246, 199, 47, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  transition: all 0.25s ease-in-out;
+}
+
+.glow-btn-amber:hover {
+  background: linear-gradient(135deg, #ffe066 0%, #ffd027 50%, #eab308 100%);
+  box-shadow: 
+    0 0 30px rgba(246, 199, 47, 0.7),
+    0 0 60px rgba(246, 199, 47, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+/* Input Glowing Halo on Focus */
+.focus-glow-amber:focus {
+  border-color: #f6c72f !important;
+  box-shadow: 
+    0 0 0 1px #f6c72f,
+    0 0 18px rgba(246, 199, 47, 0.3) !important;
+  outline: none;
+}
+
+/* Glowing Neon Pills */
+.badge-glow-emerald {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+}
+
+.badge-glow-amber {
+  box-shadow: 0 0 14px rgba(246, 199, 47, 0.4);
+}
+
+/* Shimmering Top Light Line */
+.shimmer-line {
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(246, 199, 47, 0.2) 20%, #f6c72f 50%, rgba(246, 199, 47, 0.2) 80%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer-sweep 4s linear infinite;
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Pulse animation for live beacons */
 @keyframes beacon-pulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(246, 199, 47, 0.6);
+    box-shadow: 0 0 0 0 rgba(246, 199, 47, 0.7);
   }
   70% {
     transform: scale(1);
@@ -77,11 +196,11 @@ body {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0c0f15;
+  background: #080a0e;
 }
 ::-webkit-scrollbar-thumb {
   background: #242c3d;
@@ -90,3 +209,46 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #394560;
 }
+
+/* Skeleton Shimmer Loading */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(246, 199, 47, 0.1) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.skeleton-box {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(246, 199, 47, 0.08) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
