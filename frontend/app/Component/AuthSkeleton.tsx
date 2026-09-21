@@ -89,16 +89,6 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
 
               {!isSignUp ? (
                 <>
-                  {/* Persona Chips */}
-                  <div className="rounded-xl border border-zinc-800/90 bg-[#0a0d13]/80 p-2.5 space-y-2">
-                    <div className="h-3 w-32 rounded skeleton-box" />
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="h-8 rounded-lg skeleton-box" />
-                      ))}
-                    </div>
-                  </div>
-
                   {/* Input Fields */}
                   <div className="space-y-3">
                     <div className="space-y-1">

@@ -5,7 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import AuthSkeleton from "../Component/AuthSkeleton";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { registerSuccess, logout } from "@/lib/redux/slices/authSlice";
+import {
+  registerUser,
+  logoutUser,
+  registerSuccess,
+} from "@/lib/redux/slices/authSlice";
 import {
   ShieldCheck,
   Building2,
@@ -142,7 +146,7 @@ export default function SignUpPage() {
   const strengthLabels = ["Weak", "Fair", "Good", "Strong", "Enterprise Grade"];
   const strengthColors = ["bg-zinc-700", "bg-red-500", "bg-amber-500", "bg-blue-500", "bg-emerald-500"];
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Zod Schema Validation
@@ -174,33 +178,36 @@ export default function SignUpPage() {
     setSubmitting(true);
     setFeedback(null);
 
-    setTimeout(() => {
-      setSubmitting(false);
-      const newProfile = {
-        id: `usr_${Date.now()}`,
-        name,
-        email,
-        company,
-        industry,
-        role,
-        fleetSize,
-      };
-
-      dispatch(
-        registerSuccess({
-          user: newProfile,
-          token: "jwt_sitesafe_" + Math.random().toString(36).substring(2),
+    try {
+      // Dispatches centralized Axios API call through Redux
+      const result = await dispatch(
+        registerUser({
+          name,
+          email,
+          company,
+          industry,
+          role,
+          fleetSize,
+          password,
+          confirmPassword,
+          agreeTerms,
         })
-      );
+      ).unwrap();
 
       setFeedback(
-        `Workspace provisioned for ${company}! Redux profile created.`
+        `Workspace provisioned for ${result.user.company || company}! Redux profile created.`
       );
-    }, 850);
+    } catch (err: any) {
+      setFeedback(
+        typeof err === "string" ? err : "Failed to provision workspace. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
     setFeedback("Signed out from Redux session.");
     setTimeout(() => setFeedback(null), 3000);
   };

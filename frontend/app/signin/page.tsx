@@ -6,9 +6,9 @@ import Link from "next/link";
 import AuthSkeleton from "../Component/AuthSkeleton";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
-  loginStart,
+  loginUser,
+  logoutUser,
   loginSuccess,
-  logout,
 } from "@/lib/redux/slices/authSlice";
 import {
   ShieldCheck,
@@ -25,8 +25,6 @@ import {
   Wifi,
   Cpu,
   Building2,
-  Activity,
-  Fingerprint,
   LogOut,
   UserCheck,
   MapPin,
@@ -47,7 +45,6 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [activePersona, setActivePersona] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -59,56 +56,7 @@ export default function SignInPage() {
     return <AuthSkeleton isSignUp={false} />;
   }
 
-  // Quick Demo Personas
-  const demoPersonas = [
-    {
-      role: "Safety Head / EHS",
-      name: "Dr. Vikram Seth",
-      email: "ehs.director@ayantrai-demo.com",
-      pass: "Sitesafe@2026",
-      company: "L&T Heavy Civil Infra",
-      badge: "Full Audit",
-      icon: ShieldCheck,
-    },
-    {
-      role: "Site Manager",
-      name: "Rajesh Sharma",
-      email: "site.manager@ayantrai-demo.com",
-      pass: "Sitesafe@2026",
-      company: "Afcons Infrastructure",
-      badge: "Zone Ops",
-      icon: Building2,
-    },
-    {
-      role: "Field Supervisor",
-      name: "Amit Verma",
-      email: "supervisor.zone4@ayantrai-demo.com",
-      pass: "Sitesafe@2026",
-      company: "Tata Projects",
-      badge: "Field Triage",
-      icon: Activity,
-    },
-    {
-      role: "Device Admin",
-      name: "Pooja Mehta",
-      email: "fleet.admin@ayantrai-demo.com",
-      pass: "Sitesafe@2026",
-      company: "AyantrAI Operations",
-      badge: "Hardware & Kits",
-      icon: Cpu,
-    },
-  ];
-
-  const handleApplyPersona = (persona: (typeof demoPersonas)[0]) => {
-    setActivePersona(persona.role);
-    setEmail(persona.email);
-    setPassword(persona.pass);
-    setErrors({});
-    setFeedback(`Loaded credentials for ${persona.role}`);
-    setTimeout(() => setFeedback(null), 3000);
-  };
-
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Zod Schema Validation
@@ -126,30 +74,17 @@ export default function SignInPage() {
     }
     setErrors({});
 
-    dispatch(loginStart());
-
-    setTimeout(() => {
-      const selected = demoPersonas.find((p) => p.email === email);
-      const userProfile = {
-        id: `usr_${Date.now()}`,
-        name: selected ? selected.name : email.split("@")[0],
-        email: email,
-        role: selected ? selected.role : "Safety Head / EHS",
-        company: selected ? selected.company : "Industrial Site Operator",
-      };
-
-      dispatch(
-        loginSuccess({
-          user: userProfile,
-          token: "jwt_sitesafe_" + Math.random().toString(36).substring(2),
-        })
-      );
-      setFeedback(`Welcome back, ${userProfile.name}! Redux session active.`);
-    }, 750);
+    try {
+      // Dispatches centralized Axios API call through Redux
+      const result = await dispatch(loginUser({ email, password, rememberMe })).unwrap();
+      setFeedback(`Welcome back, ${result.user.name}! Redux session active.`);
+    } catch (err: any) {
+      setFeedback(typeof err === "string" ? err : "Failed to sign in. Please verify credentials.");
+    }
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
     setFeedback("Signed out from Redux session.");
     setTimeout(() => setFeedback(null), 3000);
   };
@@ -398,38 +333,6 @@ export default function SignInPage() {
                 </div>
               )}
 
-              {/* Quick Demo Personas Bar */}
-              <div className="rounded-xl border border-zinc-800/90 bg-[#0a0d13]/80 p-2.5 mb-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1 font-semibold">
-                    <Fingerprint className="w-3 h-3 text-[#F6C72F]" />
-                    Quick Demo Personas:
-                  </span>
-                  <span className="text-[9px] text-zinc-500">Tap to autofill</span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-1.5">
-                  {demoPersonas.map((persona) => {
-                    const Icon = persona.icon;
-                    const isSelected = activePersona === persona.role;
-                    return (
-                      <button
-                        key={persona.role}
-                        type="button"
-                        onClick={() => handleApplyPersona(persona)}
-                        className={`p-1.5 sm:p-2 rounded-lg text-left transition-all flex items-center gap-1.5 sm:gap-2 border cursor-pointer ${
-                          isSelected
-                            ? "bg-[#F6C72F]/20 border-[#F6C72F] text-white shadow-[0_0_12px_rgba(246,199,47,0.3)]"
-                            : "bg-zinc-800/60 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700"
-                        }`}
-                      >
-                        <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isSelected ? "text-[#F6C72F]" : "text-zinc-400"}`} />
-                        <span className="truncate font-medium text-[10px] sm:text-[11px]">{persona.role}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
               {/* Sign In Form */}
               <form onSubmit={handleSignIn} className="space-y-2.5 sm:space-y-3">
