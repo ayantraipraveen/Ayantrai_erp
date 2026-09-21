@@ -31,7 +31,9 @@ import {
   UserCheck,
   MapPin,
   CheckCircle,
+  AlertCircle,
 } from "lucide-react";
+import { signInSchema } from "@/lib/validations/auth";
 
 export default function SignInPage() {
   const dispatch = useAppDispatch();
@@ -46,6 +48,7 @@ export default function SignInPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [activePersona, setActivePersona] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 300);
@@ -100,13 +103,28 @@ export default function SignInPage() {
     setActivePersona(persona.role);
     setEmail(persona.email);
     setPassword(persona.pass);
+    setErrors({});
     setFeedback(`Loaded credentials for ${persona.role}`);
     setTimeout(() => setFeedback(null), 3000);
   };
 
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) return;
+
+    // Zod Schema Validation
+    const validationResult = signInSchema.safeParse({ email, password, rememberMe });
+    if (!validationResult.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of validationResult.error.issues) {
+        const key = issue.path[0] as string;
+        if (key && !fieldErrors[key]) {
+          fieldErrors[key] = issue.message;
+        }
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+    setErrors({});
 
     dispatch(loginStart());
 
@@ -427,13 +445,25 @@ export default function SignInPage() {
                     </div>
                     <input
                       type="text"
-                      required
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+                      }}
                       placeholder="name@company.com or EMP-1092"
-                      className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
+                      className={`w-full rounded-xl bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all ${
+                        errors.email
+                          ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                          : "border border-zinc-800/90 focus-glow-amber"
+                      }`}
                     />
                   </div>
+                  {errors.email && (
+                    <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                      <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                      <span>{errors.email}</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Password */}
@@ -454,11 +484,17 @@ export default function SignInPage() {
                     </div>
                     <input
                       type={showPassword ? "text" : "password"}
-                      required
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
+                      }}
                       placeholder="••••••••••••"
-                      className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
+                      className={`w-full rounded-xl bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all ${
+                        errors.password
+                          ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                          : "border border-zinc-800/90 focus-glow-amber"
+                      }`}
                     />
                     <button
                       type="button"
@@ -468,6 +504,12 @@ export default function SignInPage() {
                       {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                     </button>
                   </div>
+                  {errors.password && (
+                    <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                      <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                      <span>{errors.password}</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Remember Me Checkbox */}

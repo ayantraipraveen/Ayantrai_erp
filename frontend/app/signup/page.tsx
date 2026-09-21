@@ -28,7 +28,9 @@ import {
   ChevronDown,
   LogOut,
   UserCheck,
+  AlertCircle,
 } from "lucide-react";
+import { signUpSchema } from "@/lib/validations/auth";
 
 export default function SignUpPage() {
   const dispatch = useAppDispatch();
@@ -50,6 +52,7 @@ export default function SignUpPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 300);
@@ -119,6 +122,7 @@ export default function SignUpPage() {
     setPassword(tpl.pass);
     setConfirmPassword(tpl.pass);
     setAgreeTerms(true);
+    setErrors({});
     setFeedback(`Autofilled enterprise template for ${tpl.company}`);
     setTimeout(() => setFeedback(null), 3000);
   };
@@ -140,14 +144,32 @@ export default function SignUpPage() {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreeTerms) {
-      alert("Please accept the Sitesafe Telemetry Policy to proceed.");
+
+    // Zod Schema Validation
+    const validationResult = signUpSchema.safeParse({
+      name,
+      email,
+      company,
+      industry,
+      role,
+      fleetSize,
+      password,
+      confirmPassword,
+      agreeTerms,
+    });
+
+    if (!validationResult.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of validationResult.error.issues) {
+        const key = issue.path[0] as string;
+        if (key && !fieldErrors[key]) {
+          fieldErrors[key] = issue.message;
+        }
+      }
+      setErrors(fieldErrors);
       return;
     }
-    if (password !== confirmPassword) {
-      alert("Passwords do not match. Please re-check.");
-      return;
-    }
+    setErrors({});
 
     setSubmitting(true);
     setFeedback(null);
@@ -476,7 +498,7 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              {/* Sign Up Form */}
+              {/* Sign Up Form with Zod Validation */}
               <form onSubmit={handleRegister} className="space-y-2.5 sm:space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {/* Full Name */}
@@ -488,13 +510,25 @@ export default function SignUpPage() {
                       </div>
                       <input
                         type="text"
-                        required
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
+                        }}
                         placeholder="e.g. Vikram Seth"
-                        className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
+                        className={`w-full rounded-xl bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all ${
+                          errors.name
+                            ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                            : "border border-zinc-800/90 focus-glow-amber"
+                        }`}
                       />
                     </div>
+                    {errors.name && (
+                      <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                        <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span>{errors.name}</span>
+                      </p>
+                    )}
                   </div>
 
                   {/* Email */}
@@ -509,13 +543,25 @@ export default function SignUpPage() {
                       </div>
                       <input
                         type="email"
-                        required
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
+                        }}
                         placeholder="vikram@company.com"
-                        className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
+                        className={`w-full rounded-xl bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all ${
+                          errors.email
+                            ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                            : "border border-zinc-800/90 focus-glow-amber"
+                        }`}
                       />
                     </div>
+                    {errors.email && (
+                      <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                        <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span>{errors.email}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -529,13 +575,25 @@ export default function SignUpPage() {
                       </div>
                       <input
                         type="text"
-                        required
                         value={company}
-                        onChange={(e) => setCompany(e.target.value)}
+                        onChange={(e) => {
+                          setCompany(e.target.value);
+                          if (errors.company) setErrors((prev) => ({ ...prev, company: "" }));
+                        }}
                         placeholder="L&T Heavy Infra"
-                        className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
+                        className={`w-full rounded-xl bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all ${
+                          errors.company
+                            ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                            : "border border-zinc-800/90 focus-glow-amber"
+                        }`}
                       />
                     </div>
+                    {errors.company && (
+                      <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                        <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span>{errors.company}</span>
+                      </p>
+                    )}
                   </div>
 
                   {/* Industry */}
@@ -547,8 +605,15 @@ export default function SignUpPage() {
                       </div>
                       <select
                         value={industry}
-                        onChange={(e) => setIndustry(e.target.value)}
-                        className="w-full appearance-none rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-8 py-2 text-sm sm:text-xs text-white transition-all focus-glow-amber"
+                        onChange={(e) => {
+                          setIndustry(e.target.value);
+                          if (errors.industry) setErrors((prev) => ({ ...prev, industry: "" }));
+                        }}
+                        className={`w-full appearance-none rounded-xl bg-[#080b10] pl-9 pr-8 py-2 text-sm sm:text-xs text-white transition-all ${
+                          errors.industry
+                            ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                            : "border border-zinc-800/90 focus-glow-amber"
+                        }`}
                       >
                         <option>Construction & Civil</option>
                         <option>Infrastructure & Metro</option>
@@ -561,6 +626,12 @@ export default function SignUpPage() {
                         <ChevronDown className="h-3.5 w-3.5" />
                       </div>
                     </div>
+                    {errors.industry && (
+                      <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                        <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span>{errors.industry}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -574,8 +645,15 @@ export default function SignUpPage() {
                       </div>
                       <select
                         value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                        className="w-full appearance-none rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-8 py-2 text-sm sm:text-xs text-white transition-all focus-glow-amber"
+                        onChange={(e) => {
+                          setRole(e.target.value);
+                          if (errors.role) setErrors((prev) => ({ ...prev, role: "" }));
+                        }}
+                        className={`w-full appearance-none rounded-xl bg-[#080b10] pl-9 pr-8 py-2 text-sm sm:text-xs text-white transition-all ${
+                          errors.role
+                            ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                            : "border border-zinc-800/90 focus-glow-amber"
+                        }`}
                       >
                         <option>Safety Head / EHS Manager</option>
                         <option>Project & Site Head</option>
@@ -587,6 +665,12 @@ export default function SignUpPage() {
                         <ChevronDown className="h-3.5 w-3.5" />
                       </div>
                     </div>
+                    {errors.role && (
+                      <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                        <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span>{errors.role}</span>
+                      </p>
+                    )}
                   </div>
 
                   {/* Planned Fleet */}
@@ -598,8 +682,15 @@ export default function SignUpPage() {
                       </div>
                       <select
                         value={fleetSize}
-                        onChange={(e) => setFleetSize(e.target.value)}
-                        className="w-full appearance-none rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-8 py-2 text-sm sm:text-xs text-white transition-all focus-glow-amber"
+                        onChange={(e) => {
+                          setFleetSize(e.target.value);
+                          if (errors.fleetSize) setErrors((prev) => ({ ...prev, fleetSize: "" }));
+                        }}
+                        className={`w-full appearance-none rounded-xl bg-[#080b10] pl-9 pr-8 py-2 text-sm sm:text-xs text-white transition-all ${
+                          errors.fleetSize
+                            ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                            : "border border-zinc-800/90 focus-glow-amber"
+                        }`}
                       >
                         <option>Pilot Trial (10-50 kits)</option>
                         <option>Standard Site (50-250 kits)</option>
@@ -610,6 +701,12 @@ export default function SignUpPage() {
                         <ChevronDown className="h-3.5 w-3.5" />
                       </div>
                     </div>
+                    {errors.fleetSize && (
+                      <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                        <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span>{errors.fleetSize}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -623,11 +720,17 @@ export default function SignUpPage() {
                       </div>
                       <input
                         type={showPassword ? "text" : "password"}
-                        required
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
+                        }}
                         placeholder="••••••••"
-                        className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
+                        className={`w-full rounded-xl bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all ${
+                          errors.password
+                            ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                            : "border border-zinc-800/90 focus-glow-amber"
+                        }`}
                       />
                       <button
                         type="button"
@@ -637,6 +740,12 @@ export default function SignUpPage() {
                         {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </button>
                     </div>
+                    {errors.password && (
+                      <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                        <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span>{errors.password}</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -647,11 +756,17 @@ export default function SignUpPage() {
                       </div>
                       <input
                         type={showPassword ? "text" : "password"}
-                        required
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                        }}
                         placeholder="••••••••"
-                        className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
+                        className={`w-full rounded-xl bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all ${
+                          errors.confirmPassword
+                            ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                            : "border border-zinc-800/90 focus-glow-amber"
+                        }`}
                       />
                       <button
                         type="button"
@@ -661,6 +776,12 @@ export default function SignUpPage() {
                         {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </button>
                     </div>
+                    {errors.confirmPassword && (
+                      <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                        <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                        <span>{errors.confirmPassword}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -685,18 +806,27 @@ export default function SignUpPage() {
                 )}
 
                 {/* Consent Checkbox */}
-                <div className="flex items-center justify-between pt-0.5">
+                <div className="pt-0.5">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={agreeTerms}
-                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      onChange={(e) => {
+                        setAgreeTerms(e.target.checked);
+                        if (errors.agreeTerms) setErrors((prev) => ({ ...prev, agreeTerms: "" }));
+                      }}
                       className="h-3.5 w-3.5 rounded border-zinc-700 bg-zinc-900 text-[#F6C72F] accent-[#F6C72F] focus:ring-0"
                     />
                     <span className="text-[11px] text-zinc-400">
                       I agree to the Sitesafe Telemetry Policy & ISO 45001 EHS audit terms
                     </span>
                   </label>
+                  {errors.agreeTerms && (
+                    <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-1 animate-fadeIn">
+                      <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                      <span>{errors.agreeTerms}</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Submit Glowing Button */}
@@ -708,7 +838,7 @@ export default function SignUpPage() {
                   {submitting ? (
                     <>
                       <div className="h-3.5 w-3.5 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
-                      <span>Creating Redux Account...</span>
+                      <span>Validating & Creating Account...</span>
                     </>
                   ) : (
                     <>
