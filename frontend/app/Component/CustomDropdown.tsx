@@ -208,10 +208,10 @@ export default function CustomDropdown({
           sizeClasses[size]
         } ${
           error
-            ? "input-error border-red-500/90 shadow-[0_0_12px_rgba(239,68,68,0.25)] bg-[#12080a]"
+            ? "input-error border-red-500/90 shadow-[0_0_16px_rgba(239,68,68,0.5)] bg-[#12080a]"
             : isOpen
-            ? "border-[#F6C72F]/70 bg-[#0d111a] shadow-[0_0_14px_rgba(246,199,47,0.18)]"
-            : "border-zinc-800/90 bg-[#080b10] hover:border-zinc-700 hover:bg-[#0c0f16]"
+            ? "border-[#F6C72F] bg-[#0d111a] shadow-[0_0_16px_rgba(246,199,47,0.5),0_0_30px_rgba(246,199,47,0.25)]"
+            : "border-zinc-800/90 bg-[#080b10] hover:border-[#F6C72F]/60 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] hover:bg-[#0c0f16]"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${buttonClassName}`}
       >
         <div className="flex items-center gap-2 truncate pr-2">

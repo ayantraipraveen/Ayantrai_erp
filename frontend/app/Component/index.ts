@@ -12,3 +12,6 @@ export * from "./CustomDropdown";
 
 export { default as AuthSkeleton } from "./AuthSkeleton";
 export { default as AuthPortal } from "./AuthPortal";
+
+export { default as Sidebar } from "./Sidebar";
+export * from "./Sidebar";
