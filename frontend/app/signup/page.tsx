@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AuthSkeleton from "../Component/AuthSkeleton";
+import AuthNavbar from "../Component/AuthNavbar";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   registerUser,
@@ -37,6 +39,7 @@ import {
 import { signUpSchema } from "@/lib/validations/auth";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { user, isAuthenticated, isLoading } = useAppSelector(
     (state) => state.auth
@@ -55,7 +58,6 @@ export default function SignUpPage() {
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -66,70 +68,6 @@ export default function SignUpPage() {
   if (!mounted) {
     return <AuthSkeleton isSignUp={true} />;
   }
-
-  // Quick Pilot Onboarding Templates (100% parity with Sign In demo personas)
-  const pilotTemplates = [
-    {
-      company: "L&T Heavy Infra",
-      name: "Dr. Vikram Seth",
-      email: "vikram.seth@lt-heavyinfra.com",
-      industry: "Construction & Civil",
-      role: "Safety Head / EHS Manager",
-      fleet: "Standard Site (50-250 kits)",
-      pass: "Sitesafe@2026",
-      badge: "Civil & Infra",
-      icon: Building2,
-    },
-    {
-      company: "Tata Projects",
-      name: "Rajesh Sharma",
-      email: "rajesh.s@tataprojects.com",
-      industry: "Infrastructure & Metro",
-      role: "Project & Site Head",
-      fleet: "Large Project (250-1,000 kits)",
-      pass: "Sitesafe@2026",
-      badge: "Metro & Rail",
-      icon: Layers,
-    },
-    {
-      company: "Afcons Infra",
-      name: "Amit Verma",
-      email: "amit.verma@afcons.com",
-      industry: "Mining & Tunneling",
-      role: "Field Supervisor",
-      fleet: "Standard Site (50-250 kits)",
-      pass: "Sitesafe@2026",
-      badge: "Tunneling",
-      icon: ShieldCheck,
-    },
-    {
-      company: "Adani Logistics",
-      name: "Pooja Mehta",
-      email: "pooja.m@adaniports.com",
-      industry: "Warehousing & Logistics",
-      role: "Auditor / Executive",
-      fleet: "Pilot Trial (10-50 kits)",
-      pass: "Sitesafe@2026",
-      badge: "Supply Hub",
-      icon: Cpu,
-    },
-  ];
-
-  const handleApplyTemplate = (tpl: (typeof pilotTemplates)[0]) => {
-    setActiveTemplate(tpl.company);
-    setName(tpl.name);
-    setEmail(tpl.email);
-    setCompany(tpl.company);
-    setIndustry(tpl.industry);
-    setRole(tpl.role);
-    setFleetSize(tpl.fleet);
-    setPassword(tpl.pass);
-    setConfirmPassword(tpl.pass);
-    setAgreeTerms(true);
-    setErrors({});
-    setFeedback(`Autofilled enterprise template for ${tpl.company}`);
-    setTimeout(() => setFeedback(null), 3000);
-  };
 
   // Password strength calculation
   const getPasswordStrength = (pass: string) => {
@@ -195,8 +133,11 @@ export default function SignUpPage() {
       ).unwrap();
 
       setFeedback(
-        `Workspace provisioned for ${result.user.company || company}! Redux profile created.`
+        `Workspace provisioned for ${result.user.company || company}! Redirecting to Dashboard...`
       );
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 500);
     } catch (err: any) {
       setFeedback(
         typeof err === "string" ? err : "Failed to provision workspace. Please try again."
@@ -221,41 +162,8 @@ export default function SignUpPage() {
         <div className="cyan-rim-light" />
       </div>
 
-      {/* Top Header - Consistent Across App */}
-      <header className="relative z-10 w-full border-b border-zinc-800/80 bg-[#0c1017]/90 backdrop-blur-md flex-shrink-0">
-        <div className="max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <Link href="/signup" className="flex items-center gap-2.5 sm:gap-3 group">
-              <div className="relative h-7 sm:h-8 md:h-9 w-28 sm:w-32 md:w-36 flex items-center">
-                <Image
-                  src="/logo.png"
-                  alt="AyantrAI Sitesafe"
-                  width={150}
-                  height={42}
-                  className="object-contain filter brightness-110 drop-shadow-[0_0_16px_rgba(246,199,47,0.3)] transition-all group-hover:drop-shadow-[0_0_22px_rgba(246,199,47,0.5)]"
-                  priority
-                />
-              </div>
-              <div className="hidden sm:flex flex-col border-l border-zinc-700/80 pl-2.5 sm:pl-3">
-                <span className="text-[10px] tracking-widest text-[#F6C72F] font-mono uppercase font-bold drop-shadow-[0_0_8px_rgba(246,199,47,0.4)]">
-                  Sitesafe ERP
-                </span>
-                <span className="text-[11px] text-zinc-400 font-medium hidden md:inline">Enterprise Onboarding</span>
-              </div>
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden md:inline text-xs text-zinc-400">Already registered?</span>
-            <Link
-              href="/signin"
-              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800/90 border border-zinc-700/80 text-zinc-200 hover:text-white hover:border-[#F6C72F]/60 hover:shadow-[0_0_15px_rgba(246,199,47,0.2)] transition-all"
-            >
-              Sign In to Portal
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Top Header - Reusable Modular AuthNavbar */}
+      <AuthNavbar mode="signup" />
 
       {/* Main Content Area */}
       <main className="relative z-10 flex-1 w-full max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 flex items-center justify-center py-6 lg:py-2 overflow-visible lg:overflow-hidden">
@@ -472,38 +380,6 @@ export default function SignUpPage() {
                 </div>
               )}
 
-              {/* Quick Pilot Templates Bar - Matching Sign In Personas Grid */}
-              <div className="rounded-xl border border-zinc-800/90 bg-[#0a0d13]/80 p-2.5 mb-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1 font-semibold">
-                    <Building2 className="w-3 h-3 text-[#F6C72F]" />
-                    Quick Pilot Templates:
-                  </span>
-                  <span className="text-[9px] text-zinc-500">Tap to autofill</span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-1.5">
-                  {pilotTemplates.map((tpl) => {
-                    const Icon = tpl.icon;
-                    const isSelected = activeTemplate === tpl.company;
-                    return (
-                      <button
-                        key={tpl.company}
-                        type="button"
-                        onClick={() => handleApplyTemplate(tpl)}
-                        className={`p-1.5 sm:p-2 rounded-lg text-left transition-all flex items-center gap-1.5 sm:gap-2 border cursor-pointer ${
-                          isSelected
-                            ? "bg-[#F6C72F]/20 border-[#F6C72F] text-white shadow-[0_0_12px_rgba(246,199,47,0.3)]"
-                            : "bg-zinc-800/60 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700"
-                        }`}
-                      >
-                        <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isSelected ? "text-[#F6C72F]" : "text-zinc-400"}`} />
-                        <span className="truncate font-medium text-[10px] sm:text-[11px]">{tpl.company}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
               {/* Sign Up Form with Zod Validation */}
               <form onSubmit={handleRegister} className="space-y-2.5 sm:space-y-3">

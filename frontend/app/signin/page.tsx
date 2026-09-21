@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AuthSkeleton from "../Component/AuthSkeleton";
+import AuthNavbar from "../Component/AuthNavbar";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   loginUser,
@@ -25,6 +27,8 @@ import {
   Wifi,
   Cpu,
   Building2,
+  Activity,
+  Fingerprint,
   LogOut,
   UserCheck,
   MapPin,
@@ -34,6 +38,7 @@ import {
 import { signInSchema } from "@/lib/validations/auth";
 
 export default function SignInPage() {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { user, isAuthenticated, isLoading } = useAppSelector(
     (state) => state.auth
@@ -45,6 +50,7 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [activePersona, setActivePersona] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -55,6 +61,55 @@ export default function SignInPage() {
   if (!mounted) {
     return <AuthSkeleton isSignUp={false} />;
   }
+
+  // Quick Demo Personas
+  const demoPersonas = [
+    {
+      role: "Safety Head / EHS",
+      name: "Dr. Vikram Seth",
+      email: "ehs.director@ayantrai-demo.com",
+      pass: "Sitesafe@2026",
+      company: "L&T Heavy Civil Infra",
+      badge: "Full Audit",
+      icon: ShieldCheck,
+    },
+    {
+      role: "Site Manager",
+      name: "Rajesh Sharma",
+      email: "site.manager@ayantrai-demo.com",
+      pass: "Sitesafe@2026",
+      company: "Afcons Infrastructure",
+      badge: "Zone Ops",
+      icon: Building2,
+    },
+    {
+      role: "Field Supervisor",
+      name: "Amit Verma",
+      email: "supervisor.zone4@ayantrai-demo.com",
+      pass: "Sitesafe@2026",
+      company: "Tata Projects",
+      badge: "Field Triage",
+      icon: Activity,
+    },
+    {
+      role: "Device Admin",
+      name: "Pooja Mehta",
+      email: "fleet.admin@ayantrai-demo.com",
+      pass: "Sitesafe@2026",
+      company: "AyantrAI Operations",
+      badge: "Hardware & Kits",
+      icon: Cpu,
+    },
+  ];
+
+  const handleApplyPersona = (persona: (typeof demoPersonas)[0]) => {
+    setActivePersona(persona.role);
+    setEmail(persona.email);
+    setPassword(persona.pass);
+    setErrors({});
+    setFeedback(`Loaded credentials for ${persona.role}`);
+    setTimeout(() => setFeedback(null), 3000);
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +132,10 @@ export default function SignInPage() {
     try {
       // Dispatches centralized Axios API call through Redux
       const result = await dispatch(loginUser({ email, password, rememberMe })).unwrap();
-      setFeedback(`Welcome back, ${result.user.name}! Redux session active.`);
+      setFeedback(`Welcome back, ${result.user.name}! Redirecting to Sitesafe Dashboard...`);
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 500);
     } catch (err: any) {
       setFeedback(typeof err === "string" ? err : "Failed to sign in. Please verify credentials.");
     }
@@ -98,41 +156,8 @@ export default function SignInPage() {
         <div className="cyan-rim-light" />
       </div>
 
-      {/* Top Header - Consistent Across App */}
-      <header className="relative z-10 w-full border-b border-zinc-800/80 bg-[#0c1017]/90 backdrop-blur-md flex-shrink-0">
-        <div className="max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <Link href="/signin" className="flex items-center gap-2.5 sm:gap-3 group">
-              <div className="relative h-7 sm:h-8 md:h-9 w-28 sm:w-32 md:w-36 flex items-center">
-                <Image
-                  src="/logo.png"
-                  alt="AyantrAI Sitesafe"
-                  width={150}
-                  height={42}
-                  className="object-contain filter brightness-110 drop-shadow-[0_0_16px_rgba(246,199,47,0.3)] transition-all group-hover:drop-shadow-[0_0_22px_rgba(246,199,47,0.5)]"
-                  priority
-                />
-              </div>
-              <div className="hidden sm:flex flex-col border-l border-zinc-700/80 pl-2.5 sm:pl-3">
-                <span className="text-[10px] tracking-widest text-[#F6C72F] font-mono uppercase font-bold drop-shadow-[0_0_8px_rgba(246,199,47,0.4)]">
-                  Sitesafe ERP
-                </span>
-                <span className="text-[11px] text-zinc-400 font-medium hidden md:inline">Connected Site Portal</span>
-              </div>
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="hidden md:inline text-xs text-zinc-400">Need a new site account?</span>
-            <Link
-              href="/signup"
-              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800/90 border border-zinc-700/80 text-zinc-200 hover:text-white hover:border-[#F6C72F]/60 hover:shadow-[0_0_15px_rgba(246,199,47,0.2)] transition-all"
-            >
-              Register Site
-            </Link>
-          </div>
-        </div>
-      </header>
+      {/* Top Header - Reusable Modular AuthNavbar */}
+      <AuthNavbar mode="signin" />
 
       {/* Main View Area */}
       <main className="relative z-10 flex-1 w-full max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 flex items-center justify-center py-6 lg:py-2 overflow-visible lg:overflow-hidden">
@@ -333,6 +358,38 @@ export default function SignInPage() {
                 </div>
               )}
 
+              {/* Quick Demo Personas Bar */}
+              <div className="rounded-xl border border-zinc-800/90 bg-[#0a0d13]/80 p-2.5 mb-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1 font-semibold">
+                    <Fingerprint className="w-3 h-3 text-[#F6C72F]" />
+                    Quick Demo Personas:
+                  </span>
+                  <span className="text-[9px] text-zinc-500">Tap to autofill</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-1.5">
+                  {demoPersonas.map((persona) => {
+                    const Icon = persona.icon;
+                    const isSelected = activePersona === persona.role;
+                    return (
+                      <button
+                        key={persona.role}
+                        type="button"
+                        onClick={() => handleApplyPersona(persona)}
+                        className={`p-1.5 sm:p-2 rounded-lg text-left transition-all flex items-center gap-1.5 sm:gap-2 border cursor-pointer ${
+                          isSelected
+                            ? "bg-[#F6C72F]/20 border-[#F6C72F] text-white shadow-[0_0_12px_rgba(246,199,47,0.3)]"
+                            : "bg-zinc-800/60 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700"
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isSelected ? "text-[#F6C72F]" : "text-zinc-400"}`} />
+                        <span className="truncate font-medium text-[10px] sm:text-[11px]">{persona.role}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               {/* Sign In Form */}
               <form onSubmit={handleSignIn} className="space-y-2.5 sm:space-y-3">
