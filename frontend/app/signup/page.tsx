@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AuthSkeleton from "../Component/AuthSkeleton";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { registerSuccess } from "@/lib/redux/slices/authSlice";
+import { registerSuccess, logout } from "@/lib/redux/slices/authSlice";
 import {
   ShieldCheck,
   Building2,
@@ -19,13 +19,15 @@ import {
   Sparkles,
   Layers,
   Award,
-  Calendar,
-  Radio,
   Clock,
   FileCheck2,
   Cpu,
   Boxes,
   CheckCircle,
+  MapPin,
+  ChevronDown,
+  LogOut,
+  UserCheck,
 } from "lucide-react";
 
 export default function SignUpPage() {
@@ -40,13 +42,14 @@ export default function SignUpPage() {
   const [company, setCompany] = useState("");
   const [industry, setIndustry] = useState("Construction & Civil");
   const [role, setRole] = useState("Safety Head / EHS Manager");
-  const [fleetSize, setFleetSize] = useState("50-250 kits");
+  const [fleetSize, setFleetSize] = useState("Pilot Trial (10-50 kits)");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 300);
@@ -56,6 +59,69 @@ export default function SignUpPage() {
   if (!mounted) {
     return <AuthSkeleton isSignUp={true} />;
   }
+
+  // Quick Pilot Onboarding Templates (100% parity with Sign In demo personas)
+  const pilotTemplates = [
+    {
+      company: "L&T Heavy Infra",
+      name: "Dr. Vikram Seth",
+      email: "vikram.seth@lt-heavyinfra.com",
+      industry: "Construction & Civil",
+      role: "Safety Head / EHS Manager",
+      fleet: "Standard Site (50-250 kits)",
+      pass: "Sitesafe@2026",
+      badge: "Civil & Infra",
+      icon: Building2,
+    },
+    {
+      company: "Tata Projects",
+      name: "Rajesh Sharma",
+      email: "rajesh.s@tataprojects.com",
+      industry: "Infrastructure & Metro",
+      role: "Project & Site Head",
+      fleet: "Large Project (250-1,000 kits)",
+      pass: "Sitesafe@2026",
+      badge: "Metro & Rail",
+      icon: Layers,
+    },
+    {
+      company: "Afcons Infra",
+      name: "Amit Verma",
+      email: "amit.verma@afcons.com",
+      industry: "Mining & Tunneling",
+      role: "Field Supervisor",
+      fleet: "Standard Site (50-250 kits)",
+      pass: "Sitesafe@2026",
+      badge: "Tunneling",
+      icon: ShieldCheck,
+    },
+    {
+      company: "Adani Logistics",
+      name: "Pooja Mehta",
+      email: "pooja.m@adaniports.com",
+      industry: "Warehousing & Logistics",
+      role: "Auditor / Executive",
+      fleet: "Pilot Trial (10-50 kits)",
+      pass: "Sitesafe@2026",
+      badge: "Supply Hub",
+      icon: Cpu,
+    },
+  ];
+
+  const handleApplyTemplate = (tpl: (typeof pilotTemplates)[0]) => {
+    setActiveTemplate(tpl.company);
+    setName(tpl.name);
+    setEmail(tpl.email);
+    setCompany(tpl.company);
+    setIndustry(tpl.industry);
+    setRole(tpl.role);
+    setFleetSize(tpl.fleet);
+    setPassword(tpl.pass);
+    setConfirmPassword(tpl.pass);
+    setAgreeTerms(true);
+    setFeedback(`Autofilled enterprise template for ${tpl.company}`);
+    setTimeout(() => setFeedback(null), 3000);
+  };
 
   // Password strength calculation
   const getPasswordStrength = (pass: string) => {
@@ -69,13 +135,13 @@ export default function SignUpPage() {
   };
 
   const strengthScore = getPasswordStrength(password);
-  const strengthLabels = ["Very Weak", "Weak", "Fair", "Strong", "Enterprise Grade"];
+  const strengthLabels = ["Weak", "Fair", "Good", "Strong", "Enterprise Grade"];
   const strengthColors = ["bg-zinc-700", "bg-red-500", "bg-amber-500", "bg-blue-500", "bg-emerald-500"];
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreeTerms) {
-      alert("Please accept the Sitesafe Telemetry Data Handling Policy to proceed.");
+      alert("Please accept the Sitesafe Telemetry Policy to proceed.");
       return;
     }
     if (password !== confirmPassword) {
@@ -106,9 +172,15 @@ export default function SignUpPage() {
       );
 
       setFeedback(
-        `Workspace provisioned for ${company}! Redux profile created. You can now access your portal.`
+        `Workspace provisioned for ${company}! Redux profile created.`
       );
-    }, 1000);
+    }, 850);
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    setFeedback("Signed out from Redux session.");
+    setTimeout(() => setFeedback(null), 3000);
   };
 
   return (
@@ -176,86 +248,125 @@ export default function SignUpPage() {
                 </span>
               </h1>
               <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                Equip your industrial crews with connected PPE chipsets. Seamlessly track workforce presence, real-time safety compliance,
-                and zone telemetrics.
+                Equip your industrial crews with connected PPE chipsets. Seamlessly track workforce presence, real-time safety compliance, and zone telemetrics.
               </p>
             </div>
 
-            {/* Benefits Cards - Consistent Glassmorphism and Shimmer with Sign In */}
-            <div className="rounded-2xl border border-zinc-800/90 bg-[#0f131c]/85 p-4 sm:p-5 backdrop-blur-xl neon-glow-card relative overflow-hidden group space-y-3">
+            {/* Benefits Showcase Card - 100% Consistent Glassmorphism and Shimmer with Sign In */}
+            <div className="rounded-2xl border border-zinc-800/90 bg-[#0f131c]/85 p-4 sm:p-5 backdrop-blur-xl neon-glow-card relative overflow-hidden group">
               <div className="absolute top-0 left-0 right-0 shimmer-line opacity-75" />
               <div className="absolute top-0 right-0 h-32 w-32 bg-[#F6C72F]/8 rounded-bl-full pointer-events-none filter blur-xl" />
 
-              <div className="flex flex-wrap items-center justify-between pb-2.5 mb-1 border-b border-zinc-800/80 gap-2">
+              <div className="flex flex-wrap items-center justify-between pb-2.5 mb-3 border-b border-zinc-800/80 gap-2">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-[#F6C72F] beacon-active" />
                   <span className="text-xs font-mono font-semibold uppercase tracking-wider text-zinc-200">
                     Enterprise Pilot Program Inclusions
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-amber-400 bg-amber-950/70 border border-amber-500/40 px-2.5 py-0.5 rounded font-semibold badge-glow-amber">
-                  EARLY ACCESS OPEN
-                </span>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-[10px] font-mono text-zinc-400">
+                    Cohort: <span className="text-zinc-200 font-semibold">Batch 1</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-amber-400 bg-amber-950/70 border border-amber-500/40 px-2.5 py-0.5 rounded font-semibold badge-glow-amber">
+                    EARLY ACCESS OPEN
+                  </span>
+                </div>
               </div>
 
+              {/* 4 Inclusions Grid with matching styling to device cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl border border-zinc-800/90 bg-[#090c12]/90 hover:border-zinc-700 transition-all">
-                  <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/15 border border-[#F6C72F]/40 flex items-center justify-center flex-shrink-0 text-[#F6C72F] mt-0.5 shadow-[0_0_10px_rgba(246,199,47,0.2)]">
-                    <Boxes className="w-3.5 h-3.5" />
-                  </div>
+                {/* Inclusion 01 */}
+                <div className="rounded-xl border border-zinc-800/90 bg-[#090c12]/90 p-3 flex flex-col justify-between hover:border-zinc-700 transition-all">
                   <div>
-                    <h4 className="text-xs font-bold text-zinc-100">Priority Hardware Allocation</h4>
-                    <p className="text-[10px] text-zinc-400 mt-0.5 leading-relaxed">
-                      Pre-paired smart PPE kits (Helmet, Vest Hub, Boot chipsets) dispatched first.
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-[#F6C72F] shadow-[0_0_10px_rgba(246,199,47,0.15)]">
+                        <Boxes className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] font-mono text-amber-400 bg-amber-950/60 border border-amber-800/60 px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
+                        <CheckCircle className="w-2.5 h-2.5" /> PRIORITY
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-zinc-200">Priority Hardware Allocation</div>
+                    <div className="text-[10px] text-zinc-400 font-mono mt-0.5">Pre-paired Helmet, Vest Hub & Boot modules</div>
+                  </div>
+                  <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-400">
+                    <span>Pre-configured Kits</span>
+                    <span className="text-emerald-400 font-semibold">Dispatched 1st</span>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl border border-zinc-800/90 bg-[#090c12]/90 hover:border-zinc-700 transition-all">
-                  <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/15 border border-[#F6C72F]/40 flex items-center justify-center flex-shrink-0 text-[#F6C72F] mt-0.5 shadow-[0_0_10px_rgba(246,199,47,0.2)]">
-                    <FileCheck2 className="w-3.5 h-3.5" />
-                  </div>
+                {/* Inclusion 02 */}
+                <div className="rounded-xl border border-[#F6C72F]/50 bg-[#0d111a]/95 p-3 flex flex-col justify-between shadow-[0_0_25px_rgba(246,199,47,0.12),inset_0_1px_1px_rgba(246,199,47,0.2)] relative">
                   <div>
-                    <h4 className="text-xs font-bold text-zinc-100">ISO 45001 Compliance Logs</h4>
-                    <p className="text-[10px] text-zinc-400 mt-0.5 leading-relaxed">
-                      Continuous digital logs satisfying EHS audits and regulatory inspections automatically.
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/20 border border-[#F6C72F]/50 flex items-center justify-center text-[#F6C72F] shadow-[0_0_12px_rgba(246,199,47,0.3)]">
+                        <FileCheck2 className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950/70 border border-emerald-500/40 px-1.5 py-0.5 rounded font-medium flex items-center gap-1 badge-glow-emerald">
+                        <CheckCircle className="w-2.5 h-2.5 text-emerald-400" /> ISO 45001
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-white">ISO 45001 Compliance Logs</div>
+                    <div className="text-[10px] text-[#F6C72F] font-mono font-medium mt-0.5">Continuous digital compliance audit trails</div>
+                  </div>
+                  <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-400">
+                    <span>Zero Manual Paperwork</span>
+                    <span className="text-emerald-400 font-semibold">Automated</span>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl border border-zinc-800/90 bg-[#090c12]/90 hover:border-zinc-700 transition-all">
-                  <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/15 border border-[#F6C72F]/40 flex items-center justify-center flex-shrink-0 text-[#F6C72F] mt-0.5 shadow-[0_0_10px_rgba(246,199,47,0.2)]">
-                    <Cpu className="w-3.5 h-3.5" />
-                  </div>
+                {/* Inclusion 03 */}
+                <div className="rounded-xl border border-zinc-800/90 bg-[#090c12]/90 p-3 flex flex-col justify-between hover:border-zinc-700 transition-all">
                   <div>
-                    <h4 className="text-xs font-bold text-zinc-100">Zero Equipment Replacement</h4>
-                    <p className="text-[10px] text-zinc-400 mt-0.5 leading-relaxed">
-                      Non-invasive clip and strap modules attaching directly onto existing crew PPE.
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-[#F6C72F] shadow-[0_0_10px_rgba(246,199,47,0.15)]">
+                        <Cpu className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] font-mono text-sky-400 bg-sky-950/60 border border-sky-800/60 px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
+                        <CheckCircle className="w-2.5 h-2.5" /> CLIP-ON
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-zinc-200">Zero Equipment Replacement</div>
+                    <div className="text-[10px] text-zinc-400 font-mono mt-0.5">Non-invasive strap modules for existing PPE</div>
+                  </div>
+                  <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-400">
+                    <span>Uses Existing Gear</span>
+                    <span className="text-emerald-400 font-semibold">0 Capex</span>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-2.5 p-2.5 rounded-xl border border-zinc-800/90 bg-[#090c12]/90 hover:border-zinc-700 transition-all">
-                  <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/15 border border-[#F6C72F]/40 flex items-center justify-center flex-shrink-0 text-[#F6C72F] mt-0.5 shadow-[0_0_10px_rgba(246,199,47,0.2)]">
-                    <Clock className="w-3.5 h-3.5" />
-                  </div>
+                {/* Inclusion 04 */}
+                <div className="rounded-xl border border-zinc-800/90 bg-[#090c12]/90 p-3 flex flex-col justify-between hover:border-zinc-700 transition-all">
                   <div>
-                    <h4 className="text-xs font-bold text-zinc-100">Free Integrated Attendance</h4>
-                    <p className="text-[10px] text-zinc-400 mt-0.5 leading-relaxed">
-                      Presence and shift duration stream automatically with telemetry readings.
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-[#F6C72F] shadow-[0_0_10px_rgba(246,199,47,0.15)]">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
+                        <CheckCircle className="w-2.5 h-2.5" /> INTEGRATED
+                      </span>
+                    </div>
+                    <div className="text-xs font-bold text-zinc-200">Free Integrated Attendance</div>
+                    <div className="text-[10px] text-zinc-400 font-mono mt-0.5">Presence and shift duration stream automatically</div>
+                  </div>
+                  <div className="mt-2.5 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-400">
+                    <span>GPS + BLE Mesh Roster</span>
+                    <span className="text-emerald-400 font-semibold">Real-time</span>
                   </div>
                 </div>
               </div>
 
               {/* Status Bar */}
-              <div className="pt-2 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
+              <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-zinc-400">
                 <div className="flex items-center gap-1.5 font-mono">
-                  <Sparkles className="w-3 h-3 text-[#F6C72F]" />
-                  <span className="text-zinc-300">Founding-site terms available during pilot onboarding</span>
+                  <MapPin className="w-3 h-3 text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.5)]" />
+                  <span className="truncate text-zinc-300">Nx-One Tower Pilot Site (Greater Noida)</span>
                 </div>
-                <div className="flex items-center gap-2 font-mono text-[10px]">
-                  <span className="text-emerald-400">● Live Prototype Tested</span>
+                <div className="flex items-center gap-2 sm:gap-3 font-mono text-[10px]">
+                  <span className="text-emerald-400">● Live Hardware Tested</span>
+                  <span className="text-sky-400">● 0 Capex</span>
+                  <span className="text-amber-400">● 14-Day Setup</span>
                 </div>
               </div>
             </div>
@@ -275,9 +386,9 @@ export default function SignUpPage() {
               </div>
 
               <div className="rounded-xl border border-zinc-800/80 bg-[#0e1219]/80 p-2.5 xl:p-3 hover:border-emerald-500/40 hover:shadow-[0_0_18px_rgba(16,185,129,0.12)] transition-all">
-                <div className="text-xl xl:text-2xl font-bold font-mono text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.35)]">ISO 45001</div>
-                <div className="text-[11px] text-zinc-300 font-medium">Audit Ready</div>
-                <div className="text-[9px] text-emerald-400 font-mono">CE applied & in progress</div>
+                <div className="text-xl xl:text-2xl font-bold font-mono text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.35)]">0</div>
+                <div className="text-[11px] text-zinc-300 font-medium">Capex Cost</div>
+                <div className="text-[9px] text-emerald-400 font-mono">Pilot hardware included</div>
               </div>
 
               <div className="rounded-xl border border-zinc-800/80 bg-[#0e1219]/80 p-2.5 xl:p-3 hover:border-sky-500/40 hover:shadow-[0_0_18px_rgba(6,182,212,0.12)] transition-all">
@@ -305,13 +416,65 @@ export default function SignUpPage() {
                 </p>
               </div>
 
+              {/* Redux Authenticated State Indicator */}
+              {isAuthenticated && user && (
+                <div className="mb-3 rounded-xl border border-emerald-500/40 bg-emerald-950/40 p-2.5 text-xs text-emerald-300 flex items-center justify-between badge-glow-emerald">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <div className="text-[11px]">
+                      <span className="font-semibold text-white">{user.name}</span> • {user.role}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="px-2 py-0.5 text-[10px] rounded border border-emerald-800/80 bg-emerald-900/50 text-emerald-200 hover:bg-emerald-800 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <LogOut className="w-2.5 h-2.5" />
+                    Logout
+                  </button>
+                </div>
+              )}
+
               {/* Feedback toast */}
               {feedback && (
-                <div className="mb-2.5 rounded-lg border border-[#F6C72F]/40 bg-[#F6C72F]/10 p-2.5 text-xs text-[#F6C72F] flex items-center gap-2 animate-fadeIn badge-glow-amber">
+                <div className="mb-3 rounded-lg border border-[#F6C72F]/40 bg-[#F6C72F]/10 p-2.5 text-xs text-[#F6C72F] flex items-center gap-2 animate-fadeIn badge-glow-amber">
                   <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>{feedback}</span>
                 </div>
               )}
+
+              {/* Quick Pilot Templates Bar - Matching Sign In Personas Grid */}
+              <div className="rounded-xl border border-zinc-800/90 bg-[#0a0d13]/80 p-2.5 mb-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1 font-semibold">
+                    <Building2 className="w-3 h-3 text-[#F6C72F]" />
+                    Quick Pilot Templates:
+                  </span>
+                  <span className="text-[9px] text-zinc-500">Tap to autofill</span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-1.5">
+                  {pilotTemplates.map((tpl) => {
+                    const Icon = tpl.icon;
+                    const isSelected = activeTemplate === tpl.company;
+                    return (
+                      <button
+                        key={tpl.company}
+                        type="button"
+                        onClick={() => handleApplyTemplate(tpl)}
+                        className={`p-1.5 sm:p-2 rounded-lg text-left transition-all flex items-center gap-1.5 sm:gap-2 border cursor-pointer ${
+                          isSelected
+                            ? "bg-[#F6C72F]/20 border-[#F6C72F] text-white shadow-[0_0_12px_rgba(246,199,47,0.3)]"
+                            : "bg-zinc-800/60 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700"
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isSelected ? "text-[#F6C72F]" : "text-zinc-400"}`} />
+                        <span className="truncate font-medium text-[10px] sm:text-[11px]">{tpl.company}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               {/* Sign Up Form */}
               <form onSubmit={handleRegister} className="space-y-2.5 sm:space-y-3">
@@ -336,7 +499,10 @@ export default function SignUpPage() {
 
                   {/* Email */}
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-zinc-300">Work Email</label>
+                    <label className="text-[11px] font-medium text-zinc-300 flex items-center justify-between">
+                      <span>Work Email</span>
+                      <span className="text-[9px] font-mono text-zinc-500">SSO Ready</span>
+                    </label>
                     <div className="relative">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-500">
                         <Mail className="h-3.5 w-3.5" />
@@ -375,18 +541,26 @@ export default function SignUpPage() {
                   {/* Industry */}
                   <div className="space-y-1">
                     <label className="text-[11px] font-medium text-zinc-300">Industry Sector</label>
-                    <select
-                      value={industry}
-                      onChange={(e) => setIndustry(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] px-3 py-2 text-sm sm:text-xs text-white transition-all focus-glow-amber"
-                    >
-                      <option>Construction & Civil</option>
-                      <option>Infrastructure & Metro</option>
-                      <option>Manufacturing & Heavy Eng</option>
-                      <option>Oil & Gas / Refinery</option>
-                      <option>Mining & Tunneling</option>
-                      <option>Warehousing & Logistics</option>
-                    </select>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-500">
+                        <Layers className="h-3.5 w-3.5" />
+                      </div>
+                      <select
+                        value={industry}
+                        onChange={(e) => setIndustry(e.target.value)}
+                        className="w-full appearance-none rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-8 py-2 text-sm sm:text-xs text-white transition-all focus-glow-amber"
+                      >
+                        <option>Construction & Civil</option>
+                        <option>Infrastructure & Metro</option>
+                        <option>Manufacturing & Heavy Eng</option>
+                        <option>Oil & Gas / Refinery</option>
+                        <option>Mining & Tunneling</option>
+                        <option>Warehousing & Logistics</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-500">
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -394,62 +568,98 @@ export default function SignUpPage() {
                   {/* Primary Role */}
                   <div className="space-y-1">
                     <label className="text-[11px] font-medium text-zinc-300">Your Primary Role</label>
-                    <select
-                      value={role}
-                      onChange={(e) => setRole(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] px-3 py-2 text-sm sm:text-xs text-white transition-all focus-glow-amber"
-                    >
-                      <option>Safety Head / EHS Manager</option>
-                      <option>Project & Site Head</option>
-                      <option>Field Supervisor</option>
-                      <option>Procurement & Operations</option>
-                      <option>Auditor / Executive</option>
-                    </select>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-500">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                      </div>
+                      <select
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        className="w-full appearance-none rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-8 py-2 text-sm sm:text-xs text-white transition-all focus-glow-amber"
+                      >
+                        <option>Safety Head / EHS Manager</option>
+                        <option>Project & Site Head</option>
+                        <option>Field Supervisor</option>
+                        <option>Procurement & Operations</option>
+                        <option>Auditor / Executive</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-500">
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Planned Fleet */}
                   <div className="space-y-1">
                     <label className="text-[11px] font-medium text-zinc-300">Target Fleet Size</label>
-                    <select
-                      value={fleetSize}
-                      onChange={(e) => setFleetSize(e.target.value)}
-                      className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] px-3 py-2 text-sm sm:text-xs text-white transition-all focus-glow-amber"
-                    >
-                      <option>Pilot Trial (10-50 kits)</option>
-                      <option>Standard Site (50-250 kits)</option>
-                      <option>Large Project (250-1,000 kits)</option>
-                      <option>Enterprise (1,000+ kits)</option>
-                    </select>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-500">
+                        <Boxes className="h-3.5 w-3.5" />
+                      </div>
+                      <select
+                        value={fleetSize}
+                        onChange={(e) => setFleetSize(e.target.value)}
+                        className="w-full appearance-none rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-8 py-2 text-sm sm:text-xs text-white transition-all focus-glow-amber"
+                      >
+                        <option>Pilot Trial (10-50 kits)</option>
+                        <option>Standard Site (50-250 kits)</option>
+                        <option>Large Project (250-1,000 kits)</option>
+                        <option>Enterprise (1,000+ kits)</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-500">
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* Passwords */}
+                {/* Passwords with Left Icons and Eye Toggle */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div className="space-y-1">
                     <label className="text-[11px] font-medium text-zinc-300">Security Password</label>
                     <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-500">
+                        <Lock className="h-3.5 w-3.5" />
+                      </div>
                       <input
                         type={showPassword ? "text" : "password"}
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] px-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
+                        className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-white cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
                     </div>
                   </div>
 
                   <div className="space-y-1">
                     <label className="text-[11px] font-medium text-zinc-300">Confirm Password</label>
                     <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-500">
+                        <Lock className="h-3.5 w-3.5" />
+                      </div>
                       <input
                         type={showPassword ? "text" : "password"}
                         required
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] px-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
+                        className="w-full rounded-xl border border-zinc-800/90 bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all focus-glow-amber"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-white cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -484,7 +694,7 @@ export default function SignUpPage() {
                       className="h-3.5 w-3.5 rounded border-zinc-700 bg-zinc-900 text-[#F6C72F] accent-[#F6C72F] focus:ring-0"
                     />
                     <span className="text-[11px] text-zinc-400">
-                      I agree to the Sitesafe Telemetry Policy & EHS audit terms
+                      I agree to the Sitesafe Telemetry Policy & ISO 45001 EHS audit terms
                     </span>
                   </label>
                 </div>
@@ -507,10 +717,45 @@ export default function SignUpPage() {
                     </>
                   )}
                 </button>
+
+                {/* SSO Separator - Matching Sign In */}
+                <div className="relative my-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-zinc-800/90" />
+                  </div>
+                  <div className="relative flex justify-center text-[9px] uppercase font-mono">
+                    <span className="bg-[#111520] px-2 text-zinc-500">Or Enterprise SSO</span>
+                  </div>
+                </div>
+
+                {/* SSO Buttons */}
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => alert("Connecting to Microsoft Azure Active Directory...")}
+                    className="flex items-center justify-center py-1.5 px-2 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all cursor-pointer"
+                  >
+                    Azure AD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => alert("Connecting to Okta Identity...")}
+                    className="flex items-center justify-center py-1.5 px-2 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all cursor-pointer"
+                  >
+                    Okta
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => alert("Connecting to Google Workspace...")}
+                    className="flex items-center justify-center py-1.5 px-2 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all cursor-pointer"
+                  >
+                    Google
+                  </button>
+                </div>
               </form>
 
               {/* Bottom Link to Sign In */}
-              <div className="mt-3.5 pt-3 border-t border-zinc-800/80 text-center text-xs text-zinc-400">
+              <div className="mt-3 pt-2.5 border-t border-zinc-800/80 text-center text-xs text-zinc-400">
                 Already have an active account?{" "}
                 <Link href="/signin" className="font-semibold text-[#F6C72F] hover:underline">
                   Sign in to portal
@@ -530,7 +775,7 @@ export default function SignUpPage() {
             <span className="hidden md:inline text-zinc-400">Pursuing ISO 45001 & CE Certifications</span>
           </div>
           <div className="flex items-center justify-center sm:justify-end gap-3 sm:gap-4">
-            <span className="font-mono text-zinc-500">Kanpur & Greater Noida</span>
+            <span className="font-mono text-zinc-500">Kanpur & Greater Noida, India</span>
             <a href="mailto:info@ayantrai.com" className="text-zinc-400 hover:text-[#F6C72F] transition-colors">
               info@ayantrai.com
             </a>

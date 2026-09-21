@@ -559,7 +559,7 @@ export default function SignInPage() {
             <span className="hidden md:inline text-zinc-400">Pursuing ISO 45001 & CE Certifications</span>
           </div>
           <div className="flex items-center justify-center sm:justify-end gap-3 sm:gap-4">
-            <span className="font-mono text-zinc-500">Kanpur & Greater Noida</span>
+            <span className="font-mono text-zinc-500">Kanpur & Greater Noida, India</span>
             <a href="mailto:info@ayantrai.com" className="text-zinc-400 hover:text-[#F6C72F] transition-colors">
               info@ayantrai.com
             </a>
