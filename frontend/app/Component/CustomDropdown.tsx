@@ -168,9 +168,9 @@ export default function CustomDropdown({
     }
   };
 
-  // Size specific styles
+  // Size specific styles - standardized to rounded-xl to match adjacent form inputs
   const sizeClasses = {
-    sm: "py-1.5 px-2.5 text-xs rounded-lg min-h-[32px]",
+    sm: "py-2 px-3 text-xs sm:text-sm rounded-xl min-h-[38px]",
     md: "py-2 px-3 text-xs sm:text-sm rounded-xl min-h-[38px]",
     lg: "py-2.5 px-3.5 text-sm rounded-xl min-h-[44px]",
   };
@@ -181,17 +181,17 @@ export default function CustomDropdown({
       className={`relative space-y-1 ${className}`}
       onKeyDown={handleKeyDown}
     >
-      {/* Optional Form Field Label */}
+      {/* Optional Form Field Label - matched font size and weight to standard inputs */}
       {label && (
         <label
           htmlFor={dropdownId}
-          className="block text-[10px] font-medium text-zinc-300"
+          className="block text-[11px] sm:text-xs font-medium text-zinc-300"
         >
           {label}
         </label>
       )}
 
-      {/* Main Trigger Button */}
+      {/* Main Trigger Button - matches rounded-xl, height, and glowing amber halo of inputs */}
       <button
         type="button"
         id={dropdownId}
@@ -204,26 +204,26 @@ export default function CustomDropdown({
         }}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`w-full flex items-center justify-between text-left transition-all border outline-none cursor-pointer ${
+        className={`w-full flex items-center justify-between text-left transition-all border outline-none cursor-pointer rounded-xl ${
           sizeClasses[size]
         } ${
           error
             ? "input-error border-red-500/90 shadow-[0_0_16px_rgba(239,68,68,0.5)] bg-[#12080a]"
             : isOpen
-            ? "border-[#F6C72F] bg-[#0d111a] shadow-[0_0_16px_rgba(246,199,47,0.5),0_0_30px_rgba(246,199,47,0.25)]"
-            : "border-zinc-800/90 bg-[#080b10] hover:border-[#F6C72F]/60 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] hover:bg-[#0c0f16]"
+            ? "border-[#F6C72F] bg-[#0d111a] shadow-[0_0_0_1.5px_#f6c72f,0_0_16px_rgba(246,199,47,0.65),0_0_32px_rgba(246,199,47,0.3),inset_0_0_8px_rgba(246,199,47,0.12)]"
+            : "border-zinc-800/90 bg-[#080b10] focus-glow-amber hover:border-[#F6C72F]/60 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] hover:bg-[#0c0f16]"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${buttonClassName}`}
       >
-        <div className="flex items-center gap-2 truncate pr-2">
+        <div className="flex items-center gap-2.5 truncate pr-2">
           {LeadingIcon && (
-            <LeadingIcon className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
+            <LeadingIcon className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" />
           )}
           {selectedOption?.icon && (
-            <selectedOption.icon className="w-3.5 h-3.5 text-[#F6C72F] flex-shrink-0" />
+            <selectedOption.icon className="w-3.5 h-3.5 text-[#F6C72F] flex-shrink-0 drop-shadow-[0_0_6px_rgba(246,199,47,0.4)]" />
           )}
           <span
-            className={`truncate font-medium ${
-              selectedOption ? "text-zinc-100" : "text-zinc-500"
+            className={`truncate text-xs sm:text-sm ${
+              selectedOption ? "text-white font-medium" : "text-zinc-500 font-normal"
             }`}
           >
             {selectedOption ? selectedOption.label : placeholder}
@@ -242,16 +242,16 @@ export default function CustomDropdown({
 
         <ChevronDown
           className={`w-3.5 h-3.5 text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
-            isOpen ? "rotate-180 text-[#F6C72F]" : ""
+            isOpen ? "rotate-180 text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.6)]" : ""
           }`}
         />
       </button>
 
-      {/* Floating Dropdown Panel */}
+      {/* Floating Dropdown Panel - glowing amber border and rounded-xl */}
       {isOpen && (
         <div
           role="listbox"
-          className={`absolute z-50 mt-1 w-full min-w-[220px] rounded-xl border border-zinc-800/95 bg-[#0e131e]/95 backdrop-blur-2xl p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.85),0_0_20px_rgba(246,199,47,0.08)] animate-fadeIn ${
+          className={`absolute z-50 mt-1.5 w-full min-w-[220px] rounded-xl border border-[#F6C72F]/40 bg-[#0e131e]/98 backdrop-blur-2xl p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.9),0_0_24px_rgba(246,199,47,0.18),inset_0_1px_1px_rgba(246,199,47,0.1)] animate-fadeIn ${
             align === "right" ? "right-0" : "left-0"
           } ${menuClassName}`}
         >
@@ -269,7 +269,7 @@ export default function CustomDropdown({
                     setFocusedIndex(0);
                   }}
                   placeholder="Filter options..."
-                  className="w-full pl-7 pr-2 py-1 text-[11px] bg-[#07090e] border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-[#F6C72F]/60 font-mono"
+                  className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-[#07090e] border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-[#F6C72F] focus:shadow-[0_0_10px_rgba(246,199,47,0.3)] font-mono"
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
@@ -307,10 +307,10 @@ export default function CustomDropdown({
                       option.disabled
                         ? "opacity-40 cursor-not-allowed"
                         : isSelected
-                        ? "bg-[#F6C72F]/15 text-[#F6C72F] font-semibold border border-[#F6C72F]/30"
+                        ? "bg-[#F6C72F]/15 text-[#F6C72F] font-semibold border border-[#F6C72F]/40 shadow-[0_0_10px_rgba(246,199,47,0.15)]"
                         : isFocused
-                        ? "bg-zinc-800/80 text-white"
-                        : "text-zinc-300 hover:bg-zinc-800/60 hover:text-white"
+                        ? "bg-zinc-800/90 text-white"
+                        : "text-zinc-300 hover:bg-[#F6C72F]/10 hover:text-white"
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate pr-2">

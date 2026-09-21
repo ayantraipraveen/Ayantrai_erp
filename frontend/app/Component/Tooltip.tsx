@@ -28,12 +28,12 @@ export interface TooltipProps {
 
 const variantStyles: Record<TooltipVariant, { container: string; arrow: string }> = {
   default: {
-    container: "bg-[#0d121c] border-zinc-700/80 text-zinc-200 shadow-2xl shadow-black/80",
-    arrow: "border-zinc-700/80 bg-[#0d121c]",
+    container: "bg-[#0d121c] border-zinc-700/90 text-zinc-200 shadow-[0_4px_24px_rgba(0,0,0,0.85),0_0_14px_rgba(246,199,47,0.12)]",
+    arrow: "border-zinc-700/90 bg-[#0d121c]",
   },
   amber: {
-    container: "bg-[#121620] border-[#F6C72F]/50 text-amber-200 shadow-[0_0_18px_rgba(246,199,47,0.22)]",
-    arrow: "border-[#F6C72F]/50 bg-[#121620]",
+    container: "bg-[#121620] border-[#F6C72F]/60 text-amber-200 shadow-[0_0_20px_rgba(246,199,47,0.3)]",
+    arrow: "border-[#F6C72F]/60 bg-[#121620]",
   },
   emerald: {
     container: "bg-[#091814] border-emerald-500/50 text-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.22)]",
@@ -130,7 +130,7 @@ export default function Tooltip({
       <div
         role="tooltip"
         aria-hidden={!isVisible}
-        className={`pointer-events-none absolute z-50 whitespace-nowrap rounded-lg border px-2.5 py-1 text-[10px] font-mono font-medium tracking-tight backdrop-blur-xl transition-all duration-150 ${
+        className={`pointer-events-none absolute z-50 whitespace-nowrap rounded-xl border px-2.5 py-1 text-[10px] font-mono font-medium tracking-tight backdrop-blur-xl transition-all duration-150 ${
           currentPosition.container
         } ${currentVariant.container} ${
           isVisible

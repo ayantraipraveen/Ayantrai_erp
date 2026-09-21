@@ -55,7 +55,7 @@ export const defaultNavItems: NavItem[] = [
   },
   {
     name: "Reports",
-    href: "/dashboard/reports",
+    href: "/report",
     icon: BarChart3,
     badge: "ISO 45001",
     badgeColor: "bg-amber-950 text-[#F6C72F] border-amber-500/40",
@@ -124,6 +124,9 @@ export default function Sidebar({
   const isItemActive = (href: string) => {
     if (href === "/dashboard") {
       return pathname === "/dashboard";
+    }
+    if (href === "/report") {
+      return pathname === "/report" || pathname.startsWith("/report");
     }
     return pathname.startsWith(href);
   };

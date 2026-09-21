@@ -462,21 +462,21 @@ export default function SignInPage() {
                   <button
                     type="button"
                     onClick={() => alert("Redirecting to Microsoft Azure Active Directory...")}
-                    className="flex items-center justify-center py-1.5 px-2 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all cursor-pointer"
+                    className="flex items-center justify-center py-1.5 px-2 rounded-xl border border-zinc-800/80 bg-zinc-900/60 text-[11px] font-medium text-zinc-300 hover:bg-[#0d111a] hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] focus:border-[#F6C72F] focus:shadow-[0_0_0_1.5px_#f6c72f,0_0_12px_rgba(246,199,47,0.4)] outline-none transition-all cursor-pointer"
                   >
                     Azure AD
                   </button>
                   <button
                     type="button"
                     onClick={() => alert("Redirecting to Okta Identity...")}
-                    className="flex items-center justify-center py-1.5 px-2 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all cursor-pointer"
+                    className="flex items-center justify-center py-1.5 px-2 rounded-xl border border-zinc-800/80 bg-zinc-900/60 text-[11px] font-medium text-zinc-300 hover:bg-[#0d111a] hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] focus:border-[#F6C72F] focus:shadow-[0_0_0_1.5px_#f6c72f,0_0_12px_rgba(246,199,47,0.4)] outline-none transition-all cursor-pointer"
                   >
                     Okta
                   </button>
                   <button
                     type="button"
                     onClick={() => alert("Redirecting to Google Workspace...")}
-                    className="flex items-center justify-center py-1.5 px-2 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-700 transition-all cursor-pointer"
+                    className="flex items-center justify-center py-1.5 px-2 rounded-xl border border-zinc-800/80 bg-zinc-900/60 text-[11px] font-medium text-zinc-300 hover:bg-[#0d111a] hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] focus:border-[#F6C72F] focus:shadow-[0_0_0_1.5px_#f6c72f,0_0_12px_rgba(246,199,47,0.4)] outline-none transition-all cursor-pointer"
                   >
                     Google
                   </button>

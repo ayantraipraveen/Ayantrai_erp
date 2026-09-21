@@ -15,3 +15,6 @@ export { default as AuthPortal } from "./AuthPortal";
 
 export { default as Sidebar } from "./Sidebar";
 export * from "./Sidebar";
+
+export { default as WorkspaceLayout } from "./WorkspaceLayout";
+export * from "./WorkspaceLayout";
