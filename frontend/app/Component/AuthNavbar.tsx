@@ -49,7 +49,7 @@ export default function AuthNavbar({
     logoHref ?? (isSignIn ? "/signin" : "/signup");
 
   return (
-    <header className="relative z-10 w-full border-b border-zinc-800/80 bg-[#0c1017]/90 backdrop-blur-md flex-shrink-0">
+    <header className="sticky top-0 z-30 w-full border-b border-zinc-800/80 bg-[#0c1017]/95 backdrop-blur-md flex-shrink-0">
       <div className="max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 py-2.5 flex items-center justify-between">
         {/* Left: AyantrAI Logo & Sitesafe ERP Subtitle */}
         <div className="flex items-center gap-3 sm:gap-4">
