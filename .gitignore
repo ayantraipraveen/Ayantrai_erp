@@ -1,0 +1,9 @@
+.antigravity/
+node_modules/
+.next/
+out/
+build/
+dist/
+.env*.local
+*.log
+.DS_Store
