@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import StoreProvider from "@/lib/redux/StoreProvider";
+import { ThemeProvider } from "./Component/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,7 +27,26 @@ export const metadata: Metadata = {
   },
 };
 
-import StoreProvider from "@/lib/redux/StoreProvider";
+const themeInitScript = `
+  (function() {
+    try {
+      var saved = localStorage.getItem('ayantrai_theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = saved || 'dark';
+      var isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+      var root = document.documentElement;
+      if (isDark) {
+        root.classList.add('dark');
+        root.classList.remove('light');
+        root.setAttribute('data-theme', 'dark');
+      } else {
+        root.classList.remove('dark');
+        root.classList.add('light');
+        root.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  })();
+`;
 
 export default function RootLayout({
   children,
@@ -35,10 +56,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col">
-        <StoreProvider>{children}</StoreProvider>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)] transition-colors duration-200">
+        <StoreProvider>
+          <ThemeProvider defaultTheme="dark">
+            {children}
+          </ThemeProvider>
+        </StoreProvider>
       </body>
     </html>
   );

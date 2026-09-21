@@ -1,6 +1,19 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary-gold: #d97706;
+  --primary-gold-hover: #b45309;
+  --surface-card: #ffffff;
+  --surface-elevated: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --border-bright: #cbd5e1;
+}
+
+.dark {
   --background: #080a0e;
   --foreground: #f1f5f9;
   --primary-gold: #f6c72f;
@@ -21,14 +34,23 @@
 }
 
 body {
-  background: #080a0e;
-  color: #f1f5f9;
+  background-color: var(--background);
+  color: var(--foreground);
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* Industrial Grid Background */
 .industrial-grid {
+  background-image: 
+    linear-gradient(to right, rgba(217, 119, 6, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(217, 119, 6, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.dark .industrial-grid,
+:root.dark .industrial-grid {
   background-image: 
     linear-gradient(to right, rgba(246, 199, 47, 0.035) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(246, 199, 47, 0.035) 1px, transparent 1px);
@@ -50,9 +72,14 @@ body {
   left: 20%;
   width: 650px;
   height: 650px;
-  background: radial-gradient(circle, rgba(246, 199, 47, 0.16) 0%, rgba(246, 199, 47, 0.04) 45%, rgba(8, 10, 14, 0) 70%);
+  background: radial-gradient(circle, rgba(217, 119, 6, 0.08) 0%, rgba(217, 119, 6, 0.015) 45%, rgba(248, 250, 252, 0) 70%);
   filter: blur(60px);
   animation: float-glow 14s ease-in-out infinite alternate;
+}
+
+.dark .amber-spotlight,
+:root.dark .amber-spotlight {
+  background: radial-gradient(circle, rgba(246, 199, 47, 0.16) 0%, rgba(246, 199, 47, 0.04) 45%, rgba(8, 10, 14, 0) 70%);
 }
 
 .cyan-rim-light {
@@ -61,9 +88,14 @@ body {
   right: 15%;
   width: 550px;
   height: 550px;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0.02) 50%, rgba(8, 10, 14, 0) 70%);
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.06) 0%, rgba(14, 165, 233, 0.01) 50%, rgba(248, 250, 252, 0) 70%);
   filter: blur(70px);
   animation: float-glow-reverse 18s ease-in-out infinite alternate;
+}
+
+.dark .cyan-rim-light,
+:root.dark .cyan-rim-light {
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0.02) 50%, rgba(8, 10, 14, 0) 70%);
 }
 
 @keyframes float-glow {
@@ -99,6 +131,15 @@ body {
 /* Glowing Border & Surface Effects */
 .neon-glow-amber {
   box-shadow: 
+    0 0 0 1px rgba(217, 119, 6, 0.25),
+    0 0 14px rgba(217, 119, 6, 0.1),
+    0 8px 24px -8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.dark .neon-glow-amber,
+:root.dark .neon-glow-amber {
+  box-shadow: 
     0 0 0 1px rgba(246, 199, 47, 0.35),
     0 0 18px rgba(246, 199, 47, 0.15),
     0 10px 30px -10px rgba(0, 0, 0, 0.8),
@@ -106,6 +147,15 @@ body {
 }
 
 .neon-glow-amber-lg {
+  box-shadow: 
+    0 0 0 1px rgba(217, 119, 6, 0.3),
+    0 0 20px rgba(217, 119, 6, 0.1),
+    0 16px 45px -12px rgba(0, 0, 0, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+}
+
+.dark .neon-glow-amber-lg,
+:root.dark .neon-glow-amber-lg {
   box-shadow: 
     0 0 0 1px rgba(246, 199, 47, 0.45),
     0 0 25px rgba(246, 199, 47, 0.22),
@@ -115,6 +165,14 @@ body {
 }
 
 .neon-glow-card {
+  box-shadow: 
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 0 16px rgba(217, 119, 6, 0.05),
+    0 10px 30px -10px rgba(0, 0, 0, 0.08);
+}
+
+.dark .neon-glow-card,
+:root.dark .neon-glow-card {
   box-shadow: 
     0 0 0 1px rgba(255, 255, 255, 0.08),
     0 0 20px rgba(246, 199, 47, 0.06),
@@ -142,16 +200,32 @@ body {
 
 /* High-Impact Input Glowing Halo on Focus */
 .focus-glow-amber:focus {
+  border-color: #d97706 !important;
+  box-shadow: 
+    0 0 0 1.5px #d97706,
+    0 0 14px rgba(217, 119, 6, 0.35),
+    0 0 24px rgba(217, 119, 6, 0.15),
+    inset 0 0 6px rgba(217, 119, 6, 0.06) !important;
+  outline: none;
+}
+
+.dark .focus-glow-amber:focus,
+:root.dark .focus-glow-amber:focus {
   border-color: #f6c72f !important;
   box-shadow: 
     0 0 0 1.5px #f6c72f,
     0 0 16px rgba(246, 199, 47, 0.65),
     0 0 32px rgba(246, 199, 47, 0.3),
     inset 0 0 8px rgba(246, 199, 47, 0.12) !important;
-  outline: none;
 }
 
 .focus-glow-amber:hover:not(:focus):not(.input-error) {
+  border-color: rgba(217, 119, 6, 0.55) !important;
+  box-shadow: 0 0 10px rgba(217, 119, 6, 0.18) !important;
+}
+
+.dark .focus-glow-amber:hover:not(:focus):not(.input-error),
+:root.dark .focus-glow-amber:hover:not(:focus):not(.input-error) {
   border-color: rgba(246, 199, 47, 0.55) !important;
   box-shadow: 0 0 12px rgba(246, 199, 47, 0.2) !important;
 }
@@ -246,17 +320,25 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #080a0e;
+  background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
-  background: #242c3d;
+  background: #cbd5e1;
   border-radius: 4px;
 }
+.dark ::-webkit-scrollbar-thumb,
+:root.dark ::-webkit-scrollbar-thumb {
+  background: #242c3d;
+}
 ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb:hover,
+:root.dark ::-webkit-scrollbar-thumb:hover {
   background: #394560;
 }
 
-/* Skeleton Shimmer Loading */
+/* Skeleton Shimmer Loading - Fully preserved for both Dark & Light modes */
 @keyframes skeleton-shimmer {
   0% {
     background-position: 200% 0;
@@ -269,19 +351,34 @@ body {
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(246, 199, 47, 0.1) 50%,
-    rgba(255, 255, 255, 0.03) 100%
+    rgba(0, 0, 0, 0.03) 0%,
+    rgba(217, 119, 6, 0.08) 50%,
+    rgba(0, 0, 0, 0.03) 100%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
+.dark .skeleton-shimmer,
+:root.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(246, 199, 47, 0.1) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+}
+
 .skeleton-box {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgba(0, 0, 0, 0.06);
   border-radius: 0.5rem;
   position: relative;
   overflow: hidden;
+}
+
+.dark .skeleton-box,
+:root.dark .skeleton-box {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .skeleton-box::after {
@@ -291,10 +388,19 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(246, 199, 47, 0.08) 50%,
+    rgba(217, 119, 6, 0.08) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
   animation: skeleton-shimmer 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
+.dark .skeleton-box::after,
+:root.dark .skeleton-box::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(246, 199, 47, 0.08) 50%,
+    transparent 100%
+  );
+}

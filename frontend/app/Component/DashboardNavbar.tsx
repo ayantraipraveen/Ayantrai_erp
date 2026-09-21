@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Tooltip from "./Tooltip";
 import CustomDropdown, { DropdownOption } from "./CustomDropdown";
+import ThemeToggle from "./ThemeToggle";
 
 export interface DashboardNavbarProps {
   /** Current desktop sidebar collapsed/expanded state */
@@ -100,7 +101,7 @@ export default function DashboardNavbar({
   };
 
   return (
-    <header className="relative z-30 w-full border-b border-zinc-800/80 bg-[#0b0e14]/95 backdrop-blur-md flex-shrink-0 sticky top-0">
+    <header className="relative z-30 w-full border-b border-slate-200/90 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-md flex-shrink-0 sticky top-0 transition-colors">
       <div className="max-w-[1780px] mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
         {/* Left: Brand Logo & Mobile Toggle & Custom Site Dropdown */}
         <div className="flex items-center gap-3">
@@ -113,7 +114,7 @@ export default function DashboardNavbar({
                   setSidebarOpen(!sidebarOpen);
                 }
               }}
-              className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-700 transition-colors cursor-pointer"
             >
               <Menu className="w-4 h-4" />
             </button>
@@ -130,11 +131,11 @@ export default function DashboardNavbar({
                 priority
               />
             </div>
-            <div className="hidden sm:flex flex-col border-l border-zinc-700/80 pl-2.5">
+            <div className="hidden sm:flex flex-col border-l border-slate-300 dark:border-zinc-700/80 pl-2.5">
               <span className="text-[10px] tracking-widest text-[#F6C72F] font-mono uppercase font-bold drop-shadow-[0_0_8px_rgba(246,199,47,0.4)]">
                 Sitesafe ERP
               </span>
-              <span className="text-[11px] text-zinc-400 font-medium">Enterprise Telemetry</span>
+              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium">Enterprise Telemetry</span>
             </div>
           </Link>
 
@@ -147,31 +148,34 @@ export default function DashboardNavbar({
               icon={MapPin}
               size="sm"
               searchable={true}
-              buttonClassName="border-zinc-800/90 bg-[#0e1219]/90 text-xs text-zinc-200"
+              buttonClassName="border-slate-300 dark:border-zinc-800/90 bg-white dark:bg-[#0e1219]/90 text-xs text-slate-800 dark:text-zinc-200"
             />
           </div>
         </div>
 
-        {/* Right: Live Connection, Alert Bell, User Profile, Logout */}
-        <div className="flex items-center gap-2 sm:gap-3.5">
+        {/* Right: Live Connection, Theme Toggle, Alert Bell, User Profile, Logout */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Live Gateway Pill with Reusable Tooltip */}
           <Tooltip
             content="Mesh Gateway connected • Latency 18ms • Encryption AES-256"
             position="bottom"
             variant="emerald"
           >
-            <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-950/40 text-[11px] font-mono text-emerald-300 cursor-help">
-              <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-[11px] font-mono text-emerald-700 dark:text-emerald-300 cursor-help">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
               <span>4G LTE-M Uplink Live</span>
             </div>
           </Tooltip>
+
+          {/* Theme Toggle Button */}
+          <ThemeToggle />
 
           {/* Alert Bell with Tooltip */}
           <div className="relative">
             <Tooltip content="Live Telemetry Safety Alerts" position="bottom" variant="amber">
               <button
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
-                className="relative p-2 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
+                className="relative p-2 rounded-xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-700 transition-colors cursor-pointer"
               >
                 <Bell className="w-4 h-4" />
                 <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#F6C72F] animate-ping" />
@@ -180,24 +184,24 @@ export default function DashboardNavbar({
             </Tooltip>
 
             {notificationsOpen && (
-              <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-zinc-800 bg-[#0f131c] p-3 shadow-2xl z-50 animate-fadeIn">
-                <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-                  <span className="text-xs font-bold text-white">Live Site Alerts</span>
-                  <span className="text-[10px] font-mono text-emerald-400">1 Active</span>
+              <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0f131c] p-3 shadow-2xl z-50 animate-fadeIn text-slate-800 dark:text-white">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-zinc-800">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">Live Site Alerts</span>
+                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400">1 Active</span>
                 </div>
                 <div className="py-2.5 space-y-2">
-                  <div className="p-2 rounded-lg border border-amber-500/30 bg-amber-950/30 text-xs">
-                    <div className="font-semibold text-[#F6C72F] flex items-center gap-1">
+                  <div className="p-2 rounded-lg border border-amber-500/30 bg-amber-50 dark:bg-amber-950/30 text-xs">
+                    <div className="font-semibold text-amber-600 dark:text-[#F6C72F] flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" /> Zone 2 Geofence Warning
                     </div>
-                    <div className="text-[10px] text-zinc-400 mt-0.5">
+                    <div className="text-[10px] text-slate-600 dark:text-zinc-400 mt-0.5">
                       Worker Vikram S. entered Restricted Shaft Crane Radius (resolved in 4s).
                     </div>
                   </div>
                 </div>
                 <button
                   onClick={() => setNotificationsOpen(false)}
-                  className="w-full py-1 text-center text-[10px] text-zinc-400 hover:text-white cursor-pointer"
+                  className="w-full py-1 text-center text-[10px] text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
                 >
                   Close
                 </button>
@@ -210,15 +214,15 @@ export default function DashboardNavbar({
             content={`Signed in as ${currentUser.name} (${currentUser.email || currentUser.company || "Enterprise EHS"})`}
             position="bottom"
           >
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl border border-zinc-800 bg-[#0f131c]/90 cursor-default">
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl border border-slate-300 dark:border-zinc-800 bg-slate-100 dark:bg-[#0f131c]/90 cursor-default">
               <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/20 border border-[#F6C72F]/50 flex items-center justify-center font-bold text-xs text-[#F6C72F]">
                 {currentUser.name ? currentUser.name.charAt(0) : "U"}
               </div>
               <div className="hidden sm:flex flex-col text-left">
-                <span className="text-xs font-semibold text-white leading-tight">
+                <span className="text-xs font-semibold text-slate-900 dark:text-white leading-tight">
                   {currentUser.name}
                 </span>
-                <span className="text-[10px] font-mono text-zinc-400 leading-none">
+                <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400 leading-none">
                   {currentUser.role || "Operator"}
                 </span>
               </div>
@@ -229,7 +233,7 @@ export default function DashboardNavbar({
           <Tooltip content="Sign out of Sitesafe ERP session" position="bottom" variant="danger">
             <button
               onClick={onLogout}
-              className="px-2.5 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:text-red-400 hover:border-red-500/40 hover:bg-red-950/20 transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+              className="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 text-slate-700 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400 hover:border-red-400 dark:hover:border-red-500/40 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Logout</span>

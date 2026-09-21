@@ -18,3 +18,8 @@ export * from "./Sidebar";
 
 export { default as WorkspaceLayout } from "./WorkspaceLayout";
 export * from "./WorkspaceLayout";
+
+export { default as ThemeToggle } from "./ThemeToggle";
+export * from "./ThemeToggle";
+
+export * from "./ThemeProvider";
