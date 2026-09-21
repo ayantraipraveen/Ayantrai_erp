@@ -148,7 +148,7 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#080a0e] text-slate-100 flex flex-col justify-between overflow-y-auto industrial-grid">
+    <div className="relative min-h-screen lg:h-screen w-full bg-[#080a0e] text-slate-100 flex flex-col justify-between overflow-y-auto lg:overflow-hidden industrial-grid">
       
       {/* Ambient Lighting Orbs */}
       <div className="ambient-lighting-layer">
@@ -160,8 +160,8 @@ export default function SignInPage() {
       <AuthNavbar mode="signin" />
 
       {/* Main View Area */}
-      <main className="relative z-10 flex-1 w-full max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 flex items-center justify-center py-8 sm:py-10 lg:py-8">
-        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 xl:gap-12 items-center my-auto">
+      <main className="relative z-10 flex-1 w-full max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 flex items-center justify-center py-6 lg:py-2 overflow-visible lg:overflow-hidden">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 xl:gap-12 items-center">
           
           {/* ================= LEFT COLUMN: Telemetry Command View ================= */}
           <div className="lg:col-span-7 xl:col-span-7 flex flex-col justify-center space-y-4 lg:space-y-3.5 xl:space-y-4 order-2 lg:order-1">
@@ -172,7 +172,7 @@ export default function SignInPage() {
                 <Sparkles className="w-3 h-3 text-[#F6C72F] animate-pulse" />
                 Connected Industrial Safety Infrastructure
               </div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl xl:text-4xl font-extrabold tracking-tight text-white leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-extrabold tracking-tight text-white leading-tight">
                 Sign In to{" "}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F6C72F] via-[#FFD027] to-amber-200 drop-shadow-[0_0_20px_rgba(246,199,47,0.35)]">
                   Sitesafe Portal.
