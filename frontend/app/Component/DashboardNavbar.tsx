@@ -6,11 +6,13 @@ import Link from "next/link";
 import {
   Menu,
   MapPin,
-  ChevronDown,
   Bell,
   AlertTriangle,
   LogOut,
+  Building,
 } from "lucide-react";
+import Tooltip from "./Tooltip";
+import CustomDropdown, { DropdownOption } from "./CustomDropdown";
 
 export interface DashboardNavbarProps {
   /** Current desktop sidebar collapsed/expanded state */
@@ -23,6 +25,8 @@ export interface DashboardNavbarProps {
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
   /** Currently active industrial site name */
   activeSite?: string;
+  /** Optional callback when selected site changes */
+  onSiteChange?: (newSite: string) => void;
   /** Authenticated user profile information */
   currentUser: {
     id?: string;
@@ -35,10 +39,45 @@ export interface DashboardNavbarProps {
   onLogout: () => void | Promise<void>;
 }
 
+const siteOptions: DropdownOption[] = [
+  {
+    value: "Nx-One Tower Pilot Site (Greater Noida)",
+    label: "Nx-One Tower Pilot Site",
+    description: "Greater Noida • 142 Active Workers",
+    badge: "PRIMARY PILOT",
+    badgeColor: "bg-amber-950/80 text-[#F6C72F] border-amber-500/40",
+    icon: Building,
+  },
+  {
+    value: "Metro Line 4 Underground Tunnel (Mumbai)",
+    label: "Metro Line 4 Tunnel",
+    description: "Mumbai • 88 Active Workers",
+    badge: "SUBTERRANEAN",
+    badgeColor: "bg-sky-950/80 text-sky-400 border-sky-500/40",
+    icon: Building,
+  },
+  {
+    value: "High-Speed Rail Viaduct C-2 (Ahmedabad)",
+    label: "HSR Viaduct C-2",
+    description: "Ahmedabad • 215 Active Workers",
+    badge: "INFRASTRUCTURE",
+    badgeColor: "bg-purple-950/80 text-purple-400 border-purple-500/40",
+    icon: Building,
+  },
+  {
+    value: "Steel Plant Blast Furnace Revamp (Jamshedpur)",
+    label: "Blast Furnace Revamp",
+    description: "Jamshedpur • 64 Active Workers",
+    badge: "HEAVY ENG",
+    badgeColor: "bg-emerald-950/80 text-emerald-400 border-emerald-500/40",
+    icon: Building,
+  },
+];
+
 /**
  * Reusable DashboardNavbar (Command Bar) for Sitesafe ERP.
- * Features mobile/desktop sidebar triggers, active site switcher, real-time uplink indicator,
- * live telemetry alert dropdown, user profile badge, and Redux session signout.
+ * Features mobile/desktop sidebar triggers, interactive custom site dropdown,
+ * real-time uplink indicator with tooltip, live telemetry alerts, and user profile badge.
  */
 export default function DashboardNavbar({
   sidebarOpen,
@@ -46,29 +85,39 @@ export default function DashboardNavbar({
   mobileMenuOpen,
   setMobileMenuOpen,
   activeSite = "Nx-One Tower Pilot Site (Greater Noida)",
+  onSiteChange,
   currentUser,
   onLogout,
 }: DashboardNavbarProps) {
+  const [selectedSite, setSelectedSite] = useState(activeSite);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const handleSiteSelect = (site: string) => {
+    setSelectedSite(site);
+    if (onSiteChange) {
+      onSiteChange(site);
+    }
+  };
 
   return (
     <header className="relative z-30 w-full border-b border-zinc-800/80 bg-[#0b0e14]/95 backdrop-blur-md flex-shrink-0 sticky top-0">
       <div className="max-w-[1780px] mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
-        {/* Left: Brand Logo & Mobile Toggle */}
+        {/* Left: Brand Logo & Mobile Toggle & Custom Site Dropdown */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              if (typeof window !== "undefined" && window.innerWidth < 1024) {
-                setMobileMenuOpen(!mobileMenuOpen);
-              } else {
-                setSidebarOpen(!sidebarOpen);
-              }
-            }}
-            className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
-            title="Toggle Navigation"
-          >
-            <Menu className="w-4 h-4" />
-          </button>
+          <Tooltip content="Toggle Sidebar Navigation" position="bottom">
+            <button
+              onClick={() => {
+                if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                  setMobileMenuOpen(!mobileMenuOpen);
+                } else {
+                  setSidebarOpen(!sidebarOpen);
+                }
+              }}
+              className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+          </Tooltip>
 
           <Link href="/dashboard" className="flex items-center gap-2.5 sm:gap-3 group">
             <div className="relative h-7 sm:h-8 w-28 sm:w-32 flex items-center">
@@ -89,34 +138,46 @@ export default function DashboardNavbar({
             </div>
           </Link>
 
-          {/* Active Site Selector */}
-          <div className="hidden md:flex items-center gap-2 ml-3 px-3 py-1.5 rounded-xl border border-zinc-800/90 bg-[#0e1219]/90 text-xs">
-            <MapPin className="w-3.5 h-3.5 text-[#F6C72F] flex-shrink-0" />
-            <span className="font-mono text-zinc-300 truncate max-w-[240px] xl:max-w-none">
-              {activeSite}
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+          {/* Interactive Reusable Custom Dropdown: Active Site Selector */}
+          <div className="hidden md:block ml-2 w-64 lg:w-72">
+            <CustomDropdown
+              options={siteOptions}
+              value={selectedSite}
+              onChange={handleSiteSelect}
+              icon={MapPin}
+              size="sm"
+              searchable={true}
+              buttonClassName="border-zinc-800/90 bg-[#0e1219]/90 text-xs text-zinc-200"
+            />
           </div>
         </div>
 
         {/* Right: Live Connection, Alert Bell, User Profile, Logout */}
         <div className="flex items-center gap-2 sm:gap-3.5">
-          {/* Live Gateway Pill */}
-          <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-950/40 text-[11px] font-mono text-emerald-300">
-            <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>4G LTE-M Uplink Live</span>
-          </div>
+          {/* Live Gateway Pill with Reusable Tooltip */}
+          <Tooltip
+            content="Mesh Gateway connected • Latency 18ms • Encryption AES-256"
+            position="bottom"
+            variant="emerald"
+          >
+            <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-950/40 text-[11px] font-mono text-emerald-300 cursor-help">
+              <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>4G LTE-M Uplink Live</span>
+            </div>
+          </Tooltip>
 
-          {/* Alert Bell */}
+          {/* Alert Bell with Tooltip */}
           <div className="relative">
-            <button
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
-              className="relative p-2 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#F6C72F] animate-ping" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#F6C72F]" />
-            </button>
+            <Tooltip content="Live Telemetry Safety Alerts" position="bottom" variant="amber">
+              <button
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                className="relative p-2 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors cursor-pointer"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#F6C72F] animate-ping" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#F6C72F]" />
+              </button>
+            </Tooltip>
 
             {notificationsOpen && (
               <div className="absolute right-0 mt-2 w-80 rounded-2xl border border-zinc-800 bg-[#0f131c] p-3 shadow-2xl z-50 animate-fadeIn">
@@ -144,30 +205,36 @@ export default function DashboardNavbar({
             )}
           </div>
 
-          {/* User Profile Badge */}
-          <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl border border-zinc-800 bg-[#0f131c]/90">
-            <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/20 border border-[#F6C72F]/50 flex items-center justify-center font-bold text-xs text-[#F6C72F]">
-              {currentUser.name ? currentUser.name.charAt(0) : "U"}
-            </div>
-            <div className="hidden sm:flex flex-col text-left">
-              <span className="text-xs font-semibold text-white leading-tight">
-                {currentUser.name}
-              </span>
-              <span className="text-[10px] font-mono text-zinc-400 leading-none">
-                {currentUser.role || "Operator"}
-              </span>
-            </div>
-          </div>
-
-          {/* Logout Button */}
-          <button
-            onClick={onLogout}
-            className="px-2.5 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:text-red-400 hover:border-red-500/40 hover:bg-red-950/20 transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer"
-            title="Sign Out from Sitesafe"
+          {/* User Profile Badge with Reusable Tooltip */}
+          <Tooltip
+            content={`Signed in as ${currentUser.name} (${currentUser.email || currentUser.company || "Enterprise EHS"})`}
+            position="bottom"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Logout</span>
-          </button>
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl border border-zinc-800 bg-[#0f131c]/90 cursor-default">
+              <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/20 border border-[#F6C72F]/50 flex items-center justify-center font-bold text-xs text-[#F6C72F]">
+                {currentUser.name ? currentUser.name.charAt(0) : "U"}
+              </div>
+              <div className="hidden sm:flex flex-col text-left">
+                <span className="text-xs font-semibold text-white leading-tight">
+                  {currentUser.name}
+                </span>
+                <span className="text-[10px] font-mono text-zinc-400 leading-none">
+                  {currentUser.role || "Operator"}
+                </span>
+              </div>
+            </div>
+          </Tooltip>
+
+          {/* Logout Button with Reusable Tooltip */}
+          <Tooltip content="Sign out of Sitesafe ERP session" position="bottom" variant="danger">
+            <button
+              onClick={onLogout}
+              className="px-2.5 py-1.5 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:text-red-400 hover:border-red-500/40 hover:bg-red-950/20 transition-all flex items-center gap-1.5 text-xs font-medium cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </Tooltip>
         </div>
       </div>
     </header>

@@ -23,6 +23,7 @@ import {
   SlidersHorizontal,
   ChevronRight,
 } from "lucide-react";
+import { Tooltip, CustomDropdown, DropdownOption } from "../Component";
 
 interface WorkerTelemetry {
   id: string;
@@ -227,6 +228,29 @@ export default function DashboardPage() {
   const compliantCount = workers.filter((w) => w.isCompliant).length;
   const compliancePercentage = ((compliantCount / workers.length) * 100).toFixed(1);
 
+  const zoneOptions: DropdownOption[] = [
+    { value: "ALL", label: "All Zones" },
+    { value: "Zone 1", label: "Zone 1 (Yard)", description: "Ground Yard B" },
+    { value: "Zone 2", label: "Zone 2 (Tower Core)", description: "Tower Core L12" },
+    { value: "Zone 3", label: "Zone 3 (Basement)", description: "Basement Substation" },
+  ];
+
+  const complianceOptions: DropdownOption[] = [
+    { value: "ALL", label: "All Statuses" },
+    {
+      value: "COMPLIANT",
+      label: "100% Compliant",
+      badge: "SAFE",
+      badgeColor: "bg-emerald-950 text-emerald-400 border-emerald-500/40",
+    },
+    {
+      value: "NON_COMPLIANT",
+      label: "Violations Only",
+      badge: "ALERT",
+      badgeColor: "bg-red-950 text-red-400 border-red-500/40",
+    },
+  ];
+
   return (
     <div className="space-y-6">
       
@@ -258,110 +282,108 @@ export default function DashboardPage() {
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-              Nx-One Commercial Tower{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F6C72F] to-amber-200">
-                Telemetry Hub
-              </span>
+              Nx-One Tower • Real-Time Safety Operations
             </h1>
             <p className="text-xs text-zinc-400 max-w-2xl">
-              Real-time wireless 3-point smart PPE verification. Active supervision powered by AyantrAI
-              Bluetooth mesh and 4G LTE-M industrial telemetry gateways.
+              Streaming active personnel presence, biometric safety thresholds, and 3-point PPE telemetry directly from field hardware chipsets.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            <div className="p-2.5 rounded-xl border border-zinc-800 bg-[#090c12]/80 text-center min-w-[100px]">
-              <div className="text-[10px] font-mono text-zinc-400">Ambient Temp</div>
-              <div className="text-sm font-bold font-mono text-zinc-200">32°C Normal</div>
-            </div>
-            <div className="p-2.5 rounded-xl border border-zinc-800 bg-[#090c12]/80 text-center min-w-[100px]">
-              <div className="text-[10px] font-mono text-zinc-400">Gateways</div>
-              <div className="text-sm font-bold font-mono text-emerald-400">4 / 4 Online</div>
-            </div>
-            <div className="p-2.5 rounded-xl border border-[#F6C72F]/30 bg-[#F6C72F]/10 text-center min-w-[110px]">
-              <div className="text-[10px] font-mono text-[#F6C72F]">ISO 45001 EHS</div>
-              <div className="text-sm font-bold font-mono text-white">Full Audit Log</div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setLastHeartbeat("Just now");
+                setPingFeedback("Synchronized latest mesh packet from base gateway.");
+                setTimeout(() => setPingFeedback(null), 3000);
+              }}
+              className="px-3.5 py-2 rounded-xl border border-zinc-800 bg-[#080b10] text-xs font-semibold text-zinc-300 hover:text-white hover:border-[#F6C72F]/50 flex items-center gap-2 transition-all cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-[#F6C72F]" />
+              Refresh Mesh
+            </button>
+            <div className="px-3 py-1.5 rounded-xl border border-[#F6C72F]/30 bg-[#F6C72F]/10 text-xs font-mono text-[#F6C72F]">
+              Gateways: <span className="font-bold">4 Active</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ================= 4 KPI METRIC CARDS ================= */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        
-        {/* Metric 1: Compliance */}
-        <div className="rounded-2xl border border-amber-500/40 bg-[#0e131d]/90 p-4 relative overflow-hidden group hover:border-[#F6C72F] transition-all hover:shadow-[0_0_25px_rgba(246,199,47,0.18)]">
-          <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-            <span className="font-medium">PPE Compliance Rate</span>
-            <span className="h-6 w-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-[#F6C72F]">
-              <ShieldCheck className="w-3.5 h-3.5" />
+      {/* ================= COMPLIANCE & TELEMETRY KPI METRICS ================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Metric 01: Compliance Percentage */}
+        <div className="rounded-2xl border border-zinc-800/90 bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-[#F6C72F]/40 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Site Compliance</span>
+            <div className="h-7 w-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold font-mono text-emerald-400">
+              {compliancePercentage}%
             </span>
+            <span className="text-[10px] font-mono text-emerald-300">+2.1% today</span>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-[#F6C72F] drop-shadow-[0_0_12px_rgba(246,199,47,0.35)]">
-            {compliancePercentage}%
-          </div>
-          <div className="text-[10px] font-mono text-emerald-400 mt-1 flex items-center gap-1">
-            <ArrowUpRight className="w-3 h-3" />
-            <span>+1.8% vs manual inspections</span>
-          </div>
+          <p className="mt-1 text-[11px] text-zinc-400">3-point verified PPE adherence</p>
         </div>
 
-        {/* Metric 2: Deployed Kits */}
-        <div className="rounded-2xl border border-zinc-800/90 bg-[#0e131d]/90 p-4 relative overflow-hidden group hover:border-zinc-700 transition-all">
-          <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-            <span className="font-medium">Active Deployed Kits</span>
-            <span className="h-6 w-6 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300">
-              <HardHat className="w-3.5 h-3.5" />
+        {/* Metric 02: Active Workers */}
+        <div className="rounded-2xl border border-zinc-800/90 bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-zinc-700 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Active Crews</span>
+            <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-[#F6C72F]">
+              <HardHat className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold font-mono text-white">
+              {workers.length}
             </span>
+            <span className="text-[10px] font-mono text-zinc-400">of 150 registered</span>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white">
-            142 <span className="text-base text-zinc-500 font-normal">/ 150</span>
-          </div>
-          <div className="text-[10px] font-mono text-zinc-400 mt-1">
-            8 standby in dock charging bay
-          </div>
+          <p className="mt-1 text-[11px] text-zinc-400">Real-time BLE mesh beacon sync</p>
         </div>
 
-        {/* Metric 3: Hazards */}
-        <div className="rounded-2xl border border-emerald-500/30 bg-[#0e131d]/90 p-4 relative overflow-hidden group hover:border-emerald-500/60 transition-all hover:shadow-[0_0_25px_rgba(16,185,129,0.15)]">
-          <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-            <span className="font-medium">Active Hazards / Breaches</span>
-            <span className="h-6 w-6 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+        {/* Metric 03: Open Safety Violations */}
+        <div className="rounded-2xl border border-zinc-800/90 bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-red-500/40 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Open Violations</span>
+            <div className="h-7 w-7 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold font-mono text-red-400">
+              {workers.length - compliantCount}
             </span>
+            <span className="text-[10px] font-mono text-amber-400">Auto-auditing</span>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400 drop-shadow-[0_0_12px_rgba(16,185,129,0.35)]">
-            {workers.filter((w) => !w.isCompliant).length}
-          </div>
-          <div className="text-[10px] font-mono text-emerald-400 mt-1">
-            Zero unresolved critical alarms
-          </div>
+          <p className="mt-1 text-[11px] text-zinc-400">Instant haptic triage enabled</p>
         </div>
 
-        {/* Metric 4: Average Battery */}
-        <div className="rounded-2xl border border-sky-500/30 bg-[#0e131d]/90 p-4 relative overflow-hidden group hover:border-sky-500/60 transition-all hover:shadow-[0_0_25px_rgba(6,182,212,0.15)]">
-          <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-            <span className="font-medium">Fleet Battery Average</span>
-            <span className="h-6 w-6 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
-              <Zap className="w-3.5 h-3.5" />
-            </span>
+        {/* Metric 04: Hardware Battery Health */}
+        <div className="rounded-2xl border border-zinc-800/90 bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-sky-500/40 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono text-zinc-400 uppercase tracking-wider">Fleet Battery</span>
+            <div className="h-7 w-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+              <Zap className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-sky-400 drop-shadow-[0_0_12px_rgba(6,182,212,0.35)]">
-            94.2%
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold font-mono text-sky-400">91.6%</span>
+            <span className="text-[10px] font-mono text-sky-300">Avg fleet level</span>
           </div>
-          <div className="text-[10px] font-mono text-sky-400 mt-1">
-            All kits &gt; 14h continuous runtime
-          </div>
+          <p className="mt-1 text-[11px] text-zinc-400">Estimated 38h remaining</p>
         </div>
       </div>
 
-      {/* ================= WORKSPACE: WORKER MATRIX + LIVE EVENT LOG ================= */}
+      {/* ================= WORKERS MATRIX & LIVE TELEMETRY LOGS ================= */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         
         {/* LEFT COLUMN: Worker Compliance Matrix (8 Cols) */}
         <div className="xl:col-span-8 space-y-3">
           
-          {/* Controls Bar: Search & Filter */}
+          {/* Controls Bar: Search & Reusable CustomDropdown Filters */}
           <div className="rounded-2xl border border-zinc-800/90 bg-[#0f131c]/90 p-3 flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -375,26 +397,23 @@ export default function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <select
-                value={filterZone}
-                onChange={(e) => setFilterZone(e.target.value)}
-                className="rounded-xl border border-zinc-800 bg-[#080b10] px-2.5 py-1.5 text-xs text-zinc-300 focus-glow-amber"
-              >
-                <option value="ALL">All Zones</option>
-                <option value="Zone 1">Zone 1 (Yard)</option>
-                <option value="Zone 2">Zone 2 (Tower Core)</option>
-                <option value="Zone 3">Zone 3 (Basement)</option>
-              </select>
+              <div className="w-36 sm:w-44">
+                <CustomDropdown
+                  options={zoneOptions}
+                  value={filterZone}
+                  onChange={setFilterZone}
+                  size="sm"
+                />
+              </div>
 
-              <select
-                value={filterCompliance}
-                onChange={(e) => setFilterCompliance(e.target.value)}
-                className="rounded-xl border border-zinc-800 bg-[#080b10] px-2.5 py-1.5 text-xs text-zinc-300 focus-glow-amber"
-              >
-                <option value="ALL">All Statuses</option>
-                <option value="COMPLIANT">100% Compliant</option>
-                <option value="NON_COMPLIANT">Violations Only</option>
-              </select>
+              <div className="w-40 sm:w-48">
+                <CustomDropdown
+                  options={complianceOptions}
+                  value={filterCompliance}
+                  onChange={setFilterCompliance}
+                  size="sm"
+                />
+              </div>
             </div>
           </div>
 
@@ -459,53 +478,66 @@ export default function DashboardPage() {
 
                       {/* Helmet Chipset Status */}
                       <td className="py-3 px-3 text-center">
-                        <button
-                          onClick={() => handleTogglePPE(worker.id)}
-                          title="Click to toggle simulated status"
-                          className="cursor-pointer"
+                        <Tooltip
+                          content={`Click to simulate helmet ${worker.helmetStatus === "WORN" ? "removal violation" : "re-attachment"}`}
+                          position="top"
+                          variant={worker.helmetStatus === "WORN" ? "emerald" : "danger"}
                         >
-                          {worker.helmetStatus === "WORN" ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 font-semibold badge-glow-emerald">
-                              WORN
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-red-950/70 border border-red-500/40 text-red-400 font-semibold animate-pulse">
-                              OFF-HEAD
-                            </span>
-                          )}
-                        </button>
+                          <button
+                            onClick={() => handleTogglePPE(worker.id)}
+                            className="cursor-pointer"
+                          >
+                            {worker.helmetStatus === "WORN" ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 font-semibold badge-glow-emerald">
+                                WORN
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-red-950/70 border border-red-500/40 text-red-400 font-semibold animate-pulse">
+                                OFF-HEAD
+                              </span>
+                            )}
+                          </button>
+                        </Tooltip>
                       </td>
 
                       {/* Vest Hub Status */}
                       <td className="py-3 px-3 text-center">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-sky-950/70 border border-sky-500/40 text-sky-300 font-semibold">
-                          <Wifi className="w-2.5 h-2.5" />
-                          {worker.vestStatus}
-                        </span>
+                        <Tooltip content="Mesh Relay Uplink to Tower Gateway" position="top">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-sky-950/70 border border-sky-500/40 text-sky-300 font-semibold cursor-help">
+                            <Wifi className="w-2.5 h-2.5" />
+                            {worker.vestStatus}
+                          </span>
+                        </Tooltip>
                       </td>
 
                       {/* Boot Module Status */}
                       <td className="py-3 px-3 text-center">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 font-semibold">
-                          <Footprints className="w-2.5 h-2.5" />
-                          {worker.bootStatus}
-                        </span>
+                        <Tooltip content="Sub-meter geofenced boot sensor" position="top" variant="emerald">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 font-semibold cursor-help">
+                            <Footprints className="w-2.5 h-2.5" />
+                            {worker.bootStatus}
+                          </span>
+                        </Tooltip>
                       </td>
 
                       {/* Battery */}
                       <td className="py-3 px-3 text-center font-mono text-[11px] text-zinc-300">
-                        {worker.battery}%
+                        <Tooltip content={`Li-ion battery status: ${worker.battery}%`} position="top">
+                          <span className="cursor-help">{worker.battery}%</span>
+                        </Tooltip>
                       </td>
 
                       {/* Actions: Ping Worker */}
                       <td className="py-3 px-3 text-right">
-                        <button
-                          onClick={() => handlePingWorker(worker)}
-                          className="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-zinc-800/80 border border-zinc-700 text-zinc-200 hover:text-white hover:border-[#F6C72F]/60 hover:bg-[#F6C72F]/10 transition-all flex items-center gap-1 ml-auto cursor-pointer"
-                        >
-                          <Volume2 className="w-3 h-3 text-[#F6C72F]" />
-                          Ping Hub
-                        </button>
+                        <Tooltip content={`Trigger haptic buzz on ${worker.name}'s vest`} position="left" variant="amber">
+                          <button
+                            onClick={() => handlePingWorker(worker)}
+                            className="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-zinc-800/80 border border-zinc-700 text-zinc-200 hover:text-white hover:border-[#F6C72F]/60 hover:bg-[#F6C72F]/10 transition-all flex items-center gap-1 ml-auto cursor-pointer"
+                          >
+                            <Volume2 className="w-3 h-3 text-[#F6C72F]" />
+                            Ping Hub
+                          </button>
+                        </Tooltip>
                       </td>
                     </tr>
                   ))}

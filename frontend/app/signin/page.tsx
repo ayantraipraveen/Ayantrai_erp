@@ -141,11 +141,6 @@ export default function SignInPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await dispatch(logoutUser());
-    setFeedback("Signed out from Redux session.");
-    setTimeout(() => setFeedback(null), 3000);
-  };
 
   return (
     <div className="relative min-h-screen lg:h-screen w-full bg-[#080a0e] text-slate-100 flex flex-col justify-between overflow-y-auto lg:overflow-hidden industrial-grid">
@@ -331,25 +326,6 @@ export default function SignInPage() {
                 </p>
               </div>
 
-              {/* Redux Authenticated State Indicator */}
-              {isAuthenticated && user && (
-                <div className="mb-3 rounded-xl border border-emerald-500/40 bg-emerald-950/40 p-2.5 text-xs text-emerald-300 flex items-center justify-between badge-glow-emerald">
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <div className="text-[11px]">
-                      <span className="font-semibold text-white">{user.name}</span> • {user.role}
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="px-2 py-0.5 text-[10px] rounded border border-emerald-800/80 bg-emerald-900/50 text-emerald-200 hover:bg-emerald-800 transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    <LogOut className="w-2.5 h-2.5" />
-                    Logout
-                  </button>
-                </div>
-              )}
-
               {/* Feedback toast */}
               {feedback && (
                 <div className="mb-3 rounded-lg border border-[#F6C72F]/40 bg-[#F6C72F]/10 p-2.5 text-xs text-[#F6C72F] flex items-center gap-2 animate-fadeIn badge-glow-amber">
@@ -357,39 +333,6 @@ export default function SignInPage() {
                   <span>{feedback}</span>
                 </div>
               )}
-
-              {/* Quick Demo Personas Bar */}
-              <div className="rounded-xl border border-zinc-800/90 bg-[#0a0d13]/80 p-2.5 mb-3">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1 font-semibold">
-                    <Fingerprint className="w-3 h-3 text-[#F6C72F]" />
-                    Quick Demo Personas:
-                  </span>
-                  <span className="text-[9px] text-zinc-500">Tap to autofill</span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-1.5">
-                  {demoPersonas.map((persona) => {
-                    const Icon = persona.icon;
-                    const isSelected = activePersona === persona.role;
-                    return (
-                      <button
-                        key={persona.role}
-                        type="button"
-                        onClick={() => handleApplyPersona(persona)}
-                        className={`p-1.5 sm:p-2 rounded-lg text-left transition-all flex items-center gap-1.5 sm:gap-2 border cursor-pointer ${
-                          isSelected
-                            ? "bg-[#F6C72F]/20 border-[#F6C72F] text-white shadow-[0_0_12px_rgba(246,199,47,0.3)]"
-                            : "bg-zinc-800/60 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700"
-                        }`}
-                      >
-                        <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${isSelected ? "text-[#F6C72F]" : "text-zinc-400"}`} />
-                        <span className="truncate font-medium text-[10px] sm:text-[11px]">{persona.role}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
               {/* Sign In Form */}
               <form onSubmit={handleSignIn} className="space-y-2.5 sm:space-y-3">
@@ -413,14 +356,14 @@ export default function SignInPage() {
                       placeholder="name@company.com or EMP-1092"
                       className={`w-full rounded-xl bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all ${
                         errors.email
-                          ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                          ? "input-error border border-red-500/90 shadow-[0_0_12px_rgba(239,68,68,0.25)] focus:border-red-500 focus:ring-1 focus:ring-red-500"
                           : "border border-zinc-800/90 focus-glow-amber"
                       }`}
                     />
                   </div>
                   {errors.email && (
-                    <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
-                      <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                    <p className="text-[10px] text-red-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                      <AlertCircle className="w-2.5 h-2.5 text-red-400 flex-shrink-0" />
                       <span>{errors.email}</span>
                     </p>
                   )}
@@ -452,7 +395,7 @@ export default function SignInPage() {
                       placeholder="••••••••••••"
                       className={`w-full rounded-xl bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-white placeholder-zinc-500 transition-all ${
                         errors.password
-                          ? "border border-amber-500/80 shadow-[0_0_10px_rgba(246,199,47,0.25)]"
+                          ? "input-error border border-red-500/90 shadow-[0_0_12px_rgba(239,68,68,0.25)] focus:border-red-500 focus:ring-1 focus:ring-red-500"
                           : "border border-zinc-800/90 focus-glow-amber"
                       }`}
                     />
@@ -465,8 +408,8 @@ export default function SignInPage() {
                     </button>
                   </div>
                   {errors.password && (
-                    <p className="text-[10px] text-amber-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
-                      <AlertCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                    <p className="text-[10px] text-red-400 font-mono flex items-center gap-1 mt-0.5 animate-fadeIn">
+                      <AlertCircle className="w-2.5 h-2.5 text-red-400 flex-shrink-0" />
                       <span>{errors.password}</span>
                     </p>
                   )}
@@ -494,11 +437,11 @@ export default function SignInPage() {
                   {isLoading ? (
                     <>
                       <div className="h-3.5 w-3.5 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
-                      <span>Verifying in Redux Store...</span>
+                      <span>Login...</span>
                     </>
                   ) : (
                     <>
-                      <span>Enter Sitesafe Portal</span>
+                      <span>Login</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </>
                   )}

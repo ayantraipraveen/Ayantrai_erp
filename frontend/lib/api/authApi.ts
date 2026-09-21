@@ -1,5 +1,5 @@
 import axiosClient from "./axiosClient";
-import { SignInFormData, SignUpFormData } from "@/lib/validations/auth";
+import { SignInFormData, SignUpFormData, SignUpPayload } from "@/lib/validations/auth";
 import { UserProfile } from "@/lib/redux/slices/authSlice";
 
 export interface AuthResponse {
@@ -66,7 +66,7 @@ export const authApi = {
   /**
    * POST /auth/register - Provision new enterprise site account
    */
-  register: async (data: SignUpFormData): Promise<AuthResponse> => {
+  register: async (data: SignUpFormData | SignUpPayload): Promise<AuthResponse> => {
     try {
       const response = await axiosClient.post<AuthResponse>(
         "/auth/register",

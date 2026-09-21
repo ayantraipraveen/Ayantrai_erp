@@ -68,3 +68,11 @@ export const signUpSchema = z
   });
 
 export type SignUpFormData = z.infer<typeof signUpSchema>;
+
+/**
+ * API submission payload type: Allows omitting client-side confirmation & checkbox fields
+ */
+export type SignUpPayload = Omit<SignUpFormData, "confirmPassword"> & {
+  confirmPassword?: string;
+  agreeTerms?: boolean;
+};

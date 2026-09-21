@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { authApi } from "@/lib/api";
-import { SignInFormData, SignUpFormData } from "@/lib/validations/auth";
+import { SignInFormData, SignUpFormData, SignUpPayload } from "@/lib/validations/auth";
 
 export interface UserProfile {
   id: string;
@@ -11,6 +11,20 @@ export interface UserProfile {
   industry?: string;
   fleetSize?: string;
 }
+
+export type AuthPayload =
+  | { user: UserProfile; token: string }
+  | (UserProfile & { token: string });
+
+const extractUserAndToken = (
+  payload: AuthPayload
+): { user: UserProfile; token: string } => {
+  if ("user" in payload) {
+    return { user: payload.user, token: payload.token };
+  }
+  const { token, ...userFields } = payload;
+  return { user: userFields as UserProfile, token };
+};
 
 export interface AuthState {
   user: UserProfile | null;
@@ -50,7 +64,7 @@ export const loginUser = createAsyncThunk(
  */
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
-  async (formData: SignUpFormData, { rejectWithValue }) => {
+  async (formData: SignUpFormData | SignUpPayload, { rejectWithValue }) => {
     try {
       const response = await authApi.register(formData);
       return response;
@@ -71,33 +85,29 @@ export const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // Synchronous actions (e.g. for quick demo personas & immediate state updates)
-    loginSuccess: (
-      state,
-      action: PayloadAction<{ user: UserProfile; token: string }>
-    ) => {
+    // Synchronous actions (support both nested { user, token } and flat { id, name, ..., token })
+    loginSuccess: (state, action: PayloadAction<AuthPayload>) => {
+      const { user, token } = extractUserAndToken(action.payload);
       state.isLoading = false;
       state.isAuthenticated = true;
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.user = user;
+      state.token = token;
       state.error = null;
       state.lastLoginTime = new Date().toISOString();
       if (typeof window !== "undefined") {
-        localStorage.setItem("sitesafe_token", action.payload.token);
+        localStorage.setItem("sitesafe_token", token);
       }
     },
-    registerSuccess: (
-      state,
-      action: PayloadAction<{ user: UserProfile; token: string }>
-    ) => {
+    registerSuccess: (state, action: PayloadAction<AuthPayload>) => {
+      const { user, token } = extractUserAndToken(action.payload);
       state.isLoading = false;
       state.isAuthenticated = true;
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+      state.user = user;
+      state.token = token;
       state.error = null;
       state.lastLoginTime = new Date().toISOString();
       if (typeof window !== "undefined") {
-        localStorage.setItem("sitesafe_token", action.payload.token);
+        localStorage.setItem("sitesafe_token", token);
       }
     },
     logout: (state) => {
