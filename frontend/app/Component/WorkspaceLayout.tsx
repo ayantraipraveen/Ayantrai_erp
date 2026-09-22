@@ -33,6 +33,26 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const [activeSite, setActiveSite] = useState("Nx-One Tower Pilot Site (Greater Noida)");
   const [checkingAuth, setCheckingAuth] = useState(true);
 
+  // Restore sidebar state from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sitesafe_sidebar_open");
+      if (saved !== null) {
+        setSidebarOpen(saved === "true");
+      }
+    }
+  }, []);
+
+  const handleSetSidebarOpen: React.Dispatch<React.SetStateAction<boolean>> = (action) => {
+    setSidebarOpen((prev) => {
+      const next = typeof action === "function" ? action(prev) : action;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sitesafe_sidebar_open", String(next));
+      }
+      return next;
+    });
+  };
+
   // 1. Verify token & restore session on client mount
   useEffect(() => {
     let token = stateToken;
@@ -118,7 +138,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       {/* ================= REUSABLE SIDEBAR (DESKTOP FULL-HEIGHT + MOBILE DRAWER) ================= */}
       <Sidebar
         sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
+        setSidebarOpen={handleSetSidebarOpen}
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
         currentUser={currentUser}
@@ -130,7 +150,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         {/* Top Command Bar (DashboardNavbar) */}
         <DashboardNavbar
           sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
+          setSidebarOpen={handleSetSidebarOpen}
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
           activeSite={activeSite}
