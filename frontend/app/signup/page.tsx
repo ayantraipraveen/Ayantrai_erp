@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AuthSkeleton, AuthNavbar, Tooltip, CustomDropdown } from "../Component";
+import { AuthSkeleton, AuthNavbar, AuthFooter, Tooltip, CustomDropdown } from "../Component";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   registerUser,
@@ -119,6 +119,26 @@ export default function SignUpPage() {
       const resultAction = await dispatch(
         registerUser(validationResult.data)
       );
+
+      // Persist newly registered enterprise account into localStorage for verified signin
+      if (typeof window !== "undefined") {
+        try {
+          const existing = localStorage.getItem("ayantrai_registered_users");
+          const userList = existing ? JSON.parse(existing) : [];
+          const newUserEntry = {
+            id: `usr_${Date.now()}`,
+            name,
+            email,
+            password,
+            role,
+            company,
+            industry,
+            fleetSize,
+          };
+          userList.push(newUserEntry);
+          localStorage.setItem("ayantrai_registered_users", JSON.stringify(userList));
+        } catch (e) {}
+      }
 
       if (registerUser.fulfilled.match(resultAction)) {
         setFeedback("Site registration confirmed. Launching telemetry workspace...");
@@ -785,22 +805,8 @@ export default function SignUpPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 w-full border-t border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0c1017]/90 flex-shrink-0 transition-colors">
-        <div className="max-w-[1720px] mx-auto px-4 sm:px-8 xl:px-12 py-2 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 dark:text-zinc-500 gap-1 text-center sm:text-left">
-          <div>
-            <span>© 2026 AyantrAI. Sitesafe Connected Industrial Infrastructure.</span>
-            <span className="hidden md:inline mx-2 text-slate-300 dark:text-zinc-700">|</span>
-            <span className="hidden md:inline text-slate-600 dark:text-zinc-400">Pursuing ISO 45001 & CE Certifications</span>
-          </div>
-          <div className="flex items-center justify-center sm:justify-end gap-3 sm:gap-4">
-            <span className="font-mono text-slate-500 dark:text-zinc-500">Kanpur & Greater Noida, India</span>
-            <a href="mailto:info@ayantrai.com" className="text-slate-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F] transition-colors">
-              info@ayantrai.com
-            </a>
-          </div>
-        </div>
-      </footer>
+      {/* Footer - Reusable Common Component */}
+      <AuthFooter maxWidthClassName="max-w-[1720px]" />
     </div>
   );
 }

@@ -21,4 +21,7 @@ export * from "./WorkspaceLayout";
 export { default as ThemeToggle } from "./ThemeToggle";
 export * from "./ThemeToggle";
 
+export { default as AuthFooter } from "./AuthFooter";
+export * from "./AuthFooter";
+
 export * from "./ThemeProvider";

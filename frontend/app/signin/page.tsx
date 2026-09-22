@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AuthSkeleton from "../Component/AuthSkeleton";
 import AuthNavbar from "../Component/AuthNavbar";
+import AuthFooter from "../Component/AuthFooter";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   loginUser,
@@ -51,6 +52,7 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [activePersona, setActivePersona] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -108,12 +110,14 @@ export default function SignInPage() {
     setEmail(persona.email);
     setPassword(persona.pass);
     setErrors({});
+    setAuthError(null);
     setFeedback(`Selected ${persona.role} (${persona.email}) • Password auto-filled`);
     setTimeout(() => setFeedback(null), 3500);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAuthError(null);
 
     // Zod Schema Validation
     const validationResult = signInSchema.safeParse({ email, password, rememberMe });
@@ -144,6 +148,7 @@ export default function SignInPage() {
         dispatch(setActiveRole("admin"));
       }
 
+      setAuthError(null);
       setFeedback(`Authenticated as ${result.user.name} (${result.user.role}) with active security token. Redirecting...`);
 
       let targetRedirect = "/dashboard";
@@ -159,7 +164,23 @@ export default function SignInPage() {
         router.push(targetRedirect);
       }, 500);
     } catch (err: any) {
-      setFeedback(typeof err === "string" ? err : "Failed to sign in. Please verify credentials.");
+      const errorMsg =
+        typeof err === "string"
+          ? err
+          : err?.message || "Failed to sign in. Please verify your credentials.";
+      setAuthError(errorMsg);
+      setFeedback(null);
+      setErrors({
+        email:
+          errorMsg.toLowerCase().includes("unrecognized") ||
+          errorMsg.toLowerCase().includes("access denied")
+            ? "Unrecognized enterprise account"
+            : "",
+        password:
+          errorMsg.toLowerCase().includes("password")
+            ? "Incorrect password"
+            : "",
+      });
     }
   };
 
@@ -356,6 +377,21 @@ export default function SignInPage() {
                 </div>
               )}
 
+              {/* Authentication Error Banner */}
+              {authError && (
+                <div className="mb-3 rounded-xl border border-red-500/60 bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400 flex items-start gap-2.5 animate-fadeIn shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-500 animate-pulse" />
+                  <div className="space-y-0.5">
+                    <div className="font-bold text-[11px] uppercase tracking-wider text-red-600 dark:text-red-400">
+                      Authentication Failed • Unverified Account
+                    </div>
+                    <div className="text-[11px] text-red-700 dark:text-red-300 leading-snug">
+                      {authError}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Quick Persona Demo Selector */}
               <div className="mb-3.5 space-y-2 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/40">
                 <div className="flex items-center justify-between text-[11px]">
@@ -450,11 +486,12 @@ export default function SignInPage() {
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
+                        if (authError) setAuthError(null);
                         if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
                       }}
                       placeholder="name@company.com or EMP-1092"
                       className={`w-full rounded-xl bg-white dark:bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 transition-all ${
-                        errors.email
+                        errors.email || (authError && !errors.password)
                           ? "input-error border border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.25)] focus:border-red-500 focus:ring-1 focus:ring-red-500"
                           : "border border-slate-300 dark:border-zinc-800/90 hover:border-slate-400 dark:hover:border-zinc-700 focus-glow-amber"
                       }`}
@@ -492,11 +529,12 @@ export default function SignInPage() {
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
+                        if (authError) setAuthError(null);
                         if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
                       }}
                       placeholder="••••••••••••"
                       className={`w-full rounded-xl bg-white dark:bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 transition-all ${
-                        errors.password
+                        errors.password || (authError && !errors.email)
                           ? "input-error border border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.25)] focus:border-red-500 focus:ring-1 focus:ring-red-500"
                           : "border border-slate-300 dark:border-zinc-800/90 hover:border-slate-400 dark:hover:border-zinc-700 focus-glow-amber"
                       }`}
@@ -597,22 +635,8 @@ export default function SignInPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 w-full border-t border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0c1017]/90 flex-shrink-0 transition-colors">
-        <div className="max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 py-2 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 dark:text-zinc-500 gap-1 text-center sm:text-left">
-          <div>
-            <span>© 2026 AyantrAI. Sitesafe Connected Industrial Infrastructure.</span>
-            <span className="hidden md:inline mx-2 text-slate-300 dark:text-zinc-700">|</span>
-            <span className="hidden md:inline text-slate-600 dark:text-zinc-400">Pursuing ISO 45001 & CE Certifications</span>
-          </div>
-          <div className="flex items-center justify-center sm:justify-end gap-3 sm:gap-4">
-            <span className="font-mono text-slate-500 dark:text-zinc-500">Kanpur & Greater Noida, India</span>
-            <a href="mailto:info@ayantrai.com" className="text-slate-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F] transition-colors">
-              info@ayantrai.com
-            </a>
-          </div>
-        </div>
-      </footer>
+      {/* Footer - Reusable Common Component */}
+      <AuthFooter />
     </div>
   );
 }
