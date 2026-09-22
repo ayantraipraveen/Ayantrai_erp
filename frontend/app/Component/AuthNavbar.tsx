@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Tooltip from "./Tooltip";
+import ThemeToggle from "./ThemeToggle";
 
 export interface AuthNavbarProps {
   /**
@@ -26,7 +27,7 @@ export interface AuthNavbarProps {
 
 /**
  * Reusable AuthNavbar component for Sitesafe ERP authentication flows.
- * Renders high-fidelity AyantrAI branding, dynamic ERP mode label, and responsive action toggles with industrial tooltips.
+ * Renders high-fidelity AyantrAI branding, dynamic ERP mode label, ThemeToggle, and responsive action toggles with industrial tooltips.
  */
 export default function AuthNavbar({
   mode = "signin",
@@ -50,7 +51,7 @@ export default function AuthNavbar({
     logoHref ?? (isSignIn ? "/signin" : "/signup");
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-zinc-800/80 bg-[#0c1017]/95 backdrop-blur-md flex-shrink-0">
+    <header className="sticky top-0 z-30 w-full border-b border-slate-200/90 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-md flex-shrink-0 transition-colors">
       <div className="max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 py-2.5 flex items-center justify-between">
         {/* Left: AyantrAI Logo & Sitesafe ERP Subtitle with Tooltip */}
         <div className="flex items-center gap-3 sm:gap-4">
@@ -67,23 +68,25 @@ export default function AuthNavbar({
                 />
               </div>
             </Tooltip>
-            <div className="hidden sm:flex flex-col border-l border-zinc-700/80 pl-2.5 sm:pl-3">
+            <div className="hidden sm:flex flex-col border-l border-slate-300 dark:border-zinc-700/80 pl-2.5 sm:pl-3">
               <Tooltip content="Sitesafe Industrial Safety Cloud v2.4" position="bottom" variant="amber">
                 <span className="text-[10px] tracking-widest text-[#F6C72F] font-mono uppercase font-bold drop-shadow-[0_0_8px_rgba(246,199,47,0.4)] cursor-help">
                   Sitesafe ERP
                 </span>
               </Tooltip>
-              <span className="text-[11px] text-zinc-400 font-medium hidden md:inline">
+              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium hidden md:inline">
                 {resolvedSubtitle}
               </span>
             </div>
           </Link>
         </div>
 
-        {/* Right: Mode Switcher Action Link with Tooltip */}
+        {/* Right: Theme Toggle & Mode Switcher Action Link with Tooltip */}
         <div className="flex items-center gap-2 sm:gap-3">
+          <ThemeToggle />
+
           {resolvedActionPrompt && (
-            <span className="hidden md:inline text-xs text-zinc-400">
+            <span className="hidden md:inline text-xs text-slate-500 dark:text-zinc-400">
               {resolvedActionPrompt}
             </span>
           )}
@@ -93,7 +96,7 @@ export default function AuthNavbar({
           >
             <Link
               href={resolvedActionHref}
-              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800/90 border border-zinc-700/80 text-zinc-200 hover:text-white hover:border-[#F6C72F]/60 hover:shadow-[0_0_15px_rgba(246,199,47,0.2)] transition-all"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-zinc-800/90 border border-slate-300 dark:border-zinc-700/80 text-slate-700 dark:text-zinc-200 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/60 hover:shadow-[0_0_15px_rgba(246,199,47,0.2)] transition-all cursor-pointer"
             >
               {resolvedActionText}
             </Link>

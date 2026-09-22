@@ -61,54 +61,6 @@ export const defaultNavItems: NavItem[] = [
     badgeColor: "bg-amber-950 text-[#F6C72F] border-amber-500/40",
     description: "Compliance audits & telemetry logs",
   },
-  {
-    name: "Workers & Crews",
-    href: "/dashboard#workers",
-    icon: Users,
-    badge: "142 Active",
-    badgeColor: "bg-zinc-800 text-zinc-300 border-zinc-700",
-    description: "Workforce presence & assignments",
-  },
-  {
-    name: "Hardware & Kits",
-    href: "/dashboard#hardware",
-    icon: Cpu,
-    badge: "150 Paired",
-    badgeColor: "bg-zinc-800 text-zinc-300 border-zinc-700",
-    description: "Smart helmet, vest & boot sensors",
-  },
-  {
-    name: "Violation Triage",
-    href: "/dashboard#alerts",
-    icon: AlertTriangle,
-    badge: "0 Open",
-    badgeColor: "bg-emerald-950 text-emerald-400 border-emerald-500/40",
-    description: "Automated PPE alert escalations",
-  },
-  {
-    name: "ISO 45001 Audits",
-    href: "/dashboard#compliance",
-    icon: FileCheck2,
-    badge: "Compliant",
-    badgeColor: "bg-emerald-950 text-emerald-400 border-emerald-500/40",
-    description: "Continuous digital compliance audit trails",
-  },
-  {
-    name: "Shift Attendance",
-    href: "/dashboard#attendance",
-    icon: Clock,
-    badge: "Day Shift",
-    badgeColor: "bg-zinc-800 text-zinc-400 border-zinc-700",
-    description: "Geofenced muster roll attendance",
-  },
-  {
-    name: "Gateway & Settings",
-    href: "/dashboard#settings",
-    icon: Settings,
-    badge: null,
-    badgeColor: "",
-    description: "IoT hubs, BLE mesh & credentials",
-  },
 ];
 
 export default function Sidebar({
@@ -135,7 +87,7 @@ export default function Sidebar({
     <div className="space-y-1 py-3 px-2">
       {/* Primary Section Header */}
       {(isMobile || sidebarOpen) && (
-        <div className="px-2.5 pb-1.5 pt-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-zinc-500 flex items-center justify-between">
+        <div className="px-2.5 pb-1.5 pt-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-500 flex items-center justify-between">
           <span>Main Navigation</span>
           <span className="h-1 w-1 rounded-full bg-[#F6C72F]" />
         </div>
@@ -154,8 +106,8 @@ export default function Sidebar({
             }}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group relative ${
               active
-                ? "bg-[#F6C72F]/15 border border-[#F6C72F]/50 text-white shadow-[0_0_16px_rgba(246,199,47,0.22)]"
-                : "text-zinc-400 hover:text-white hover:bg-zinc-800/60 border border-transparent hover:border-zinc-800/80"
+                ? "bg-amber-500/15 border border-[#F6C72F]/50 text-slate-900 dark:text-white shadow-[0_0_16px_rgba(246,199,47,0.18)]"
+                : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 border border-transparent hover:border-slate-200 dark:hover:border-zinc-800/80"
             }`}
           >
             {/* Active Left Pill Accent */}
@@ -165,13 +117,13 @@ export default function Sidebar({
 
             <Icon
               className={`w-4 h-4 flex-shrink-0 transition-colors ${
-                active ? "text-[#F6C72F]" : "text-zinc-400 group-hover:text-zinc-200"
+                active ? "text-[#F6C72F]" : "text-slate-500 dark:text-zinc-400 group-hover:text-slate-900 dark:group-hover:text-zinc-200"
               }`}
             />
 
             {(isMobile || sidebarOpen) && (
               <div className="flex-1 flex items-center justify-between overflow-hidden">
-                <span className={`truncate ${active ? "font-semibold text-white" : ""}`}>
+                <span className={`truncate ${active ? "font-semibold text-slate-900 dark:text-white" : ""}`}>
                   {item.name}
                 </span>
                 {item.badge && (
@@ -204,7 +156,7 @@ export default function Sidebar({
     <>
       {/* ================= DESKTOP SIDEBAR ================= */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-zinc-800/80 bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-20 ${
+        className={`hidden lg:flex flex-col border-r border-slate-200 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-20 ${
           sidebarOpen ? "w-64" : "w-16"
         }`}
       >
@@ -215,19 +167,19 @@ export default function Sidebar({
 
         {/* Desktop Bottom Telemetry Widget */}
         {sidebarOpen ? (
-          <div className="p-3 m-2 rounded-xl border border-zinc-800/90 bg-[#0e1219]/90 space-y-2">
-            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400">
+          <div className="p-3 m-2 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50 dark:bg-[#0e1219]/90 space-y-2">
+            <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-zinc-400">
               <span className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 beacon-active" />
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 beacon-active" />
                 Mesh Uplink:
               </span>
-              <span className="text-emerald-400 font-semibold">Active (4G LTE)</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Active (4G LTE)</span>
             </div>
-            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400">
+            <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-zinc-400">
               <span>Compliance Standard:</span>
               <span className="text-[#F6C72F] font-semibold">ISO 45001</span>
             </div>
-            <div className="pt-1.5 border-t border-zinc-800/80 flex items-center justify-between text-[9px] text-zinc-500 font-mono">
+            <div className="pt-1.5 border-t border-slate-200 dark:border-zinc-800/80 flex items-center justify-between text-[9px] text-slate-400 dark:text-zinc-500 font-mono">
               <span>AyantrAI ERP v2.4</span>
               <a
                 href="https://www.ayantrai.com"
@@ -240,9 +192,9 @@ export default function Sidebar({
             </div>
           </div>
         ) : (
-          <div className="py-3 flex justify-center border-t border-zinc-800/80">
+          <div className="py-3 flex justify-center border-t border-slate-200 dark:border-zinc-800/80">
             <Tooltip content="Telemetry Mesh Active • ISO 45001" position="right" variant="emerald">
-              <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 beacon-active cursor-help" />
+              <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 dark:bg-emerald-400 beacon-active cursor-help" />
             </Tooltip>
           </div>
         )}
@@ -253,27 +205,27 @@ export default function Sidebar({
         <div className="fixed inset-0 z-50 lg:hidden">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/70 dark:bg-black/80 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
 
           {/* Drawer Panel */}
-          <div className="fixed inset-y-0 left-0 w-72 max-w-[80vw] bg-[#0a0d13] border-r border-zinc-800 p-4 flex flex-col justify-between shadow-2xl z-10 animate-fadeIn">
+          <div className="fixed inset-y-0 left-0 w-72 max-w-[80vw] bg-white dark:bg-[#0a0d13] border-r border-slate-200 dark:border-zinc-800 p-4 flex flex-col justify-between shadow-2xl z-10 animate-fadeIn">
             <div>
               {/* Drawer Header */}
-              <div className="flex items-center justify-between pb-3 mb-2 border-b border-zinc-800">
+              <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-200 dark:border-zinc-800">
                 <div className="flex items-center gap-2">
                   <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/20 border border-[#F6C72F]/40 flex items-center justify-center text-[#F6C72F]">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white">Sitesafe ERP</div>
-                    <div className="text-[9px] font-mono text-zinc-500">Navigation Hub</div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white">Sitesafe ERP</div>
+                    <div className="text-[9px] font-mono text-slate-500 dark:text-zinc-500">Navigation Hub</div>
                   </div>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1 rounded-lg border border-zinc-800 text-zinc-400 hover:text-white"
+                  className="p-1 rounded-lg border border-slate-300 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -285,9 +237,9 @@ export default function Sidebar({
 
             {/* Drawer User Footer */}
             {currentUser && (
-              <div className="pt-3 border-t border-zinc-800/80">
-                <div className="text-xs font-semibold text-white truncate">{currentUser.name}</div>
-                <div className="text-[10px] text-zinc-400 truncate">{currentUser.role}</div>
+              <div className="pt-3 border-t border-slate-200 dark:border-zinc-800/80">
+                <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">{currentUser.name}</div>
+                <div className="text-[10px] text-slate-600 dark:text-zinc-400 truncate">{currentUser.role}</div>
                 <div className="text-[9px] font-mono text-[#F6C72F] truncate mt-0.5">{currentUser.company}</div>
               </div>
             )}

@@ -159,18 +159,18 @@ export default function ReportsPage() {
         </div>
       )}
 
-      {/* ================= HERO HEADER ================= */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-zinc-800/80">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border border-[#F6C72F]/40 bg-[#F6C72F]/10 text-[#F6C72F] text-[10px] font-mono tracking-wide uppercase shadow-[0_0_12px_rgba(246,199,47,0.15)] mb-1.5">
-            <Sparkles className="w-3 h-3 text-[#F6C72F] animate-pulse" />
-            Statutory EHS & Continuous Audit Trails
+      {/* ================= HERO REPORT HEADER BANNER ================= */}
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-gradient-to-r from-white via-slate-50 to-white dark:from-[#0d121c] dark:via-[#0f1422] dark:to-[#0d121c] p-4 sm:p-5 backdrop-blur-xl relative overflow-hidden neon-glow-card flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm dark:shadow-none transition-colors">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border border-[#F6C72F]/40 bg-amber-50 dark:bg-[#F6C72F]/10 text-amber-700 dark:text-[#F6C72F] text-[10px] sm:text-[11px] font-mono tracking-wide uppercase">
+            <Sparkles className="w-3 h-3 text-[#F6C72F]" />
+            Regulatory Compliance Audit Center
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
             <span>Safety & Compliance Reports</span>
             <span className="h-2 w-2 rounded-full bg-[#F6C72F] beacon-active" />
           </h1>
-          <p className="text-xs text-zinc-400 mt-1 max-w-2xl">
+          <p className="text-xs text-slate-600 dark:text-zinc-400 mt-1 max-w-2xl">
             Auto-generated ISO 45001 digital compliance logs, continuous 3-point PPE telemetry data, and muster roll audits stamped with cryptographic signatures.
           </p>
         </div>
@@ -191,9 +191,9 @@ export default function ReportsPage() {
               onClick={() => {
                 if (typeof window !== "undefined") window.print();
               }}
-              className="px-3 py-2 rounded-xl text-xs font-medium border border-zinc-800 bg-[#0d1017] hover:border-zinc-700 text-zinc-300 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-2 rounded-xl text-xs font-medium border border-slate-300 dark:border-zinc-800 bg-white dark:bg-[#0d1017] hover:border-slate-400 dark:hover:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer shadow-sm dark:shadow-none"
             >
-              <Printer className="w-3.5 h-3.5 text-zinc-400" />
+              <Printer className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
               <span className="hidden sm:inline">Print Log</span>
             </button>
           </Tooltip>
@@ -202,51 +202,51 @@ export default function ReportsPage() {
 
       {/* ================= 4 METRICS STRIP ================= */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-2xl border border-[#F6C72F]/30 bg-[#0e131d]/90 p-3.5 sm:p-4 backdrop-blur-xl relative overflow-hidden neon-glow-card">
-          <div className="text-xs text-zinc-400 font-mono">ISO 45001 Audit Trail</div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-[#F6C72F] mt-1 drop-shadow-[0_0_12px_rgba(246,199,47,0.35)]">
+        <div className="rounded-2xl border border-[#F6C72F]/30 bg-white/90 dark:bg-[#0e131d]/90 p-3.5 sm:p-4 backdrop-blur-xl relative overflow-hidden neon-glow-card shadow-sm dark:shadow-none">
+          <div className="text-xs text-slate-500 dark:text-zinc-400 font-mono">ISO 45001 Audit Trail</div>
+          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-amber-600 dark:text-[#F6C72F] mt-1 drop-shadow-[0_0_12px_rgba(246,199,47,0.35)]">
             100%
           </div>
-          <div className="text-[10px] text-emerald-400 font-mono mt-1 flex items-center gap-1">
+          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono mt-1 flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" /> Zero Non-Conformities
           </div>
         </div>
 
-        <div className="rounded-2xl border border-zinc-800/80 bg-[#0e131d]/90 p-3.5 sm:p-4 backdrop-blur-xl">
-          <div className="text-xs text-zinc-400 font-mono">Audit Stamped Kits</div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-white mt-1">
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0e131d]/90 p-3.5 sm:p-4 backdrop-blur-xl shadow-sm dark:shadow-none">
+          <div className="text-xs text-slate-500 dark:text-zinc-400 font-mono">Audit Stamped Kits</div>
+          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">
             1,480+
           </div>
-          <div className="text-[10px] text-zinc-400 font-mono mt-1">6 Active Deployments</div>
+          <div className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono mt-1">6 Active Deployments</div>
         </div>
 
-        <div className="rounded-2xl border border-emerald-500/30 bg-[#0c1514]/90 p-3.5 sm:p-4 backdrop-blur-xl">
-          <div className="text-xs text-zinc-400 font-mono">Open Hazard Escalations</div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400 mt-1 drop-shadow-[0_0_12px_rgba(16,185,129,0.35)]">
+        <div className="rounded-2xl border border-emerald-500/30 bg-white/90 dark:bg-[#0c1514]/90 p-3.5 sm:p-4 backdrop-blur-xl shadow-sm dark:shadow-none">
+          <div className="text-xs text-slate-500 dark:text-zinc-400 font-mono">Open Hazard Escalations</div>
+          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 mt-1 drop-shadow-[0_0_12px_rgba(16,185,129,0.35)]">
             0
           </div>
-          <div className="text-[10px] text-emerald-400 font-mono mt-1 flex items-center gap-1">
+          <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono mt-1 flex items-center gap-1">
             <ShieldCheck className="w-3 h-3" /> Real-Time Auto Triage
           </div>
         </div>
 
-        <div className="rounded-2xl border border-sky-500/30 bg-[#0d161d]/90 p-3.5 sm:p-4 backdrop-blur-xl">
-          <div className="text-xs text-zinc-400 font-mono">Generated Reports (Sep)</div>
-          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-sky-400 mt-1 drop-shadow-[0_0_12px_rgba(6,182,212,0.35)]">
+        <div className="rounded-2xl border border-sky-500/30 bg-white/90 dark:bg-[#0d161d]/90 p-3.5 sm:p-4 backdrop-blur-xl shadow-sm dark:shadow-none">
+          <div className="text-xs text-slate-500 dark:text-zinc-400 font-mono">Generated Reports (Sep)</div>
+          <div className="text-2xl sm:text-3xl font-extrabold font-mono text-sky-600 dark:text-sky-400 mt-1 drop-shadow-[0_0_12px_rgba(6,182,212,0.35)]">
             48
           </div>
-          <div className="text-[10px] text-sky-400 font-mono mt-1">100% Cryptographic Hash</div>
+          <div className="text-[10px] text-sky-600 dark:text-sky-400 font-mono mt-1">100% Cryptographic Hash</div>
         </div>
       </div>
 
       {/* ================= FILTER & SEARCH BAR ================= */}
-      <div className="rounded-2xl border border-zinc-800/90 bg-[#0d111a]/95 p-3.5 sm:p-4 backdrop-blur-xl space-y-3">
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0d111a]/95 p-3.5 sm:p-4 backdrop-blur-xl space-y-3 shadow-sm dark:shadow-none">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2 text-xs font-mono uppercase text-zinc-400 font-semibold">
-            <Filter className="w-3.5 h-3.5 text-[#F6C72F]" />
+          <div className="flex items-center gap-2 text-xs font-mono uppercase text-slate-500 dark:text-zinc-400 font-semibold">
+            <Filter className="w-3.5 h-3.5 text-amber-600 dark:text-[#F6C72F]" />
             <span>Report Query Filters</span>
           </div>
-          <span className="text-[10px] font-mono text-zinc-500">
+          <span className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
             Showing {filteredReports.length} of {mockReports.length} generated documents
           </span>
         </div>
@@ -302,11 +302,11 @@ export default function ReportsPage() {
 
           {/* Search Input */}
           <div className="space-y-1">
-            <label className="block text-[10px] font-medium text-zinc-300">
+            <label className="block text-[10px] font-medium text-slate-700 dark:text-zinc-300">
               Search by ID or Keyword
             </label>
             <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-zinc-500">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 dark:text-zinc-500">
                 <Search className="h-3.5 w-3.5" />
               </div>
               <input
@@ -314,7 +314,7 @@ export default function ReportsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="e.g. REP-45001 or Tunnel"
-                className="w-full rounded-lg border border-zinc-800 bg-[#080b10] pl-8 pr-3 py-1.5 text-xs text-white placeholder-zinc-500 focus-glow-amber transition-all"
+                className="w-full rounded-xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-[#080b10] pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus-glow-amber transition-all"
               />
             </div>
           </div>
@@ -322,22 +322,22 @@ export default function ReportsPage() {
       </div>
 
       {/* ================= REPORTS TABLE ================= */}
-      <div className="rounded-2xl border border-zinc-800/90 bg-[#0b0e15]/95 overflow-hidden shadow-2xl">
-        <div className="p-4 border-b border-zinc-800/80 flex items-center justify-between">
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0b0e15]/95 overflow-hidden shadow-sm dark:shadow-2xl">
+        <div className="p-4 border-b border-slate-200 dark:border-zinc-800/80 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-[#F6C72F]" />
-            <h2 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
+            <FileText className="w-4 h-4 text-amber-600 dark:text-[#F6C72F]" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider font-mono">
               Audit & Compliance Register
             </h2>
           </div>
-          <span className="text-[10px] font-mono text-zinc-400">
+          <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400">
             Real-Time Cryptographic Stamping Active
           </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#080b10] border-b border-zinc-800/80 text-zinc-400 uppercase font-mono text-[10px]">
+            <thead className="bg-slate-50 dark:bg-[#080b10] border-b border-slate-200 dark:border-zinc-800/80 text-slate-500 dark:text-zinc-400 uppercase font-mono text-[10px]">
               <tr>
                 <th className="py-3 px-4">Report Identifier</th>
                 <th className="py-3 px-4">Subject & Scope</th>
@@ -347,10 +347,10 @@ export default function ReportsPage() {
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800/60 font-medium">
+            <tbody className="divide-y divide-slate-200 dark:divide-zinc-800/60 font-medium">
               {filteredReports.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-zinc-500">
+                  <td colSpan={6} className="py-8 text-center text-slate-400 dark:text-zinc-500">
                     No reports match the selected filters.
                   </td>
                 </tr>
@@ -358,55 +358,55 @@ export default function ReportsPage() {
                 filteredReports.map((report) => (
                   <tr
                     key={report.id}
-                    className="hover:bg-zinc-800/30 transition-colors group"
+                    className="hover:bg-slate-50 dark:hover:bg-zinc-800/30 transition-colors group"
                   >
                     {/* Report ID */}
                     <td className="py-3.5 px-4 font-mono">
                       <div className="flex items-center gap-2">
-                        <FileCheck2 className="w-3.5 h-3.5 text-[#F6C72F] flex-shrink-0" />
-                        <span className="font-bold text-white group-hover:text-[#F6C72F] transition-colors">
+                        <FileCheck2 className="w-3.5 h-3.5 text-amber-600 dark:text-[#F6C72F] flex-shrink-0" />
+                        <span className="font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-[#F6C72F] transition-colors">
                           {report.id}
                         </span>
                       </div>
-                      <span className="text-[9px] text-zinc-500 block mt-0.5">
+                      <span className="text-[9px] text-slate-400 dark:text-zinc-500 block mt-0.5">
                         {report.fileSize}
                       </span>
                     </td>
 
                     {/* Title & Category */}
                     <td className="py-3.5 px-4 max-w-sm">
-                      <div className="font-semibold text-zinc-100 truncate">
+                      <div className="font-semibold text-slate-900 dark:text-zinc-100 truncate">
                         {report.title}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded border uppercase font-semibold bg-zinc-800/80 text-zinc-300 border-zinc-700">
+                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded border uppercase font-semibold bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700">
                           {report.category}
                         </span>
-                        <span className="text-[10px] text-zinc-500">
+                        <span className="text-[10px] text-slate-400 dark:text-zinc-500">
                           {report.workersCount} Workers Audited
                         </span>
                       </div>
                     </td>
 
                     {/* Site Location */}
-                    <td className="py-3.5 px-4 text-zinc-300">
+                    <td className="py-3.5 px-4 text-slate-700 dark:text-zinc-300">
                       <span className="truncate block max-w-xs">{report.site}</span>
                     </td>
 
                     {/* Compliance */}
                     <td className="py-3.5 px-4 font-mono">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-emerald-400 font-bold">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                           {report.complianceRate}
                         </span>
-                        <span className="text-[9px] font-mono text-emerald-400 bg-emerald-950/70 border border-emerald-500/40 px-1.5 py-0.2 rounded">
+                        <span className="text-[9px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-400/40 dark:border-emerald-500/40 px-1.5 py-0.2 rounded">
                           {report.status}
                         </span>
                       </div>
                     </td>
 
                     {/* Timestamp */}
-                    <td className="py-3.5 px-4 text-zinc-400 font-mono text-[11px]">
+                    <td className="py-3.5 px-4 text-slate-500 dark:text-zinc-400 font-mono text-[11px]">
                       {report.timestamp}
                     </td>
 
@@ -416,27 +416,27 @@ export default function ReportsPage() {
                         <Tooltip content="Preview Audit Document" position="top">
                           <button
                             onClick={() => setActivePreview(report)}
-                            className="p-1.5 rounded-lg border border-zinc-800 bg-[#090d14] text-zinc-300 hover:text-white hover:border-[#F6C72F]/60 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 bg-white dark:bg-[#090d14] text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/60 transition-all cursor-pointer shadow-sm dark:shadow-none"
                           >
-                            <Eye className="w-3.5 h-3.5 text-[#F6C72F]" />
+                            <Eye className="w-3.5 h-3.5 text-amber-600 dark:text-[#F6C72F]" />
                           </button>
                         </Tooltip>
 
                         <Tooltip content="Download Verified PDF" position="top">
                           <button
                             onClick={() => showToast(`Downloading PDF: ${report.id}.pdf`)}
-                            className="p-1.5 rounded-lg border border-zinc-800 bg-[#090d14] text-zinc-300 hover:text-white hover:border-emerald-500/60 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 bg-white dark:bg-[#090d14] text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-emerald-500/60 transition-all cursor-pointer shadow-sm dark:shadow-none"
                           >
-                            <Download className="w-3.5 h-3.5 text-emerald-400" />
+                            <Download className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                           </button>
                         </Tooltip>
 
                         <Tooltip content="Export CSV Telemetry Dataset" position="top">
                           <button
                             onClick={() => showToast(`Exporting Raw Telemetry: ${report.id}.csv`)}
-                            className="p-1.5 rounded-lg border border-zinc-800 bg-[#090d14] text-zinc-300 hover:text-white hover:border-sky-500/60 transition-all cursor-pointer"
+                            className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 bg-white dark:bg-[#090d14] text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-sky-500/60 transition-all cursor-pointer shadow-sm dark:shadow-none"
                           >
-                            <FileSpreadsheet className="w-3.5 h-3.5 text-sky-400" />
+                            <FileSpreadsheet className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
                           </button>
                         </Tooltip>
                       </div>
@@ -454,34 +454,34 @@ export default function ReportsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/85 backdrop-blur-md"
+            className="fixed inset-0 bg-black/70 dark:bg-black/85 backdrop-blur-md"
             onClick={() => setActivePreview(null)}
           />
 
           {/* Modal Panel */}
-          <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[#F6C72F]/40 bg-[#0e121a] p-6 text-slate-100 shadow-[0_25px_60px_rgba(0,0,0,0.9),0_0_30px_rgba(246,199,47,0.15)] animate-fadeIn">
+          <div className="relative z-10 w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-[#F6C72F]/40 bg-white dark:bg-[#0e121a] p-6 text-slate-900 dark:text-slate-100 shadow-2xl animate-fadeIn">
             {/* Header */}
-            <div className="flex items-start justify-between pb-4 border-b border-zinc-800">
+            <div className="flex items-start justify-between pb-4 border-b border-slate-200 dark:border-zinc-800">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-bold bg-[#F6C72F]/15 text-[#F6C72F] border-[#F6C72F]/40">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded border uppercase font-bold bg-amber-50 dark:bg-[#F6C72F]/15 text-amber-700 dark:text-[#F6C72F] border-amber-300 dark:border-[#F6C72F]/40">
                     Official ISO 45001 Certificate
                   </span>
-                  <span className="text-xs font-mono text-zinc-400">
+                  <span className="text-xs font-mono text-slate-500 dark:text-zinc-400">
                     ID: {activePreview.id}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                   {activePreview.title}
                 </h3>
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-slate-600 dark:text-zinc-400">
                   {activePreview.site} • {activePreview.timestamp}
                 </p>
               </div>
 
               <button
                 onClick={() => setActivePreview(null)}
-                className="p-1 rounded-lg border border-zinc-800 text-zinc-400 hover:text-white cursor-pointer"
+                className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -489,69 +489,69 @@ export default function ReportsPage() {
 
             {/* Document Body */}
             <div className="py-5 space-y-4 text-xs leading-relaxed">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border border-zinc-800 bg-[#090c12] font-mono">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-[#090c12] font-mono">
                 <div>
-                  <div className="text-[10px] text-zinc-500">Compliance Status</div>
-                  <div className="text-sm font-bold text-emerald-400">
+                  <div className="text-[10px] text-slate-500 dark:text-zinc-500">Compliance Status</div>
+                  <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                     {activePreview.complianceRate} COMPLIANT
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-zinc-500">Active IoT Nodes</div>
-                  <div className="text-sm font-bold text-white">
+                  <div className="text-[10px] text-slate-500 dark:text-zinc-500">Active IoT Nodes</div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">
                     {activePreview.workersCount * 3} Sensors
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-zinc-500">Audited Crews</div>
-                  <div className="text-sm font-bold text-white">
+                  <div className="text-[10px] text-slate-500 dark:text-zinc-500">Audited Crews</div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">
                     {activePreview.workersCount} Personnel
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-zinc-500">Certified By</div>
-                  <div className="text-[11px] font-bold text-[#F6C72F] truncate">
+                  <div className="text-[10px] text-slate-500 dark:text-zinc-500">Certified By</div>
+                  <div className="text-[11px] font-bold text-amber-700 dark:text-[#F6C72F] truncate">
                     {activePreview.author}
                   </div>
                 </div>
               </div>
 
               {/* Sensor Telemetry Breakdown */}
-              <div className="rounded-xl border border-zinc-800/90 bg-[#0b0f16] p-4 space-y-2.5">
-                <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-zinc-300">
+              <div className="rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/70 dark:bg-[#0b0f16] p-4 space-y-2.5">
+                <div className="font-mono text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
                   Continuous Sensor Telemetry Summary:
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px]">
-                  <div className="p-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 flex items-center justify-between">
+                  <div className="p-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 flex items-center justify-between">
                     <span>Helmet (BLE Mesh):</span>
-                    <span className="text-emerald-400 font-bold">100% Worn</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Worn</span>
                   </div>
-                  <div className="p-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 flex items-center justify-between">
+                  <div className="p-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 flex items-center justify-between">
                     <span>Vest Hub (4G IoT):</span>
-                    <span className="text-emerald-400 font-bold">99.8% Online</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">99.8% Online</span>
                   </div>
-                  <div className="p-2.5 rounded-lg border border-zinc-800 bg-zinc-900/50 flex items-center justify-between">
+                  <div className="p-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 flex items-center justify-between">
                     <span>Safety Boot:</span>
-                    <span className="text-emerald-400 font-bold">100% Grounded</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Grounded</span>
                   </div>
                 </div>
               </div>
 
               {/* Cryptographic Proof Hash */}
-              <div className="p-3 rounded-xl border border-zinc-800/80 bg-[#080b10] font-mono text-[10px]">
-                <div className="text-zinc-500 mb-1 flex items-center justify-between">
+              <div className="p-3 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-slate-100 dark:bg-[#080b10] font-mono text-[10px]">
+                <div className="text-slate-500 dark:text-zinc-500 mb-1 flex items-center justify-between">
                   <span>Cryptographic Verification Hash (SHA-256):</span>
-                  <span className="text-emerald-400">Timestamp Immutable</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">Timestamp Immutable</span>
                 </div>
-                <div className="text-[#F6C72F] break-all select-all font-mono">
+                <div className="text-amber-700 dark:text-[#F6C72F] break-all select-all font-mono">
                   {activePreview.sha256}
                 </div>
               </div>
             </div>
 
             {/* Modal Actions */}
-            <div className="pt-4 border-t border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-[10px] font-mono text-zinc-500">
+            <div className="pt-4 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-500">
                 Authorized for statutory submission to state labour inspectorates.
               </span>
               <div className="flex items-center gap-2">

@@ -40,7 +40,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#080a0e] text-slate-100 flex flex-col industrial-grid relative overflow-x-hidden">
+    <div className="min-h-screen w-full bg-slate-50 dark:bg-[#080a0e] text-slate-900 dark:text-slate-100 flex flex-col industrial-grid relative overflow-x-hidden transition-colors">
       {/* Dynamic Ambient Glow Lighting */}
       <div className="ambient-lighting-layer">
         <div className="amber-spotlight opacity-40" />

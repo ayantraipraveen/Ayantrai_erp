@@ -45,40 +45,65 @@ const initialState: AuthState = {
 };
 
 /**
- * Async Thunk: Sign in user through centralized Axios authApi
+ * Async Thunk: Sign in user (UI-Only Mode: Zero backend API calls until backend is connected)
  */
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async (credentials: SignInFormData, { rejectWithValue }) => {
-    try {
-      const response = await authApi.login(credentials);
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to sign in");
-    }
+  async (credentials: SignInFormData) => {
+    // UI-Only Mode: Simulating instant enterprise authentication without network calls
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    const namePart = credentials.email.split("@")[0].replace(/[._]/g, " ");
+    const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+
+    return {
+      user: {
+        id: "usr-" + Math.random().toString(36).substring(2, 9),
+        name: formattedName || "Site Administrator",
+        email: credentials.email,
+        role: "Safety Head / EHS",
+        company: "AyantrAI Enterprise Partner",
+      },
+      token: "mock-jwt-token-" + Date.now(),
+    };
   }
 );
 
 /**
- * Async Thunk: Register enterprise site through centralized Axios authApi
+ * Async Thunk: Register enterprise site (UI-Only Mode: Zero backend API calls until backend is connected)
  */
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
-  async (formData: SignUpFormData | SignUpPayload, { rejectWithValue }) => {
-    try {
-      const response = await authApi.register(formData);
-      return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to create account");
-    }
+  async (formData: SignUpFormData | SignUpPayload) => {
+    // UI-Only Mode: Simulating instant site registration without network calls
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    const companyVal =
+      ("companyName" in formData ? formData.companyName : (formData as any).company) ||
+      "Industrial Partner Site";
+
+    return {
+      user: {
+        id: "usr-" + Math.random().toString(36).substring(2, 9),
+        name: formData.name || "Site Lead",
+        email: formData.email,
+        role: formData.role || "Operations Manager",
+        company: companyVal,
+        industry: formData.industry,
+        fleetSize: formData.fleetSize,
+      },
+      token: "mock-jwt-token-" + Date.now(),
+    };
   }
 );
 
 /**
- * Async Thunk: Terminate session through centralized Axios authApi
+ * Async Thunk: Terminate session (UI-Only Mode: Zero backend API calls)
  */
 export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
-  await authApi.logout();
+  await new Promise((resolve) => setTimeout(resolve, 150));
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("sitesafe_token");
+  }
 });
 
 export const authSlice = createSlice({
