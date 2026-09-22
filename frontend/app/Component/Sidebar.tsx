@@ -18,9 +18,6 @@ import {
   Building2,
   Sliders,
   LogOut,
-  ShieldCheck,
-  Radio,
-  History,
 } from "lucide-react";
 import { useAppSelector } from "@/lib/redux/hooks";
 import Tooltip from "./Tooltip";
@@ -60,79 +57,64 @@ export const superadminNavItems: NavItem[] = [
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    badge: "LIVE",
-    badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
     description: "Multi-site live telemetry & KPIs",
   },
   {
     name: "Templates",
     href: "/templates",
     icon: Layers,
-    badge: "APPROVALS",
-    badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
     description: "Template inspection & review queue",
   },
   {
     name: "Reports",
     href: "/report",
     icon: BarChart3,
-    badge: "ISO 45001",
-    badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
     description: "Safety compliance & executive audit reports",
   },
   {
     name: "Sites",
     href: "/sites",
     icon: Building2,
-    badge: "4 SITES",
-    badgeColor: "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40",
     description: "Monitored sites directory & assigned leads",
   },
   {
     name: "Admins",
     href: "/admins",
     icon: Users,
-    badge: "4 ACTIVE",
-    badgeColor: "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/40",
     description: "Manage site-scoped admin accounts",
   },
   {
     name: "Activity Log",
     href: "/activity-log",
     icon: Clock,
-    badge: "AUDIT",
-    badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
     description: "Cryptographic system audit trail",
   },
   {
     name: "Settings",
     href: "/settings",
     icon: Settings,
-    badge: null,
     description: "Approval thresholds & dispatch configs",
   },
 ];
+
 
 export const adminNavItems: NavItem[] = [
   {
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
     description: "Site operations & telemetry summary",
   },
   {
     name: "Templates",
     href: "/templates",
     icon: Layers,
-    badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
     description: "Create & submit template blocks",
   },
   {
     name: "Reports",
     href: "/report",
     icon: BarChart3,
-    badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
     description: "Report history, edit & send",
   },
   {
@@ -149,14 +131,12 @@ export const projectHeadNavItems: NavItem[] = [
     name: "Report Review",
     href: "/report",
     icon: FileCheck2,
-    badgeColor: "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/40",
     description: "Interactive report & section commenting",
   },
   {
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
     description: "Project telemetry overview",
   },
 ];
@@ -172,20 +152,15 @@ export default function Sidebar({
   const pathname = usePathname();
   const authUser = useAppSelector((state) => state.auth.user);
   const reduxActiveRole = useAppSelector((state) => state.reportModule.activeRole);
-  const { templates, sites, admins } = useAppSelector((state) => state.reportModule);
+  const isCollapsed = !sidebarOpen;
 
   // Determine effective user role (prioritizing currentUser and authUser)
   const roleString = (currentUser?.role || authUser?.role || reduxActiveRole || "superadmin").toLowerCase();
   const effectiveRole: RoleType = roleString.includes("superadmin")
     ? "superadmin"
     : roleString.includes("project")
-    ? "project_head"
-    : "admin";
-
-  // Dynamic badge metrics from Redux store
-  const pendingTemplatesCount = templates.filter((t) => t.status === "pending").length;
-  const activeAdminsCount = admins.filter((a) => a.status === "Active").length;
-  const totalSitesCount = sites.length;
+      ? "project_head"
+      : "admin";
 
   // Standard Organized Navigation Groups for Superadmin
   const superadminGroups: NavGroup[] = [
@@ -196,25 +171,20 @@ export default function Sidebar({
           name: "Dashboard",
           href: "/dashboard",
           icon: LayoutDashboard,
-          badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
           description: "Multi-site live telemetry & KPIs",
         },
         {
           name: "Templates",
           href: "/templates",
           icon: Layers,
-          badge: pendingTemplatesCount > 0 ? `${pendingTemplatesCount} PENDING` : "ACTIVE",
-          badgeColor:
-            pendingTemplatesCount > 0
-              ? "bg-amber-500/20 text-amber-700 dark:text-[#F6C72F] border-amber-500/50"
-              : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
+          badge: "APPROVALS",
+          badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
           description: "Template inspection & review queue",
         },
         {
           name: "Reports",
           href: "/report",
           icon: BarChart3,
-         badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
           description: "Safety compliance & executive audit reports",
         },
       ],
@@ -226,7 +196,7 @@ export default function Sidebar({
           name: "Sites",
           href: "/sites",
           icon: Building2,
-          badge: `${totalSitesCount} SITES`,
+          badge: `${0} SITES`,
           badgeColor: "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40",
           description: "Monitored sites directory & assigned leads",
         },
@@ -234,7 +204,7 @@ export default function Sidebar({
           name: "Admins",
           href: "/admins",
           icon: Users,
-          badge: `${activeAdminsCount} ACTIVE`,
+          badge: `${0} ACTIVE`,
           badgeColor: "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/40",
           description: "Manage site-scoped admin accounts",
         },
@@ -336,8 +306,8 @@ export default function Sidebar({
     effectiveRole === "superadmin"
       ? superadminGroups
       : effectiveRole === "admin"
-      ? adminGroups
-      : projectHeadGroups;
+        ? adminGroups
+        : projectHeadGroups;
 
   // Active state matching helper
   const isItemActive = (href: string) => {
@@ -350,25 +320,18 @@ export default function Sidebar({
     return pathname.startsWith(href);
   };
 
-  // Resolved user credentials for the bottom card
-  const resolvedUserName =
-    currentUser?.name || authUser?.name || (effectiveRole === "superadmin" ? "Dr. Vikram Seth" : "Vikram Seth");
-  const resolvedRole =
-    currentUser?.role || authUser?.role || (effectiveRole === "superadmin" ? "Superadmin" : "Site Admin");
-  const resolvedCompany =
-    currentUser?.company ||
-    authUser?.company ||
-    (effectiveRole === "superadmin" ? "AyantrAI HQ Governance" : "Nx-One Tower Site");
+  // Authenticated user credentials
+  const userName = currentUser?.name || authUser?.name || "";
+  const userRole = currentUser?.role || authUser?.role || "";
+  const userCompany = currentUser?.company || authUser?.company || "";
   const userInitials =
-    effectiveRole === "superadmin"
-      ? "SA"
-      : resolvedUserName
-          .split(" ")
-          .filter(Boolean)
-          .map((n) => n[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase() || "SA";
+    userName
+      .split(" ")
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "SA";
 
   // Standard Navigation Renderer (supports grouped categories + responsive tooltips)
   const renderNavLinks = (isMobile: boolean = false) => {
@@ -393,8 +356,6 @@ export default function Sidebar({
             {group.items.map((item) => {
               const Icon = item.icon;
               const active = isItemActive(item.href);
-              const isTemplateWithPending =
-                item.name === "Templates" && pendingTemplatesCount > 0;
 
               const linkContent = (
                 <Link
@@ -403,15 +364,13 @@ export default function Sidebar({
                   onClick={() => {
                     if (isMobile) setMobileMenuOpen(false);
                   }}
-                  className={`relative rounded-xl text-xs font-medium transition-all group select-none flex items-center ${
-                    isCollapsed
-                      ? "justify-center w-10 h-10 mx-auto"
-                      : "gap-3 px-3 py-2.5 w-full"
-                  } ${
-                    active
+                  className={`relative rounded-xl text-xs font-medium transition-all group select-none flex items-center ${isCollapsed
+                    ? "justify-center w-10 h-10 mx-auto"
+                    : "gap-3 px-3 py-2.5 w-full"
+                    } ${active
                       ? "bg-amber-500/15 border border-[#F6C72F]/50 text-slate-950 dark:text-white shadow-[0_0_16px_rgba(246,199,47,0.18)] font-semibold"
                       : "text-slate-600 dark:text-zinc-400 hover:text-amber-950 dark:hover:text-white hover:bg-amber-500/10 dark:hover:bg-[#F6C72F]/10 border border-transparent hover:border-amber-500/25 dark:hover:border-[#F6C72F]/30"
-                  }`}
+                    }`}
                 >
                   {/* Active Left Pill Accent (Expanded mode) */}
                   {active && !isCollapsed && (
@@ -421,31 +380,21 @@ export default function Sidebar({
                   {/* Icon */}
                   <div className="relative flex-shrink-0">
                     <Icon
-                      className={`w-4 h-4 transition-all duration-200 ${
-                        active
-                          ? "text-amber-600 dark:text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.4)]"
-                          : "text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-[#F6C72F] group-hover:scale-110"
-                      }`}
+                      className={`w-4 h-4 transition-all duration-200 ${active
+                        ? "text-amber-600 dark:text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.4)]"
+                        : "text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-[#F6C72F] group-hover:scale-110"
+                        }`}
                     />
-                    {/* Collapsed Pending Badge Notification Dot */}
-                    {isCollapsed && isTemplateWithPending && (
-                      <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-amber-500 border-2 border-white dark:border-[#0a0d13] shadow-[0_0_8px_rgba(246,199,47,0.9)] animate-pulse" />
-                    )}
-                    {/* Collapsed Live Indicator for Dashboard */}
-                    {isCollapsed && item.name === "Dashboard" && active && (
-                      <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    )}
                   </div>
 
                   {/* Expanded Item Label & Badge */}
                   {!isCollapsed && (
                     <div className="flex-1 flex items-center justify-between overflow-hidden min-w-0">
                       <span
-                        className={`truncate ${
-                          active
-                            ? "font-bold text-slate-950 dark:text-white"
-                            : ""
-                        }`}
+                        className={`truncate ${active
+                          ? "font-bold text-slate-950 dark:text-white"
+                          : ""
+                          }`}
                       >
                         {item.name}
                       </span>
@@ -492,9 +441,8 @@ export default function Sidebar({
     <>
       {/* ================= DESKTOP SIDEBAR ================= */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-slate-200 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 h-full select-none ${
-          sidebarOpen ? "w-64" : "w-16"
-        }`}
+        className={`hidden lg:flex flex-col border-r border-slate-200 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 h-full select-none ${sidebarOpen ? "w-64" : "w-16"
+          }`}
       >
         {/* ================= DESKTOP HEADER (BRAND LOGO + EXPAND / COLLAPSE TOGGLE) ================= */}
         <div className="h-16 flex items-center border-b border-slate-200/90 dark:border-zinc-800/80 px-3.5 flex-shrink-0 overflow-hidden">
@@ -510,17 +458,9 @@ export default function Sidebar({
                     alt="AyantrAI Sitesafe"
                     width={112}
                     height={30}
-                    className="object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
+                    className="w-[120px] object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
                     priority
                   />
-                </div>
-                <div className="flex flex-col border-l border-slate-300 dark:border-zinc-700/80 pl-2 flex-shrink-0">
-                  <span className="text-[9px] tracking-wider text-[#F6C72F] font-mono uppercase font-bold whitespace-nowrap">
-                    Sitesafe
-                  </span>
-                  <span className="text-[9px] text-slate-500 dark:text-zinc-400 font-medium whitespace-nowrap">
-                    ERP
-                  </span>
                 </div>
               </Link>
 
@@ -529,9 +469,9 @@ export default function Sidebar({
                   type="button"
                   onClick={() => setSidebarOpen(false)}
                   aria-label="Collapse sidebar"
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/50 dark:hover:border-[#F6C72F]/50 hover:bg-amber-500/10 transition-all cursor-pointer flex-shrink-0"
+                  className="p-1.5 rounded-lg border border-[#F6C72F]/30 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/50 dark:hover:border-[#F6C72F]/50 hover:bg-amber-500/10 transition-all cursor-pointer flex-shrink-0"
                 >
-                  <PanelLeftClose className="w-4 h-4" />
+                  <PanelLeftClose className="w-4 h-4 text-[#F6C72F]" />
                 </button>
               </Tooltip>
             </div>
@@ -552,8 +492,8 @@ export default function Sidebar({
                     className="object-contain filter brightness-110 group-hover:scale-105 transition-transform"
                     priority
                   />
-                  <span className="absolute -bottom-1 -right-1 p-0.5 rounded-full bg-amber-500 text-slate-950 shadow-sm">
-                    <PanelLeftOpen className="w-2.5 h-2.5" />
+                  <span className="absolute -bottom-1 -right-1 p-1.25 rounded-full bg-amber-500 text-slate-950 shadow-sm">
+                    {/* <PanelLeftOpen className="w-2.5 h-2.5" /> */}
                   </span>
                 </button>
               </Tooltip>
@@ -561,17 +501,13 @@ export default function Sidebar({
           )}
         </div>
 
-
         {/* ================= NAVIGATION LINKS SCROLLABLE BODY ================= */}
         <div
-          className={`flex-1 custom-scrollbar ${
-            sidebarOpen ? "overflow-y-auto" : "overflow-x-hidden overflow-y-auto"
-          }`}
+          className={`flex-1 custom-scrollbar ${sidebarOpen ? "overflow-y-auto" : "overflow-x-hidden overflow-y-auto"
+            }`}
         >
           {renderNavLinks(false)}
         </div>
-
-       
       </aside>
 
       {/* ================= MOBILE DRAWER OVERLAY ================= */}
@@ -622,21 +558,6 @@ export default function Sidebar({
                 </button>
               </div>
 
-              {/* Mobile Superadmin Banner */}
-              {effectiveRole === "superadmin" && (
-                <div className="mb-3 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#F6C72F]" />
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
-                      Superadmin Console
-                    </span>
-                  </div>
-                  <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                    ROOT
-                  </span>
-                </div>
-              )}
-
               {/* Drawer Links */}
               {renderNavLinks(true)}
             </div>
@@ -650,10 +571,10 @@ export default function Sidebar({
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                      {resolvedUserName}
+                      {userName}
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
-                      {resolvedRole} • {resolvedCompany}
+                      {userRole}{userCompany ? ` • ${userCompany}` : ""}
                     </div>
                   </div>
                 </div>
