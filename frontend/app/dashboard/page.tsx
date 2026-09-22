@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAppSelector } from "@/lib/redux/hooks";
+import Link from "next/link";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { approveTemplate } from "@/lib/redux/slices/reportModuleSlice";
 import {
   ShieldCheck,
   HardHat,
@@ -22,6 +24,11 @@ import {
   ArrowUpRight,
   SlidersHorizontal,
   ChevronRight,
+  Layers,
+  Users,
+  Building,
+  FileCheck2,
+  ArrowRight,
 } from "lucide-react";
 import { Tooltip, CustomDropdown, DropdownOption } from "../Component";
 
@@ -40,13 +47,30 @@ interface WorkerTelemetry {
 }
 
 export default function DashboardPage() {
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
+  const { activeRole, templates, sites, admins, reports } = useAppSelector(
+    (state) => state.reportModule
+  );
+
+  const pendingTemplates = templates.filter((t) => t.status === "pending");
 
   const [filterZone, setFilterZone] = useState("ALL");
   const [filterCompliance, setFilterCompliance] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [lastHeartbeat, setLastHeartbeat] = useState("Just now");
   const [pingFeedback, setPingFeedback] = useState<string | null>(null);
+
+  const handleQuickApprove = (tplId: string) => {
+    dispatch(
+      approveTemplate({
+        templateId: tplId,
+        superadminName: "Dr. Vikram Seth (Superadmin)",
+      })
+    );
+    setPingFeedback("Template approved! Report auto-generated successfully.");
+    setTimeout(() => setPingFeedback(null), 3500);
+  };
 
   // Initial Sample Workers Telemetry
   const [workers, setWorkers] = useState<WorkerTelemetry[]>([
@@ -263,119 +287,330 @@ export default function DashboardPage() {
       )}
 
       {/* ================= HERO SITE STATUS BANNER ================= */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-gradient-to-r from-white via-slate-50 to-white dark:from-[#0d121c] dark:via-[#0f1422] dark:to-[#0d121c] p-4 sm:p-5 backdrop-blur-xl relative overflow-hidden neon-glow-card shadow-sm dark:shadow-none transition-colors">
-        <div className="absolute top-0 left-0 right-0 shimmer-line opacity-80" />
-        
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-zinc-400">
-              <span className="flex items-center gap-1 text-amber-600 dark:text-[#F6C72F] font-bold">
-                <Sparkles className="w-3.5 h-3.5" />
-                PILOT DEPLOYMENT COHORT
-              </span>
-              <span>•</span>
-              <span className="text-slate-700 dark:text-zinc-300">Shift 1 (08:00 - 18:00 IST)</span>
-              <span>•</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
-                Live Mesh Sync: {lastHeartbeat}
-              </span>
+      {activeRole === "superadmin" ? (
+        <div className="rounded-2xl border border-[#F6C72F]/50 bg-gradient-to-r from-amber-500/10 via-slate-50 to-white dark:from-[#141209] dark:via-[#0f1422] dark:to-[#0d121c] p-4 sm:p-5 backdrop-blur-xl relative overflow-hidden shadow-lg transition-colors">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-zinc-400">
+                <span className="flex items-center gap-1 text-[#F6C72F] font-bold">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  SUPERADMIN ENTERPRISE CONTROL
+                </span>
+                <span>•</span>
+                <span className="text-slate-700 dark:text-zinc-300">Spec Section 1 & 5</span>
+                <span>•</span>
+                <span className="text-emerald-500 font-semibold flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  Multi-Site Telemetry Mesh Active
+                </span>
+              </div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Enterprise Operations & Governance Dashboard
+              </h1>
+              <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-2xl">
+                Real-time oversight across all 4 monitored infrastructure sites with pending template approval pipeline and field compliance telemetry.
+              </p>
             </div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Nx-One Tower • Real-Time Safety Operations
-            </h1>
-            <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-2xl">
-              Streaming active personnel presence, biometric safety thresholds, and 3-point PPE telemetry directly from field hardware chipsets.
-            </p>
-          </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                setLastHeartbeat("Just now");
-                setPingFeedback("Synchronized latest mesh packet from base gateway.");
-                setTimeout(() => setPingFeedback(null), 3000);
-              }}
-              className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-[#080b10] text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/50 flex items-center gap-2 transition-all cursor-pointer shadow-sm dark:shadow-none"
-            >
-              <RefreshCw className="w-3.5 h-3.5 text-amber-600 dark:text-[#F6C72F]" />
-              Refresh Mesh
-            </button>
-            <div className="px-3 py-1.5 rounded-xl border border-[#F6C72F]/30 bg-amber-50 dark:bg-[#F6C72F]/10 text-xs font-mono text-amber-700 dark:text-[#F6C72F]">
-              Gateways: <span className="font-bold">4 Active</span>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/templates"
+                className="px-3.5 py-2 rounded-xl bg-[#F6C72F] hover:bg-[#F6C72F]/90 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-[0_0_16px_rgba(246,199,47,0.3)] transition-all cursor-pointer"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Review Templates ({pendingTemplates.length})</span>
+              </Link>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-gradient-to-r from-white via-slate-50 to-white dark:from-[#0d121c] dark:via-[#0f1422] dark:to-[#0d121c] p-4 sm:p-5 backdrop-blur-xl relative overflow-hidden neon-glow-card shadow-sm dark:shadow-none transition-colors">
+          <div className="absolute top-0 left-0 right-0 shimmer-line opacity-80" />
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-zinc-400">
+                <span className="flex items-center gap-1 text-amber-600 dark:text-[#F6C72F] font-bold">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  PILOT DEPLOYMENT COHORT
+                </span>
+                <span>•</span>
+                <span className="text-slate-700 dark:text-zinc-300">Shift 1 (08:00 - 18:00 IST)</span>
+                <span>•</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-ping" />
+                  Live Mesh Sync: {lastHeartbeat}
+                </span>
+              </div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Nx-One Tower • Real-Time Safety Operations
+              </h1>
+              <p className="text-xs text-slate-600 dark:text-zinc-400 max-w-2xl">
+                Streaming active personnel presence, biometric safety thresholds, and 3-point PPE telemetry directly from field hardware chipsets.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  setLastHeartbeat("Just now");
+                  setPingFeedback("Synchronized latest mesh packet from base gateway.");
+                  setTimeout(() => setPingFeedback(null), 3000);
+                }}
+                className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-zinc-800 bg-white dark:bg-[#080b10] text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/50 flex items-center gap-2 transition-all cursor-pointer shadow-sm dark:shadow-none"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-amber-600 dark:text-[#F6C72F]" />
+                Refresh Mesh
+              </button>
+              <div className="px-3 py-1.5 rounded-xl border border-[#F6C72F]/30 bg-amber-50 dark:bg-[#F6C72F]/10 text-xs font-mono text-amber-700 dark:text-[#F6C72F]">
+                Gateways: <span className="font-bold">4 Active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= PENDING TEMPLATE APPROVALS QUEUE (DIRECT ACTION ON DASHBOARD) ================= */}
+      {activeRole === "superadmin" && pendingTemplates.length > 0 && (
+        <div className="p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-[#1a1408] dark:to-[#0f131c] shadow-lg space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-amber-500/20 text-[#F6C72F] border border-amber-500/40">
+                <Clock className="w-4 h-4 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>Pending Template Approval Queue</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-bold">
+                    {pendingTemplates.length} Action Required
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-zinc-400">
+                  Spec Section 2, Step 3: Approve template to trigger automated report generation, or return to Admin for edits.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/templates"
+              className="text-xs text-[#F6C72F] font-semibold hover:underline flex items-center gap-1"
+            >
+              <span>View All Templates</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="space-y-2.5">
+            {pendingTemplates.map((tpl) => (
+              <div
+                key={tpl.id}
+                className="p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono font-bold text-[#F6C72F] bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded">
+                      {tpl.id}
+                    </span>
+                    <span className="text-xs font-bold text-slate-900 dark:text-white">{tpl.name}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-zinc-400 mt-1 flex flex-wrap gap-2">
+                    <span>Site: <strong className="text-slate-700 dark:text-zinc-300">{tpl.site_name}</strong></span>
+                    <span>•</span>
+                    <span>Submitted by: <strong className="text-slate-700 dark:text-zinc-300">{tpl.created_by}</strong></span>
+                    <span>•</span>
+                    <span>{tpl.blocks.length} Configured Sections</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/templates"
+                    className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-zinc-700 text-xs font-semibold text-slate-700 dark:text-zinc-300 hover:border-[#F6C72F]"
+                  >
+                    Inspect
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickApprove(tpl.id)}
+                    className="px-4 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.35)] transition-all cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Approve & Generate Report</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ================= COMPLIANCE & TELEMETRY KPI METRICS ================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric 01: Compliance Percentage */}
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-[#F6C72F]/40 shadow-sm dark:shadow-none transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Site Compliance</span>
-            <div className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <ShieldCheck className="w-4 h-4" />
+      {activeRole === "superadmin" ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link
+            href="/sites"
+            className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-[#F6C72F]/40 shadow-sm transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                Monitored Sites
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-[#F6C72F]">
+                <Building className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
-              {compliancePercentage}%
-            </span>
-            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-300">+2.1% today</span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">3-point verified PPE adherence</p>
-        </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold font-mono text-slate-900 dark:text-white">
+                {sites.length} Active
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+              <span>View infrastructure sites</span>
+              <ArrowRight className="w-3 h-3 text-[#F6C72F]" />
+            </p>
+          </Link>
 
-        {/* Metric 02: Active Workers */}
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-slate-300 dark:hover:border-zinc-700 shadow-sm dark:shadow-none transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Active Crews</span>
-            <div className="h-7 w-7 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-[#F6C72F]">
-              <HardHat className="w-4 h-4" />
+          <Link
+            href="/admins"
+            className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-[#F6C72F]/40 shadow-sm transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                Field Administrators
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                <Users className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold font-mono text-slate-900 dark:text-white">
-              {workers.length}
-            </span>
-            <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400">of 150 registered</span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">Real-time BLE mesh beacon sync</p>
-        </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold font-mono text-slate-900 dark:text-white">
+                {admins.length} Scoped
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+              <span>Manage site-scoped admins</span>
+              <ArrowRight className="w-3 h-3 text-sky-400" />
+            </p>
+          </Link>
 
-        {/* Metric 03: Open Safety Violations */}
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-red-400 dark:hover:border-red-500/40 shadow-sm dark:shadow-none transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Open Violations</span>
-            <div className="h-7 w-7 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 flex items-center justify-center text-red-500 dark:text-red-400">
-              <AlertTriangle className="w-4 h-4" />
+          <Link
+            href="/templates"
+            className={`rounded-2xl border p-4 relative overflow-hidden group shadow-sm transition-all ${
+              pendingTemplates.length > 0
+                ? "border-amber-500/60 bg-amber-500/5 dark:bg-[#151208] shadow-[0_0_20px_rgba(246,199,47,0.15)]"
+                : "border-slate-200 dark:border-zinc-800/90 bg-white dark:bg-[#0f131c]/90"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                Pending Approvals
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-[#F6C72F]">
+                <Layers className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold font-mono text-red-500 dark:text-red-400">
-              {workers.length - compliantCount}
-            </span>
-            <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400">Auto-auditing</span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">Instant haptic triage enabled</p>
-        </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold font-mono text-amber-500">
+                {pendingTemplates.length} Urgent
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-amber-600 dark:text-[#F6C72F] flex items-center gap-1 font-semibold">
+              <span>Spec 2.3 Review queue</span>
+              <ArrowRight className="w-3 h-3 text-[#F6C72F]" />
+            </p>
+          </Link>
 
-        {/* Metric 04: Hardware Battery Health */}
-        <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-sky-400 dark:hover:border-sky-500/40 shadow-sm dark:shadow-none transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Fleet Battery</span>
-            <div className="h-7 w-7 rounded-lg bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 flex items-center justify-center text-sky-500 dark:text-sky-400">
-              <Zap className="w-4 h-4" />
+          <Link
+            href="/report"
+            className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-[#F6C72F]/40 shadow-sm transition-all"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                Generated Reports
+              </span>
+              <div className="h-7 w-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <FileCheck2 className="w-4 h-4" />
+              </div>
             </div>
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold font-mono text-sky-500 dark:text-sky-400">91.6%</span>
-            <span className="text-[10px] font-mono text-sky-600 dark:text-sky-300">Avg fleet level</span>
-          </div>
-          <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">Estimated 38h remaining</p>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold font-mono text-emerald-500">
+                {reports.length} Certified
+              </span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+              <span>ISO 45001 register</span>
+              <ArrowRight className="w-3 h-3 text-emerald-400" />
+            </p>
+          </Link>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Metric 01: Compliance Percentage */}
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-[#F6C72F]/40 shadow-sm dark:shadow-none transition-all">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Site Compliance</span>
+              <div className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+                {compliancePercentage}%
+              </span>
+              <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-300">+2.1% today</span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">3-point verified PPE adherence</p>
+          </div>
+
+          {/* Metric 02: Active Workers */}
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-slate-300 dark:hover:border-zinc-700 shadow-sm dark:shadow-none transition-all">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Active Crews</span>
+              <div className="h-7 w-7 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-[#F6C72F]">
+                <HardHat className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold font-mono text-slate-900 dark:text-white">
+                {workers.length}
+              </span>
+              <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400">of 150 registered</span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">Real-time BLE mesh beacon sync</p>
+          </div>
+
+          {/* Metric 03: Open Violations */}
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-red-400 dark:hover:border-red-500/40 shadow-sm dark:shadow-none transition-all">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Open Violations</span>
+              <div className="h-7 w-7 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 flex items-center justify-center text-red-500 dark:text-red-400">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold font-mono text-red-500 dark:text-red-400">
+                {workers.length - compliantCount}
+              </span>
+              <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400">Auto-auditing</span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">Instant haptic triage enabled</p>
+          </div>
+
+          {/* Metric 04: Hardware Battery Health */}
+          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/90 p-4 relative overflow-hidden group hover:border-sky-400 dark:hover:border-sky-500/40 shadow-sm dark:shadow-none transition-all">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-slate-500 dark:text-zinc-400 uppercase tracking-wider">Fleet Battery</span>
+              <div className="h-7 w-7 rounded-lg bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 flex items-center justify-center text-sky-500 dark:text-sky-400">
+                <Zap className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-bold font-mono text-sky-500 dark:text-sky-400">91.6%</span>
+              <span className="text-[10px] font-mono text-sky-600 dark:text-sky-300">Avg fleet level</span>
+            </div>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400">Estimated 38h remaining</p>
+          </div>
+        </div>
+      )}
 
       {/* ================= WORKERS MATRIX & LIVE TELEMETRY LOGS ================= */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">

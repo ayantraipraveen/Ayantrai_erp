@@ -101,71 +101,37 @@ export default function DashboardNavbar({
   };
 
   return (
-    <header className="relative z-30 w-full border-b border-slate-200/90 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-md flex-shrink-0 sticky top-0 transition-colors">
-      <div className="max-w-[1780px] mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-3">
-        {/* Left: Brand Logo & Mobile Toggle & Custom Site Dropdown */}
+    <header className="relative z-20 w-full h-16 border-b border-slate-200/90 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-md flex-shrink-0 flex items-center transition-colors">
+      <div className="w-full px-4 sm:px-6 flex items-center justify-between gap-3">
+        {/* Left Section: Mobile Menu Trigger + Mobile Logo + Desktop Site Selector */}
         <div className="flex items-center gap-3">
-          <Tooltip content="Toggle Sidebar Navigation" position="bottom">
-            <button
-              onClick={() => {
-                if (typeof window !== "undefined" && window.innerWidth < 1024) {
-                  setMobileMenuOpen(!mobileMenuOpen);
-                } else {
-                  setSidebarOpen(!sidebarOpen);
-                }
-              }}
-              className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-700 transition-colors cursor-pointer"
-            >
-              <Menu className="w-4 h-4" />
-            </button>
-          </Tooltip>
+          {/* Mobile Drawer Trigger (< lg) */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Open navigation menu"
+            className="lg:hidden p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-400 dark:hover:border-zinc-700 transition-colors cursor-pointer"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
 
-          <Link href="/dashboard" className="flex items-center gap-2.5 sm:gap-3 group">
-            <div className="relative h-7 sm:h-8 w-28 sm:w-32 flex items-center">
+          {/* Mobile Brand Logo (< lg) */}
+          <Link href="/dashboard" className="lg:hidden flex items-center gap-2 group">
+            <div className="relative h-7 w-24 flex items-center">
               <Image
                 src="/logo.png"
                 alt="AyantrAI Sitesafe"
-                width={140}
-                height={38}
-                className="object-contain filter brightness-110 drop-shadow-[0_0_14px_rgba(246,199,47,0.35)]"
+                width={100}
+                height={28}
+                className="object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.35)]"
                 priority
               />
             </div>
-            <div className="hidden sm:flex flex-col border-l border-slate-300 dark:border-zinc-700/80 pl-2.5">
-              <span className="text-[10px] tracking-widest text-[#F6C72F] font-mono uppercase font-bold drop-shadow-[0_0_8px_rgba(246,199,47,0.4)]">
-                Sitesafe ERP
-              </span>
-              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium">Enterprise Telemetry</span>
-            </div>
           </Link>
-
-          {/* Interactive Reusable Custom Dropdown: Active Site Selector */}
-          <div className="hidden md:block ml-2 w-64 lg:w-72">
-            <CustomDropdown
-              options={siteOptions}
-              value={selectedSite}
-              onChange={handleSiteSelect}
-              icon={MapPin}
-              size="sm"
-              searchable={true}
-              buttonClassName="border-slate-300 dark:border-zinc-800/90 bg-white dark:bg-[#0e1219]/90 text-xs text-slate-800 dark:text-zinc-200"
-            />
-          </div>
         </div>
 
         {/* Right: Live Connection, Theme Toggle, Alert Bell, User Profile, Logout */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Live Gateway Pill with Reusable Tooltip */}
-          <Tooltip
-            content="Mesh Gateway connected • Latency 18ms • Encryption AES-256"
-            position="bottom"
-            variant="emerald"
-          >
-            <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-lg border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40 text-[11px] font-mono text-emerald-700 dark:text-emerald-300 cursor-help">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
-              <span>4G LTE-M Uplink Live</span>
-            </div>
-          </Tooltip>
 
           {/* Theme Toggle Button */}
           <ThemeToggle />
@@ -209,9 +175,17 @@ export default function DashboardNavbar({
             )}
           </div>
 
+          {/* Active Bearer Token Indicator */}
+          <Tooltip content="Active Bearer Token Authenticated (sitesafe_token) • Role Permissions Verified" position="bottom">
+            <div className="hidden md:flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>TOKEN OK</span>
+            </div>
+          </Tooltip>
+
           {/* User Profile Badge with Reusable Tooltip */}
           <Tooltip
-            content={`Signed in as ${currentUser.name} (${currentUser.email || currentUser.company || "Enterprise EHS"})`}
+            content={`Signed in as ${currentUser.name} (${currentUser.email || currentUser.company || "Enterprise EHS"}) • Role: ${currentUser.role || "Operator"}`}
             position="bottom"
           >
             <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl border border-slate-300 dark:border-zinc-800 bg-slate-100 dark:bg-[#0f131c]/90 cursor-default">
@@ -222,7 +196,11 @@ export default function DashboardNavbar({
                 <span className="text-xs font-semibold text-slate-900 dark:text-white leading-tight">
                   {currentUser.name}
                 </span>
-                <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400 leading-none">
+                <span className={`text-[9px] font-mono font-bold uppercase tracking-wider px-1 py-0.2 rounded w-fit mt-0.5 border ${
+                  (currentUser.role || "").toLowerCase().includes("superadmin")
+                    ? "text-[#F6C72F] bg-amber-500/10 border-amber-500/30"
+                    : "text-sky-400 bg-sky-500/10 border-sky-500/30"
+                }`}>
                   {currentUser.role || "Operator"}
                 </span>
               </div>

@@ -51,18 +51,86 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (credentials: SignInFormData) => {
     // UI-Only Mode: Simulating instant enterprise authentication without network calls
-    await new Promise((resolve) => setTimeout(resolve, 350));
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const lowerEmail = credentials.email.toLowerCase().trim();
+
+    // 1. Check if Superadmin dummy credentials
+    if (
+      lowerEmail === "superadmin@ayantrai.com" ||
+      lowerEmail.includes("superadmin")
+    ) {
+      const superUser: UserProfile = {
+        id: "SA-001",
+        name: "Dr. Vikram Seth",
+        email: credentials.email,
+        role: "Superadmin",
+        company: "AyantrAI HQ Governance",
+        industry: "Enterprise Industrial Safety",
+        fleetSize: "4 Sites / 426 Chipsets",
+      };
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("sitesafe_user", JSON.stringify(superUser));
+          localStorage.setItem("sitesafe_token", "superadmin-session-token");
+        } catch (e) {}
+      }
+      return {
+        user: superUser,
+        token: "superadmin-session-token",
+      };
+    }
+
+    // 2. Check if created Admin exists in localStorage
+    if (typeof window !== "undefined") {
+      try {
+        const storedAdmins = localStorage.getItem("ayantrai_admins");
+        if (storedAdmins) {
+          const adminsList = JSON.parse(storedAdmins);
+          const matchedAdmin = adminsList.find(
+            (a: any) => a.email.toLowerCase().trim() === lowerEmail
+          );
+          if (matchedAdmin) {
+            const adminUser: UserProfile = {
+              id: matchedAdmin.id,
+              name: matchedAdmin.name,
+              email: matchedAdmin.email,
+              role: "Site Admin",
+              company: matchedAdmin.assigned_site,
+              industry: "Infrastructure & Heavy Civil",
+              fleetSize: "Site-Scoped Operations",
+            };
+            localStorage.setItem("sitesafe_user", JSON.stringify(adminUser));
+            localStorage.setItem("sitesafe_token", "admin-session-token-" + matchedAdmin.id);
+            return {
+              user: adminUser,
+              token: "admin-session-token-" + matchedAdmin.id,
+            };
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 3. Fallback generic site user
     const namePart = credentials.email.split("@")[0].replace(/[._]/g, " ");
     const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
 
+    const genericUser: UserProfile = {
+      id: "usr-" + Math.random().toString(36).substring(2, 9),
+      name: formattedName || "Site Administrator",
+      email: credentials.email,
+      role: "Site Admin",
+      company: "Nx-One Tower Pilot Site",
+    };
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("sitesafe_user", JSON.stringify(genericUser));
+        localStorage.setItem("sitesafe_token", "generic-session-token");
+      } catch (e) {}
+    }
+
     return {
-      user: {
-        id: "usr-" + Math.random().toString(36).substring(2, 9),
-        name: formattedName || "Site Administrator",
-        email: credentials.email,
-        role: "Safety Head / EHS",
-        company: "AyantrAI Enterprise Partner",
-      },
+      user: genericUser,
       token: "mock-jwt-token-" + Date.now(),
     };
   }
@@ -135,6 +203,19 @@ export const authSlice = createSlice({
         localStorage.setItem("sitesafe_token", token);
       }
     },
+    restoreSession: (state) => {
+      if (typeof window !== "undefined") {
+        try {
+          const storedUser = localStorage.getItem("sitesafe_user");
+          const storedToken = localStorage.getItem("sitesafe_token");
+          if (storedUser) {
+            state.user = JSON.parse(storedUser);
+            state.token = storedToken || "session-token";
+            state.isAuthenticated = true;
+          }
+        } catch (e) {}
+      }
+    },
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -144,6 +225,7 @@ export const authSlice = createSlice({
       state.lastLoginTime = null;
       if (typeof window !== "undefined") {
         localStorage.removeItem("sitesafe_token");
+        localStorage.removeItem("sitesafe_user");
       }
     },
     clearError: (state) => {
@@ -197,11 +279,15 @@ export const authSlice = createSlice({
       state.isLoading = false;
       state.error = null;
       state.lastLoginTime = null;
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("sitesafe_token");
+        localStorage.removeItem("sitesafe_user");
+      }
     });
   },
 });
 
-export const { loginSuccess, registerSuccess, logout, clearError } =
+export const { loginSuccess, registerSuccess, restoreSession, logout, clearError } =
   authSlice.actions;
 
 export default authSlice.reducer;

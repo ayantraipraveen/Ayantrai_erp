@@ -437,3 +437,26 @@ select:-webkit-autofill:focus {
   caret-color: #f8fafc;
 }
 
+/* Theme-Aware Text Selection Highlights */
+::selection {
+  background-color: rgba(217, 119, 6, 0.25);
+  color: #0f172a;
+}
+
+::-moz-selection {
+  background-color: rgba(217, 119, 6, 0.25);
+  color: #0f172a;
+}
+
+.dark ::selection,
+:root.dark ::selection {
+  background-color: rgba(246, 199, 47, 0.35);
+  color: #ffffff;
+}
+
+.dark ::-moz-selection,
+:root.dark ::-moz-selection {
+  background-color: rgba(246, 199, 47, 0.35);
+  color: #ffffff;
+}
+

@@ -96,7 +96,7 @@ export default function AuthNavbar({
           >
             <Link
               href={resolvedActionHref}
-              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-zinc-800/90 border border-slate-300 dark:border-zinc-700/80 text-slate-700 dark:text-zinc-200 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/60 hover:shadow-[0_0_15px_rgba(246,199,47,0.2)] transition-all cursor-pointer"
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-zinc-800/90 border border-slate-300 dark:border-zinc-700/80 text-slate-700 dark:text-zinc-200 hover:text-amber-600 dark:hover:text-[#F6C72F] hover:border-[#F6C72F]/60 hover:shadow-[0_0_15px_rgba(246,199,47,0.2)] transition-all cursor-pointer"
             >
               {resolvedActionText}
             </Link>

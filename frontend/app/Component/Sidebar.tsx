@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Activity,
@@ -18,7 +19,13 @@ import {
   Radio,
   FileText,
   ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Layers,
+  Building,
+  Sliders,
 } from "lucide-react";
+import { useAppSelector } from "@/lib/redux/hooks";
 import Tooltip from "./Tooltip";
 
 export interface NavItem {
@@ -44,22 +51,98 @@ export interface SidebarProps {
   onLogout?: () => void;
 }
 
-export const defaultNavItems: NavItem[] = [
+export const superadminNavItems: NavItem[] = [
   {
     name: "Dashboard",
     href: "/dashboard",
     icon: Activity,
     badge: "LIVE",
     badgeColor: "bg-emerald-950 text-emerald-400 border-emerald-500/40",
-    description: "Real-time telemetry & site status",
+    description: "System KPIs & pending approvals",
   },
   {
-    name: "Reports",
+    name: "Templates",
+    href: "/templates",
+    icon: Layers,
+    badge: "APPROVALS",
+    badgeColor: "bg-amber-950 text-[#F6C72F] border-amber-500/40",
+    description: "All templates & review queue",
+  },
+  {
+    name: "Admins",
+    href: "/admins",
+    icon: Users,
+    badge: "4 Active",
+    badgeColor: "bg-sky-950 text-sky-400 border-sky-500/40",
+    description: "Manage site-scoped admin accounts",
+  },
+  {
+    name: "Settings",
+    href: "/settings",
+    icon: Settings,
+    badge: null,
+    description: "System-wide approval & dispatch configs",
+  },
+  {
+    name: "Sites",
+    href: "/sites",
+    icon: Building,
+    badge: "4 Sites",
+    badgeColor: "bg-purple-950 text-purple-400 border-purple-500/40",
+    description: "Sites directory & assigned leads",
+  },
+  {
+    name: "Activity Log",
+    href: "/activity-log",
+    icon: Clock,
+    badge: "AUDIT",
+    badgeColor: "bg-emerald-950 text-emerald-400 border-emerald-500/40",
+    description: "Full cryptographic audit trail",
+  },
+];
+
+export const adminNavItems: NavItem[] = [
+  {
+    name: "Dashboard",
+    href: "/dashboard",
+    icon: Activity,
+    badge: "SITE",
+    badgeColor: "bg-emerald-950 text-emerald-400 border-emerald-500/40",
+    description: "Site operations & telemetry summary",
+  },
+  {
+    name: "Templates",
+    href: "/templates",
+    icon: Layers,
+    badge: "BUILDER",
+    badgeColor: "bg-amber-950 text-[#F6C72F] border-amber-500/40",
+    description: "Create & submit template blocks",
+  },
+  {
+    name: "Report",
     href: "/report",
     icon: BarChart3,
     badge: "ISO 45001",
     badgeColor: "bg-amber-950 text-[#F6C72F] border-amber-500/40",
-    description: "Compliance audits & telemetry logs",
+    description: "Report history, edit & send to project head",
+  },
+  {
+    name: "Sites Setting",
+    href: "/sites-setting",
+    icon: Sliders,
+    badge: null,
+    description: "Project Head contact & PDF dispatch",
+  },
+];
+
+export const projectHeadNavItems: NavItem[] = [
+  {
+    name: "Report Review",
+    href: "/report",
+    icon: FileCheck2,
+    badge: "FEEDBACK",
+    badgeColor: "bg-sky-950 text-sky-400 border-sky-500/40",
+    description: "Interactive report & section commenting",
   },
 ];
 
@@ -71,6 +154,14 @@ export default function Sidebar({
   currentUser,
 }: SidebarProps) {
   const pathname = usePathname();
+  const activeRole = useAppSelector((state) => state.reportModule.activeRole);
+
+  const navItems =
+    activeRole === "superadmin"
+      ? superadminNavItems
+      : activeRole === "admin"
+      ? adminNavItems
+      : projectHeadNavItems;
 
   // Helper to check active state
   const isItemActive = (href: string) => {
@@ -85,7 +176,7 @@ export default function Sidebar({
 
   const renderNavLinks = (isMobile: boolean = false) => (
     <div className="space-y-1 py-3 px-2">
-      {defaultNavItems.map((item) => {
+      {navItems.map((item) => {
         const Icon = item.icon;
         const active = isItemActive(item.href);
 
@@ -148,10 +239,62 @@ export default function Sidebar({
     <>
       {/* ================= DESKTOP SIDEBAR ================= */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-slate-200 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-20 ${
+        className={`hidden lg:flex flex-col border-r border-slate-200 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 h-full ${
           sidebarOpen ? "w-64" : "w-16"
         }`}
       >
+        {/* ================= DESKTOP HEADER (BRAND LOGO + CLOSE / OPEN TOGGLE) ================= */}
+        <div className="h-16 flex items-center border-b border-slate-200/90 dark:border-zinc-800/80 px-3.5 flex-shrink-0 overflow-hidden">
+          {sidebarOpen ? (
+            <div className="w-full flex items-center justify-between gap-2">
+              <Link href="/dashboard" className="flex items-center gap-2 group overflow-hidden min-w-0">
+                <div className="relative h-7 w-28 flex items-center flex-shrink-0">
+                  <Image
+                    src="/logo.png"
+                    alt="AyantrAI Sitesafe"
+                    width={112}
+                    height={30}
+                    className="object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
+                    priority
+                  />
+                </div>
+                <div className="flex flex-col border-l border-slate-300 dark:border-zinc-700/80 pl-2 flex-shrink-0">
+                  <span className="text-[9px] tracking-wider text-[#F6C72F] font-mono uppercase font-bold whitespace-nowrap">
+                    Sitesafe
+                  </span>
+                  <span className="text-[9px] text-slate-500 dark:text-zinc-400 font-medium whitespace-nowrap">
+                    ERP
+                  </span>
+                </div>
+              </Link>
+
+              <Tooltip content="Collapse sidebar" position="right">
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  aria-label="Collapse sidebar"
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/50 dark:hover:border-[#F6C72F]/50 hover:bg-amber-500/10 transition-all cursor-pointer flex-shrink-0"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            </div>
+          ) : (
+            <div className="w-full flex items-center justify-center">
+              <Tooltip content="Expand sidebar" position="right" variant="amber">
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Expand sidebar"
+                  className="p-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:bg-amber-500/10 transition-all cursor-pointer shadow-sm hover:shadow-[0_0_12px_rgba(246,199,47,0.25)] flex items-center justify-center"
+                >
+                  <PanelLeftOpen className="w-4 h-4" />
+                </button>
+              </Tooltip>
+            </div>
+          )}
+        </div>
+
         {/* Navigation Links Scrollable Area */}
         <div className="flex-1 overflow-y-auto">
           {renderNavLinks(false)}
@@ -206,18 +349,35 @@ export default function Sidebar({
             <div>
               {/* Drawer Header */}
               <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-200 dark:border-zinc-800">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-[#F6C72F]/20 border border-[#F6C72F]/40 flex items-center justify-center text-[#F6C72F]">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">Sitesafe ERP</div>
-                    <div className="text-[9px] font-mono text-slate-500 dark:text-zinc-500">Navigation Hub</div>
-                  </div>
-                </div>
-                <button
+                <Link
+                  href="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1 rounded-lg border border-slate-300 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                  className="flex items-center gap-2 group"
+                >
+                  <div className="relative h-7 w-28 flex items-center">
+                    <Image
+                      src="/logo.png"
+                      alt="AyantrAI Sitesafe"
+                      width={112}
+                      height={30}
+                      className="object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
+                      priority
+                    />
+                  </div>
+                  <div className="flex flex-col border-l border-slate-300 dark:border-zinc-700/80 pl-2">
+                    <span className="text-[9px] tracking-wider text-[#F6C72F] font-mono uppercase font-bold">
+                      Sitesafe
+                    </span>
+                    <span className="text-[9px] text-slate-500 dark:text-zinc-400 font-medium">
+                      ERP
+                    </span>
+                  </div>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-label="Close menu"
+                  className="p-1.5 rounded-lg border border-slate-300 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/80 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
