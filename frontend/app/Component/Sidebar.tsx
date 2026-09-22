@@ -85,14 +85,6 @@ export default function Sidebar({
 
   const renderNavLinks = (isMobile: boolean = false) => (
     <div className="space-y-1 py-3 px-2">
-      {/* Primary Section Header */}
-      {(isMobile || sidebarOpen) && (
-        <div className="px-2.5 pb-1.5 pt-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-500 flex items-center justify-between">
-          <span>Main Navigation</span>
-          <span className="h-1 w-1 rounded-full bg-[#F6C72F]" />
-        </div>
-      )}
-
       {defaultNavItems.map((item) => {
         const Icon = item.icon;
         const active = isItemActive(item.href);

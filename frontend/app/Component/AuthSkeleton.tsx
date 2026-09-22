@@ -2,7 +2,7 @@ import React from "react";
 
 export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean }) {
   return (
-    <div className="relative min-h-screen lg:h-screen w-full bg-[#080a0e] text-slate-100 flex flex-col justify-between overflow-y-auto lg:overflow-hidden industrial-grid">
+    <div className="relative min-h-screen lg:h-screen w-full bg-slate-50 dark:bg-[#080a0e] text-slate-900 dark:text-slate-100 flex flex-col justify-between overflow-y-auto lg:overflow-hidden industrial-grid transition-colors">
       {/* Ambient background lighting */}
       <div className="ambient-lighting-layer">
         <div className="amber-spotlight opacity-50" />
@@ -10,7 +10,7 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
       </div>
 
       {/* Header Skeleton */}
-      <header className="relative z-10 w-full border-b border-zinc-800/80 bg-[#0c1017]/90 backdrop-blur-md flex-shrink-0">
+      <header className="relative z-10 w-full border-b border-slate-200/90 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0c1017]/90 backdrop-blur-md flex-shrink-0">
         <div className="max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-8 w-32 rounded-lg skeleton-box" />
@@ -34,15 +34,15 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
             </div>
 
             {/* 3-Device Telemetry Hub Skeleton */}
-            <div className="rounded-2xl border border-zinc-800/80 bg-[#0f131c]/85 p-4 sm:p-5 backdrop-blur-xl shadow-2xl space-y-3">
-              <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800/80">
+            <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0f131c]/85 p-4 sm:p-5 backdrop-blur-xl shadow-md dark:shadow-2xl space-y-3">
+              <div className="flex items-center justify-between pb-2.5 border-b border-slate-200 dark:border-zinc-800/80">
                 <div className="h-4 w-48 rounded skeleton-box" />
                 <div className="h-5 w-28 rounded skeleton-box" />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="rounded-xl border border-zinc-800/90 bg-[#090c12]/90 p-3 space-y-3">
+                  <div key={i} className="rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/90 dark:bg-[#090c12]/90 p-3 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="h-7 w-7 rounded-lg skeleton-box" />
                       <div className="h-4 w-12 rounded skeleton-box" />
@@ -51,7 +51,7 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
                       <div className="h-3.5 w-24 rounded skeleton-box" />
                       <div className="h-3 w-16 rounded skeleton-box" />
                     </div>
-                    <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between">
+                    <div className="pt-2 border-t border-slate-200 dark:border-zinc-800/80 flex items-center justify-between">
                       <div className="h-3 w-14 rounded skeleton-box" />
                       <div className="h-3 w-12 rounded skeleton-box" />
                     </div>
@@ -59,7 +59,7 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
                 ))}
               </div>
 
-              <div className="pt-2.5 border-t border-zinc-800/80 flex items-center justify-between">
+              <div className="pt-2.5 border-t border-slate-200 dark:border-zinc-800/80 flex items-center justify-between">
                 <div className="h-3.5 w-60 rounded skeleton-box" />
                 <div className="h-3.5 w-40 rounded skeleton-box" />
               </div>
@@ -68,7 +68,7 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
             {/* 4 Metrics Strip Skeleton */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="rounded-xl border border-zinc-800/80 bg-[#0e1219]/80 p-2.5 xl:p-3 space-y-1.5">
+                <div key={i} className="rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0e1219]/80 p-2.5 xl:p-3 space-y-1.5">
                   <div className="h-7 w-20 rounded skeleton-box" />
                   <div className="h-3 w-16 rounded skeleton-box" />
                   <div className="h-2.5 w-12 rounded skeleton-box" />
@@ -79,7 +79,7 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
 
           {/* Right Column Form Skeleton (5 cols) */}
           <div className="lg:col-span-5 xl:col-span-5 flex justify-center lg:justify-end w-full order-1 lg:order-2">
-            <div className="w-full max-w-md xl:max-w-lg rounded-2xl border border-[#F6C72F]/20 bg-[#111520]/95 p-5 sm:p-6 xl:p-7 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.65)] space-y-4">
+            <div className="w-full max-w-md xl:max-w-lg rounded-2xl border border-slate-200 dark:border-[#F6C72F]/20 bg-white/95 dark:bg-[#111520]/95 p-5 sm:p-6 xl:p-7 backdrop-blur-2xl shadow-xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.65)] space-y-4">
               
               {/* Form Title */}
               <div className="space-y-1.5">
@@ -142,7 +142,7 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
               )}
 
               {/* Bottom Link */}
-              <div className="pt-2 border-t border-zinc-800/80">
+              <div className="pt-2 border-t border-slate-200 dark:border-zinc-800/80">
                 <div className="h-3 w-48 mx-auto rounded skeleton-box" />
               </div>
             </div>
@@ -151,7 +151,7 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
       </main>
 
       {/* Footer Skeleton */}
-      <footer className="relative z-10 w-full border-t border-zinc-800/80 bg-[#0c1017]/90 flex-shrink-0">
+      <footer className="relative z-10 w-full border-t border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0c1017]/90 flex-shrink-0">
         <div className="max-w-[1680px] mx-auto px-4 sm:px-8 xl:px-14 py-2 flex items-center justify-between">
           <div className="h-3.5 w-64 rounded skeleton-box" />
           <div className="h-3.5 w-40 rounded skeleton-box" />
