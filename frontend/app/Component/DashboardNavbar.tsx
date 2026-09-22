@@ -77,8 +77,8 @@ const siteOptions: DropdownOption[] = [
 
 /**
  * Reusable DashboardNavbar (Command Bar) for Sitesafe ERP.
- * Standardized with consistent 36px (h-9) controls, active site selector,
- * real-time telemetry mesh indicator, alert notifications, and user profile badge.
+ * Standardized with consistent 36px (h-9) controls, exact bottom alignment across all elements,
+ * active site selector, real-time telemetry mesh indicator, alert notifications, and user profile badge.
  */
 export default function DashboardNavbar({
   sidebarOpen,
@@ -173,31 +173,7 @@ export default function DashboardNavbar({
             </div>
           </Link>
 
-          {/* Desktop Active Site Selector */}
-          <div className="hidden lg:flex items-center gap-2.5 h-9">
-            <div className="w-56 lg:w-64 xl:w-72 h-9">
-              <CustomDropdown
-                options={siteOptions}
-                value={selectedSite}
-                onChange={handleSiteSelect}
-                icon={MapPin}
-                size="sm"
-                placeholder="Select active site..."
-                className="h-9"
-              />
-            </div>
 
-            {/* Real-time Telemetry Mesh Status Indicator */}
-            <div className="hidden xl:flex items-center gap-1.5 px-2.5 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-[10px] font-mono text-slate-500 dark:text-zinc-400 select-none shadow-sm h-9 flex-shrink-0">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              <span className="font-semibold text-slate-700 dark:text-zinc-300">MESH ACTIVE</span>
-              <span className="text-slate-400 dark:text-zinc-600">•</span>
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold">100%</span>
-            </div>
-          </div>
         </div>
 
         {/* ================= RIGHT SECTION (ALL CONTROLS STANDARDIZED TO h-9) ================= */}
@@ -213,11 +189,10 @@ export default function DashboardNavbar({
                 type="button"
                 onClick={() => setNotificationsOpen(!notificationsOpen)}
                 aria-label="View safety notifications"
-                className={`group relative h-9 w-9 rounded-xl border transition-all flex items-center justify-center cursor-pointer shadow-sm flex-shrink-0 ${
-                  notificationsOpen
+                className={`group relative h-9 w-9 rounded-xl border transition-all flex items-center justify-center cursor-pointer shadow-sm flex-shrink-0 ${notificationsOpen
                     ? "border-[#F6C72F] bg-amber-500/15 text-slate-900 dark:text-white shadow-[0_0_12px_rgba(246,199,47,0.25)]"
                     : "border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/50 dark:hover:border-[#F6C72F]/50 hover:bg-amber-500/10 dark:hover:bg-[#F6C72F]/10"
-                }`}
+                  }`}
               >
                 <Bell className="w-4 h-4 transition-transform group-hover:rotate-12" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#F6C72F] animate-ping" />
@@ -262,11 +237,11 @@ export default function DashboardNavbar({
             )}
           </div>
 
-         
+
 
           {/* User Profile Badge (Standardized h-9) */}
           <Tooltip
-            content={`Signed in as ${userName} (${currentUser.email || currentUser.company || "Enterprise EHS"}) • Role: ${userRole}`}
+            content={`Signed in as ${userName}`}
             position="bottom"
           >
             <div className="group flex items-center gap-2 h-9 px-2.5 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 hover:border-slate-300 dark:hover:border-zinc-700 transition-colors cursor-default shadow-sm select-none flex-shrink-0">
@@ -277,11 +252,10 @@ export default function DashboardNavbar({
                 <span className="text-xs font-semibold text-slate-900 dark:text-white leading-tight truncate max-w-[110px] lg:max-w-[130px]">
                   {userName}
                 </span>
-                <span className={`text-[8px] font-mono font-bold uppercase tracking-wider px-1 py-0.2 rounded w-fit mt-0.5 border leading-none ${
-                  isSuperadmin
-                    ? "text-amber-700 dark:text-[#F6C72F] bg-amber-500/10 border-amber-500/30"
-                    : "text-sky-700 dark:text-sky-400 bg-sky-500/10 border-sky-500/30"
-                }`}>
+                <span className={`text-[8px] font-mono font-bold uppercase tracking-wider px-1 py-0.2 rounded w-fit mt-0.5  leading-none ${isSuperadmin
+                  ? "text-amber-700 dark:text-[#F6C72F] bg-amber-500/10 "
+                  : "text-sky-700 dark:text-sky-400 bg-sky-500/10 "
+                  }`}>
                   {userRole}
                 </span>
               </div>
@@ -289,7 +263,7 @@ export default function DashboardNavbar({
           </Tooltip>
 
           {/* Logout Button (Standardized h-9) */}
-          <Tooltip content="Sign out of Sitesafe ERP session" position="bottom" variant="danger">
+          <Tooltip content="Sign out" position="bottom" variant="danger">
             <button
               type="button"
               onClick={onLogout}
