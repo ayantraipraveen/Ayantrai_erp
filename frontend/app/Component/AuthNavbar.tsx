@@ -58,12 +58,22 @@ export default function AuthNavbar({
           <Link href={resolvedLogoHref} className="flex items-center gap-2.5 sm:gap-3 group">
             <Tooltip content="AyantrAI • Connected Industrial Intelligence" position="bottom">
               <div className="relative h-7 sm:h-8 md:h-9 w-28 sm:w-32 md:w-36 flex items-center">
+                {/* Light Mode */}
+                <Image
+                  src="/logo-light.png"
+                  alt="AyantrAI Sitesafe"
+                  width={150}
+                  height={42}
+                  className="object-contain dark:hidden filter brightness-105 transition-all"
+                  priority
+                />
+                {/* Dark Mode */}
                 <Image
                   src="/logo.png"
                   alt="AyantrAI Sitesafe"
                   width={150}
                   height={42}
-                  className="object-contain filter brightness-110 drop-shadow-[0_0_16px_rgba(246,199,47,0.3)] transition-all group-hover:drop-shadow-[0_0_22px_rgba(246,199,47,0.5)]"
+                  className="object-contain hidden dark:block filter brightness-110 drop-shadow-[0_0_16px_rgba(246,199,47,0.3)] transition-all group-hover:drop-shadow-[0_0_22px_rgba(246,199,47,0.5)]"
                   priority
                 />
               </div>
