@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 
 export type Theme = "light" | "dark" | "system";
 export type ResolvedTheme = "light" | "dark";
@@ -27,6 +27,23 @@ export function ThemeProvider({
   const [theme, setThemeState] = useState<Theme>(defaultTheme);
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("dark");
   const [mounted, setMounted] = useState(false);
+  const isFirstRender = useRef(true);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Enable smooth CSS interpolation during manual theme changes
+  const enableTransitions = () => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    root.classList.add("theme-transitioning");
+
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+    }
+
+    transitionTimeoutRef.current = setTimeout(() => {
+      root.classList.remove("theme-transitioning");
+    }, 450);
+  };
 
   // Initialize theme from localStorage or system preference
   useEffect(() => {
@@ -46,6 +63,12 @@ export function ThemeProvider({
   // Update resolvedTheme and document classList whenever theme changes
   useEffect(() => {
     if (!mounted) return;
+
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+    } else {
+      enableTransitions();
+    }
 
     const root = document.documentElement;
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -82,6 +105,7 @@ export function ThemeProvider({
     // Listener for OS system theme change
     const handleSystemChange = () => {
       if (theme === "system") {
+        enableTransitions();
         const sysResolved = mediaQuery.matches ? "dark" : "light";
         setResolvedTheme(sysResolved);
         if (sysResolved === "dark") {
@@ -99,7 +123,12 @@ export function ThemeProvider({
     };
 
     mediaQuery.addEventListener("change", handleSystemChange);
-    return () => mediaQuery.removeEventListener("change", handleSystemChange);
+    return () => {
+      mediaQuery.removeEventListener("change", handleSystemChange);
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+    };
   }, [theme, mounted]);
 
   const setTheme = (newTheme: Theme) => {

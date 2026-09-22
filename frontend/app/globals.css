@@ -40,12 +40,57 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+/* ================= SMOOTH THEME MODE TRANSITION ================= */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: 
+    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    fill 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    stroke 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    outline-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-delay: 0s !important;
+}
+
 body {
   background-color: var(--background);
   color: var(--foreground);
   min-height: 100vh;
   overflow-x: hidden;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ================= DUAL-THEME LOGO CROSSFADE ================= */
+.logo-light-mode {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: opacity 0.35s ease-in-out, visibility 0.35s ease-in-out;
+}
+.dark .logo-light-mode,
+:root.dark .logo-light-mode,
+[data-theme="dark"] .logo-light-mode {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.logo-dark-mode {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: opacity 0.35s ease-in-out, visibility 0.35s ease-in-out;
+}
+.dark .logo-dark-mode,
+:root.dark .logo-dark-mode,
+[data-theme="dark"] .logo-dark-mode {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 
 /* Industrial Grid Background */

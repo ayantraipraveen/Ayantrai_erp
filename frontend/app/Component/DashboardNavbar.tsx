@@ -117,14 +117,14 @@ export default function DashboardNavbar({
 
           {/* Mobile Brand Logo (< lg) */}
           <Link href="/dashboard" className="lg:hidden flex items-center gap-2 group">
-            <div className="relative h-7 w-24 flex items-center">
+            <div className="grid grid-cols-1 grid-rows-1 items-center h-7 w-24 flex-shrink-0">
               {/* Light Mode */}
               <Image
                 src="/logo-light.png"
                 alt="AyantrAI Sitesafe"
                 width={100}
                 height={28}
-                className="object-contain dark:hidden filter brightness-105"
+                className="col-start-1 row-start-1 object-contain logo-light-mode filter brightness-105 select-none"
                 priority
               />
               {/* Dark Mode */}
@@ -133,7 +133,7 @@ export default function DashboardNavbar({
                 alt="AyantrAI Sitesafe"
                 width={100}
                 height={28}
-                className="object-contain hidden dark:block filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.35)]"
+                className="col-start-1 row-start-1 object-contain logo-dark-mode filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.35)] select-none"
                 priority
               />
             </div>

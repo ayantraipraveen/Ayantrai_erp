@@ -452,14 +452,14 @@ export default function Sidebar({
                 href="/dashboard"
                 className="flex items-center gap-2 group overflow-hidden min-w-0"
               >
-                <div className="relative h-7 w-28 flex items-center flex-shrink-0">
+                <div className="grid grid-cols-1 grid-rows-1 items-center h-7 w-28 flex-shrink-0">
                   {/* Light Mode: Blue Text */}
                   <Image
                     src="/logo-light.png"
                     alt="AyantrAI Sitesafe"
                     width={112}
                     height={30}
-                    className="w-[120px] object-contain dark:hidden filter brightness-105"
+                    className="col-start-1 row-start-1 w-[120px] object-contain logo-light-mode filter brightness-105 select-none"
                     priority
                   />
                   {/* Dark Mode: White Text */}
@@ -468,7 +468,7 @@ export default function Sidebar({
                     alt="AyantrAI Sitesafe"
                     width={112}
                     height={30}
-                    className="w-[120px] object-contain hidden dark:block filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
+                    className="col-start-1 row-start-1 w-[120px] object-contain logo-dark-mode filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)] select-none"
                     priority
                   />
                 </div>
@@ -539,14 +539,14 @@ export default function Sidebar({
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 group"
                 >
-                  <div className="relative h-7 w-28 flex items-center">
+                  <div className="grid grid-cols-1 grid-rows-1 items-center h-7 w-28 flex-shrink-0">
                     {/* Light Mode */}
                     <Image
                       src="/logo-light.png"
                       alt="AyantrAI Sitesafe"
                       width={112}
                       height={30}
-                      className="object-contain dark:hidden filter brightness-105"
+                      className="col-start-1 row-start-1 object-contain logo-light-mode filter brightness-105 select-none"
                       priority
                     />
                     {/* Dark Mode */}
@@ -555,7 +555,7 @@ export default function Sidebar({
                       alt="AyantrAI Sitesafe"
                       width={112}
                       height={30}
-                      className="object-contain hidden dark:block filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
+                      className="col-start-1 row-start-1 object-contain logo-dark-mode filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)] select-none"
                       priority
                     />
                   </div>
