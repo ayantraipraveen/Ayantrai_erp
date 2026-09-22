@@ -14,6 +14,9 @@ export * from "./Tooltip";
 export { default as CustomDropdown } from "./CustomDropdown";
 export * from "./CustomDropdown";
 
+export { default as DateRangeFilter } from "./DateRangeFilter";
+export * from "./DateRangeFilter";
+
 export { default as AuthSkeleton } from "./AuthSkeleton";
 
 export { default as Sidebar } from "./Sidebar";

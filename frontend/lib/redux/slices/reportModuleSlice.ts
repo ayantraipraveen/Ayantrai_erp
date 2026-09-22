@@ -1,6 +1,7 @@
 "use client";
 
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { DateRangeValue, DEFAULT_DATE_RANGE } from "@/app/Component/DateRangeFilter";
 
 export type RoleType = "superadmin" | "admin" | "project_head";
 
@@ -163,6 +164,20 @@ export interface ReportModuleState {
   systemSettings: SystemSettings;
   activityLogs: ActivityLog[];
   selectedReportId: string | null;
+
+  // Pure Redux UI & Filter State for Templates Module
+  templateSearchQuery: string;
+  templateStatusFilter: string;
+  templateSiteFilter: string;
+  templateDateRange: DateRangeValue;
+  templateViewMode: "table" | "grid";
+  templateCurrentPage: number;
+  templatePageSize: number;
+  templateSelectedId: string | null;
+  templateReviewModalOpen: boolean;
+  templateBuilderOpen: boolean;
+  templateDeleteConfirmId: string | null;
+  templateToastMessage: string | null;
 }
 
 const defaultBlocks: TemplateBlock[] = [
@@ -583,6 +598,20 @@ const initialState: ReportModuleState = {
   systemSettings: initialSystemSettings,
   activityLogs: initialActivityLogs,
   selectedReportId: "REP-2026-09-01",
+
+  // Pure Redux UI & Filter State for Templates Module
+  templateSearchQuery: "",
+  templateStatusFilter: "all",
+  templateSiteFilter: "all",
+  templateDateRange: DEFAULT_DATE_RANGE,
+  templateViewMode: "table",
+  templateCurrentPage: 1,
+  templatePageSize: 10,
+  templateSelectedId: null,
+  templateReviewModalOpen: false,
+  templateBuilderOpen: false,
+  templateDeleteConfirmId: null,
+  templateToastMessage: null,
 };
 
 export const reportModuleSlice = createSlice({
@@ -666,6 +695,69 @@ export const reportModuleSlice = createSlice({
           type: "template",
         });
       }
+    },
+    deleteTemplate: (state, action: PayloadAction<string>) => {
+      const tplId = action.payload;
+      const tpl = state.templates.find((t) => t.id === tplId);
+      state.templates = state.templates.filter((t) => t.id !== tplId);
+      state.activityLogs.unshift({
+        id: `act-${Date.now()}-del-tpl`,
+        actor: "Dr. Vikram Seth",
+        role: "Superadmin",
+        action: "Deleted report template",
+        target: tpl ? `${tpl.id} (${tpl.name})` : tplId,
+        timestamp: "Just now",
+        type: "template",
+      });
+    },
+    // Template Pure Redux UI, Filters & Pagination Reducers
+    setTemplateSearchQuery: (state, action: PayloadAction<string>) => {
+      state.templateSearchQuery = action.payload;
+      state.templateCurrentPage = 1;
+    },
+    setTemplateStatusFilter: (state, action: PayloadAction<string>) => {
+      state.templateStatusFilter = action.payload;
+      state.templateCurrentPage = 1;
+    },
+    setTemplateSiteFilter: (state, action: PayloadAction<string>) => {
+      state.templateSiteFilter = action.payload;
+      state.templateCurrentPage = 1;
+    },
+    setTemplateDateRange: (state, action: PayloadAction<DateRangeValue>) => {
+      state.templateDateRange = action.payload;
+      state.templateCurrentPage = 1;
+    },
+    setTemplateViewMode: (state, action: PayloadAction<"table" | "grid">) => {
+      state.templateViewMode = action.payload;
+    },
+    setTemplateCurrentPage: (state, action: PayloadAction<number>) => {
+      state.templateCurrentPage = action.payload;
+    },
+    setTemplatePageSize: (state, action: PayloadAction<number>) => {
+      state.templatePageSize = action.payload;
+      state.templateCurrentPage = 1;
+    },
+    resetTemplateFilters: (state) => {
+      state.templateSearchQuery = "";
+      state.templateStatusFilter = "all";
+      state.templateSiteFilter = "all";
+      state.templateDateRange = DEFAULT_DATE_RANGE;
+      state.templateCurrentPage = 1;
+    },
+    setTemplateSelectedId: (state, action: PayloadAction<string | null>) => {
+      state.templateSelectedId = action.payload;
+    },
+    setTemplateReviewModalOpen: (state, action: PayloadAction<boolean>) => {
+      state.templateReviewModalOpen = action.payload;
+    },
+    setTemplateBuilderOpen: (state, action: PayloadAction<boolean>) => {
+      state.templateBuilderOpen = action.payload;
+    },
+    setTemplateDeleteConfirmId: (state, action: PayloadAction<string | null>) => {
+      state.templateDeleteConfirmId = action.payload;
+    },
+    setTemplateToastMessage: (state, action: PayloadAction<string | null>) => {
+      state.templateToastMessage = action.payload;
     },
     // Report Actions
     updateReportRemarks: (state, action: PayloadAction<{ reportId: string; remarks: string }>) => {
@@ -895,6 +987,20 @@ export const {
   addTemplate,
   approveTemplate,
   rejectTemplate,
+  deleteTemplate,
+  setTemplateSearchQuery,
+  setTemplateStatusFilter,
+  setTemplateSiteFilter,
+  setTemplateDateRange,
+  setTemplateViewMode,
+  setTemplateCurrentPage,
+  setTemplatePageSize,
+  resetTemplateFilters,
+  setTemplateSelectedId,
+  setTemplateReviewModalOpen,
+  setTemplateBuilderOpen,
+  setTemplateDeleteConfirmId,
+  setTemplateToastMessage,
   updateReportRemarks,
   updateActionPlan,
   sendReportToProjectHead,
