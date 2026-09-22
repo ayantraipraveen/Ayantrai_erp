@@ -3,6 +3,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  color-scheme: light;
   --background: #f8fafc;
   --foreground: #0f172a;
   --primary-gold: #d97706;
@@ -13,7 +14,9 @@
   --border-bright: #cbd5e1;
 }
 
-.dark {
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
   --background: #080a0e;
   --foreground: #f1f5f9;
   --primary-gold: #f6c72f;
@@ -22,6 +25,10 @@
   --surface-elevated: #161c27;
   --border-subtle: #202735;
   --border-bright: #354054;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
 }
 
 @theme inline {
@@ -405,58 +412,118 @@ body {
   );
 }
 
+/* Browser Form Controls Color-Scheme */
+input,
+select,
+textarea {
+  color-scheme: light;
+}
+
+.dark input,
+.dark select,
+.dark textarea,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  color-scheme: dark;
+}
+
 /* Browser Autofill Support for Light & Dark Mode */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
+input:autofill,
+input:autofill:hover,
+input:autofill:focus,
 textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus,
+textarea:autofill,
+textarea:autofill:hover,
+textarea:autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
-select:-webkit-autofill:focus {
+select:-webkit-autofill:focus,
+select:autofill,
+select:autofill:hover,
+select:autofill:focus {
   -webkit-text-fill-color: #0f172a !important;
-  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
-  box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  caret-color: #0f172a !important;
+  color-scheme: light !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 
 .dark input:-webkit-autofill,
 .dark input:-webkit-autofill:hover,
 .dark input:-webkit-autofill:focus,
-:root.dark input:-webkit-autofill,
-:root.dark input:-webkit-autofill:hover,
-:root.dark input:-webkit-autofill:focus,
+.dark input:autofill,
+.dark input:autofill:hover,
+.dark input:autofill:focus,
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover,
+[data-theme="dark"] input:-webkit-autofill:focus,
+[data-theme="dark"] input:autofill,
+[data-theme="dark"] input:autofill:hover,
+[data-theme="dark"] input:autofill:focus,
 .dark textarea:-webkit-autofill,
-:root.dark textarea:-webkit-autofill,
+.dark textarea:-webkit-autofill:hover,
+.dark textarea:-webkit-autofill:focus,
+[data-theme="dark"] textarea:-webkit-autofill,
+[data-theme="dark"] textarea:-webkit-autofill:hover,
+[data-theme="dark"] textarea:-webkit-autofill:focus,
 .dark select:-webkit-autofill,
-:root.dark select:-webkit-autofill {
+.dark select:-webkit-autofill:hover,
+.dark select:-webkit-autofill:focus,
+[data-theme="dark"] select:-webkit-autofill,
+[data-theme="dark"] select:-webkit-autofill:hover,
+[data-theme="dark"] select:-webkit-autofill:focus {
   -webkit-text-fill-color: #f8fafc !important;
-  -webkit-box-shadow: 0 0 0px 1000px #080b10 inset !important;
-  box-shadow: 0 0 0px 1000px #080b10 inset !important;
-  caret-color: #f8fafc;
+  -webkit-box-shadow: 0 0 0 1000px #080b10 inset !important;
+  box-shadow: 0 0 0 1000px #080b10 inset !important;
+  background-color: #080b10 !important;
+  color: #f8fafc !important;
+  caret-color: #f8fafc !important;
+  color-scheme: dark !important;
 }
 
-/* Theme-Aware Text Selection Highlights */
-::selection {
-  background-color: rgba(217, 119, 6, 0.25);
+/* Theme-Aware Text Selection Highlights (Document & Form Inputs) */
+::selection,
+input::selection,
+textarea::selection {
+  background-color: rgba(217, 119, 6, 0.28);
   color: #0f172a;
 }
 
-::-moz-selection {
-  background-color: rgba(217, 119, 6, 0.25);
+::-moz-selection,
+input::-moz-selection,
+textarea::-moz-selection {
+  background-color: rgba(217, 119, 6, 0.28);
   color: #0f172a;
 }
 
 .dark ::selection,
-:root.dark ::selection {
-  background-color: rgba(246, 199, 47, 0.35);
+:root.dark ::selection,
+[data-theme="dark"] ::selection,
+.dark input::selection,
+.dark textarea::selection,
+[data-theme="dark"] input::selection,
+[data-theme="dark"] textarea::selection {
+  background-color: rgba(246, 199, 47, 0.38);
   color: #ffffff;
 }
 
 .dark ::-moz-selection,
-:root.dark ::-moz-selection {
-  background-color: rgba(246, 199, 47, 0.35);
+:root.dark ::-moz-selection,
+[data-theme="dark"] ::-moz-selection,
+.dark input::-moz-selection,
+.dark textarea::-moz-selection,
+[data-theme="dark"] input::-moz-selection,
+[data-theme="dark"] textarea::-moz-selection {
+  background-color: rgba(246, 199, 47, 0.38);
   color: #ffffff;
 }
 

@@ -615,7 +615,7 @@ export default function SignUpPage() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F] transition-colors cursor-pointer"
                         >
                           {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         </button>
@@ -653,7 +653,7 @@ export default function SignUpPage() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F] transition-colors cursor-pointer"
                         >
                           {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         </button>

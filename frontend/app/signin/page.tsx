@@ -443,7 +443,10 @@ export default function SignInPage() {
                       <Mail className="h-3.5 w-3.5" />
                     </div>
                     <input
+                      id="signin-email"
+                      name="email"
                       type="text"
+                      autoComplete="username"
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
@@ -468,7 +471,7 @@ export default function SignInPage() {
                 {/* Password */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-medium text-slate-700 dark:text-zinc-300">Security Password</label>
+                    <label htmlFor="signin-password" className="text-[11px] font-medium text-slate-700 dark:text-zinc-300">Security Password</label>
                     <button
                       type="button"
                       onClick={() => alert("Password reset instructions sent to your registered email.")}
@@ -482,7 +485,10 @@ export default function SignInPage() {
                       <Lock className="h-3.5 w-3.5" />
                     </div>
                     <input
+                      id="signin-password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);

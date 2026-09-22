@@ -39,10 +39,12 @@ const themeInitScript = `
         root.classList.add('dark');
         root.classList.remove('light');
         root.setAttribute('data-theme', 'dark');
+        root.style.colorScheme = 'dark';
       } else {
         root.classList.remove('dark');
         root.classList.add('light');
         root.setAttribute('data-theme', 'light');
+        root.style.colorScheme = 'light';
       }
     } catch (e) {}
   })();

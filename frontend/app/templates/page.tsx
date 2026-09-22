@@ -531,7 +531,7 @@ export default function TemplatesPage() {
                 <button
                   type="button"
                   onClick={() => setBuilderOpen(false)}
-                  className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-400 hover:text-white"
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -618,7 +618,7 @@ export default function TemplatesPage() {
                             type="button"
                             onClick={() => moveBlock(idx, "up")}
                             disabled={idx === 0}
-                            className="p-1 text-slate-400 hover:text-white disabled:opacity-20 cursor-pointer"
+                            className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 transition-colors cursor-pointer"
                           >
                             <MoveUp className="w-3.5 h-3.5" />
                           </button>
@@ -626,7 +626,7 @@ export default function TemplatesPage() {
                             type="button"
                             onClick={() => moveBlock(idx, "down")}
                             disabled={idx === builderBlocks.length - 1}
-                            className="p-1 text-slate-400 hover:text-white disabled:opacity-20 cursor-pointer"
+                            className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-20 transition-colors cursor-pointer"
                           >
                             <MoveDown className="w-3.5 h-3.5" />
                           </button>
