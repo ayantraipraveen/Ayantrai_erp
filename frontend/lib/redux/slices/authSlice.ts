@@ -70,7 +70,7 @@ export const loginUser = createAsyncThunk<
       const superUser: UserProfile = {
         id: "SA-001",
         name: "Superadmin",
-        email: "[EMAIL_ADDRESS]",
+        email: credentials.email || "superadmin@ayantrai.com",
         role: "Superadmin",
         company: "AyantrAI HQ Governance",
         industry: "Enterprise Industrial Safety",
