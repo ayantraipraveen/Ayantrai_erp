@@ -21,7 +21,7 @@ export default function ThemeToggle({
   if (!mounted) {
     return (
       <div
-        className={`h-8 w-8 rounded-xl border border-zinc-800 bg-zinc-900/60 animate-pulse ${className}`}
+        className={`h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-100/80 dark:bg-zinc-900/60 animate-pulse ${className}`}
       />
     );
   }
@@ -91,10 +91,10 @@ export default function ThemeToggle({
         type="button"
         onClick={toggleTheme}
         aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-        className={`relative p-2 rounded-xl border transition-all duration-300 flex items-center justify-center cursor-pointer ${
+        className={`relative h-9 w-9 rounded-xl border transition-all duration-300 flex items-center justify-center cursor-pointer ${
           isDark
             ? "border-zinc-800/90 bg-[#0e1219]/90 text-[#F6C72F] hover:border-[#F6C72F]/60 hover:shadow-[0_0_14px_rgba(246,199,47,0.3)] hover:bg-[#131924]"
-            : "border-slate-300 bg-white text-amber-600 hover:border-amber-500/60 hover:shadow-[0_0_12px_rgba(217,119,6,0.25)] hover:bg-slate-50 shadow-sm"
+            : "border-slate-200 bg-slate-50/80 text-amber-600 hover:border-amber-500/60 hover:shadow-[0_0_12px_rgba(217,119,6,0.25)] hover:bg-slate-100 shadow-sm"
         } ${className}`}
       >
         <div className="relative w-4 h-4 flex items-center justify-center">

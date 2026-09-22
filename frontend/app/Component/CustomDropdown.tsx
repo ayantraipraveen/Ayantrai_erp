@@ -170,7 +170,7 @@ export default function CustomDropdown({
 
   // Size specific styles - standardized to rounded-xl to match adjacent form inputs
   const sizeClasses = {
-    sm: "py-2 px-3 text-xs sm:text-sm rounded-xl min-h-[38px]",
+    sm: "h-9 px-3 text-xs rounded-xl min-h-[36px]",
     md: "py-2 px-3 text-xs sm:text-sm rounded-xl min-h-[38px]",
     lg: "py-2.5 px-3.5 text-sm rounded-xl min-h-[44px]",
   };
@@ -178,14 +178,14 @@ export default function CustomDropdown({
   return (
     <div
       ref={containerRef}
-      className={`relative space-y-1 ${className}`}
+      className={`relative ${label ? "space-y-1" : ""} ${className}`}
       onKeyDown={handleKeyDown}
     >
       {/* Optional Form Field Label - matched font size and weight to standard inputs */}
       {label && (
         <label
           htmlFor={dropdownId}
-          className="block text-[11px] sm:text-xs font-medium text-zinc-300"
+          className="block text-[11px] sm:text-xs font-medium text-slate-700 dark:text-zinc-300"
         >
           {label}
         </label>
@@ -208,22 +208,22 @@ export default function CustomDropdown({
           sizeClasses[size]
         } ${
           error
-            ? "input-error border-red-500/90 shadow-[0_0_16px_rgba(239,68,68,0.5)] bg-[#12080a]"
+            ? "input-error border-red-500/90 shadow-[0_0_16px_rgba(239,68,68,0.5)] bg-red-50 dark:bg-[#12080a]"
             : isOpen
-            ? "border-[#F6C72F] bg-[#0d111a] shadow-[0_0_0_1.5px_#f6c72f,0_0_16px_rgba(246,199,47,0.65),0_0_32px_rgba(246,199,47,0.3),inset_0_0_8px_rgba(246,199,47,0.12)]"
-            : "border-zinc-800/90 bg-[#080b10] focus-glow-amber hover:border-[#F6C72F]/60 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] hover:bg-[#0c0f16]"
+            ? "border-[#F6C72F] bg-amber-50/40 dark:bg-[#0d111a] shadow-[0_0_0_1.5px_#f6c72f,0_0_16px_rgba(246,199,47,0.3)] text-slate-900 dark:text-white"
+            : "border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#080b10] text-slate-800 dark:text-zinc-200 focus-glow-amber hover:border-[#F6C72F]/60 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] hover:bg-slate-100/90 dark:hover:bg-[#0c0f16]"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${buttonClassName}`}
       >
         <div className="flex items-center gap-2.5 truncate pr-2">
           {LeadingIcon && (
-            <LeadingIcon className="w-3.5 h-3.5 text-zinc-500 flex-shrink-0" />
+            <LeadingIcon className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-500 flex-shrink-0" />
           )}
           {selectedOption?.icon && (
             <selectedOption.icon className="w-3.5 h-3.5 text-[#F6C72F] flex-shrink-0 drop-shadow-[0_0_6px_rgba(246,199,47,0.4)]" />
           )}
           <span
-            className={`truncate text-xs sm:text-sm ${
-              selectedOption ? "text-white font-medium" : "text-zinc-500 font-normal"
+            className={`truncate text-xs ${
+              selectedOption ? "text-slate-900 dark:text-white font-medium" : "text-slate-500 dark:text-zinc-500 font-normal"
             }`}
           >
             {selectedOption ? selectedOption.label : placeholder}
@@ -232,7 +232,7 @@ export default function CustomDropdown({
             <span
               className={`text-[9px] font-mono px-1.5 py-0.2 rounded border uppercase font-semibold ${
                 selectedOption.badgeColor ||
-                "bg-zinc-800 text-zinc-300 border-zinc-700"
+                "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700"
               }`}
             >
               {selectedOption.badge}
@@ -241,7 +241,7 @@ export default function CustomDropdown({
         </div>
 
         <ChevronDown
-          className={`w-3.5 h-3.5 text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
+          className={`w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
             isOpen ? "rotate-180 text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.6)]" : ""
           }`}
         />
@@ -251,15 +251,15 @@ export default function CustomDropdown({
       {isOpen && (
         <div
           role="listbox"
-          className={`absolute z-50 mt-1.5 w-full min-w-[220px] rounded-xl border border-[#F6C72F]/40 bg-[#0e131e]/98 backdrop-blur-2xl p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.9),0_0_24px_rgba(246,199,47,0.18),inset_0_1px_1px_rgba(246,199,47,0.1)] animate-fadeIn ${
+          className={`absolute z-50 mt-1.5 w-full min-w-[220px] rounded-xl border border-slate-200 dark:border-[#F6C72F]/40 bg-white/98 dark:bg-[#0e131e]/98 backdrop-blur-2xl p-1.5 shadow-2xl animate-fadeIn ${
             align === "right" ? "right-0" : "left-0"
           } ${menuClassName}`}
         >
           {/* Optional Search Input */}
           {(searchable || normalizedOptions.length > 8) && (
-            <div className="p-1 mb-1 border-b border-zinc-800/80">
+            <div className="p-1 mb-1 border-b border-slate-100 dark:border-zinc-800/80">
               <div className="relative flex items-center">
-                <Search className="absolute left-2 w-3 h-3 text-zinc-500 pointer-events-none" />
+                <Search className="absolute left-2 w-3 h-3 text-slate-400 dark:text-zinc-500 pointer-events-none" />
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -269,7 +269,7 @@ export default function CustomDropdown({
                     setFocusedIndex(0);
                   }}
                   placeholder="Filter options..."
-                  className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-[#07090e] border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:border-[#F6C72F] focus:shadow-[0_0_10px_rgba(246,199,47,0.3)] font-mono"
+                  className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-slate-50 dark:bg-[#07090e] border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-[#F6C72F] focus:shadow-[0_0_10px_rgba(246,199,47,0.3)] font-mono"
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
@@ -279,7 +279,7 @@ export default function CustomDropdown({
           {/* Options List */}
           <div className="max-h-56 overflow-y-auto space-y-0.5 custom-scrollbar">
             {filteredOptions.length === 0 ? (
-              <div className="py-2 px-3 text-center text-[10px] text-zinc-500 font-mono">
+              <div className="py-2 px-3 text-center text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
                 No matching results
               </div>
             ) : (
@@ -307,17 +307,17 @@ export default function CustomDropdown({
                       option.disabled
                         ? "opacity-40 cursor-not-allowed"
                         : isSelected
-                        ? "bg-[#F6C72F]/15 text-[#F6C72F] font-semibold border border-[#F6C72F]/40 shadow-[0_0_10px_rgba(246,199,47,0.15)]"
+                        ? "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] font-semibold border border-amber-500/30 dark:border-[#F6C72F]/40 shadow-[0_0_10px_rgba(246,199,47,0.15)]"
                         : isFocused
-                        ? "bg-zinc-800/90 text-white"
-                        : "text-zinc-300 hover:bg-[#F6C72F]/10 hover:text-white"
+                        ? "bg-slate-100 dark:bg-zinc-800/90 text-slate-900 dark:text-white"
+                        : "text-slate-700 dark:text-zinc-300 hover:bg-amber-500/10 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate pr-2">
                       {OptionIcon && (
                         <OptionIcon
                           className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            isSelected ? "text-[#F6C72F]" : "text-zinc-400"
+                            isSelected ? "text-amber-600 dark:text-[#F6C72F]" : "text-slate-400 dark:text-zinc-400"
                           }`}
                         />
                       )}
@@ -326,7 +326,7 @@ export default function CustomDropdown({
                           {option.label}
                         </div>
                         {option.description && (
-                          <div className="text-[9px] text-zinc-500 font-mono truncate">
+                          <div className="text-[9px] text-slate-500 dark:text-zinc-500 font-mono truncate">
                             {option.description}
                           </div>
                         )}
@@ -338,7 +338,7 @@ export default function CustomDropdown({
                         <span
                           className={`text-[8px] font-mono px-1 py-0.2 rounded border uppercase ${
                             option.badgeColor ||
-                            "bg-zinc-800 text-zinc-400 border-zinc-700"
+                            "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
                           }`}
                         >
                           {option.badge}
