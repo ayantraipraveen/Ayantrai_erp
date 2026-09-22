@@ -16,17 +16,17 @@ import {
   Sparkles,
   ArrowUpRight,
 } from "lucide-react";
-import { useAppSelector } from "@/lib/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { showGlobalToast } from "@/lib/redux/slices/reportModuleSlice";
 
 export default function ActivityLogPage() {
+  const dispatch = useAppDispatch();
   const { activityLogs } = useAppSelector((state) => state.reportModule);
   const [filterType, setFilterType] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3500);
+  const showToast = (msg: string, type: "success" | "info" | "warning" | "error" = "info") => {
+    dispatch(showGlobalToast({ message: msg, type }));
   };
 
   const filteredLogs = activityLogs.filter((log) => {
@@ -55,14 +55,6 @@ export default function ActivityLogPage() {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
-      {/* Toast Feedback */}
-      {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 text-white border border-[#F6C72F]/60 shadow-[0_0_24px_rgba(246,199,47,0.3)] text-xs font-medium animate-slideUp">
-          <Sparkles className="w-4 h-4 text-[#F6C72F]" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0b0e14]/90 backdrop-blur-xl shadow-lg">
         <div>

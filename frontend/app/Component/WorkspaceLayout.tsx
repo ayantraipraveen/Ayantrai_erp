@@ -8,6 +8,7 @@ import { setActiveRole, RoleType } from "@/lib/redux/slices/reportModuleSlice";
 import { ShieldAlert, ArrowLeft, Lock, ShieldCheck, KeyRound, Radio } from "lucide-react";
 import DashboardNavbar from "./DashboardNavbar";
 import Sidebar from "./Sidebar";
+import GlobalToast from "./GlobalToast";
 
 export interface WorkspaceLayoutProps {
   children: React.ReactNode;
@@ -252,6 +253,9 @@ export default function WorkspaceLayout({
           </div>
         </main>
       </div>
+
+      {/* Universal Global Toast Notification */}
+      <GlobalToast />
     </div>
   );
 }

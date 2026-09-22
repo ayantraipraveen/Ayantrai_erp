@@ -32,3 +32,8 @@ export { default as AuthFooter } from "./AuthFooter";
 export * from "./AuthFooter";
 
 export * from "./ThemeProvider";
+
+export { default as GlobalToast } from "./GlobalToast";
+export * from "./GlobalToast";
+
+export * from "./useToast";

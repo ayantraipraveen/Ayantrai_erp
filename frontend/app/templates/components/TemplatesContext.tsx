@@ -23,6 +23,7 @@ import {
   setTemplateBuilderOpen,
   setTemplateDeleteConfirmId,
   setTemplateToastMessage,
+  showGlobalToast,
 } from "@/lib/redux/slices/reportModuleSlice";
 import {
   DropdownOption,
@@ -242,11 +243,11 @@ export function useTemplates() {
   const setBuilderOpen = (open: boolean) => dispatch(setTemplateBuilderOpen(open));
   const setDeleteConfirmId = (id: string | null) => dispatch(setTemplateDeleteConfirmId(id));
 
-  const showToast = (msg: string) => {
-    dispatch(setTemplateToastMessage(msg));
-    setTimeout(() => {
-      dispatch(setTemplateToastMessage(null));
-    }, 3500);
+  const showToast = (
+    msg: string,
+    type: "success" | "info" | "warning" | "error" = "info"
+  ) => {
+    dispatch(showGlobalToast({ message: msg, type }));
   };
 
   // Actions
@@ -258,12 +259,12 @@ export function useTemplates() {
       })
     );
     dispatch(setTemplateReviewModalOpen(false));
-    showToast(`Template "${tpl.name}" approved! Report auto-generated.`);
+    showToast(`Template "${tpl.name}" approved! Report auto-generated.`, "success");
   };
 
   const handleReject = (tpl: ReportTemplate, reason: string) => {
     if (!reason.trim()) {
-      showToast("Please provide a reason for rejection.");
+      showToast("Please provide a reason for rejection.", "warning");
       return;
     }
     dispatch(
@@ -274,13 +275,13 @@ export function useTemplates() {
       })
     );
     dispatch(setTemplateReviewModalOpen(false));
-    showToast(`Template "${tpl.name}" returned for revision.`);
+    showToast(`Template "${tpl.name}" returned for revision.`, "warning");
   };
 
   const handleDelete = (id: string) => {
     dispatch(deleteTemplate(id));
     dispatch(setTemplateDeleteConfirmId(null));
-    showToast("Template blueprint deleted.");
+    showToast("Template blueprint deleted.", "error");
   };
 
   const handleCreateTemplate = (

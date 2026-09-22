@@ -3,8 +3,25 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { DateRangeValue, DEFAULT_DATE_RANGE } from "@/app/Component/DateRangeFilter";
 
+// ============================================================================
+// TYPES & INTERFACES (CENTRALIZED DOMAIN & STATE TYPES)
+// ============================================================================
+
+// 1. Roles & Global Toast Notification
 export type RoleType = "superadmin" | "admin" | "project_head";
 
+export interface ToastNotification {
+  id: string;
+  message: string;
+  type?: "success" | "info" | "warning" | "error";
+  duration?: number;
+}
+
+export type ShowGlobalToastPayload =
+  | { message: string; type?: "success" | "info" | "warning" | "error"; duration?: number }
+  | string;
+
+// 2. Template Blueprint Types & Payloads
 export type TemplateBlockType =
   | "key_metrics"
   | "attendance_trends"
@@ -39,6 +56,18 @@ export interface ReportTemplate {
   version: string;
 }
 
+export interface ApproveTemplatePayload {
+  templateId: string;
+  superadminName: string;
+}
+
+export interface RejectTemplatePayload {
+  templateId: string;
+  reason: string;
+  superadminName: string;
+}
+
+// 3. Report Content, Insights & Feedback
 export interface SupervisoryItem {
   id: string;
   supervisor: string;
@@ -115,6 +144,36 @@ export interface GeneratedReport {
   feedbacks: SectionFeedback[];
 }
 
+export interface UpdateReportRemarksPayload {
+  reportId: string;
+  remarks: string;
+}
+
+export interface UpdateActionPlanPayload {
+  reportId: string;
+  items: ActionPlanItem[];
+}
+
+export interface SendReportPayload {
+  reportId: string;
+  recipientEmail: string;
+}
+
+export interface AddSectionFeedbackPayload {
+  reportId: string;
+  sectionId: TemplateBlockType;
+  sectionTitle: string;
+  comment: string;
+  projectHeadName: string;
+  projectHeadEmail: string;
+}
+
+export interface ResolveSectionFeedbackPayload {
+  reportId: string;
+  feedbackId: string;
+}
+
+// 4. Industrial Sites, Admin Governance & Audit Logs
 export interface AdminAccount {
   id: string;
   name: string;
@@ -138,6 +197,14 @@ export interface SiteInfo {
   auto_attach_pdf: boolean;
 }
 
+export interface UpdateSiteSettingPayload {
+  siteId: string;
+  projectHeadName: string;
+  projectHeadEmail: string;
+  projectHeadPhone: string;
+  autoAttachPdf: boolean;
+}
+
 export interface SystemSettings {
   require_superadmin_approval: boolean;
   notification_sender_email: string;
@@ -155,6 +222,7 @@ export interface ActivityLog {
   type: "template" | "report" | "feedback" | "admin" | "system";
 }
 
+// 5. Main Root Redux Slice State
 export interface ReportModuleState {
   activeRole: RoleType;
   templates: ReportTemplate[];
@@ -164,6 +232,9 @@ export interface ReportModuleState {
   systemSettings: SystemSettings;
   activityLogs: ActivityLog[];
   selectedReportId: string | null;
+
+  // Universal Global Toast System
+  globalToast: ToastNotification | null;
 
   // Pure Redux UI & Filter State for Templates Module
   templateSearchQuery: string;
@@ -599,6 +670,9 @@ const initialState: ReportModuleState = {
   activityLogs: initialActivityLogs,
   selectedReportId: "REP-2026-09-01",
 
+  // Universal Global Toast System
+  globalToast: null,
+
   // Pure Redux UI & Filter State for Templates Module
   templateSearchQuery: "",
   templateStatusFilter: "all",
@@ -644,7 +718,7 @@ export const reportModuleSlice = createSlice({
         type: "template",
       });
     },
-    approveTemplate: (state, action: PayloadAction<{ templateId: string; superadminName: string }>) => {
+    approveTemplate: (state, action: PayloadAction<ApproveTemplatePayload>) => {
       const template = state.templates.find((t) => t.id === action.payload.templateId);
       if (template) {
         template.status = "active";
@@ -678,7 +752,7 @@ export const reportModuleSlice = createSlice({
         });
       }
     },
-    rejectTemplate: (state, action: PayloadAction<{ templateId: string; reason: string; superadminName: string }>) => {
+    rejectTemplate: (state, action: PayloadAction<RejectTemplatePayload>) => {
       const template = state.templates.find((t) => t.id === action.payload.templateId);
       if (template) {
         template.status = "rejected";
@@ -759,20 +833,42 @@ export const reportModuleSlice = createSlice({
     setTemplateToastMessage: (state, action: PayloadAction<string | null>) => {
       state.templateToastMessage = action.payload;
     },
+    // Global Universal Toast Reducers
+    showGlobalToast: (state, action: PayloadAction<ShowGlobalToastPayload>) => {
+      const payload = action.payload;
+      if (typeof payload === "string") {
+        state.globalToast = {
+          id: `toast-${Date.now()}`,
+          message: payload,
+          type: "info",
+          duration: 3500,
+        };
+      } else {
+        state.globalToast = {
+          id: `toast-${Date.now()}`,
+          message: payload.message,
+          type: payload.type || "info",
+          duration: payload.duration || 3500,
+        };
+      }
+    },
+    clearGlobalToast: (state) => {
+      state.globalToast = null;
+    },
     // Report Actions
-    updateReportRemarks: (state, action: PayloadAction<{ reportId: string; remarks: string }>) => {
+    updateReportRemarks: (state, action: PayloadAction<UpdateReportRemarksPayload>) => {
       const report = state.reports.find((r) => r.id === action.payload.reportId);
       if (report) {
         report.content.operational_remarks = action.payload.remarks;
       }
     },
-    updateActionPlan: (state, action: PayloadAction<{ reportId: string; items: ActionPlanItem[] }>) => {
+    updateActionPlan: (state, action: PayloadAction<UpdateActionPlanPayload>) => {
       const report = state.reports.find((r) => r.id === action.payload.reportId);
       if (report) {
         report.content.improvement_action_plan = action.payload.items;
       }
     },
-    sendReportToProjectHead: (state, action: PayloadAction<{ reportId: string; recipientEmail: string }>) => {
+    sendReportToProjectHead: (state, action: PayloadAction<SendReportPayload>) => {
       const report = state.reports.find((r) => r.id === action.payload.reportId);
       if (report) {
         report.status = "sent";
@@ -791,17 +887,7 @@ export const reportModuleSlice = createSlice({
       }
     },
     // Project Head Feedback Actions
-    addSectionFeedback: (
-      state,
-      action: PayloadAction<{
-        reportId: string;
-        sectionId: TemplateBlockType;
-        sectionTitle: string;
-        comment: string;
-        projectHeadName: string;
-        projectHeadEmail: string;
-      }>
-    ) => {
+    addSectionFeedback: (state, action: PayloadAction<AddSectionFeedbackPayload>) => {
       const report = state.reports.find((r) => r.id === action.payload.reportId);
       if (report) {
         const newFeedback: SectionFeedback = {
@@ -829,7 +915,7 @@ export const reportModuleSlice = createSlice({
         });
       }
     },
-    resolveSectionFeedback: (state, action: PayloadAction<{ reportId: string; feedbackId: string }>) => {
+    resolveSectionFeedback: (state, action: PayloadAction<ResolveSectionFeedbackPayload>) => {
       const report = state.reports.find((r) => r.id === action.payload.reportId);
       if (report) {
         const fb = report.feedbacks.find((f) => f.id === action.payload.feedbackId);
@@ -839,16 +925,7 @@ export const reportModuleSlice = createSlice({
       }
     },
     // Site Setting Action
-    updateSiteSetting: (
-      state,
-      action: PayloadAction<{
-        siteId: string;
-        projectHeadName: string;
-        projectHeadEmail: string;
-        projectHeadPhone: string;
-        autoAttachPdf: boolean;
-      }>
-    ) => {
+    updateSiteSetting: (state, action: PayloadAction<UpdateSiteSettingPayload>) => {
       const site = state.sites.find((s) => s.id === action.payload.siteId);
       if (site) {
         site.project_head_name = action.payload.projectHeadName;
@@ -1001,6 +1078,8 @@ export const {
   setTemplateBuilderOpen,
   setTemplateDeleteConfirmId,
   setTemplateToastMessage,
+  showGlobalToast,
+  clearGlobalToast,
   updateReportRemarks,
   updateActionPlan,
   sendReportToProjectHead,
