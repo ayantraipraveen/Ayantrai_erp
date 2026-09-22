@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 export type TooltipPosition = "top" | "bottom" | "left" | "right";
 export type TooltipVariant = "default" | "amber" | "emerald" | "danger" | "sky";
@@ -49,28 +50,10 @@ const variantStyles: Record<TooltipVariant, { container: string; arrow: string }
   },
 };
 
-const positionStyles: Record<TooltipPosition, { container: string; arrow: string }> = {
-  top: {
-    container: "bottom-full left-1/2 -translate-x-1/2 mb-2",
-    arrow: "top-full left-1/2 -translate-x-1/2 -translate-y-1/2 border-r border-b",
-  },
-  bottom: {
-    container: "top-full left-1/2 -translate-x-1/2 mt-2",
-    arrow: "bottom-full left-1/2 -translate-x-1/2 translate-y-1/2 border-l border-t",
-  },
-  left: {
-    container: "right-full top-1/2 -translate-y-1/2 mr-2",
-    arrow: "left-full top-1/2 -translate-y-1/2 -translate-x-1/2 border-t border-r",
-  },
-  right: {
-    container: "left-full top-1/2 -translate-y-1/2 ml-2",
-    arrow: "right-full top-1/2 -translate-y-1/2 translate-x-1/2 border-b border-l",
-  },
-};
-
 /**
  * Reusable Industrial Tooltip Component
  * Displays an illuminated, accessible popover upon hover or keyboard focus.
+ * Portaled to document.body to prevent parent container overflow clipping or scrollbar generation.
  */
 export default function Tooltip({
   content,
@@ -84,11 +67,48 @@ export default function Tooltip({
   disabled = false,
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const triggerRef = useRef<HTMLDivElement | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const updateCoords = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+
+    if (position === "right") {
+      setCoords({
+        top: rect.top + rect.height / 2,
+        left: rect.right + 8,
+      });
+    } else if (position === "left") {
+      setCoords({
+        top: rect.top + rect.height / 2,
+        left: rect.left - 8,
+      });
+    } else if (position === "bottom") {
+      setCoords({
+        top: rect.bottom + 8,
+        left: rect.left + rect.width / 2,
+      });
+    } else {
+      // top
+      setCoords({
+        top: rect.top - 8,
+        left: rect.left + rect.width / 2,
+      });
+    }
+  }, [position]);
 
   const showTooltip = () => {
     if (disabled || !content) return;
+    updateCoords();
     timeoutRef.current = setTimeout(() => {
+      updateCoords();
       setIsVisible(true);
     }, delay);
   };
@@ -100,6 +120,20 @@ export default function Tooltip({
     }
     setIsVisible(false);
   };
+
+  // Recalculate or close on window scroll / resize
+  useEffect(() => {
+    if (!isVisible) return;
+    const handleScrollOrResize = () => {
+      updateCoords();
+    };
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    return () => {
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
+  }, [isVisible, updateCoords]);
 
   useEffect(() => {
     return () => {
@@ -114,10 +148,25 @@ export default function Tooltip({
   }
 
   const currentVariant = variantStyles[variant] || variantStyles.default;
-  const currentPosition = positionStyles[position] || positionStyles.top;
+
+  // Transform and arrow styles per position
+  let transformStyle = "translate(-50%, -100%)";
+  let arrowClass = "bottom-[-4px] left-1/2 -translate-x-1/2 border-r border-b";
+
+  if (position === "bottom") {
+    transformStyle = "translate(-50%, 0)";
+    arrowClass = "top-[-4px] left-1/2 -translate-x-1/2 border-l border-t";
+  } else if (position === "right") {
+    transformStyle = "translate(0, -50%)";
+    arrowClass = "left-[-4px] top-1/2 -translate-y-1/2 border-l border-b";
+  } else if (position === "left") {
+    transformStyle = "translate(-100%, -50%)";
+    arrowClass = "right-[-4px] top-1/2 -translate-y-1/2 border-r border-t";
+  }
 
   return (
     <div
+      ref={triggerRef}
       className={`relative inline-flex items-center ${className}`}
       onMouseEnter={showTooltip}
       onMouseLeave={hideTooltip}
@@ -126,27 +175,34 @@ export default function Tooltip({
     >
       {children}
 
-      {/* Tooltip Floating Bubble */}
-      <div
-        role="tooltip"
-        aria-hidden={!isVisible}
-        className={`pointer-events-none absolute z-50 whitespace-nowrap rounded-xl border px-2.5 py-1 text-[10px] font-mono font-medium tracking-tight backdrop-blur-xl transition-all duration-150 ${
-          currentPosition.container
-        } ${currentVariant.container} ${
-          isVisible
-            ? "opacity-100 scale-100 translate-y-0"
-            : "opacity-0 scale-95 pointer-events-none"
-        } ${tooltipClassName}`}
-      >
-        {content}
+      {/* Tooltip Floating Bubble (Portaled to document.body) */}
+      {mounted &&
+        isVisible &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            role="tooltip"
+            style={{
+              position: "fixed",
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              transform: transformStyle,
+              zIndex: 99999,
+            }}
+            className={`pointer-events-none whitespace-nowrap rounded-xl border px-2.5 py-1 text-[10px] font-mono font-medium tracking-tight backdrop-blur-xl animate-fadeIn ${currentVariant.container} ${tooltipClassName}`}
+          >
+            {content}
 
-        {/* Directional Arrow */}
-        {showArrow && (
-          <span
-            className={`absolute h-1.5 w-1.5 rotate-45 pointer-events-none ${currentPosition.arrow} ${currentVariant.arrow}`}
-          />
+            {/* Directional Arrow */}
+            {showArrow && (
+              <span
+                className={`absolute h-1.5 w-1.5 rotate-45 pointer-events-none ${arrowClass} ${currentVariant.arrow}`}
+              />
+            )}
+          </div>,
+          document.body
         )}
-      </div>
     </div>
   );
 }
+

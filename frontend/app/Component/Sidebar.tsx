@@ -118,7 +118,6 @@ export const adminNavItems: NavItem[] = [
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    badge: "SITE",
     badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
     description: "Site operations & telemetry summary",
   },
@@ -126,7 +125,6 @@ export const adminNavItems: NavItem[] = [
     name: "Templates",
     href: "/templates",
     icon: Layers,
-    badge: "BUILDER",
     badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
     description: "Create & submit template blocks",
   },
@@ -134,7 +132,6 @@ export const adminNavItems: NavItem[] = [
     name: "Reports",
     href: "/report",
     icon: BarChart3,
-    badge: "ISO 45001",
     badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
     description: "Report history, edit & send",
   },
@@ -152,7 +149,6 @@ export const projectHeadNavItems: NavItem[] = [
     name: "Report Review",
     href: "/report",
     icon: FileCheck2,
-    badge: "FEEDBACK",
     badgeColor: "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/40",
     description: "Interactive report & section commenting",
   },
@@ -160,7 +156,6 @@ export const projectHeadNavItems: NavItem[] = [
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    badge: "SUMMARY",
     badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
     description: "Project telemetry overview",
   },
@@ -478,8 +473,9 @@ export default function Sidebar({
                     }
                     position="right"
                     variant={active ? "amber" : "default"}
+                    className="w-full flex justify-center"
                   >
-                    <div>{linkContent}</div>
+                    {linkContent}
                   </Tooltip>
                 );
               }
@@ -565,117 +561,17 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* ================= SUPERADMIN CONTROL PLANE PILL ================= */}
-        {effectiveRole === "superadmin" && (
-          sidebarOpen ? (
-            <div className="px-3 pt-3 pb-1">
-              <div className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border border-amber-500/30 flex items-center justify-between shadow-xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="h-5 w-5 rounded-md bg-[#F6C72F]/20 text-[#F6C72F] flex items-center justify-center flex-shrink-0">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200 truncate">
-                    Superadmin Console
-                  </span>
-                </div>
-                <span className="inline-flex items-center gap-1 text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  ROOT
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="pt-2 pb-1 flex justify-center">
-              <Tooltip content="Superadmin Console • Full Root Privileges" position="right" variant="amber">
-                <div className="h-8 w-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-[#F6C72F] shadow-sm cursor-help">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-              </Tooltip>
-            </div>
-          )
-        )}
 
         {/* ================= NAVIGATION LINKS SCROLLABLE BODY ================= */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <div
+          className={`flex-1 custom-scrollbar ${
+            sidebarOpen ? "overflow-y-auto" : "overflow-x-hidden overflow-y-auto"
+          }`}
+        >
           {renderNavLinks(false)}
         </div>
 
-        {/* ================= DESKTOP BOTTOM SECTION (TELEMETRY + USER PROFILE) ================= */}
-        <div className="border-t border-slate-200/90 dark:border-zinc-800/80 p-2.5 flex-shrink-0 bg-slate-50/50 dark:bg-[#07090e]/50">
-          {sidebarOpen ? (
-            <div className="space-y-2">
-              {/* Telemetry Status Bar */}
-              <div className="px-2 py-1.5 rounded-lg border border-slate-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-[#0e1219]/80 flex items-center justify-between text-[10px] font-mono">
-                <span className="flex items-center gap-1.5 text-slate-600 dark:text-zinc-400">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 beacon-active" />
-                  Mesh Uplink:
-                </span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Active (4G LTE)</span>
-              </div>
-
-              {/* Standard Enterprise User Profile Card */}
-              <div className="p-2 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] flex items-center justify-between gap-2 shadow-sm hover:border-[#F6C72F]/40 transition-colors">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  {/* Avatar Initials with Status Halo */}
-                  <div className="relative h-8 w-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-bold text-xs flex items-center justify-center shadow-[0_0_10px_rgba(246,199,47,0.3)] flex-shrink-0">
-                    <span>{userInitials}</span>
-                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0c1017]" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                      {resolvedUserName}
-                    </div>
-                    <div className="text-[10px] text-slate-500 dark:text-zinc-400 truncate flex items-center gap-1 mt-0.5">
-                      <span className="text-[9px] font-mono uppercase font-bold text-amber-600 dark:text-[#F6C72F] px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/30">
-                        {resolvedRole}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quick Sign Out Action */}
-                {onLogout && (
-                  <Tooltip content="Sign Out" position="top" variant="amber">
-                    <button
-                      type="button"
-                      onClick={onLogout}
-                      aria-label="Sign out"
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all cursor-pointer flex-shrink-0"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                    </button>
-                  </Tooltip>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-2 py-1">
-              <Tooltip
-                content={`${resolvedUserName} (${resolvedRole}) • ${resolvedCompany}`}
-                position="right"
-                variant="amber"
-              >
-                <div className="relative h-8 w-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-bold text-xs flex items-center justify-center shadow-[0_0_10px_rgba(246,199,47,0.3)] cursor-help">
-                  <span>{userInitials}</span>
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#0c1017]" />
-                </div>
-              </Tooltip>
-
-              {onLogout && (
-                <Tooltip content="Sign Out" position="right">
-                  <button
-                    type="button"
-                    onClick={onLogout}
-                    aria-label="Sign out"
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all cursor-pointer"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                  </button>
-                </Tooltip>
-              )}
-            </div>
-          )}
-        </div>
+       
       </aside>
 
       {/* ================= MOBILE DRAWER OVERLAY ================= */}
