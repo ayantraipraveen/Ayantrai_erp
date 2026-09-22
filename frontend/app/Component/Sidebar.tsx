@@ -453,12 +453,22 @@ export default function Sidebar({
                 className="flex items-center gap-2 group overflow-hidden min-w-0"
               >
                 <div className="relative h-7 w-28 flex items-center flex-shrink-0">
+                  {/* Light Mode: Blue Text */}
+                  <Image
+                    src="/logo-light.png"
+                    alt="AyantrAI Sitesafe"
+                    width={112}
+                    height={30}
+                    className="w-[120px] object-contain dark:hidden filter brightness-105"
+                    priority
+                  />
+                  {/* Dark Mode: White Text */}
                   <Image
                     src="/logo.png"
                     alt="AyantrAI Sitesafe"
                     width={112}
                     height={30}
-                    className="w-[120px] object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
+                    className="w-[120px] object-contain hidden dark:block filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
                     priority
                   />
                 </div>
@@ -530,12 +540,22 @@ export default function Sidebar({
                   className="flex items-center gap-2 group"
                 >
                   <div className="relative h-7 w-28 flex items-center">
+                    {/* Light Mode */}
+                    <Image
+                      src="/logo-light.png"
+                      alt="AyantrAI Sitesafe"
+                      width={112}
+                      height={30}
+                      className="object-contain dark:hidden filter brightness-105"
+                      priority
+                    />
+                    {/* Dark Mode */}
                     <Image
                       src="/logo.png"
                       alt="AyantrAI Sitesafe"
                       width={112}
                       height={30}
-                      className="object-contain filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
+                      className="object-contain hidden dark:block filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)]"
                       priority
                     />
                   </div>
