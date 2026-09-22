@@ -1,7 +1,11 @@
 export { default as AuthNavbar } from "./AuthNavbar";
 export * from "./AuthNavbar";
 
-export { default as DashboardNavbar } from "./DashboardNavbar";
+export {
+  default as DashboardNavbar,
+  AppNavbar,
+  CommonNavbar,
+} from "./DashboardNavbar";
 export * from "./DashboardNavbar";
 
 export { default as Tooltip } from "./Tooltip";

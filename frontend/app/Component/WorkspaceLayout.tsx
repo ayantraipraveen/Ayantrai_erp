@@ -11,17 +11,37 @@ import Sidebar from "./Sidebar";
 
 export interface WorkspaceLayoutProps {
   children: React.ReactNode;
+  /** Optional custom title override for top command navbar */
+  title?: string;
+  /** Optional custom section badge override (e.g., "GOVERNANCE", "ISO 45001") */
+  sectionBadge?: string;
+  /** Optional custom breadcrumbs array */
+  breadcrumbs?: Array<{ label: string; href?: string }>;
+  /** Whether to display notifications bell */
+  showNotifications?: boolean;
+  /** Custom action slot rendered on the left of top navbar */
+  headerLeftActions?: React.ReactNode;
+  /** Custom action slot rendered on the right of top navbar */
+  headerRightActions?: React.ReactNode;
 }
 
 // Routes strictly reserved for Superadmin governance
 const SUPERADMIN_ONLY_ROUTES = ["/admins", "/settings", "/sites", "/activity-log"];
 
 /**
- * Shared authenticated workspace shell featuring top command bar (DashboardNavbar),
+ * Shared authenticated workspace shell featuring top command bar (DashboardNavbar / AppNavbar),
  * responsive collapsible sidebar (Sidebar), atmospheric lighting layers, scroll container,
  * and robust Token Verification + Role-Based Access Control (RBAC).
  */
-export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
+export default function WorkspaceLayout({
+  children,
+  title,
+  sectionBadge,
+  breadcrumbs,
+  showNotifications,
+  headerLeftActions,
+  headerRightActions,
+}: WorkspaceLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
@@ -147,15 +167,22 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
       {/* ================= RIGHT COLUMN (TOP COMMAND BAR + SCROLLABLE WORKSPACE) ================= */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative z-20">
-        {/* Top Command Bar (DashboardNavbar) */}
+        {/* Top Command Bar (DashboardNavbar / AppNavbar) */}
         <DashboardNavbar
           sidebarOpen={sidebarOpen}
           setSidebarOpen={handleSetSidebarOpen}
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
           activeSite={activeSite}
+          onSiteChange={setActiveSite}
           currentUser={currentUser}
           onLogout={handleLogout}
+          title={title}
+          sectionBadge={sectionBadge}
+          breadcrumbs={breadcrumbs}
+          showNotifications={showNotifications}
+          leftActions={headerLeftActions}
+          rightActions={headerRightActions}
         />
 
         {/* ================= MAIN WORKSPACE AREA ================= */}
