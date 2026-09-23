@@ -33,7 +33,7 @@ export default function TemplateFilterToolbar() {
   } = useTemplates();
 
   return (
-    <div className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-xl shadow-sm">
+    <div className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-xl shadow-sm">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         {/* Left Side: Search + Status Dropdown + Site Dropdown + Reset */}
         <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-2.5 flex-wrap">

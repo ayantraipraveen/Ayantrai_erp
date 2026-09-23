@@ -41,9 +41,9 @@ export default function TemplatesTable() {
   const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
 
   return (
-    <div className="w-full border-y border-l border-r-0 border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-xl shadow-sm flex flex-col overflow-hidden">
+    <div className="w-full flex-1 min-h-0 border-y border-l border-r-0 border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-xl shadow-sm flex flex-col overflow-hidden">
       {/* Scrollable table container - ONLY this container scrolls */}
-      <div className="overflow-x-auto overflow-y-auto max-h-[620px] min-h-[380px] custom-scrollbar w-full">
+      <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 custom-scrollbar w-full">
         <table className="w-full text-left border-collapse">
           {/* Sticky Header */}
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.5)] border-b border-slate-200 dark:border-zinc-800/80 text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none backdrop-blur-md">
