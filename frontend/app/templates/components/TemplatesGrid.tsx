@@ -166,13 +166,21 @@ export default function TemplatesGrid() {
                     <Tooltip
                       content={
                         <div className="max-w-xs space-y-1">
-                          <div className="font-bold text-[11px] text-purple-300 border-b border-purple-400/20 pb-0.5">
-                            {template.blocks.length} Configured Sections:
+                          <div className="font-bold text-[11px] text-purple-300 border-b border-purple-400/20 pb-0.5 flex items-center justify-between">
+                            <span>{template.blocks.length} Configured Sections:</span>
+                            <span className="text-[9px] font-mono text-purple-200">
+                              {template.blocks.reduce((acc, b) => acc + (b.graphs?.length || 0), 0)} graphs
+                            </span>
                           </div>
-                          <div className="text-[10px] leading-relaxed">
+                          <div className="text-[10px] leading-relaxed space-y-0.5">
                             {template.blocks.map((b, i) => (
-                              <div key={b.id || i} className="truncate">
-                                • {b.title}
+                              <div key={b.id || i} className="flex items-center justify-between gap-2">
+                                <span className="truncate">• {b.title}</span>
+                                {b.graphs && b.graphs.length > 0 && (
+                                  <span className="text-[9px] font-mono text-purple-300 flex-shrink-0">
+                                    ({b.graphs.length} {b.graphs.length === 1 ? "graph" : "graphs"})
+                                  </span>
+                                )}
                               </div>
                             ))}
                           </div>

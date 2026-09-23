@@ -68,21 +68,51 @@ export default function TemplateReviewModal() {
           <div className="space-y-2">
             {selectedTemplate.blocks.map((b, idx) => (
               <div
-                key={b.id}
-                className="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 flex items-center justify-between text-xs"
+                key={b.id || idx}
+                className="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 flex flex-col gap-2 text-xs"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-[#9D61FF]/20 text-[#9D61FF] font-mono text-[10px] flex items-center justify-center font-bold">
-                    {idx + 1}
-                  </span>
-                  <div>
-                    <div className="font-semibold text-slate-900 dark:text-white">{b.title}</div>
-                    <div className="text-[10px] text-slate-500 dark:text-zinc-400">{b.description}</div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-[#9D61FF]/20 text-[#9D61FF] font-mono text-[10px] flex items-center justify-center font-bold">
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-slate-900 dark:text-white">{b.title}</span>
+                        {b.isCustom && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.2 rounded border uppercase font-bold bg-amber-500/10 text-amber-500 border-amber-500/30">
+                            Custom
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-zinc-400">{b.description}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {b.graphs && b.graphs.length > 0 && (
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-[#9D61FF] border border-purple-500/30 font-semibold">
+                        {b.graphs.length} {b.graphs.length === 1 ? "graph" : "graphs"}
+                      </span>
+                    )}
+                    <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold">
+                      Included
+                    </span>
                   </div>
                 </div>
-                <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold">
-                  Included
-                </span>
+
+                {b.graphs && b.graphs.length > 0 && (
+                  <div className="pl-7 pt-1.5 border-t border-slate-200/60 dark:border-zinc-800/60 flex flex-wrap gap-1.5">
+                    {b.graphs.map((g) => (
+                      <span
+                        key={g.id}
+                        className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300"
+                      >
+                        <span className="text-[#9D61FF] font-bold uppercase">{g.type}:</span>
+                        <span>{g.title}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
