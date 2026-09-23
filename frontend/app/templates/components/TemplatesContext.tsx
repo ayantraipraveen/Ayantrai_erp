@@ -9,6 +9,7 @@ import {
   addTemplate,
   updateTemplate,
   duplicateTemplate,
+  updateTemplateRemark,
   approveTemplate,
   rejectTemplate,
   deleteTemplate,
@@ -382,6 +383,11 @@ export function useTemplates() {
     return true;
   };
 
+  const handleUpdateRemark = (templateId: string, remarks: string) => {
+    dispatch(updateTemplateRemark({ templateId, remarks }));
+    showToast("Template remark saved.", "success");
+  };
+
   return {
     templates,
     activeRole,
@@ -432,6 +438,7 @@ export function useTemplates() {
     handleDuplicate,
     handleCreateTemplate,
     handleUpdateTemplate,
+    handleUpdateRemark,
   };
 }
 

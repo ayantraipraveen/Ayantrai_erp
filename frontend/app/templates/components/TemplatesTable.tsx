@@ -13,6 +13,10 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Layers,
+  MessageSquare,
+  X,
+  Check,
 } from "lucide-react";
 import { Tooltip } from "../../Component";
 import { useTemplates } from "./TemplatesContext";
@@ -36,7 +40,12 @@ export default function TemplatesTable() {
     handleDuplicate,
     setReviewModalOpen,
     setDeleteConfirmId,
+    resetFilters,
+    handleUpdateRemark,
   } = useTemplates();
+
+  const [remarkModalTemplate, setRemarkModalTemplate] = React.useState<any | null>(null);
+  const [remarkText, setRemarkText] = React.useState("");
 
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
@@ -49,26 +58,52 @@ export default function TemplatesTable() {
 
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] border-b border-slate-200 dark:border-zinc-800/80 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none">
             <tr>
-              <th className="py-2 px-3 font-semibold w-[25%]">Template &amp; Blueprint</th>
+              <th className="py-2 px-3 font-semibold w-[24%]">Template &amp; Blueprint</th>
               <th className="py-2 px-3 font-semibold w-[16%]">Target Site</th>
               <th className="py-2 px-3 font-semibold w-[18%]">Configured Modules</th>
-              <th className="py-2 px-3 font-semibold w-[13%]">Status</th>
               <th className="py-2 px-3 font-semibold w-[18%]">Author / Created</th>
-              <th className="py-2 px-3 font-semibold w-[10%] text-right">Actions</th>
+              <th className="py-2 px-3 font-semibold w-[12%]">Status</th>
+              <th className="py-2 px-3 font-semibold w-[12%] text-right">Actions</th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60">
-            {paginatedTemplates.map((template) => {
-              const isPending  = template.status === "pending";
-              const isActive   = template.status === "active";
-              const isRejected = template.status === "rejected";
+            {paginatedTemplates.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-16 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto">
+                    <div className="h-10 w-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-[#9D61FF] flex items-center justify-center">
+                      <Layers className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                        No Templates Available
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
+                        No safety report blueprints match your current filter or search criteria.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-[11px] font-semibold text-slate-800 dark:text-white transition-colors cursor-pointer"
+                    >
+                      Reset All Filters
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              paginatedTemplates.map((template) => {
+                const isPending  = template.status === "pending";
+                const isActive   = template.status === "active";
+                const isRejected = template.status === "rejected";
 
-              return (
-                <tr
-                  key={template.id}
-                  className="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/30 transition-colors"
-                >
+                return (
+                  <tr
+                    key={template.id}
+                    className="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/30 transition-colors"
+                  >
                   {/* Template & Blueprint */}
                   <td className="py-2 px-3 overflow-hidden">
                     <div className="flex items-start gap-2 min-w-0">
@@ -136,21 +171,34 @@ export default function TemplatesTable() {
                     </div>
                   </td>
 
+                  {/* Author / Created */}
+                  <td className="py-2 px-3 overflow-hidden">
+                    <Tooltip content={template.created_by} position="top">
+                      <div className="font-medium text-[11px] text-slate-800 dark:text-zinc-200 truncate cursor-default">
+                        {template.created_by}
+                      </div>
+                    </Tooltip>
+                    <div className="text-[10px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
+                      {template.created_at}
+                    </div>
+                  </td>
+
                   {/* Status */}
                   <td className="py-2 px-3 overflow-hidden">
                     <span
-                      className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border uppercase font-bold whitespace-nowrap ${
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-medium capitalize whitespace-nowrap ${
                         isActive
-                          ? "bg-emerald-950/60 text-emerald-400 border-emerald-500/40"
+                          ? "text-emerald-600 dark:text-emerald-400"
                           : isPending
-                          ? "bg-amber-950/60 text-amber-400 border-amber-500/50"
+                          ? "text-amber-600 dark:text-amber-400"
                           : isRejected
-                          ? "bg-rose-950/60 text-rose-400 border-rose-500/40"
-                          : "bg-slate-800 text-slate-300 border-slate-700"
+                          ? "text-rose-600 dark:text-rose-400"
+                          : "text-slate-600 dark:text-zinc-400"
                       }`}
                     >
-                      {isPending && <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-ping flex-shrink-0" />}
-                      {isActive  && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 flex-shrink-0" />}
+                      {isPending && <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping flex-shrink-0" />}
+                      {isActive  && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0" />}
+                      {isRejected && <span className="h-1.5 w-1.5 rounded-full bg-rose-500 flex-shrink-0" />}
                       <span className="truncate">
                         {isPending ? "Pending" : template.status}
                       </span>
@@ -162,18 +210,6 @@ export default function TemplatesTable() {
                         </div>
                       </Tooltip>
                     )}
-                  </td>
-
-                  {/* Author / Created */}
-                  <td className="py-2 px-3 overflow-hidden">
-                    <Tooltip content={template.created_by} position="top">
-                      <div className="font-medium text-[11px] text-slate-800 dark:text-zinc-200 truncate cursor-default">
-                        {template.created_by}
-                      </div>
-                    </Tooltip>
-                    <div className="text-[10px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
-                      {template.created_at}
-                    </div>
                   </td>
 
                   {/* Actions */}
@@ -198,6 +234,25 @@ export default function TemplatesTable() {
                           className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
                         >
                           <Eye className="w-3 h-3" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content={template.remarks ? `Remark: "${template.remarks}"` : "Add remark"} position="top">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRemarkModalTemplate(template);
+                            setRemarkText(template.remarks || "");
+                          }}
+                          className={`h-6 w-6 rounded-md border transition-all flex items-center justify-center cursor-pointer relative ${
+                            template.remarks
+                              ? "border-amber-500/50 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
+                              : "border-slate-200 dark:border-zinc-800 hover:border-amber-500/50 text-slate-500 dark:text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10"
+                          }`}
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          {template.remarks && (
+                            <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          )}
                         </button>
                       </Tooltip>
                       <Tooltip content="Edit template" position="top">
@@ -230,8 +285,9 @@ export default function TemplatesTable() {
                     </div>
                   </td>
                 </tr>
-              );
-            })}
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
@@ -315,6 +371,85 @@ export default function TemplatesTable() {
           </button>
         </div>
       </div>
+
+      {/* Remark Modal Dialog */}
+      {remarkModalTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800/80 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
+                  <MessageSquare className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                    Template Remark
+                  </h3>
+                  <p className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
+                    {remarkModalTemplate.id} • {remarkModalTemplate.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRemarkModalTemplate(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-slate-700 dark:text-zinc-300">
+                Operational Notes / Remarks
+              </label>
+              <textarea
+                rows={3}
+                value={remarkText}
+                onChange={(e) => setRemarkText(e.target.value)}
+                placeholder="Enter remarks, audit notes, or compliance reminders for this template..."
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500/80 transition-all placeholder:text-slate-400"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              {remarkModalTemplate.remarks ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdateRemark(remarkModalTemplate.id, "");
+                    setRemarkModalTemplate(null);
+                  }}
+                  className="text-[11px] text-rose-500 hover:underline cursor-pointer"
+                >
+                  Clear remark
+                </button>
+              ) : <div />}
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRemarkModalTemplate(null)}
+                  className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUpdateRemark(remarkModalTemplate.id, remarkText.trim());
+                    setRemarkModalTemplate(null);
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Save Remark</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

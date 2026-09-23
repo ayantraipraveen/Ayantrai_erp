@@ -53,6 +53,7 @@ export interface ReportTemplate {
   approved_by?: string;
   approved_at?: string;
   rejection_reason?: string;
+  remarks?: string;
   version: string;
 }
 
@@ -789,6 +790,24 @@ export const reportModuleSlice = createSlice({
         });
       }
     },
+    updateTemplateRemark: (
+      state,
+      action: PayloadAction<{ templateId: string; remarks: string }>
+    ) => {
+      const template = state.templates.find((t) => t.id === action.payload.templateId);
+      if (template) {
+        template.remarks = action.payload.remarks;
+        state.activityLogs.unshift({
+          id: `act-${Date.now()}-rem`,
+          actor: state.activeRole === "superadmin" ? "Dr. Vikram Seth" : "Site Admin",
+          role: state.activeRole === "superadmin" ? "Superadmin" : "Site Admin",
+          action: "Updated template operational remark",
+          target: `${template.id} (${template.name})`,
+          timestamp: "Just now",
+          type: "template",
+        });
+      }
+    },
     approveTemplate: (state, action: PayloadAction<ApproveTemplatePayload>) => {
       const template = state.templates.find((t) => t.id === action.payload.templateId);
       if (template) {
@@ -1138,6 +1157,7 @@ export const {
   addTemplate,
   updateTemplate,
   duplicateTemplate,
+  updateTemplateRemark,
   approveTemplate,
   rejectTemplate,
   deleteTemplate,

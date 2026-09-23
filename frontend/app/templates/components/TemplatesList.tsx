@@ -13,7 +13,7 @@ import TemplatesGrid from "./TemplatesGrid";
 export default function TemplatesList() {
   const { filteredTemplates, viewMode, resetFilters } = useTemplates();
 
-  if (filteredTemplates.length === 0) {
+  if (viewMode === "grid" && filteredTemplates.length === 0) {
     return (
       <div className="px-4 sm:px-6 lg:px-7">
         <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 bg-white/50 dark:bg-[#0c1017]/50 backdrop-blur-sm space-y-4">
