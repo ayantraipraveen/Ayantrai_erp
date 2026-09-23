@@ -143,6 +143,12 @@ const SECTION_REGISTRY: Record<string, SectionRegistryMeta> = {
     badge: "GOVERNANCE",
     badgeStyle: "bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border-purple-500/30",
   },
+  "/sections-and-graphs": {
+    title: "Sections & Graphs Library",
+    shortTitle: "Sections & Graphs",
+    badge: "LIBRARY",
+    badgeStyle: "bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border-purple-500/30",
+  },
   "/report": {
     title: "Compliance Reports",
     shortTitle: "Reports",

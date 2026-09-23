@@ -1,11 +1,14 @@
-export { default as TemplateMetricsBar } from "./TemplateMetricsBar";
-export { default as TemplateFilterToolbar } from "./TemplateFilterToolbar";
-export { default as TemplatesTable } from "./TemplatesTable";
-export { default as TemplatesGrid } from "./TemplatesGrid";
-export { default as TemplatesList } from "./TemplatesList";
-export { default as TemplateReviewModal } from "./TemplateReviewModal";
-export { default as TemplateBuilderDrawer } from "./TemplateBuilderDrawer";
-export { default as DeleteTemplateModal } from "./DeleteTemplateModal";
-export { default as TemplateToast } from "./TemplateToast";
-export { default as SectionsCatalogModal } from "./SectionsCatalogModal";
+// ============================================================================
+// 1. Template Blueprint Management Components (Sub-Module)
+// ============================================================================
+export * from "./template-management";
+
+// ============================================================================
+// 2. Sections & Telemetry Graphs Management Components (Sub-Module)
+// ============================================================================
+export * from "./sections";
+
+// ============================================================================
+// 3. Shared Context, Hooks & Bridge Helpers
+// ============================================================================
 export * from "./TemplatesContext";

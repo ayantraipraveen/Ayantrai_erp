@@ -71,7 +71,7 @@ export default function Tooltip({
   tooltipClassName = "",
   showArrow = true,
   disabled = false,
-  followCursor = true,
+  followCursor = false,
   maxWidth = "max-w-xs",
   wrap = true,
 }: TooltipProps) {
@@ -89,17 +89,17 @@ export default function Tooltip({
     setMounted(true);
   }, []);
 
-  // Compute tooltip coordinates relative to mouse cursor or trigger rect
+  // Compute tooltip coordinates relative to trigger rect or mouse cursor
   const computeCoords = useCallback(
     (clientX?: number, clientY?: number) => {
-      // 1. Mouse Cursor Follow Mode
+      const viewportW = typeof window !== "undefined" ? window.innerWidth : 1200;
+      const viewportH = typeof window !== "undefined" ? window.innerHeight : 800;
+
+      // 1. Mouse Cursor Follow Mode (Only if explicitly enabled)
       if (followCursor && clientX !== undefined && clientY !== undefined) {
         let actualPos = position;
         let top = clientY;
         let left = clientX;
-
-        const viewportW = typeof window !== "undefined" ? window.innerWidth : 1200;
-        const viewportH = typeof window !== "undefined" ? window.innerHeight : 800;
 
         if (position === "top") {
           if (clientY < 48) {
@@ -108,8 +108,7 @@ export default function Tooltip({
           } else {
             top = clientY - 12;
           }
-          // Clamp horizontally to prevent viewport edge clipping (allow up to 160px margin)
-          left = Math.max(160, Math.min(viewportW - 160, clientX));
+          left = Math.max(24, Math.min(viewportW - 24, clientX));
         } else if (position === "bottom") {
           if (clientY > viewportH - 48) {
             actualPos = "top";
@@ -117,23 +116,23 @@ export default function Tooltip({
           } else {
             top = clientY + 16;
           }
-          left = Math.max(160, Math.min(viewportW - 160, clientX));
+          left = Math.max(24, Math.min(viewportW - 24, clientX));
         } else if (position === "right") {
-          if (clientX > viewportW - 150) {
+          if (clientX > viewportW - 80) {
             actualPos = "left";
             left = clientX - 14;
           } else {
             left = clientX + 14;
           }
-          top = Math.max(25, Math.min(viewportH - 25, clientY));
+          top = Math.max(20, Math.min(viewportH - 20, clientY));
         } else if (position === "left") {
-          if (clientX < 150) {
+          if (clientX < 80) {
             actualPos = "right";
             left = clientX + 14;
           } else {
             left = clientX - 14;
           }
-          top = Math.max(25, Math.min(viewportH - 25, clientY));
+          top = Math.max(20, Math.min(viewportH - 20, clientY));
         }
 
         setActivePos(actualPos);
@@ -141,33 +140,49 @@ export default function Tooltip({
         return;
       }
 
-      // 2. Element-Anchored Mode (Keyboard focus or followCursor=false)
+      // 2. Element-Anchored Mode (Default & standard for icon buttons)
       if (!triggerRef.current) return;
       const rect = triggerRef.current.getBoundingClientRect();
-      setActivePos(position);
+      let actualPos = position;
+      let top = 0;
+      let left = rect.left + rect.width / 2;
 
-      if (position === "right") {
-        setCoords({
-          top: rect.top + rect.height / 2,
-          left: rect.right + 8,
-        });
-      } else if (position === "left") {
-        setCoords({
-          top: rect.top + rect.height / 2,
-          left: rect.left - 8,
-        });
+      if (position === "top") {
+        if (rect.top < 44) {
+          actualPos = "bottom";
+          top = rect.bottom + 8;
+        } else {
+          top = rect.top - 8;
+        }
       } else if (position === "bottom") {
-        setCoords({
-          top: rect.bottom + 8,
-          left: rect.left + rect.width / 2,
-        });
-      } else {
-        // top
-        setCoords({
-          top: rect.top - 8,
-          left: rect.left + rect.width / 2,
-        });
+        if (rect.bottom > viewportH - 44) {
+          actualPos = "top";
+          top = rect.top - 8;
+        } else {
+          top = rect.bottom + 8;
+        }
+      } else if (position === "right") {
+        if (rect.right > viewportW - 80) {
+          actualPos = "left";
+          left = rect.left - 8;
+        } else {
+          left = rect.right + 8;
+        }
+        top = rect.top + rect.height / 2;
+      } else if (position === "left") {
+        if (rect.left < 80) {
+          actualPos = "right";
+          left = rect.right + 8;
+        } else {
+          left = rect.left - 8;
+        }
+        top = rect.top + rect.height / 2;
       }
+
+      // Gentle horizontal clamp to prevent viewport clipping
+      left = Math.max(20, Math.min(viewportW - 20, left));
+      setActivePos(actualPos);
+      setCoords({ top, left });
     },
     [followCursor, position]
   );

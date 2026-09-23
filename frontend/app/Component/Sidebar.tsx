@@ -14,6 +14,7 @@ import {
   X,
   PanelLeftClose,
   Layers,
+  LayoutGrid,
   Building2,
   Sliders,
   LogOut,

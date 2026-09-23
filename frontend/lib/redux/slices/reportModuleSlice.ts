@@ -248,6 +248,55 @@ export interface ActivityLog {
   type: "template" | "report" | "feedback" | "admin" | "system";
 }
 
+// 4b. Standalone "Sections & Graphs" Master Library Types
+export type PaletteRamp =
+  | "blue"
+  | "green"
+  | "purple"
+  | "red"
+  | "amber"
+  | "emerald"
+  | "cyan"
+  | "orange"
+  | "slate";
+
+export interface LibraryMetricCard {
+  id: string;
+  label: string;
+  value: string;
+  dataSourceField?: string;
+  tintColor: PaletteRamp;
+  trendDirection: "up" | "down" | "no-change";
+  trendValue: string;
+  icon?: string;
+}
+
+export interface LibraryChartCard {
+  id: string;
+  title: string;
+  chartType: GraphType;
+  dataSourceField: string;
+  description?: string;
+}
+
+export interface LibraryKeyInsightItem {
+  id: string;
+  text: string;
+}
+
+export interface LibrarySection {
+  id: string;
+  name: string;
+  eyebrow: string;
+  description: string;
+  type: "core" | "custom";
+  icon?: string;
+  updatedAt: string;
+  metricCards: LibraryMetricCard[];
+  charts: LibraryChartCard[];
+  keyInsights: LibraryKeyInsightItem[];
+}
+
 // 5. Main Root Redux Slice State
 export interface ReportModuleState {
   activeRole: RoleType;
@@ -277,9 +326,12 @@ export interface ReportModuleState {
   templateSectionsModalOpen: boolean;
   templateDeleteConfirmId: string | null;
   templateToastMessage: string | null;
+  templateActiveTab: "templates" | "sections";
 
   // Master Global Library of Sections & Graphs
   globalSections: TemplateBlock[];
+  librarySections: LibrarySection[];
+  selectedLibrarySectionId: string | null;
 }
 
 const defaultBlocks: TemplateBlock[] = [
@@ -763,6 +815,563 @@ const initialActivityLogs: ActivityLog[] = [
   },
 ];
 
+export const initialLibrarySections: LibrarySection[] = [
+  {
+    id: "sec-core-1",
+    name: "Key Metrics",
+    eyebrow: "EXECUTIVE SUMMARY",
+    description: "Core workforce safety KPIs, site muster adherence, risk-free hours, and connected telemetry deployment.",
+    type: "core",
+    icon: "Activity",
+    updatedAt: "2026-09-22 14:30",
+    metricCards: [
+      {
+        id: "mc-1",
+        label: "Attendance Adherence",
+        value: "94.2%",
+        dataSourceField: "attendance_rate",
+        tintColor: "blue",
+        trendDirection: "up",
+        trendValue: "+2.4% vs last cycle",
+        icon: "Users",
+      },
+      {
+        id: "mc-2",
+        label: "PPE Compliance Index",
+        value: "98.7%",
+        dataSourceField: "compliance_rate",
+        tintColor: "emerald",
+        trendDirection: "up",
+        trendValue: "+1.1% vs target",
+        icon: "ShieldCheck",
+      },
+      {
+        id: "mc-3",
+        label: "Safe Working Hours",
+        value: "14,280 hrs",
+        dataSourceField: "risk_free_hours",
+        tintColor: "purple",
+        trendDirection: "up",
+        trendValue: "Zero LTI recorded",
+        icon: "Clock",
+      },
+      {
+        id: "mc-4",
+        label: "Active Telemetry Hubs",
+        value: "142 units",
+        dataSourceField: "devices_deployed",
+        tintColor: "cyan",
+        trendDirection: "no-change",
+        trendValue: "100% mesh coverage",
+        icon: "Cpu",
+      },
+    ],
+    charts: [
+      {
+        id: "ch-1",
+        title: "Workforce Safety KPI Executive Summary",
+        chartType: "bar",
+        dataSourceField: "ppe_sensor_compliance",
+        description: "Comparative gauge across active contractors and workforce crews",
+      },
+    ],
+    keyInsights: [
+      {
+        id: "ki-1",
+        text: "Overall site muster adherence increased by 2.4% compared to previous reporting fortnight.",
+      },
+      {
+        id: "ki-2",
+        text: "Zero lost-time injuries (LTI) sustained across all active structural zones.",
+      },
+      {
+        id: "ki-3",
+        text: "142 active BLE telemetry gateways operated with 99.8% uninterrupted uptime.",
+      },
+    ],
+  },
+  {
+    id: "sec-core-2",
+    name: "Attendance Trends",
+    eyebrow: "ATTENDANCE ANALYSIS",
+    description: "Shift-wise muster adherence, peak biometric check-in curve, and subcontractor headcount breakdown.",
+    type: "core",
+    icon: "TrendingUp",
+    updatedAt: "2026-09-22 15:10",
+    metricCards: [
+      {
+        id: "mc-5",
+        label: "Overall Shift Adherence",
+        value: "94.2%",
+        dataSourceField: "overall_adherence",
+        tintColor: "blue",
+        trendDirection: "up",
+        trendValue: "Across 3 rotating crews",
+        icon: "CheckCircle2",
+      },
+      {
+        id: "mc-6",
+        label: "Shift 1 Check-ins",
+        value: "88 workers",
+        dataSourceField: "shift_1_checkins",
+        tintColor: "emerald",
+        trendDirection: "no-change",
+        trendValue: "On-time arrival",
+        icon: "Sun",
+      },
+      {
+        id: "mc-7",
+        label: "Shift 2 Check-ins",
+        value: "54 workers",
+        dataSourceField: "shift_2_checkins",
+        tintColor: "amber",
+        trendDirection: "down",
+        trendValue: "-3 workers vs plan",
+        icon: "Moon",
+      },
+    ],
+    charts: [
+      {
+        id: "ch-2",
+        title: "Daily Shift Muster Adherence",
+        chartType: "line",
+        dataSourceField: "attendance_daily_shifts",
+        description: "Shift 1 vs Shift 2 daily check-in volume",
+      },
+      {
+        id: "ch-3",
+        title: "Subcontractor Headcount Distribution",
+        chartType: "pie",
+        dataSourceField: "attendance_vendor_distribution",
+        description: "Muster distribution across primary civil and MEP vendors",
+      },
+    ],
+    keyInsights: [
+      {
+        id: "ki-4",
+        text: "Peak biometric check-in recorded at 08:45 AM with zero beacon sync latency.",
+      },
+      {
+        id: "ki-5",
+        text: "Steel Framing Crew #3 sustained 100% on-time presence across all shift cycles.",
+      },
+    ],
+  },
+  {
+    id: "sec-core-3",
+    name: "PPE Compliance Trends",
+    eyebrow: "SAFETY COMPLIANCE",
+    description: "Real-time BLE mesh telemetry tracking Smart Helmets, Vest IoT Hubs, and Anti-Slip Boot Grounding.",
+    type: "core",
+    icon: "Shield",
+    updatedAt: "2026-09-21 16:45",
+    metricCards: [
+      {
+        id: "mc-8",
+        label: "Smart Helmet Telemetry",
+        value: "99.4%",
+        dataSourceField: "smart_helmet",
+        tintColor: "blue",
+        trendDirection: "up",
+        trendValue: "141 / 142 active",
+        icon: "HardHat",
+      },
+      {
+        id: "mc-9",
+        label: "Vest IoT Hubs",
+        value: "98.6%",
+        dataSourceField: "vest_iot_hub",
+        tintColor: "emerald",
+        trendDirection: "up",
+        trendValue: "140 / 142 active",
+        icon: "Shirt",
+      },
+      {
+        id: "mc-10",
+        label: "Boot Grounding Sensors",
+        value: "98.1%",
+        dataSourceField: "boot_grounding",
+        tintColor: "cyan",
+        trendDirection: "up",
+        trendValue: "139 / 142 active",
+        icon: "Footprints",
+      },
+    ],
+    charts: [
+      {
+        id: "ch-4",
+        title: "Connected PPE Compliance by Zone",
+        chartType: "bar",
+        dataSourceField: "helmet_optical_telemetry",
+        description: "Real-time compliance rates from BLE mesh nodes",
+      },
+      {
+        id: "ch-5",
+        title: "Safety Vest Hub & Boot Grounding Sensor Health",
+        chartType: "donut",
+        dataSourceField: "vest_hub_battery_status",
+        description: "Active battery status and electrostatic grounding verification",
+      },
+    ],
+    keyInsights: [
+      {
+        id: "ki-6",
+        text: "Single temporary helmet unlatch detected in Zone 2 crane swing perimeter; instant haptic buzz triggered compliance recovery in under 4 seconds.",
+      },
+      {
+        id: "ki-7",
+        text: "Electrostatic grounding verified zero charge accumulation during concrete batching transfer.",
+      },
+    ],
+  },
+  {
+    id: "sec-core-4",
+    name: "Time & Operational Impact",
+    eyebrow: "OPERATIONAL EFFICIENCY",
+    description: "Shift muster clearance latency, weather stand-down tracking, and emergency reaction windows.",
+    type: "core",
+    icon: "Clock",
+    updatedAt: "2026-09-20 11:20",
+    metricCards: [
+      {
+        id: "mc-11",
+        label: "Muster Gate Clearance",
+        value: "1.8 mins",
+        dataSourceField: "gate_clearance",
+        tintColor: "emerald",
+        trendDirection: "down",
+        trendValue: "-45s improvement",
+        icon: "Zap",
+      },
+      {
+        id: "mc-12",
+        label: "Weather Stand-downs",
+        value: "0 hrs",
+        dataSourceField: "weather_standdowns",
+        tintColor: "green",
+        trendDirection: "no-change",
+        trendValue: "Optimal wind window",
+        icon: "CloudRain",
+      },
+      {
+        id: "mc-13",
+        label: "Incident Reaction Window",
+        value: "18 secs",
+        dataSourceField: "reaction_window",
+        tintColor: "purple",
+        trendDirection: "down",
+        trendValue: "-6s faster response",
+        icon: "Timer",
+      },
+    ],
+    charts: [
+      {
+        id: "ch-6",
+        title: "Shift Induction & Clearance Duration",
+        chartType: "bar",
+        dataSourceField: "attendance_daily_shifts",
+        description: "Average muster induction time across rotating crews",
+      },
+    ],
+    keyInsights: [
+      {
+        id: "ki-8",
+        text: "Automated NFC badge scanning reduced shift muster bottleneck by 45 seconds per worker.",
+      },
+      {
+        id: "ki-9",
+        text: "Weather safety sensor mesh triggered zero unnecessary tower crane stand-downs.",
+      },
+    ],
+  },
+  {
+    id: "sec-core-5",
+    name: "Key Operational Indicators",
+    eyebrow: "SITE TELEMETRY",
+    description: "Environmental sensor streaming: ambient acoustics, toxic gas PPM levels, high-altitude wind speed, and thermal comfort.",
+    type: "core",
+    icon: "Gauge",
+    updatedAt: "2026-09-21 09:15",
+    metricCards: [
+      {
+        id: "mc-14",
+        label: "Ambient Noise Level",
+        value: "68.4 dB",
+        dataSourceField: "ambient_noise",
+        tintColor: "slate",
+        trendDirection: "no-change",
+        trendValue: "Below 85 dB threshold",
+        icon: "Volume2",
+      },
+      {
+        id: "mc-15",
+        label: "Toxic Gas PPM",
+        value: "0.02 ppm",
+        dataSourceField: "toxic_gas",
+        tintColor: "emerald",
+        trendDirection: "no-change",
+        trendValue: "Safe atmospheric grade",
+        icon: "Wind",
+      },
+      {
+        id: "mc-16",
+        label: "Average Wind Speed",
+        value: "14.2 kts",
+        dataSourceField: "wind_speed",
+        tintColor: "blue",
+        trendDirection: "up",
+        trendValue: "Crane limit: 28 kts",
+        icon: "Compass",
+      },
+    ],
+    charts: [
+      {
+        id: "ch-7",
+        title: "Continuous Gas PPM & Noise Level Telemetry",
+        chartType: "line",
+        dataSourceField: "gas_sensor_ppm_levels",
+        description: "Continuous IoT sensor stream tracking atmospheric toxic gases and decibels",
+      },
+    ],
+    keyInsights: [
+      {
+        id: "ki-10",
+        text: "All hazardous environmental sensor thresholds remained strictly within OSHA and ISO 45001 limits.",
+      },
+      {
+        id: "ki-11",
+        text: "Continuous air quality monitoring verified adequate subterranean airflow during tunnel works.",
+      },
+    ],
+  },
+  {
+    id: "sec-core-6",
+    name: "Supervisory Insights",
+    eyebrow: "FIELD SUPERVISION",
+    description: "Per-supervisor efficiency, crew hazard response latency, and proactive safety intervention logs.",
+    type: "core",
+    icon: "Users",
+    updatedAt: "2026-09-21 11:15",
+    metricCards: [
+      {
+        id: "mc-17",
+        label: "Supervisors on Duty",
+        value: "3 leads",
+        dataSourceField: "supervisors_count",
+        tintColor: "purple",
+        trendDirection: "no-change",
+        trendValue: "100% shift coverage",
+        icon: "UserCheck",
+      },
+      {
+        id: "mc-18",
+        label: "Avg Intervention Speed",
+        value: "24 secs",
+        dataSourceField: "avg_response",
+        tintColor: "emerald",
+        trendDirection: "down",
+        trendValue: "32% faster than SLA",
+        icon: "Zap",
+      },
+      {
+        id: "mc-19",
+        label: "Safety Alerts Handled",
+        value: "39 total",
+        dataSourceField: "alerts_handled",
+        tintColor: "amber",
+        trendDirection: "up",
+        trendValue: "All successfully cleared",
+        icon: "BellRing",
+      },
+    ],
+    charts: [
+      {
+        id: "ch-8",
+        title: "Supervisor Efficiency & Hazard Response Matrix",
+        chartType: "table",
+        dataSourceField: "supervisory_response_time",
+        description: "Tabular audit matrix of incident response times and resolution speed",
+      },
+    ],
+    keyInsights: [
+      {
+        id: "ki-12",
+        text: "Zone 1 supervisor Sunil M. achieved 18s average intervention latency across 12 automated alerts.",
+      },
+      {
+        id: "ki-13",
+        text: "Proactive supervisory engagements prevented 14 potential perimeter incursions during crane lifting.",
+      },
+    ],
+  },
+  {
+    id: "sec-core-7",
+    name: "Device/Unit Operating Hours",
+    eyebrow: "EQUIPMENT UTILISATION",
+    description: "Active runtime hours vs permissible thermal and duty cycle limits for heavy machinery and IoT nodes.",
+    type: "core",
+    icon: "Cpu",
+    updatedAt: "2026-09-20 18:00",
+    metricCards: [
+      {
+        id: "mc-20",
+        label: "Active Runtime Hours",
+        value: "320 hrs",
+        dataSourceField: "active_operating_hours",
+        tintColor: "blue",
+        trendDirection: "up",
+        trendValue: "360 hrs permissible",
+        icon: "Clock",
+      },
+      {
+        id: "mc-21",
+        label: "Fleet Health Index",
+        value: "98.4%",
+        dataSourceField: "fleet_health_index",
+        tintColor: "emerald",
+        trendDirection: "up",
+        trendValue: "All BLE Gateways Operational",
+        icon: "Activity",
+      },
+      {
+        id: "mc-22",
+        label: "Maintenance Flagged",
+        value: "0 units",
+        dataSourceField: "flagged_units",
+        tintColor: "slate",
+        trendDirection: "no-change",
+        trendValue: "Next check scheduled Sunday",
+        icon: "Wrench",
+      },
+    ],
+    charts: [
+      {
+        id: "ch-9",
+        title: "IoT Node & Sensor Permissible Operating Hours",
+        chartType: "bar",
+        dataSourceField: "device_daily_operating_hours",
+        description: "Logged active operating hours vs permissible safety operating thresholds",
+      },
+    ],
+    keyInsights: [
+      {
+        id: "ki-14",
+        text: "Batching plant mixer unit operated at 88.9% permissible threshold with zero overheating events.",
+      },
+      {
+        id: "ki-15",
+        text: "Telemetry battery gateways maintained uninterrupted redundant power supply.",
+      },
+    ],
+  },
+  {
+    id: "sec-core-8",
+    name: "Operational Remarks",
+    eyebrow: "ENVIRONMENT & OBSERVATIONS",
+    description: "Qualitative shift observations, structural concrete curing remarks, and perimeter geotechnical conditions.",
+    type: "core",
+    icon: "FileText",
+    updatedAt: "2026-09-22 17:00",
+    metricCards: [
+      {
+        id: "mc-23",
+        label: "Weather Classification",
+        value: "Clear / Dry",
+        dataSourceField: "weather",
+        tintColor: "cyan",
+        trendDirection: "no-change",
+        trendValue: "31°C Ambient",
+        icon: "Sun",
+      },
+      {
+        id: "mc-24",
+        label: "Ground Geotech Status",
+        value: "Stable",
+        dataSourceField: "geotech_status",
+        tintColor: "emerald",
+        trendDirection: "no-change",
+        trendValue: "Settlement < 1.2mm",
+        icon: "Mountain",
+      },
+    ],
+    charts: [],
+    keyInsights: [
+      {
+        id: "ki-16",
+        text: "Monsoon winds remained below 28 knots throughout the reporting window. High-altitude crane operations in Zone 2 completed without perimeter breaches.",
+      },
+      {
+        id: "ki-17",
+        text: "Grounding sensors verified zero electrostatic hazard during heavy concrete pumping.",
+      },
+    ],
+  },
+  {
+    id: "sec-core-9",
+    name: "Improvement & Action Plan",
+    eyebrow: "CORRECTIVE ACTIONS",
+    description: "Continuous safety improvement items, corrective action tracking, responsible lead assignment, and resolution timelines.",
+    type: "core",
+    icon: "CheckSquare",
+    updatedAt: "2026-09-22 12:45",
+    metricCards: [
+      {
+        id: "mc-25",
+        label: "Open Action Items",
+        value: "3 pending",
+        dataSourceField: "open_actions",
+        tintColor: "amber",
+        trendDirection: "down",
+        trendValue: "2 resolved this week",
+        icon: "AlertCircle",
+      },
+      {
+        id: "mc-26",
+        label: "SLA Resolution Rate",
+        value: "91.4%",
+        dataSourceField: "sla_rate",
+        tintColor: "emerald",
+        trendDirection: "up",
+        trendValue: "+4.1% MoM",
+        icon: "TrendingUp",
+      },
+      {
+        id: "mc-27",
+        label: "Upcoming Deadlines",
+        value: "2 items",
+        dataSourceField: "upcoming_deadlines",
+        tintColor: "purple",
+        trendDirection: "no-change",
+        trendValue: "Due within 7 days",
+        icon: "Calendar",
+      },
+    ],
+    charts: [
+      {
+        id: "ch-10",
+        title: "Mitigation Action Plan Progress & Resolution Timeline",
+        chartType: "table",
+        dataSourceField: "action_plan_completion_rate",
+        description: "High-priority remedial actions and owner accountability matrix",
+      },
+    ],
+    keyInsights: [
+      {
+        id: "ki-18",
+        text: "Deploy secondary BLE repeater to eliminate 40-second response latency for Subcontractor EHS in Zone 3.",
+      },
+      {
+        id: "ki-19",
+        text: "Recalibrate anti-slip electrostatic grounding threshold on muddy access ramps.",
+      },
+      {
+        id: "ki-20",
+        text: "Compile verified SHA-256 cryptographic hashes for third-party regulatory signoff.",
+      },
+    ],
+  },
+];
+
 const initialState: ReportModuleState = {
   activeRole: "superadmin",
   templates: initialTemplates,
@@ -791,9 +1400,12 @@ const initialState: ReportModuleState = {
   templateSectionsModalOpen: false,
   templateDeleteConfirmId: null,
   templateToastMessage: null,
+  templateActiveTab: "templates",
 
   // Master Global Library of Sections & Graphs
   globalSections: defaultBlocks,
+  librarySections: initialLibrarySections,
+  selectedLibrarySectionId: null,
 };
 
 export const reportModuleSlice = createSlice({
@@ -1065,6 +1677,9 @@ export const reportModuleSlice = createSlice({
     setTemplateToastMessage: (state, action: PayloadAction<string | null>) => {
       state.templateToastMessage = action.payload;
     },
+    setTemplateActiveTab: (state, action: PayloadAction<"templates" | "sections">) => {
+      state.templateActiveTab = action.payload;
+    },
 
     // Master Global Sections & Graphs Library Reducers
     addGlobalSection: (state, action: PayloadAction<Omit<TemplateBlock, "id" | "order">>) => {
@@ -1134,6 +1749,259 @@ export const reportModuleSlice = createSlice({
       const sec = state.globalSections.find((s) => s.id === action.payload.sectionId);
       if (sec && sec.graphs) {
         sec.graphs = sec.graphs.filter((g) => g.id !== action.payload.graphId);
+      }
+    },
+
+    // ========================================================================
+    // Standalone "Sections & Graphs" Management Library Actions
+    // ========================================================================
+    setSelectedLibrarySectionId: (state, action: PayloadAction<string | null>) => {
+      state.selectedLibrarySectionId = action.payload;
+    },
+    createLibrarySection: (
+      state,
+      action: PayloadAction<{
+        name: string;
+        eyebrow?: string;
+        description: string;
+        icon?: string;
+        metricCards?: LibraryMetricCard[];
+        charts?: LibraryChartCard[];
+        keyInsights?: LibraryKeyInsightItem[];
+      }>
+    ) => {
+      const newSec: LibrarySection = {
+        id: `sec-custom-${Date.now()}`,
+        name: action.payload.name,
+        eyebrow: action.payload.eyebrow || "CUSTOM MODULE",
+        description: action.payload.description,
+        type: "custom",
+        icon: action.payload.icon || "Layers",
+        updatedAt: "Just now",
+        metricCards: action.payload.metricCards || [],
+        charts: action.payload.charts || [],
+        keyInsights: action.payload.keyInsights || [],
+      };
+      state.librarySections.unshift(newSec);
+      state.selectedLibrarySectionId = newSec.id;
+      state.activityLogs.unshift({
+        id: `act-${Date.now()}-lib-add`,
+        actor: state.activeRole === "superadmin" ? "Dr. Vikram Seth" : "Site Admin",
+        role: state.activeRole === "superadmin" ? "Superadmin" : "Site Admin",
+        action: `Created new library section: ${newSec.name}`,
+        target: "Sections & Graphs Library",
+        timestamp: "Just now",
+        type: "template",
+      });
+    },
+    updateLibrarySection: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        name: string;
+        eyebrow?: string;
+        description: string;
+        icon?: string;
+      }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.id);
+      if (sec) {
+        sec.name = action.payload.name;
+        if (action.payload.eyebrow !== undefined) sec.eyebrow = action.payload.eyebrow;
+        sec.description = action.payload.description;
+        if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
+        sec.updatedAt = "Just now";
+      }
+    },
+    duplicateLibrarySection: (state, action: PayloadAction<string>) => {
+      const src = state.librarySections.find((s) => s.id === action.payload);
+      if (src) {
+        const cloned: LibrarySection = {
+          ...src,
+          id: `sec-custom-dup-${Date.now()}`,
+          name: `${src.name} (Copy)`,
+          type: "custom",
+          updatedAt: "Just now",
+          metricCards: src.metricCards.map((c, i) => ({
+            ...c,
+            id: `mc-dup-${Date.now()}-${i}`,
+          })),
+          charts: src.charts.map((ch, i) => ({
+            ...ch,
+            id: `ch-dup-${Date.now()}-${i}`,
+          })),
+          keyInsights: src.keyInsights.map((ki, i) => ({
+            ...ki,
+            id: `ki-dup-${Date.now()}-${i}`,
+          })),
+        };
+        state.librarySections.unshift(cloned);
+        state.selectedLibrarySectionId = cloned.id;
+        state.activityLogs.unshift({
+          id: `act-${Date.now()}-lib-dup`,
+          actor: state.activeRole === "superadmin" ? "Dr. Vikram Seth" : "Site Admin",
+          role: state.activeRole === "superadmin" ? "Superadmin" : "Site Admin",
+          action: `Duplicated library section: ${src.name}`,
+          target: `${cloned.id} from ${src.id}`,
+          timestamp: "Just now",
+          type: "template",
+        });
+      }
+    },
+    deleteLibrarySection: (state, action: PayloadAction<string>) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload);
+      if (sec && sec.type !== "core") {
+        state.librarySections = state.librarySections.filter((s) => s.id !== action.payload);
+        if (state.selectedLibrarySectionId === action.payload) {
+          state.selectedLibrarySectionId = null;
+        }
+        state.activityLogs.unshift({
+          id: `act-${Date.now()}-lib-del`,
+          actor: state.activeRole === "superadmin" ? "Dr. Vikram Seth" : "Site Admin",
+          role: state.activeRole === "superadmin" ? "Superadmin" : "Site Admin",
+          action: `Deleted library section: ${sec.name}`,
+          target: sec.id,
+          timestamp: "Just now",
+          type: "template",
+        });
+      }
+    },
+    addCardToSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; card: Omit<LibraryMetricCard, "id"> }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.metricCards.push({
+          ...action.payload.card,
+          id: `mc-${Date.now()}`,
+        });
+        sec.updatedAt = "Just now";
+      }
+    },
+    updateCardInSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; card: LibraryMetricCard }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        const idx = sec.metricCards.findIndex((c) => c.id === action.payload.card.id);
+        if (idx !== -1) {
+          sec.metricCards[idx] = action.payload.card;
+          sec.updatedAt = "Just now";
+        }
+      }
+    },
+    deleteCardFromSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; cardId: string }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.metricCards = sec.metricCards.filter((c) => c.id !== action.payload.cardId);
+        sec.updatedAt = "Just now";
+      }
+    },
+    reorderCardsInSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; cards: LibraryMetricCard[] }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.metricCards = action.payload.cards;
+        sec.updatedAt = "Just now";
+      }
+    },
+    addChartToSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; chart: Omit<LibraryChartCard, "id"> }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.charts.push({
+          ...action.payload.chart,
+          id: `ch-${Date.now()}`,
+        });
+        sec.updatedAt = "Just now";
+      }
+    },
+    updateChartInSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; chart: LibraryChartCard }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        const idx = sec.charts.findIndex((ch) => ch.id === action.payload.chart.id);
+        if (idx !== -1) {
+          sec.charts[idx] = action.payload.chart;
+          sec.updatedAt = "Just now";
+        }
+      }
+    },
+    deleteChartFromSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; chartId: string }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.charts = sec.charts.filter((ch) => ch.id !== action.payload.chartId);
+        sec.updatedAt = "Just now";
+      }
+    },
+    reorderChartsInSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; charts: LibraryChartCard[] }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.charts = action.payload.charts;
+        sec.updatedAt = "Just now";
+      }
+    },
+    addInsightToSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; text: string }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.keyInsights.push({
+          id: `ki-${Date.now()}`,
+          text: action.payload.text,
+        });
+        sec.updatedAt = "Just now";
+      }
+    },
+    updateInsightInSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; insight: LibraryKeyInsightItem }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        const idx = sec.keyInsights.findIndex((ki) => ki.id === action.payload.insight.id);
+        if (idx !== -1) {
+          sec.keyInsights[idx] = action.payload.insight;
+          sec.updatedAt = "Just now";
+        }
+      }
+    },
+    deleteInsightFromSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; insightId: string }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.keyInsights = sec.keyInsights.filter((ki) => ki.id !== action.payload.insightId);
+        sec.updatedAt = "Just now";
+      }
+    },
+    reorderInsightsInSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; keyInsights: LibraryKeyInsightItem[] }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.keyInsights = action.payload.keyInsights;
+        sec.updatedAt = "Just now";
       }
     },
     // Global Universal Toast Reducers
@@ -1387,12 +2255,30 @@ export const {
   setTemplateSectionsModalOpen,
   setTemplateDeleteConfirmId,
   setTemplateToastMessage,
+  setTemplateActiveTab,
   addGlobalSection,
   updateGlobalSection,
   deleteGlobalSection,
   addGraphToGlobalSection,
   updateGraphInGlobalSection,
   deleteGraphFromGlobalSection,
+  setSelectedLibrarySectionId,
+  createLibrarySection,
+  updateLibrarySection,
+  duplicateLibrarySection,
+  deleteLibrarySection,
+  addCardToSection,
+  updateCardInSection,
+  deleteCardFromSection,
+  reorderCardsInSection,
+  addChartToSection,
+  updateChartInSection,
+  deleteChartFromSection,
+  reorderChartsInSection,
+  addInsightToSection,
+  updateInsightInSection,
+  deleteInsightFromSection,
+  reorderInsightsInSection,
   showGlobalToast,
   clearGlobalToast,
   updateReportRemarks,
