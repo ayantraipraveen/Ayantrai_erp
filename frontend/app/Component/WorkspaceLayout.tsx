@@ -133,8 +133,8 @@ export default function WorkspaceLayout({
     return (
       <div className="h-screen w-full bg-slate-50 dark:bg-[#080a0e] text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center space-y-4 industrial-grid">
         <div className="relative">
-          <div className="h-10 w-10 border-2 border-[#F6C72F] border-t-transparent rounded-full animate-spin" />
-          <KeyRound className="w-4 h-4 text-[#F6C72F] absolute inset-0 m-auto" />
+          <div className="h-10 w-10 border-2 border-[#9D61FF] border-t-transparent rounded-full animate-spin" />
+          <KeyRound className="w-4 h-4 text-[#9D61FF] absolute inset-0 m-auto" />
         </div>
         <div className="text-center space-y-1">
           <div className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
@@ -216,13 +216,13 @@ export default function WorkspaceLayout({
                       {currentUser.name}
                     </span>{" "}
                     with role{" "}
-                    <span className="font-mono text-[#F6C72F] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                    <span className="font-mono text-[#9D61FF] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
                       {currentUser.role || "Site Admin"}
                     </span>
                     .
                   </p>
                   <p className="text-xs text-slate-500 dark:text-zinc-500 leading-relaxed">
-                    This module (<code className="font-mono text-amber-500 font-bold">{pathname}</code>) is restricted to AyantrAI HQ Superadmin Governance. Site Administrators are scoped to individual project sites.
+                    This module (<code className="font-mono text-[#9D61FF] font-bold">{pathname}</code>) is restricted to AyantrAI HQ Superadmin Governance. Site Administrators are scoped to individual project sites.
                   </p>
                 </div>
 
@@ -230,7 +230,7 @@ export default function WorkspaceLayout({
                   <button
                     type="button"
                     onClick={() => router.push("/dashboard")}
-                    className="px-4 py-2.5 rounded-xl bg-[#F6C72F] hover:bg-[#F6C72F]/90 text-slate-950 font-bold text-xs shadow-[0_0_20px_rgba(246,199,47,0.3)] transition-all cursor-pointer flex items-center gap-2"
+                    className="px-4 py-2.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs shadow-[0_0_20px_rgba(157,97,255,0.35)] transition-all cursor-pointer flex items-center gap-2"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Return to Site Dashboard</span>

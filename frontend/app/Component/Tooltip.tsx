@@ -31,12 +31,12 @@ export interface TooltipProps {
 
 const variantStyles: Record<TooltipVariant, { container: string; arrow: string }> = {
   default: {
-    container: "bg-[#0d121c] border-zinc-700/90 text-zinc-200 shadow-[0_4px_24px_rgba(0,0,0,0.85),0_0_14px_rgba(246,199,47,0.12)]",
+    container: "bg-[#0d121c] border-zinc-700/90 text-zinc-200 shadow-[0_4px_24px_rgba(0,0,0,0.85),0_0_14px_rgba(157,97,255,0.15)]",
     arrow: "border-zinc-700/90 bg-[#0d121c]",
   },
   amber: {
-    container: "bg-[#121620] border-[#F6C72F]/60 text-amber-200 shadow-[0_0_20px_rgba(246,199,47,0.3)]",
-    arrow: "border-[#F6C72F]/60 bg-[#121620]",
+    container: "bg-[#121620] border-[#9D61FF]/60 text-purple-200 shadow-[0_0_20px_rgba(157,97,255,0.35)]",
+    arrow: "border-[#9D61FF]/60 bg-[#121620]",
   },
   emerald: {
     container: "bg-[#091814] border-emerald-500/50 text-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.22)]",

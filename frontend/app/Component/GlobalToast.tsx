@@ -41,7 +41,7 @@ export default function GlobalToast() {
             ? "bg-slate-950/95 border-rose-500/50 text-rose-200 shadow-[0_0_30px_rgba(244,63,94,0.3)]"
             : type === "warning"
             ? "bg-slate-950/95 border-amber-500/50 text-amber-200 shadow-[0_0_30px_rgba(245,158,11,0.3)]"
-            : "bg-slate-950/95 border-[#F6C72F]/60 text-white shadow-[0_0_30px_rgba(246,199,47,0.3)]"
+            : "bg-slate-950/95 border-[#9D61FF]/60 text-white shadow-[0_0_30px_rgba(157,97,255,0.35)]"
         }`}
       >
         {/* Type Icon */}
@@ -49,7 +49,7 @@ export default function GlobalToast() {
           {type === "success" && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
           {type === "error" && <AlertCircle className="w-4 h-4 text-rose-400" />}
           {type === "warning" && <AlertTriangle className="w-4 h-4 text-amber-400" />}
-          {type === "info" && <Sparkles className="w-4 h-4 text-[#F6C72F]" />}
+          {type === "info" && <Sparkles className="w-4 h-4 text-[#9D61FF]" />}
         </div>
 
         {/* Message content */}

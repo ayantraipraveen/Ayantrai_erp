@@ -141,7 +141,7 @@ const SECTION_REGISTRY: Record<string, SectionRegistryMeta> = {
     title: "Safety Templates",
     shortTitle: "Templates",
     badge: "GOVERNANCE",
-    badgeStyle: "bg-amber-500/10 text-amber-700 dark:text-[#F6C72F] border-amber-500/30",
+    badgeStyle: "bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border-purple-500/30",
   },
   "/report": {
     title: "Compliance Reports",
@@ -258,7 +258,7 @@ export default function DashboardNavbar({
       title: formatted,
       shortTitle: formatted,
       badge: "WORKSPACE",
-      badgeStyle: "bg-amber-500/10 text-amber-700 dark:text-[#F6C72F] border-amber-500/30",
+      badgeStyle: "bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border-purple-500/30",
     };
   }, [pathname]);
 
@@ -268,7 +268,7 @@ export default function DashboardNavbar({
   const resolvedBadgeStyle =
     sectionBadgeStyle ||
     detectedSection.badgeStyle ||
-    "bg-amber-500/10 text-amber-700 dark:text-[#F6C72F] border-amber-500/30";
+    "bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border-purple-500/30";
 
   // Resolve user info gracefully
   const effectiveUser = useMemo(() => {
@@ -372,7 +372,7 @@ export default function DashboardNavbar({
               type="button"
               onClick={handleToggleMobileMenu}
               aria-label="Open navigation menu"
-              className="lg:hidden h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/50 dark:hover:border-[#F6C72F]/50 hover:bg-amber-500/10 transition-all flex items-center justify-center cursor-pointer shadow-sm flex-shrink-0"
+              className="lg:hidden h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-[#9D61FF]/50 dark:hover:border-[#9D61FF]/50 hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer shadow-sm flex-shrink-0"
             >
               <Menu className="w-4 h-4" />
             </button>
@@ -454,7 +454,7 @@ export default function DashboardNavbar({
                     href="/dashboard"
                     className="text-xs font-semibold text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5 flex-shrink-0"
                   >
-                    <Shield className="w-3.5 h-3.5 text-[#F6C72F]" />
+                    <Shield className="w-3.5 h-3.5 text-[#9D61FF]" />
                     <span>Sitesafe</span>
                   </Link>
 
@@ -514,15 +514,15 @@ export default function DashboardNavbar({
                   aria-label="View safety notifications"
                   className={`group relative h-9 w-9 rounded-xl border transition-all flex items-center justify-center cursor-pointer shadow-sm flex-shrink-0 ${
                     notificationsOpen
-                      ? "border-[#F6C72F] bg-amber-500/15 text-slate-900 dark:text-white shadow-[0_0_12px_rgba(246,199,47,0.25)]"
-                      : "border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/50 dark:hover:border-[#F6C72F]/50 hover:bg-amber-500/10 dark:hover:bg-[#F6C72F]/10"
+                      ? "border-[#9D61FF] bg-purple-500/15 text-slate-900 dark:text-white shadow-[0_0_12px_rgba(157,97,255,0.25)]"
+                      : "border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-[#9D61FF]/50 dark:hover:border-[#9D61FF]/50 hover:bg-purple-500/10 dark:hover:bg-[#9D61FF]/10"
                   }`}
                 >
                   <Bell className="w-4 h-4 transition-transform group-hover:rotate-12" />
                   {activeAlerts.length > 0 && (
                     <>
-                      <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#F6C72F] animate-ping" />
-                      <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#F6C72F]" />
+                      <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#9D61FF] animate-ping" />
+                      <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#9D61FF]" />
                     </>
                   )}
                 </button>
@@ -536,7 +536,7 @@ export default function DashboardNavbar({
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
                         Safety Telemetry Alerts
                       </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border border-amber-500/30 font-bold">
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-700 dark:text-[#9D61FF] border border-purple-500/30 font-bold">
                         {activeAlerts.length} Active
                       </span>
                     </div>
@@ -577,7 +577,7 @@ export default function DashboardNavbar({
                                   isDanger
                                     ? "text-rose-600 dark:text-rose-400"
                                     : isWarning
-                                    ? "text-amber-700 dark:text-[#F6C72F]"
+                                    ? "text-purple-700 dark:text-[#9D61FF]"
                                     : isSuccess
                                     ? "text-emerald-600 dark:text-emerald-400"
                                     : "text-slate-800 dark:text-zinc-200"
@@ -634,7 +634,7 @@ export default function DashboardNavbar({
           {showUserProfile && (
             <Tooltip content={`Signed in as ${userName}`} position="bottom">
               <div className="group flex items-center gap-2 h-9 px-2.5 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 hover:border-slate-300 dark:hover:border-zinc-700 transition-colors cursor-default shadow-sm select-none flex-shrink-0">
-                <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-bold text-[10px] flex items-center justify-center shadow-sm flex-shrink-0">
+                <div className="h-6 w-6 rounded-lg bg-gradient-to-br from-[#b07dff] to-[#7938e3] text-white font-bold text-[10px] flex items-center justify-center shadow-sm flex-shrink-0">
                   {userInitials}
                 </div>
                 <div className="hidden sm:flex flex-col text-left">
@@ -644,7 +644,7 @@ export default function DashboardNavbar({
                   <span
                     className={`text-[8px] font-mono font-bold uppercase tracking-wider px-1 py-0.2 rounded w-fit mt-0.5 leading-none ${
                       isSuperadmin
-                        ? "text-amber-700 dark:text-[#F6C72F] bg-amber-500/10"
+                        ? "text-purple-700 dark:text-[#9D61FF] bg-purple-500/10"
                         : "text-sky-700 dark:text-sky-400 bg-sky-500/10"
                     }`}
                   >

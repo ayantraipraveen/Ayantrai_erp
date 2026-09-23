@@ -210,8 +210,8 @@ export default function CustomDropdown({
           error
             ? "input-error border-red-500/90 shadow-[0_0_16px_rgba(239,68,68,0.5)] bg-red-50 dark:bg-[#12080a]"
             : isOpen
-            ? "border-[#F6C72F] bg-amber-50/40 dark:bg-[#0d111a] shadow-[0_0_0_1.5px_#f6c72f,0_0_16px_rgba(246,199,47,0.3)] text-slate-900 dark:text-white"
-            : "border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#080b10] text-slate-800 dark:text-zinc-200 focus-glow-amber hover:border-[#F6C72F]/60 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] hover:bg-slate-100/90 dark:hover:bg-[#0c0f16]"
+            ? "border-[#9D61FF] bg-purple-50/40 dark:bg-[#0d111a] shadow-[0_0_0_1.5px_#9D61FF,0_0_16px_rgba(157,97,255,0.3)] text-slate-900 dark:text-white"
+            : "border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#080b10] text-slate-800 dark:text-zinc-200 focus-glow-amber hover:border-[#9D61FF]/60 hover:shadow-[0_0_12px_rgba(157,97,255,0.2)] hover:bg-slate-100/90 dark:hover:bg-[#0c0f16]"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${buttonClassName}`}
       >
         <div className="flex items-center gap-2.5 truncate pr-2">
@@ -219,7 +219,7 @@ export default function CustomDropdown({
             <LeadingIcon className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-500 flex-shrink-0" />
           )}
           {selectedOption?.icon && (
-            <selectedOption.icon className="w-3.5 h-3.5 text-[#F6C72F] flex-shrink-0 drop-shadow-[0_0_6px_rgba(246,199,47,0.4)]" />
+            <selectedOption.icon className="w-3.5 h-3.5 text-[#9D61FF] flex-shrink-0 drop-shadow-[0_0_6px_rgba(157,97,255,0.4)]" />
           )}
           <span
             className={`truncate text-xs ${
@@ -242,16 +242,16 @@ export default function CustomDropdown({
 
         <ChevronDown
           className={`w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
-            isOpen ? "rotate-180 text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.6)]" : ""
+            isOpen ? "rotate-180 text-[#9D61FF] drop-shadow-[0_0_6px_rgba(157,97,255,0.6)]" : ""
           }`}
         />
       </button>
 
-      {/* Floating Dropdown Panel - glowing amber border and rounded-xl */}
+      {/* Floating Dropdown Panel - glowing purple border and rounded-xl */}
       {isOpen && (
         <div
           role="listbox"
-          className={`absolute z-50 mt-1.5 w-full min-w-[220px] rounded-xl border border-slate-200 dark:border-[#F6C72F]/40 bg-white/98 dark:bg-[#0e131e]/98 backdrop-blur-2xl p-1.5 shadow-2xl animate-fadeIn ${
+          className={`absolute z-50 mt-1.5 w-full min-w-[220px] rounded-xl border border-slate-200 dark:border-[#9D61FF]/40 bg-white/98 dark:bg-[#0e131e]/98 backdrop-blur-2xl p-1.5 shadow-2xl animate-fadeIn ${
             align === "right" ? "right-0" : "left-0"
           } ${menuClassName}`}
         >
@@ -307,17 +307,17 @@ export default function CustomDropdown({
                       option.disabled
                         ? "opacity-40 cursor-not-allowed"
                         : isSelected
-                        ? "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] font-semibold border border-amber-500/30 dark:border-[#F6C72F]/40 shadow-[0_0_10px_rgba(246,199,47,0.15)]"
+                        ? "bg-purple-500/15 text-purple-700 dark:text-[#9D61FF] font-semibold border border-purple-500/30 dark:border-[#9D61FF]/40 shadow-[0_0_10px_rgba(157,97,255,0.2)]"
                         : isFocused
                         ? "bg-slate-100 dark:bg-zinc-800/90 text-slate-900 dark:text-white"
-                        : "text-slate-700 dark:text-zinc-300 hover:bg-amber-500/10 hover:text-slate-900 dark:hover:text-white"
+                        : "text-slate-700 dark:text-zinc-300 hover:bg-purple-500/10 hover:text-slate-900 dark:hover:text-white"
                     }`}
                   >
                     <div className="flex items-center gap-2 truncate pr-2">
                       {OptionIcon && (
                         <OptionIcon
                           className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            isSelected ? "text-amber-600 dark:text-[#F6C72F]" : "text-slate-400 dark:text-zinc-400"
+                            isSelected ? "text-purple-600 dark:text-[#9D61FF]" : "text-slate-400 dark:text-zinc-400"
                           }`}
                         />
                       )}
@@ -345,7 +345,7 @@ export default function CustomDropdown({
                         </span>
                       )}
                       {isSelected && (
-                        <Check className="w-3 h-3 text-[#F6C72F] flex-shrink-0" />
+                        <Check className="w-3 h-3 text-[#9D61FF] flex-shrink-0" />
                       )}
                     </div>
                   </button>

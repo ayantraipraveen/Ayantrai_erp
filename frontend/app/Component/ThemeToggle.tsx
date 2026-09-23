@@ -54,11 +54,11 @@ export default function ThemeToggle({
             aria-label="Activate dark mode"
             className={`px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
               theme === "dark"
-                ? "bg-[#141923] text-[#F6C72F] shadow-[0_0_12px_rgba(246,199,47,0.25)] border border-[#F6C72F]/40 font-bold"
+                ? "bg-[#141923] text-[#9D61FF] shadow-[0_0_12px_rgba(157,97,255,0.3)] border border-[#9D61FF]/40 font-bold"
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            <Moon className="w-3.5 h-3.5 text-[#F6C72F]" />
+            <Moon className="w-3.5 h-3.5 text-[#9D61FF]" />
             <span>Dark</span>
           </button>
         </Tooltip>
@@ -93,18 +93,18 @@ export default function ThemeToggle({
         aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
         className={`relative h-9 w-9 rounded-xl border transition-all duration-300 flex items-center justify-center cursor-pointer ${
           isDark
-            ? "border-zinc-800/90 bg-[#0e1219]/90 text-[#F6C72F] hover:border-[#F6C72F]/60 hover:shadow-[0_0_14px_rgba(246,199,47,0.3)] hover:bg-[#131924]"
-            : "border-slate-200 bg-slate-50/80 text-amber-600 hover:border-amber-500/60 hover:shadow-[0_0_12px_rgba(217,119,6,0.25)] hover:bg-slate-100 shadow-sm"
+            ? "border-zinc-800/90 bg-[#0e1219]/90 text-[#9D61FF] hover:border-[#9D61FF]/60 hover:shadow-[0_0_14px_rgba(157,97,255,0.35)] hover:bg-[#131924]"
+            : "border-slate-200 bg-slate-50/80 text-purple-600 hover:border-purple-500/60 hover:shadow-[0_0_12px_rgba(139,76,240,0.25)] hover:bg-slate-100 shadow-sm"
         } ${className}`}
       >
         <div className="relative w-4 h-4 flex items-center justify-center">
           <Sun
-            className={`w-4 h-4 text-amber-500 transition-all duration-300 transform absolute ${
+            className={`w-4 h-4 text-purple-600 transition-all duration-300 transform absolute ${
               isDark ? "rotate-90 scale-0 opacity-0" : "rotate-0 scale-100 opacity-100"
             }`}
           />
           <Moon
-            className={`w-4 h-4 text-[#F6C72F] transition-all duration-300 transform absolute ${
+            className={`w-4 h-4 text-[#9D61FF] transition-all duration-300 transform absolute ${
               isDark ? "rotate-0 scale-100 opacity-100" : "-rotate-90 scale-0 opacity-0"
             }`}
           />

@@ -6,8 +6,10 @@
   color-scheme: light;
   --background: #f8fafc;
   --foreground: #0f172a;
-  --primary-gold: #d97706;
-  --primary-gold-hover: #b45309;
+  --primary-gold: #8b4cf0;
+  --primary-gold-hover: #7532df;
+  --primary-purple: #9D61FF;
+  --primary-purple-hover: #8B4CF0;
   --surface-card: #ffffff;
   --surface-elevated: #f1f5f9;
   --border-subtle: #e2e8f0;
@@ -19,8 +21,10 @@
   color-scheme: dark;
   --background: #080a0e;
   --foreground: #f1f5f9;
-  --primary-gold: #f6c72f;
-  --primary-gold-hover: #ffd43f;
+  --primary-gold: #9D61FF;
+  --primary-gold-hover: #b07dff;
+  --primary-purple: #9D61FF;
+  --primary-purple-hover: #b07dff;
   --surface-card: #11151e;
   --surface-elevated: #161c27;
   --border-subtle: #202735;
@@ -36,6 +40,8 @@
   --color-foreground: var(--foreground);
   --color-gold: var(--primary-gold);
   --color-gold-hover: var(--primary-gold-hover);
+  --color-purple-theme: var(--primary-purple);
+  --color-purple-theme-hover: var(--primary-purple-hover);
   --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
@@ -96,16 +102,16 @@ body {
 /* Industrial Grid Background */
 .industrial-grid {
   background-image: 
-    linear-gradient(to right, rgba(217, 119, 6, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(217, 119, 6, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(139, 76, 240, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(139, 76, 240, 0.05) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
 .dark .industrial-grid,
 :root.dark .industrial-grid {
   background-image: 
-    linear-gradient(to right, rgba(246, 199, 47, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(246, 199, 47, 0.035) 1px, transparent 1px);
+    linear-gradient(to right, rgba(157, 97, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(157, 97, 255, 0.045) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
@@ -124,14 +130,14 @@ body {
   left: 20%;
   width: 650px;
   height: 650px;
-  background: radial-gradient(circle, rgba(217, 119, 6, 0.08) 0%, rgba(217, 119, 6, 0.015) 45%, rgba(248, 250, 252, 0) 70%);
+  background: radial-gradient(circle, rgba(139, 76, 240, 0.08) 0%, rgba(139, 76, 240, 0.015) 45%, rgba(248, 250, 252, 0) 70%);
   filter: blur(60px);
   animation: float-glow 14s ease-in-out infinite alternate;
 }
 
 .dark .amber-spotlight,
 :root.dark .amber-spotlight {
-  background: radial-gradient(circle, rgba(246, 199, 47, 0.16) 0%, rgba(246, 199, 47, 0.04) 45%, rgba(8, 10, 14, 0) 70%);
+  background: radial-gradient(circle, rgba(157, 97, 255, 0.16) 0%, rgba(157, 97, 255, 0.04) 45%, rgba(8, 10, 14, 0) 70%);
 }
 
 .cyan-rim-light {
@@ -183,8 +189,8 @@ body {
 /* Glowing Border & Surface Effects */
 .neon-glow-amber {
   box-shadow: 
-    0 0 0 1px rgba(217, 119, 6, 0.25),
-    0 0 14px rgba(217, 119, 6, 0.1),
+    0 0 0 1px rgba(139, 76, 240, 0.25),
+    0 0 14px rgba(139, 76, 240, 0.1),
     0 8px 24px -8px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
@@ -192,16 +198,16 @@ body {
 .dark .neon-glow-amber,
 :root.dark .neon-glow-amber {
   box-shadow: 
-    0 0 0 1px rgba(246, 199, 47, 0.35),
-    0 0 18px rgba(246, 199, 47, 0.15),
+    0 0 0 1px rgba(157, 97, 255, 0.35),
+    0 0 18px rgba(157, 97, 255, 0.18),
     0 10px 30px -10px rgba(0, 0, 0, 0.8),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .neon-glow-amber-lg {
   box-shadow: 
-    0 0 0 1px rgba(217, 119, 6, 0.3),
-    0 0 20px rgba(217, 119, 6, 0.1),
+    0 0 0 1px rgba(139, 76, 240, 0.3),
+    0 0 20px rgba(139, 76, 240, 0.12),
     0 16px 45px -12px rgba(0, 0, 0, 0.12),
     inset 0 1px 1px rgba(255, 255, 255, 0.9);
 }
@@ -209,17 +215,17 @@ body {
 .dark .neon-glow-amber-lg,
 :root.dark .neon-glow-amber-lg {
   box-shadow: 
-    0 0 0 1px rgba(246, 199, 47, 0.45),
-    0 0 25px rgba(246, 199, 47, 0.22),
-    0 0 60px rgba(246, 199, 47, 0.12),
+    0 0 0 1px rgba(157, 97, 255, 0.45),
+    0 0 25px rgba(157, 97, 255, 0.25),
+    0 0 60px rgba(157, 97, 255, 0.15),
     0 20px 60px -15px rgba(0, 0, 0, 0.9),
-    inset 0 1px 1px rgba(246, 199, 47, 0.2);
+    inset 0 1px 1px rgba(157, 97, 255, 0.25);
 }
 
 .neon-glow-card {
   box-shadow: 
     0 0 0 1px rgba(0, 0, 0, 0.06),
-    0 0 16px rgba(217, 119, 6, 0.05),
+    0 0 16px rgba(139, 76, 240, 0.06),
     0 10px 30px -10px rgba(0, 0, 0, 0.08);
 }
 
@@ -227,59 +233,59 @@ body {
 :root.dark .neon-glow-card {
   box-shadow: 
     0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 0 20px rgba(246, 199, 47, 0.06),
+    0 0 20px rgba(157, 97, 255, 0.08),
     0 15px 45px -10px rgba(0, 0, 0, 0.85);
 }
 
 /* Glowing Action Button */
 .glow-btn-amber {
-  background: linear-gradient(135deg, #ffd338 0%, #f6c72f 50%, #e0b020 100%);
+  background: linear-gradient(135deg, #b07dff 0%, #9D61FF 50%, #8B4CF0 100%);
   box-shadow: 
-    0 0 20px rgba(246, 199, 47, 0.45),
-    0 0 45px rgba(246, 199, 47, 0.2),
+    0 0 20px rgba(157, 97, 255, 0.45),
+    0 0 45px rgba(157, 97, 255, 0.2),
     inset 0 1px 1px rgba(255, 255, 255, 0.5);
   transition: all 0.25s ease-in-out;
 }
 
 .glow-btn-amber:hover {
-  background: linear-gradient(135deg, #ffe066 0%, #ffd027 50%, #eab308 100%);
+  background: linear-gradient(135deg, #be94ff 0%, #a875ff 50%, #7938e3 100%);
   box-shadow: 
-    0 0 30px rgba(246, 199, 47, 0.7),
-    0 0 60px rgba(246, 199, 47, 0.35),
+    0 0 30px rgba(157, 97, 255, 0.7),
+    0 0 60px rgba(157, 97, 255, 0.35),
     inset 0 1px 1px rgba(255, 255, 255, 0.7);
   transform: translateY(-1px);
 }
 
 /* High-Impact Input Glowing Halo on Focus */
 .focus-glow-amber:focus {
-  border-color: #d97706 !important;
+  border-color: #8b4cf0 !important;
   box-shadow: 
-    0 0 0 1.5px #d97706,
-    0 0 14px rgba(217, 119, 6, 0.35),
-    0 0 24px rgba(217, 119, 6, 0.15),
-    inset 0 0 6px rgba(217, 119, 6, 0.06) !important;
+    0 0 0 1.5px #8b4cf0,
+    0 0 14px rgba(139, 76, 240, 0.35),
+    0 0 24px rgba(139, 76, 240, 0.15),
+    inset 0 0 6px rgba(139, 76, 240, 0.06) !important;
   outline: none;
 }
 
 .dark .focus-glow-amber:focus,
 :root.dark .focus-glow-amber:focus {
-  border-color: #f6c72f !important;
+  border-color: #9D61FF !important;
   box-shadow: 
-    0 0 0 1.5px #f6c72f,
-    0 0 16px rgba(246, 199, 47, 0.65),
-    0 0 32px rgba(246, 199, 47, 0.3),
-    inset 0 0 8px rgba(246, 199, 47, 0.12) !important;
+    0 0 0 1.5px #9D61FF,
+    0 0 16px rgba(157, 97, 255, 0.65),
+    0 0 32px rgba(157, 97, 255, 0.3),
+    inset 0 0 8px rgba(157, 97, 255, 0.12) !important;
 }
 
 .focus-glow-amber:hover:not(:focus):not(.input-error) {
-  border-color: rgba(217, 119, 6, 0.55) !important;
-  box-shadow: 0 0 10px rgba(217, 119, 6, 0.18) !important;
+  border-color: rgba(139, 76, 240, 0.55) !important;
+  box-shadow: 0 0 10px rgba(139, 76, 240, 0.18) !important;
 }
 
 .dark .focus-glow-amber:hover:not(:focus):not(.input-error),
 :root.dark .focus-glow-amber:hover:not(:focus):not(.input-error) {
-  border-color: rgba(246, 199, 47, 0.55) !important;
-  box-shadow: 0 0 12px rgba(246, 199, 47, 0.2) !important;
+  border-color: rgba(157, 97, 255, 0.55) !important;
+  box-shadow: 0 0 12px rgba(157, 97, 255, 0.25) !important;
 }
 
 /* High-Impact Input Glowing Halo on Error */
@@ -326,13 +332,13 @@ body {
 }
 
 .badge-glow-amber {
-  box-shadow: 0 0 14px rgba(246, 199, 47, 0.4);
+  box-shadow: 0 0 14px rgba(157, 97, 255, 0.45);
 }
 
 /* Shimmering Top Light Line */
 .shimmer-line {
   height: 2px;
-  background: linear-gradient(90deg, transparent 0%, rgba(246, 199, 47, 0.2) 20%, #f6c72f 50%, rgba(246, 199, 47, 0.2) 80%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, rgba(157, 97, 255, 0.2) 20%, #9D61FF 50%, rgba(157, 97, 255, 0.2) 80%, transparent 100%);
   background-size: 200% 100%;
   animation: shimmer-sweep 4s linear infinite;
 }
@@ -350,15 +356,15 @@ body {
 @keyframes beacon-pulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(246, 199, 47, 0.7);
+    box-shadow: 0 0 0 0 rgba(157, 97, 255, 0.7);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(246, 199, 47, 0);
+    box-shadow: 0 0 0 8px rgba(157, 97, 255, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(246, 199, 47, 0);
+    box-shadow: 0 0 0 0 rgba(157, 97, 255, 0);
   }
 }
 
@@ -404,7 +410,7 @@ body {
   background: linear-gradient(
     90deg,
     rgba(0, 0, 0, 0.03) 0%,
-    rgba(217, 119, 6, 0.08) 50%,
+    rgba(139, 76, 240, 0.08) 50%,
     rgba(0, 0, 0, 0.03) 100%
   );
   background-size: 200% 100%;
@@ -416,7 +422,7 @@ body {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0.03) 0%,
-    rgba(246, 199, 47, 0.1) 50%,
+    rgba(157, 97, 255, 0.12) 50%,
     rgba(255, 255, 255, 0.03) 100%
   );
 }
@@ -440,7 +446,7 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(217, 119, 6, 0.08) 50%,
+    rgba(139, 76, 240, 0.08) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
@@ -452,7 +458,7 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(246, 199, 47, 0.08) 50%,
+    rgba(157, 97, 255, 0.08) 50%,
     transparent 100%
   );
 }
@@ -539,14 +545,14 @@ select:autofill:focus {
 ::selection,
 input::selection,
 textarea::selection {
-  background-color: rgba(217, 119, 6, 0.28);
+  background-color: rgba(139, 76, 240, 0.28);
   color: #0f172a;
 }
 
 ::-moz-selection,
 input::-moz-selection,
 textarea::-moz-selection {
-  background-color: rgba(217, 119, 6, 0.28);
+  background-color: rgba(139, 76, 240, 0.28);
   color: #0f172a;
 }
 
@@ -557,7 +563,7 @@ textarea::-moz-selection {
 .dark textarea::selection,
 [data-theme="dark"] input::selection,
 [data-theme="dark"] textarea::selection {
-  background-color: rgba(246, 199, 47, 0.38);
+  background-color: rgba(157, 97, 255, 0.38);
   color: #ffffff;
 }
 
@@ -568,7 +574,7 @@ textarea::-moz-selection {
 .dark textarea::-moz-selection,
 [data-theme="dark"] input::-moz-selection,
 [data-theme="dark"] textarea::-moz-selection {
-  background-color: rgba(246, 199, 47, 0.38);
+  background-color: rgba(157, 97, 255, 0.38);
   color: #ffffff;
 }
 

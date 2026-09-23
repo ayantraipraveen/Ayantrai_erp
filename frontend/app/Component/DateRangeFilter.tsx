@@ -299,9 +299,9 @@ export default function DateRangeFilter({
           isSm ? "h-9 min-h-[36px] px-3 text-xs" : "h-11 px-4 text-sm"
         } ${
           isOpen
-            ? "border-[#F6C72F] bg-amber-500/10 dark:bg-amber-950/20 text-slate-900 dark:text-white ring-1 ring-[#F6C72F]/50 shadow-[0_0_12px_rgba(246,199,47,0.2)]"
+            ? "border-[#9D61FF] bg-purple-500/10 dark:bg-purple-950/20 text-slate-900 dark:text-white ring-1 ring-[#9D61FF]/50 shadow-[0_0_12px_rgba(157,97,255,0.2)]"
             : isFiltered
-            ? "border-amber-500/60 bg-amber-500/5 dark:bg-[#0e1219]/90 text-slate-900 dark:text-white"
+            ? "border-purple-500/60 bg-purple-500/5 dark:bg-[#0e1219]/90 text-slate-900 dark:text-white"
             : "border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-zinc-700"
         } ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
       >
@@ -309,7 +309,7 @@ export default function DateRangeFilter({
           <CalendarIcon
             className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${
               isFiltered || isOpen
-                ? "text-[#F6C72F]"
+                ? "text-[#9D61FF]"
                 : "text-slate-400 dark:text-zinc-500 group-hover:text-slate-700 dark:group-hover:text-zinc-300"
             }`}
           />
@@ -350,11 +350,11 @@ export default function DateRangeFilter({
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
             <div className="flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-[#F6C72F]" />
+              <Clock className="w-3.5 h-3.5 text-[#9D61FF]" />
               <span className="text-xs font-bold text-slate-900 dark:text-white">Date Range Filter</span>
             </div>
             {isFiltered && (
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-[#F6C72F] border border-amber-500/30 font-semibold">
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border border-purple-500/30 font-semibold">
                 Active Filter
               </span>
             )}
@@ -375,12 +375,12 @@ export default function DateRangeFilter({
                     onClick={() => handleSelectPreset(preset)}
                     className={`px-2.5 py-1.5 rounded-xl text-xs font-medium text-left transition-all cursor-pointer flex items-center justify-between border ${
                       isSelected
-                        ? "bg-[#F6C72F]/15 border-[#F6C72F] text-slate-950 dark:text-white font-semibold shadow-[0_0_10px_rgba(246,199,47,0.2)]"
+                        ? "bg-[#9D61FF]/15 border-[#9D61FF] text-slate-950 dark:text-white font-semibold shadow-[0_0_10px_rgba(157,97,255,0.2)]"
                         : "border-slate-100 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-zinc-900/40 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/70"
                     }`}
                   >
                     <span className="truncate">{preset.label}</span>
-                    {isSelected && <Check className="w-3 h-3 text-[#F6C72F] flex-shrink-0" />}
+                    {isSelected && <Check className="w-3 h-3 text-[#9D61FF] flex-shrink-0" />}
                   </button>
                 );
               })}
@@ -405,7 +405,7 @@ export default function DateRangeFilter({
                     setDraftStart(e.target.value);
                     setDraftPreset("custom");
                   }}
-                  className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#F6C72F] transition-all"
+                  className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-all"
                 />
               </div>
 
@@ -420,7 +420,7 @@ export default function DateRangeFilter({
                     setDraftEnd(e.target.value);
                     setDraftPreset("custom");
                   }}
-                  className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#F6C72F] transition-all"
+                  className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-all"
                 />
               </div>
             </div>
@@ -449,7 +449,7 @@ export default function DateRangeFilter({
               <button
                 type="button"
                 onClick={handleApply}
-                className="h-8 px-4 rounded-xl bg-[#F6C72F] hover:bg-[#F6C72F]/90 text-slate-950 font-bold text-xs transition-all shadow-[0_0_14px_rgba(246,199,47,0.35)] cursor-pointer flex items-center gap-1"
+                className="h-8 px-4 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs transition-all shadow-[0_0_14px_rgba(157,97,255,0.35)] cursor-pointer flex items-center gap-1"
               >
                 <span>Apply</span>
                 <Check className="w-3.5 h-3.5" />

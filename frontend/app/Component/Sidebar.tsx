@@ -204,7 +204,7 @@ export default function Sidebar({
           name: "Templates",
           href: "/templates",
           icon: Layers,
-          badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
+          badgeColor: "bg-purple-500/15 text-purple-700 dark:text-[#9D61FF] border-purple-500/40",
           description: "Template inspection & review queue",
         },
         {
@@ -273,7 +273,7 @@ export default function Sidebar({
           href: "/templates",
           icon: Layers,
           badge: "BUILDER",
-          badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
+          badgeColor: "bg-purple-500/15 text-purple-700 dark:text-[#9D61FF] border-purple-500/40",
           description: "Create & submit template blocks",
         },
         {
@@ -281,7 +281,7 @@ export default function Sidebar({
           href: "/report",
           icon: BarChart3,
           badge: "ISO 45001",
-          badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
+          badgeColor: "bg-purple-500/15 text-purple-700 dark:text-[#9D61FF] border-purple-500/40",
           description: "Report history, edit & send",
         },
       ],
@@ -391,21 +391,21 @@ export default function Sidebar({
                     ? "justify-center w-10 h-10 mx-auto"
                     : "gap-3 px-3 py-2.5 w-full"
                     } ${active
-                      ? "text-amber-600 dark:text-[#F6C72F] font-semibold"
-                      : "text-slate-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F]"
+                      ? "text-[#9D61FF] dark:text-[#9D61FF] font-semibold"
+                      : "text-slate-600 dark:text-zinc-400 hover:text-[#9D61FF] dark:hover:text-[#9D61FF]"
                     }`}
                 >
                   {/* Active Left Pill Accent (Expanded mode) */}
                   {active && !isCollapsed && (
-                    <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#F6C72F] shadow-[0_0_8px_rgba(246,199,47,0.8)]" />
+                    <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#9D61FF] shadow-[0_0_10px_rgba(157,97,255,0.8)]" />
                   )}
 
                   {/* Icon */}
                   <div className="relative flex-shrink-0">
                     <Icon
                       className={`w-5 h-5 transition-all duration-200 ${active
-                        ? "text-amber-600 dark:text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.4)]"
-                        : "text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-[#F6C72F] group-hover:scale-110"
+                        ? "text-[#9D61FF] dark:text-[#9D61FF] drop-shadow-[0_0_8px_rgba(157,97,255,0.5)]"
+                        : "text-slate-500 dark:text-zinc-400 group-hover:text-[#9D61FF] dark:group-hover:text-[#9D61FF] group-hover:scale-110"
                         }`}
                     />
                   </div>
@@ -415,7 +415,7 @@ export default function Sidebar({
                     <div className="flex-1 flex items-center justify-between overflow-hidden min-w-0">
                       <span
                         className={`truncate ${active
-                          ? "font-bold text-amber-600 dark:text-[#F6C72F]"
+                          ? "font-bold text-[#9D61FF] dark:text-[#9D61FF]"
                           : ""
                           }`}
                       >
@@ -502,9 +502,9 @@ export default function Sidebar({
                   type="button"
                   onClick={() => setSidebarOpen(false)}
                   aria-label="Collapse sidebar"
-                  className="p-1.5 rounded-lg border border-[#F6C72F]/30 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-[#F6C72F]/50 dark:hover:border-[#F6C72F]/50 hover:bg-amber-500/10 transition-all cursor-pointer flex-shrink-0"
+                  className="p-1.5 rounded-lg border border-[#9D61FF]/30 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:border-[#9D61FF]/50 dark:hover:border-[#9D61FF]/50 hover:bg-purple-500/10 transition-all cursor-pointer flex-shrink-0"
                 >
-                  <PanelLeftClose className="w-4 h-4 text-[#F6C72F]" />
+                  <PanelLeftClose className="w-4 h-4 text-[#9D61FF]" />
                 </button>
               </Tooltip>
             </div>
@@ -592,7 +592,7 @@ export default function Sidebar({
                     />
                   </div>
                   <div className="flex flex-col border-l border-slate-300 dark:border-zinc-700/80 pl-2">
-                    <span className="text-[9px] tracking-wider text-[#F6C72F] font-mono uppercase font-bold">
+                    <span className="text-[9px] tracking-wider text-[#9D61FF] font-mono uppercase font-bold">
                       Sitesafe
                     </span>
                     <span className="text-[9px] text-slate-500 dark:text-zinc-400 font-medium">
@@ -618,7 +618,7 @@ export default function Sidebar({
             <div className="pt-3 border-t border-slate-200 dark:border-zinc-800/80">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-bold text-xs flex items-center justify-center shadow-sm flex-shrink-0">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-[#b07dff] to-[#7938e3] text-white font-bold text-xs flex items-center justify-center shadow-sm flex-shrink-0">
                     {userInitials}
                   </div>
                   <div className="min-w-0">
