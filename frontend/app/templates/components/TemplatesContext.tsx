@@ -333,6 +333,55 @@ export function useTemplates() {
     return true;
   };
 
+  const setEditingTemplate = (tpl: ReportTemplate | null) => {
+    dispatch(setTemplateEditingId(tpl ? tpl.id : null));
+    if (tpl) {
+      dispatch(setTemplateBuilderOpen(true));
+    }
+  };
+
+  const handleDuplicate = (id: string) => {
+    dispatch(duplicateTemplate(id));
+    showToast("Template blueprint duplicated to drafts.", "success");
+  };
+
+  const handleUpdateTemplate = (
+    id: string,
+    name: string,
+    desc: string,
+    siteId: string,
+    blocks: TemplateBlock[],
+    status?: "draft" | "pending" | "active" | "rejected"
+  ): boolean => {
+    if (!name.trim()) {
+      showToast("Please provide a template title.", "warning");
+      return false;
+    }
+    const site = sites.find((s) => s.id === siteId) || sites[0];
+    const enabledBlocks = blocks.filter((b) => b.enabled);
+    if (enabledBlocks.length === 0) {
+      showToast("Please enable at least one section block.", "warning");
+      return false;
+    }
+
+    dispatch(
+      updateTemplate({
+        id,
+        name,
+        description: desc || "Custom block-based workforce safety template.",
+        site_id: site.id,
+        site_name: site.name,
+        blocks: enabledBlocks,
+        status,
+      })
+    );
+
+    dispatch(setTemplateEditingId(null));
+    dispatch(setTemplateBuilderOpen(false));
+    showToast("Template updated successfully!", "success");
+    return true;
+  };
+
   return {
     templates,
     activeRole,
@@ -367,6 +416,8 @@ export function useTemplates() {
     siteBuilderOptions,
     selectedTemplate,
     setSelectedTemplate,
+    editingTemplate,
+    setEditingTemplate,
     reviewModalOpen,
     setReviewModalOpen,
     builderOpen,
@@ -378,7 +429,9 @@ export function useTemplates() {
     handleApprove,
     handleReject,
     handleDelete,
+    handleDuplicate,
     handleCreateTemplate,
+    handleUpdateTemplate,
   };
 }
 
