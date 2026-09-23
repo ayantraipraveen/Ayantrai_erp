@@ -1,9 +1,9 @@
-import { WorkspaceLayout } from "../Component";
+import React from "react";
 
 export default function TemplatesLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <WorkspaceLayout>{children}</WorkspaceLayout>;
+  return <>{children}</>;
 }

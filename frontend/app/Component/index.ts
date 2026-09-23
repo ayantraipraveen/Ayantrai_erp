@@ -25,6 +25,9 @@ export * from "./Sidebar";
 export { default as WorkspaceLayout } from "./WorkspaceLayout";
 export * from "./WorkspaceLayout";
 
+export { default as AppShell } from "./AppShell";
+export * from "./AppShell";
+
 export { default as ThemeToggle } from "./ThemeToggle";
 export * from "./ThemeToggle";
 

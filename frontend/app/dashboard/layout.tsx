@@ -1,10 +1,9 @@
 import React from "react";
-import { WorkspaceLayout } from "../Component";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <WorkspaceLayout>{children}</WorkspaceLayout>;
+  return <>{children}</>;
 }

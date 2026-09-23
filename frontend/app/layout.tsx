@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import StoreProvider from "@/lib/redux/StoreProvider";
 import { ThemeProvider } from "./Component/ThemeProvider";
+import AppShell from "./Component/AppShell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,7 +68,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)] transition-colors duration-200">
         <StoreProvider>
           <ThemeProvider defaultTheme="dark">
-            {children}
+            <AppShell>
+              {children}
+            </AppShell>
           </ThemeProvider>
         </StoreProvider>
       </body>
