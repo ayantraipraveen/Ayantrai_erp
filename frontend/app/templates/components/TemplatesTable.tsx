@@ -17,6 +17,8 @@ import {
   MessageSquare,
   X,
   Check,
+  History,
+  RotateCcw,
 } from "lucide-react";
 import { Tooltip } from "../../Component";
 import { useTemplates } from "./TemplatesContext";
@@ -41,11 +43,17 @@ export default function TemplatesTable() {
     setReviewModalOpen,
     setDeleteConfirmId,
     resetFilters,
+    handleApprove,
+    handleReject,
+    handleResubmit,
     handleUpdateRemark,
   } = useTemplates();
 
   const [remarkModalTemplate, setRemarkModalTemplate] = React.useState<any | null>(null);
   const [remarkText, setRemarkText] = React.useState("");
+
+  const [rejectModalTemplate, setRejectModalTemplate] = React.useState<any | null>(null);
+  const [customRejectReason, setCustomRejectReason] = React.useState("");
 
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
@@ -58,19 +66,20 @@ export default function TemplatesTable() {
 
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] border-b border-slate-200 dark:border-zinc-800/80 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none">
             <tr>
-              <th className="py-2 px-3 font-semibold w-[24%]">Template &amp; Blueprint</th>
-              <th className="py-2 px-3 font-semibold w-[16%]">Target Site</th>
-              <th className="py-2 px-3 font-semibold w-[18%]">Configured Modules</th>
-              <th className="py-2 px-3 font-semibold w-[18%]">Author / Created</th>
-              <th className="py-2 px-3 font-semibold w-[12%]">Status</th>
-              <th className="py-2 px-3 font-semibold w-[12%] text-right">Actions</th>
+              <th className="py-2.5 px-3 font-semibold w-[22%]">Template &amp; Blueprint</th>
+              <th className="py-2.5 px-3 font-semibold w-[15%]">Target Site</th>
+              <th className="py-2.5 px-3 font-semibold w-[11%]">Configured Modules</th>
+              <th className="py-2.5 px-3 font-semibold w-[15%]">Author / Created</th>
+              <th className="py-2.5 px-3 font-semibold w-[10%]">Status</th>
+              <th className="py-2.5 px-3 font-semibold w-[14%]">Review Info</th>
+              <th className="py-2.5 px-3 font-semibold w-[13%] text-center">Actions</th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60">
             {paginatedTemplates.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-16 text-center">
+                <td colSpan={7} className="py-16 text-center">
                   <div className="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto">
                     <div className="h-10 w-10 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-[#9D61FF] flex items-center justify-center">
                       <Layers className="w-5 h-5" />
@@ -105,7 +114,7 @@ export default function TemplatesTable() {
                     className="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/30 transition-colors"
                   >
                   {/* Template & Blueprint */}
-                  <td className="py-2 px-3 overflow-hidden">
+                  <td className="py-2.5 px-3 overflow-hidden">
                     <div className="flex items-start gap-2 min-w-0">
                       <div className="p-1.5 rounded-lg bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex-shrink-0 mt-0.5">
                         <FileText className="w-3.5 h-3.5" />
@@ -118,6 +127,11 @@ export default function TemplatesTable() {
                           <span className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
                             {template.version}
                           </span>
+                          <Tooltip content={`Version History (${template.version})`} position="top">
+                            <span className="cursor-pointer text-slate-400 hover:text-[#9D61FF] transition-colors p-0.5">
+                              <History className="w-2.5 h-2.5" />
+                            </span>
+                          </Tooltip>
                         </div>
                         <Tooltip content={template.name} position="top">
                           <div className="font-semibold text-[11px] text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors truncate cursor-default">
@@ -134,7 +148,7 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Target Site */}
-                  <td className="py-2 px-3 overflow-hidden">
+                  <td className="py-2.5 px-3 overflow-hidden">
                     <Tooltip content={template.site_name} position="top">
                       <div className="flex items-center gap-1 min-w-0 cursor-default">
                         <Building className="w-3 h-3 text-[#9D61FF] flex-shrink-0" />
@@ -148,31 +162,34 @@ export default function TemplatesTable() {
                     </div>
                   </td>
 
-                  {/* Configured Modules */}
-                  <td className="py-2 px-3 overflow-hidden">
-                    <div className="flex flex-wrap gap-1">
-                      {template.blocks.slice(0, 2).map((blk) => (
-                        <Tooltip key={blk.id} content={blk.title} position="top">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700/60 truncate max-w-[90px] cursor-default">
-                            {blk.title}
-                          </span>
-                        </Tooltip>
-                      ))}
-                      {template.blocks.length > 2 && (
-                        <Tooltip
-                          content={template.blocks.slice(2).map((b) => b.title).join(", ")}
-                          position="top"
-                        >
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border border-purple-500/30 font-bold cursor-default">
-                            +{template.blocks.length - 2}
-                          </span>
-                        </Tooltip>
-                      )}
-                    </div>
+                  {/* Configured Modules — Compact Chip with Tooltip */}
+                  <td className="py-2.5 px-3 overflow-hidden">
+                    <Tooltip
+                      content={
+                        <div className="max-w-xs space-y-1">
+                          <div className="font-bold text-[11px] text-purple-300 border-b border-purple-400/20 pb-0.5">
+                            {template.blocks.length} Configured Modules:
+                          </div>
+                          <div className="text-[10px] leading-relaxed">
+                            {template.blocks.map((b, i) => (
+                              <div key={b.id || i} className="truncate">
+                                • {b.title}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      }
+                      position="top"
+                    >
+                      <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 cursor-default hover:border-[#9D61FF]/40 transition-colors">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#9D61FF]" />
+                        {template.blocks.length} {template.blocks.length === 1 ? "module" : "modules"}
+                      </span>
+                    </Tooltip>
                   </td>
 
                   {/* Author / Created */}
-                  <td className="py-2 px-3 overflow-hidden">
+                  <td className="py-2.5 px-3 overflow-hidden">
                     <Tooltip content={template.created_by} position="top">
                       <div className="font-medium text-[11px] text-slate-800 dark:text-zinc-200 truncate cursor-default">
                         {template.created_by}
@@ -184,7 +201,7 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Status */}
-                  <td className="py-2 px-3 overflow-hidden">
+                  <td className="py-2.5 px-3 overflow-hidden">
                     <span
                       className={`inline-flex items-center gap-1.5 text-[11px] font-medium capitalize whitespace-nowrap ${
                         isActive
@@ -199,34 +216,95 @@ export default function TemplatesTable() {
                       {isPending && <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-ping flex-shrink-0" />}
                       {isActive  && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 flex-shrink-0" />}
                       {isRejected && <span className="h-1.5 w-1.5 rounded-full bg-rose-500 flex-shrink-0" />}
+                      {!isPending && !isActive && !isRejected && <span className="h-1.5 w-1.5 rounded-full bg-slate-400 flex-shrink-0" />}
                       <span className="truncate">
-                        {isPending ? "Pending" : template.status}
+                        {isPending
+                          ? "Pending"
+                          : isActive
+                          ? "Active"
+                          : isRejected
+                          ? "Rejected"
+                          : "Draft"}
                       </span>
                     </span>
-                    {isRejected && template.rejection_reason && (
-                      <Tooltip content={template.rejection_reason} position="bottom">
-                        <div className="text-[10px] text-rose-500 dark:text-rose-400 mt-0.5 truncate cursor-default">
-                          {template.rejection_reason}
+                  </td>
+
+                  {/* Review Info */}
+                  <td className="py-2.5 px-3 overflow-hidden text-[10px]">
+                    {isActive && (
+                      <div className="truncate">
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium">Approved</span>
+                        {template.approved_by && (
+                          <div className="text-slate-500 dark:text-zinc-400 truncate">
+                            by {template.approved_by}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {isRejected && (
+                      <Tooltip content={template.rejection_reason || "Rejected by Superadmin"} position="top">
+                        <div className="text-rose-500 dark:text-rose-400 cursor-default truncate">
+                          <span className="font-semibold">Reason:</span>{" "}
+                          <span>{template.rejection_reason || "Changes requested"}</span>
                         </div>
                       </Tooltip>
                     )}
+                    {isPending && (
+                      <div className="text-amber-600 dark:text-amber-400 italic font-mono truncate">
+                        Awaiting review
+                      </div>
+                    )}
+                    {!isActive && !isRejected && !isPending && (
+                      <div className="text-slate-400 dark:text-zinc-500 truncate">
+                        Draft saved
+                      </div>
+                    )}
                   </td>
 
-                  {/* Actions */}
-                  <td className="py-2 px-3">
-                    <div className="flex items-center justify-end gap-1">
+                  {/* Actions (Centered Header and Container) */}
+                  <td className="py-2.5 px-3">
+                    <div className="flex items-center justify-center gap-1">
+                      {/* Quick Approve / Reject for Superadmin on Pending */}
                       {activeRole === "superadmin" && isPending && (
-                        <Tooltip content="Review and approve" position="top">
+                        <>
+                          <Tooltip content="Quick Approve" position="top">
+                            <button
+                              type="button"
+                              onClick={() => handleApprove(template)}
+                              className="h-6 w-6 rounded-md bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white border border-emerald-500/30 transition-all flex items-center justify-center cursor-pointer"
+                            >
+                              <Check className="w-3 h-3" />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Reject with Reason" position="top">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setRejectModalTemplate(template);
+                                setCustomRejectReason("");
+                              }}
+                              className="h-6 w-6 rounded-md bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 transition-all flex items-center justify-center cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Tooltip>
+                        </>
+                      )}
+
+                      {/* Resubmit Action for Rejected Templates */}
+                      {isRejected && (
+                        <Tooltip content="Resubmit for Superadmin Review" position="top">
                           <button
                             type="button"
-                            onClick={() => { setSelectedTemplate(template); setReviewModalOpen(true); }}
-                            className="h-6 px-1.5 rounded-md bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-[10px] flex items-center gap-0.5 transition-all cursor-pointer whitespace-nowrap"
+                            onClick={() => handleResubmit(template.id)}
+                            className="h-6 w-6 rounded-md bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white border border-purple-500/30 transition-all flex items-center justify-center cursor-pointer"
                           >
-                            <ShieldCheck className="w-3 h-3" />
-                            <span>Review</span>
+                            <RotateCcw className="w-3 h-3" />
                           </button>
                         </Tooltip>
                       )}
+
+                      {/* Inspect blueprint */}
                       <Tooltip content="Inspect blueprint" position="top">
                         <button
                           type="button"
@@ -236,6 +314,8 @@ export default function TemplatesTable() {
                           <Eye className="w-3 h-3" />
                         </button>
                       </Tooltip>
+
+                      {/* Remark */}
                       <Tooltip content={template.remarks ? `Remark: "${template.remarks}"` : "Add remark"} position="top">
                         <button
                           type="button"
@@ -255,6 +335,8 @@ export default function TemplatesTable() {
                           )}
                         </button>
                       </Tooltip>
+
+                      {/* Edit */}
                       <Tooltip content="Edit template" position="top">
                         <button
                           type="button"
@@ -264,6 +346,8 @@ export default function TemplatesTable() {
                           <Edit3 className="w-3 h-3" />
                         </button>
                       </Tooltip>
+
+                      {/* Duplicate */}
                       <Tooltip content="Duplicate template" position="top">
                         <button
                           type="button"
@@ -273,6 +357,8 @@ export default function TemplatesTable() {
                           <Copy className="w-3 h-3" />
                         </button>
                       </Tooltip>
+
+                      {/* Delete */}
                       <Tooltip content="Delete template" position="top" variant="danger">
                         <button
                           type="button"
@@ -446,6 +532,71 @@ export default function TemplatesTable() {
                   <span>Save Remark</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Reason Modal Dialog */}
+      {rejectModalTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-2xl space-y-4 text-slate-900 dark:text-white">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800/80 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-500">
+                  <X className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                    Reject Safety Template
+                  </h3>
+                  <p className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
+                    {rejectModalTemplate.id} • {rejectModalTemplate.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRejectModalTemplate(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-slate-700 dark:text-zinc-300">
+                Reason for Rejection <span className="text-rose-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                value={customRejectReason}
+                onChange={(e) => setCustomRejectReason(e.target.value)}
+                placeholder="Specify the compliance gaps, missing blocks, or required modifications..."
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-rose-500/80 transition-all placeholder:text-slate-400"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setRejectModalTemplate(null)}
+                className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!customRejectReason.trim()}
+                onClick={() => {
+                  handleReject(rejectModalTemplate, customRejectReason.trim());
+                  setRejectModalTemplate(null);
+                }}
+                className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>Confirm Rejection</span>
+              </button>
             </div>
           </div>
         </div>
