@@ -138,7 +138,7 @@ export default function TemplatesTable() {
                             {template.name}
                           </div>
                         </Tooltip>
-                        <Tooltip content={template.description} position="bottom">
+                        <Tooltip content={template.description} position="bottom" maxWidth="max-w-[320px]">
                           <div className="text-[10px] text-slate-500 dark:text-zinc-400 truncate cursor-default">
                             {template.description}
                           </div>
@@ -242,7 +242,12 @@ export default function TemplatesTable() {
                       </div>
                     )}
                     {isRejected && (
-                      <Tooltip content={template.rejection_reason || "Rejected by Superadmin"} position="top">
+                      <Tooltip
+                        content={template.rejection_reason || "Rejected by Superadmin"}
+                        position="top"
+                        variant="danger"
+                        maxWidth="max-w-[280px]"
+                      >
                         <div className="text-rose-500 dark:text-rose-400 cursor-default truncate">
                           <span className="font-semibold">Reason:</span>{" "}
                           <span>{template.rejection_reason || "Changes requested"}</span>
@@ -316,7 +321,12 @@ export default function TemplatesTable() {
                       </Tooltip>
 
                       {/* Remark */}
-                      <Tooltip content={template.remarks ? `Remark: "${template.remarks}"` : "Add remark"} position="top">
+                      <Tooltip
+                        content={template.remarks ? `Remark: "${template.remarks}"` : "Add remark"}
+                        position="top"
+                        variant={template.remarks ? "amber" : "default"}
+                        maxWidth="max-w-[260px]"
+                      >
                         <button
                           type="button"
                           onClick={() => {

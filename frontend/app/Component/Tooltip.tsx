@@ -27,6 +27,10 @@ export interface TooltipProps {
   disabled?: boolean;
   /** Whether tooltip should follow the cursor while hovering inside the trigger element (default: true) */
   followCursor?: boolean;
+  /** Maximum width for wrapping long text (e.g. "max-w-xs", "max-w-sm", or custom px) */
+  maxWidth?: string;
+  /** Whether text should wrap (default: true for long content) */
+  wrap?: boolean;
 }
 
 const variantStyles: Record<TooltipVariant, { container: string; arrow: string }> = {
@@ -68,6 +72,8 @@ export default function Tooltip({
   showArrow = true,
   disabled = false,
   followCursor = true,
+  maxWidth = "max-w-xs",
+  wrap = true,
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -102,8 +108,8 @@ export default function Tooltip({
           } else {
             top = clientY - 12;
           }
-          // Clamp horizontally to prevent viewport edge clipping
-          left = Math.max(90, Math.min(viewportW - 90, clientX));
+          // Clamp horizontally to prevent viewport edge clipping (allow up to 160px margin)
+          left = Math.max(160, Math.min(viewportW - 160, clientX));
         } else if (position === "bottom") {
           if (clientY > viewportH - 48) {
             actualPos = "top";
@@ -111,7 +117,7 @@ export default function Tooltip({
           } else {
             top = clientY + 16;
           }
-          left = Math.max(90, Math.min(viewportW - 90, clientX));
+          left = Math.max(160, Math.min(viewportW - 160, clientX));
         } else if (position === "right") {
           if (clientX > viewportW - 150) {
             actualPos = "left";
@@ -290,7 +296,9 @@ export default function Tooltip({
               pointerEvents: "none",
               willChange: "top, left",
             }}
-            className={`whitespace-nowrap rounded-xl border px-2.5 py-1 text-[10px] font-mono font-medium tracking-tight backdrop-blur-xl animate-fadeIn ${currentVariant.container} ${tooltipClassName}`}
+            className={`${
+              wrap ? `${maxWidth} whitespace-normal break-words leading-relaxed text-start` : "whitespace-nowrap"
+            } rounded-xl border px-3 py-1.5 text-[10px] font-mono font-medium tracking-tight backdrop-blur-xl animate-fadeIn ${currentVariant.container} ${tooltipClassName}`}
           >
             {content}
 
