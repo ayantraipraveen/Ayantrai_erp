@@ -6,6 +6,7 @@ import {
   ReportTemplate,
   TemplateBlock,
   TemplateBlockType,
+  TemplateGraphConfig,
   addTemplate,
   updateTemplate,
   duplicateTemplate,
@@ -26,8 +27,15 @@ import {
   setTemplateEditingId,
   setTemplateReviewModalOpen,
   setTemplateBuilderOpen,
+  setTemplateSectionsModalOpen,
   setTemplateDeleteConfirmId,
   setTemplateToastMessage,
+  addGlobalSection,
+  updateGlobalSection,
+  deleteGlobalSection,
+  addGraphToGlobalSection,
+  updateGraphInGlobalSection,
+  deleteGraphFromGlobalSection,
   showGlobalToast,
 } from "@/lib/redux/slices/reportModuleSlice";
 import {
@@ -123,8 +131,10 @@ export function useTemplates() {
     templateEditingId: editingTemplateId,
     templateReviewModalOpen: reviewModalOpen,
     templateBuilderOpen: builderOpen,
+    templateSectionsModalOpen: sectionsModalOpen,
     templateDeleteConfirmId: deleteConfirmId,
     templateToastMessage: toastMessage,
+    globalSections,
   } = useAppSelector((state) => state.reportModule);
 
   // Selected template object derived from selectedTemplateId
@@ -456,6 +466,9 @@ export function useTemplates() {
     setReviewModalOpen,
     builderOpen,
     setBuilderOpen,
+    sectionsModalOpen,
+    setSectionsModalOpen: (open: boolean) => dispatch(setTemplateSectionsModalOpen(open)),
+    globalSections,
     deleteConfirmId,
     setDeleteConfirmId,
     toastMessage,
@@ -468,6 +481,30 @@ export function useTemplates() {
     handleCreateTemplate,
     handleUpdateTemplate,
     handleUpdateRemark,
+    handleAddGlobalSection: (sec: Omit<TemplateBlock, "id" | "order">) => {
+      dispatch(addGlobalSection(sec));
+      showToast(`Section "${sec.title}" added to catalog!`, "success");
+    },
+    handleUpdateGlobalSection: (payload: { id: string; title: string; description: string; enabled?: boolean }) => {
+      dispatch(updateGlobalSection(payload));
+      showToast("Section updated successfully!", "success");
+    },
+    handleDeleteGlobalSection: (id: string) => {
+      dispatch(deleteGlobalSection(id));
+      showToast("Section removed from catalog.", "info");
+    },
+    handleAddGraphToSection: (sectionId: string, graph: Omit<TemplateGraphConfig, "id">) => {
+      dispatch(addGraphToGlobalSection({ sectionId, graph }));
+      showToast(`Graph "${graph.title}" attached!`, "success");
+    },
+    handleUpdateGraphInSection: (sectionId: string, graph: TemplateGraphConfig) => {
+      dispatch(updateGraphInGlobalSection({ sectionId, graph }));
+      showToast("Graph updated!", "success");
+    },
+    handleDeleteGraphFromSection: (sectionId: string, graphId: string) => {
+      dispatch(deleteGraphFromGlobalSection({ sectionId, graphId }));
+      showToast("Graph removed from section.", "info");
+    },
   };
 }
 

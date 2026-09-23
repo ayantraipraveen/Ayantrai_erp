@@ -69,6 +69,7 @@ export default function TemplateBuilderDrawer() {
     editingTemplate,
     setEditingTemplate,
     sites,
+    globalSections,
   } = useTemplates();
 
   // Active Tab
@@ -79,17 +80,13 @@ export default function TemplateBuilderDrawer() {
   const [templateDesc, setTemplateDesc] = useState("");
   const [selectedSiteId, setSelectedSiteId] = useState(sites[0]?.id || "SITE-01");
 
-  // Blocks & Graphs State
+  // Blocks & Graphs State initialized from master catalog
   const [builderBlocks, setBuilderBlocks] = useState<TemplateBlock[]>(() =>
-    availableBlockTypes.map((b, idx) => ({
-      id: `blk-core-${idx + 1}`,
-      type: b.type,
-      title: b.title,
-      description: b.description,
-      enabled: true,
+    globalSections.map((b, idx) => ({
+      ...b,
       order: idx + 1,
-      isCustom: false,
-      graphs: [],
+      enabled: true,
+      graphs: b.graphs ? [...b.graphs] : [],
     }))
   );
 
@@ -106,7 +103,7 @@ export default function TemplateBuilderDrawer() {
 
   const isEditing = Boolean(editingTemplate);
 
-  // Sync state when drawer opens or editing template changes
+  // Sync state when drawer opens or editing template changes or globalSections change
   useEffect(() => {
     if (editingTemplate) {
       setTemplateName(editingTemplate.name);
@@ -116,31 +113,29 @@ export default function TemplateBuilderDrawer() {
 
       const existingBlockMap = new Map(editingTemplate.blocks.map((b) => [b.id || b.type, b]));
 
-      // Merge core presets
-      const coreInitialized = availableBlockTypes.map((b, idx) => {
+      // Merge with master global sections
+      const initialized = globalSections.map((b, idx) => {
         const found =
-          editingTemplate.blocks.find((x) => x.type === b.type) ||
+          editingTemplate.blocks.find((x) => x.id === b.id || x.type === b.type) ||
           existingBlockMap.get(b.type);
         return {
-          id: found?.id || `blk-core-${idx + 1}`,
-          type: b.type,
-          title: b.title,
-          description: b.description,
+          ...b,
+          id: found?.id || b.id,
           enabled: Boolean(found && found.enabled !== false),
           order: found?.order ?? idx + 1,
-          isCustom: false,
-          graphs: found?.graphs || [],
+          graphs: found?.graphs || b.graphs || [],
         };
       });
 
-      // Include any custom sections from existing template
-      const customBlocks = editingTemplate.blocks.filter((b) => b.isCustom);
-      const combined = [...coreInitialized, ...customBlocks];
+      // Include any custom sections created specifically in this template
+      const extraCustomBlocks = editingTemplate.blocks.filter(
+        (b) => !globalSections.some((gs) => gs.id === b.id || gs.type === b.type)
+      );
+      const combined = [...initialized, ...extraCustomBlocks];
       combined.sort((a, b) => a.order - b.order);
 
       setBuilderBlocks(combined);
 
-      // Auto-expand the first enabled section
       const firstEnabled = combined.find((b) => b.enabled);
       if (firstEnabled) {
         setExpandedSectionIds({ [firstEnabled.id]: true });
@@ -151,58 +146,19 @@ export default function TemplateBuilderDrawer() {
       setSelectedSiteId(sites[0]?.id || "SITE-01");
       setActiveTab("general");
 
-      const initial = availableBlockTypes.map((b, idx) => ({
-        id: `blk-core-${idx + 1}`,
-        type: b.type,
-        title: b.title,
-        description: b.description,
+      const initial = globalSections.map((b, idx) => ({
+        ...b,
         enabled: true,
         order: idx + 1,
-        isCustom: false,
-        graphs:
-          b.type === "attendance_trends"
-            ? [
-                {
-                  id: "grp-init-1",
-                  title: "Daily Shift Muster Adherence",
-                  type: "line" as GraphType,
-                  dataSource: "attendance_daily_shifts",
-                  description: "Shift 1 vs Shift 2 daily headcount check-in volume",
-                },
-                {
-                  id: "grp-init-2",
-                  title: "Subcontractor Headcount Distribution",
-                  type: "pie" as GraphType,
-                  dataSource: "attendance_vendor_distribution",
-                  description: "Percentage breakdown per vendor contractor",
-                },
-              ]
-            : b.type === "ppe_compliance_trends"
-            ? [
-                {
-                  id: "grp-init-3",
-                  title: "Connected PPE Compliance by Zone",
-                  type: "bar" as GraphType,
-                  dataSource: "helmet_optical_telemetry",
-                  description: "Smart helmet & vest gateway compliance rates",
-                },
-              ]
-            : [],
+        graphs: b.graphs ? [...b.graphs] : [],
       }));
 
       setBuilderBlocks(initial);
-      setExpandedSectionIds({ [initial[0].id]: true });
+      if (initial[0]) {
+        setExpandedSectionIds({ [initial[0].id]: true });
+      }
     }
-  }, [editingTemplate, sites, builderOpen]);
-
-  if (!builderOpen) return null;
-
-  const handleClose = () => {
-    setEditingTemplate(null);
-    setBuilderOpen(false);
-    setActiveGraphDraft(null);
-    setIsAddingSection(false);
-  };
+  }, [editingTemplate, sites, builderOpen, globalSections]);
 
   // Section handlers
   const toggleBlock = (index: number) => {
@@ -390,6 +346,15 @@ export default function TemplateBuilderDrawer() {
         return <Grid className="w-3.5 h-3.5 text-slate-400" />;
     }
   };
+
+  const handleClose = () => {
+    setEditingTemplate(null);
+    setBuilderOpen(false);
+    setActiveGraphDraft(null);
+    setIsAddingSection(false);
+  };
+
+  if (!builderOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-fadeIn">

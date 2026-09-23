@@ -7,4 +7,5 @@ export { default as TemplateReviewModal } from "./TemplateReviewModal";
 export { default as TemplateBuilderDrawer } from "./TemplateBuilderDrawer";
 export { default as DeleteTemplateModal } from "./DeleteTemplateModal";
 export { default as TemplateToast } from "./TemplateToast";
+export { default as SectionsCatalogModal } from "./SectionsCatalogModal";
 export * from "./TemplatesContext";

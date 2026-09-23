@@ -274,8 +274,12 @@ export interface ReportModuleState {
   templateEditingId: string | null;
   templateReviewModalOpen: boolean;
   templateBuilderOpen: boolean;
+  templateSectionsModalOpen: boolean;
   templateDeleteConfirmId: string | null;
   templateToastMessage: string | null;
+
+  // Master Global Library of Sections & Graphs
+  globalSections: TemplateBlock[];
 }
 
 const defaultBlocks: TemplateBlock[] = [
@@ -784,8 +788,12 @@ const initialState: ReportModuleState = {
   templateEditingId: null,
   templateReviewModalOpen: false,
   templateBuilderOpen: false,
+  templateSectionsModalOpen: false,
   templateDeleteConfirmId: null,
   templateToastMessage: null,
+
+  // Master Global Library of Sections & Graphs
+  globalSections: defaultBlocks,
 };
 
 export const reportModuleSlice = createSlice({
@@ -1048,11 +1056,85 @@ export const reportModuleSlice = createSlice({
     setTemplateBuilderOpen: (state, action: PayloadAction<boolean>) => {
       state.templateBuilderOpen = action.payload;
     },
+    setTemplateSectionsModalOpen: (state, action: PayloadAction<boolean>) => {
+      state.templateSectionsModalOpen = action.payload;
+    },
     setTemplateDeleteConfirmId: (state, action: PayloadAction<string | null>) => {
       state.templateDeleteConfirmId = action.payload;
     },
     setTemplateToastMessage: (state, action: PayloadAction<string | null>) => {
       state.templateToastMessage = action.payload;
+    },
+
+    // Master Global Sections & Graphs Library Reducers
+    addGlobalSection: (state, action: PayloadAction<Omit<TemplateBlock, "id" | "order">>) => {
+      const newSection: TemplateBlock = {
+        ...action.payload,
+        id: `blk-custom-${Date.now()}`,
+        order: state.globalSections.length + 1,
+        isCustom: true,
+        graphs: action.payload.graphs || [],
+      };
+      state.globalSections.push(newSection);
+      state.activityLogs.unshift({
+        id: `act-${Date.now()}-sec-add`,
+        actor: "Dr. Vikram Seth",
+        role: "Superadmin",
+        action: `Added new report section blueprint: ${newSection.title}`,
+        target: "Sections & Graphs Catalog",
+        timestamp: "Just now",
+        type: "template",
+      });
+    },
+    updateGlobalSection: (
+      state,
+      action: PayloadAction<{ id: string; title: string; description: string; enabled?: boolean }>
+    ) => {
+      const sec = state.globalSections.find((s) => s.id === action.payload.id);
+      if (sec) {
+        sec.title = action.payload.title;
+        sec.description = action.payload.description;
+        if (action.payload.enabled !== undefined) {
+          sec.enabled = action.payload.enabled;
+        }
+      }
+    },
+    deleteGlobalSection: (state, action: PayloadAction<string>) => {
+      state.globalSections = state.globalSections.filter((s) => s.id !== action.payload);
+    },
+    addGraphToGlobalSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; graph: Omit<TemplateGraphConfig, "id"> }>
+    ) => {
+      const sec = state.globalSections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        if (!sec.graphs) sec.graphs = [];
+        sec.graphs.push({
+          ...action.payload.graph,
+          id: `grp-${Date.now()}`,
+        });
+      }
+    },
+    updateGraphInGlobalSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; graph: TemplateGraphConfig }>
+    ) => {
+      const sec = state.globalSections.find((s) => s.id === action.payload.sectionId);
+      if (sec && sec.graphs) {
+        const idx = sec.graphs.findIndex((g) => g.id === action.payload.graph.id);
+        if (idx !== -1) {
+          sec.graphs[idx] = action.payload.graph;
+        }
+      }
+    },
+    deleteGraphFromGlobalSection: (
+      state,
+      action: PayloadAction<{ sectionId: string; graphId: string }>
+    ) => {
+      const sec = state.globalSections.find((s) => s.id === action.payload.sectionId);
+      if (sec && sec.graphs) {
+        sec.graphs = sec.graphs.filter((g) => g.id !== action.payload.graphId);
+      }
     },
     // Global Universal Toast Reducers
     showGlobalToast: (state, action: PayloadAction<ShowGlobalToastPayload>) => {
@@ -1302,8 +1384,15 @@ export const {
   setTemplateEditingId,
   setTemplateReviewModalOpen,
   setTemplateBuilderOpen,
+  setTemplateSectionsModalOpen,
   setTemplateDeleteConfirmId,
   setTemplateToastMessage,
+  addGlobalSection,
+  updateGlobalSection,
+  deleteGlobalSection,
+  addGraphToGlobalSection,
+  updateGraphInGlobalSection,
+  deleteGraphFromGlobalSection,
   showGlobalToast,
   clearGlobalToast,
   updateReportRemarks,
