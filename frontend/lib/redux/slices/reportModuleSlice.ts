@@ -892,6 +892,9 @@ export const reportModuleSlice = createSlice({
     setTemplateSelectedId: (state, action: PayloadAction<string | null>) => {
       state.templateSelectedId = action.payload;
     },
+    setTemplateEditingId: (state, action: PayloadAction<string | null>) => {
+      state.templateEditingId = action.payload;
+    },
     setTemplateReviewModalOpen: (state, action: PayloadAction<boolean>) => {
       state.templateReviewModalOpen = action.payload;
     },
@@ -1133,6 +1136,8 @@ export const {
   setActiveRole,
   setSelectedReportId,
   addTemplate,
+  updateTemplate,
+  duplicateTemplate,
   approveTemplate,
   rejectTemplate,
   deleteTemplate,
@@ -1145,6 +1150,7 @@ export const {
   setTemplatePageSize,
   resetTemplateFilters,
   setTemplateSelectedId,
+  setTemplateEditingId,
   setTemplateReviewModalOpen,
   setTemplateBuilderOpen,
   setTemplateDeleteConfirmId,
