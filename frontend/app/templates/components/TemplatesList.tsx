@@ -17,7 +17,7 @@ export default function TemplatesList() {
     return (
       <div className="px-4 sm:px-6 lg:px-7">
         <div className="p-12 text-center rounded-2xl border border-dashed border-slate-200 dark:border-zinc-800 bg-white/50 dark:bg-[#0c1017]/50 backdrop-blur-sm space-y-4">
-          <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[#F6C72F] flex items-center justify-center mx-auto">
+          <div className="h-12 w-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-[#9D61FF] flex items-center justify-center mx-auto">
             <Layers className="w-6 h-6" />
           </div>
           <div>

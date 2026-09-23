@@ -45,7 +45,7 @@ export default function TemplateFilterToolbar() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search blueprints by name, ID, or site..."
-              className="w-full h-9 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-[#F6C72F]/80 focus:bg-white dark:focus:bg-[#0b0e14] transition-all shadow-sm"
+              className="w-full h-9 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-[#9D61FF]/80 focus:bg-white dark:focus:bg-[#0b0e14] transition-all shadow-sm"
             />
             {searchQuery && (
               <button
@@ -151,7 +151,7 @@ export default function TemplateFilterToolbar() {
           <button
             type="button"
             onClick={() => setBuilderOpen(true)}
-            className="h-9 px-4 rounded-xl bg-[#F6C72F] hover:bg-[#F6C72F]/90 text-slate-950 font-semibold text-xs transition-all shadow-[0_0_18px_rgba(246,199,47,0.35)] cursor-pointer flex items-center justify-center gap-2 flex-shrink-0"
+            className="h-9 px-4 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-semibold text-xs transition-all shadow-[0_0_18px_rgba(157,97,255,0.4)] cursor-pointer flex items-center justify-center gap-2 flex-shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Create Template</span>

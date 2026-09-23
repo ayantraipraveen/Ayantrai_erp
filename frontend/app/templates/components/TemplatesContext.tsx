@@ -126,7 +126,7 @@ export function useTemplates() {
         value: "pending",
         label: "Pending Approval",
         badge: `${pendingCount}`,
-        badgeColor: "bg-amber-500/20 text-amber-700 dark:text-[#F6C72F] border-amber-500/30",
+        badgeColor: "bg-purple-500/20 text-purple-700 dark:text-[#9D61FF] border-purple-500/30",
         icon: Clock,
       },
       {

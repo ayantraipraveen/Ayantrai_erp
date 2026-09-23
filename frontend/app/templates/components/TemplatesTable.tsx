@@ -242,7 +242,7 @@ export default function TemplatesTable() {
                 onClick={() => setPageSize(size)}
                 className={`h-6 px-2 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
                   pageSize === size
-                    ? "bg-[#F6C72F] text-slate-950 font-bold shadow-sm"
+                    ? "bg-[#9D61FF] text-white font-bold shadow-sm"
                     : "hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400"
                 }`}
               >
