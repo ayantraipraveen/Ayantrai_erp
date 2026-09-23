@@ -45,7 +45,7 @@ export default function TemplateMetricsBar() {
 
       <div className="py-2 px-3 sm:py-2.5 sm:px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0c1017]/90 backdrop-blur-md flex items-center justify-between shadow-sm hover:border-[#9D61FF]/40 hover:shadow-[0_0_20px_rgba(157,97,255,0.12)] transition-all">
         <div>
-          <div className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-zinc-400">Section Modules</div>
+          <div className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-zinc-400">Configured Sections</div>
           <div className="text-base sm:text-lg font-bold text-[#9D61FF] mt-0.5">7 Core</div>
         </div>
         <div className="p-2 rounded-lg bg-purple-500/10 text-[#9D61FF] shadow-[0_0_12px_rgba(157,97,255,0.2)]">
