@@ -43,7 +43,7 @@ export default function TemplateReviewModal() {
         {/* Modal Header */}
         <div className="flex items-start justify-between border-b border-slate-200 dark:border-zinc-800 pb-4">
           <div>
-            <span className="text-[10px] font-mono text-[#F6C72F] uppercase font-bold tracking-wider">
+            <span className="text-[10px] font-mono text-[#9D61FF] uppercase font-bold tracking-wider">
               Template Blueprint • {selectedTemplate.id} ({selectedTemplate.version})
             </span>
             <h2 className="text-lg font-bold mt-1 text-slate-900 dark:text-white">{selectedTemplate.name}</h2>
@@ -72,7 +72,7 @@ export default function TemplateReviewModal() {
                 className="p-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 flex items-center justify-between text-xs"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-[#F6C72F]/20 text-[#F6C72F] font-mono text-[10px] flex items-center justify-center font-bold">
+                  <span className="w-5 h-5 rounded-full bg-[#9D61FF]/20 text-[#9D61FF] font-mono text-[10px] flex items-center justify-center font-bold">
                     {idx + 1}
                   </span>
                   <div>
