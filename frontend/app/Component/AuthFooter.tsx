@@ -26,7 +26,7 @@ export default function AuthFooter({
   maxWidthClassName = "max-w-[1680px]",
   className = "",
   certificationText = "Pursuing ISO 45001 & CE Certifications",
-  locationText = "Kanpur & Greater Noida, India",
+  locationText = "Noida, India",
   supportEmail = "info@ayantrai.com",
   copyrightYear = 2026,
 }: AuthFooterProps) {
@@ -58,7 +58,7 @@ export default function AuthFooter({
           </span>
           <a
             href={`mailto:${supportEmail}`}
-            className="text-slate-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F] transition-colors"
+            className="text-slate-600 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-[#9D61FF] transition-colors"
           >
             {supportEmail}
           </a>

@@ -114,7 +114,7 @@ export default function AdminsManagementPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0b0e14]/90 backdrop-blur-xl shadow-lg">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#F6C72F] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 font-bold">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#9D61FF] px-2 py-0.5 rounded-full border border-purple-500/30 bg-purple-500/10 font-bold">
               SUPERADMIN GOVERNANCE
             </span>
             <span className="text-xs text-slate-500 dark:text-zinc-400">Spec Section 1 & 5</span>
@@ -141,7 +141,7 @@ export default function AdminsManagementPage() {
           <button
             type="button"
             onClick={() => setAddModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#F6C72F] hover:bg-[#F6C72F]/90 text-slate-950 font-semibold text-xs transition-all shadow-[0_0_20px_rgba(246,199,47,0.35)] cursor-pointer"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(157,97,255,0.35)] cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Provision New Admin</span>
@@ -150,9 +150,9 @@ export default function AdminsManagementPage() {
       </div>
 
       {/* LocalStorage Persistence Banner */}
-      <div className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/5 dark:bg-[#0f1420] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-slate-700 dark:text-zinc-300">
+      <div className="p-3.5 rounded-xl border border-purple-500/30 bg-purple-500/5 dark:bg-[#0f1420] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-slate-700 dark:text-zinc-300">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-[#F6C72F]/20 text-[#F6C72F]">
+          <div className="p-1.5 rounded-lg bg-purple-500/15 text-[#9D61FF]">
             <Database className="w-4 h-4" />
           </div>
           <div>
@@ -160,7 +160,7 @@ export default function AdminsManagementPage() {
               LocalStorage Persistence Active:
             </span>{" "}
             Admins created here are automatically saved to browser storage (
-            <code className="font-mono text-[11px] text-[#F6C72F] font-bold">
+            <code className="font-mono text-[11px] text-[#9D61FF] font-bold">
               &apos;{ADMINS_STORAGE_KEY}&apos;
             </code>
             ) and persist across page refreshes.
@@ -179,7 +179,7 @@ export default function AdminsManagementPage() {
             <div className="text-[11px] text-slate-500 dark:text-zinc-400">Total Admins</div>
             <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{admins.length}</div>
           </div>
-          <div className="p-2 rounded-lg bg-amber-500/10 text-[#F6C72F]">
+          <div className="p-2 rounded-lg bg-purple-500/10 text-[#9D61FF]">
             <Users className="w-4 h-4" />
           </div>
         </div>
@@ -209,9 +209,9 @@ export default function AdminsManagementPage() {
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0d1017] flex items-center justify-between">
           <div>
             <div className="text-[11px] text-slate-500 dark:text-zinc-400">Access Policy</div>
-            <div className="text-lg font-bold text-[#F6C72F] mt-0.5">Site-Scoped</div>
+            <div className="text-lg font-bold text-[#9D61FF] mt-0.5">Site-Scoped</div>
           </div>
-          <div className="p-2 rounded-lg bg-[#F6C72F]/10 text-[#F6C72F]">
+          <div className="p-2 rounded-lg bg-purple-500/10 text-[#9D61FF]">
             <ShieldCheck className="w-4 h-4" />
           </div>
         </div>
@@ -226,7 +226,7 @@ export default function AdminsManagementPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, email, or site..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#F6C72F]"
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#9D61FF]"
           />
         </div>
 
@@ -238,7 +238,7 @@ export default function AdminsManagementPage() {
               onClick={() => setStatusFilter(st)}
               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 statusFilter === st
-                  ? "bg-[#F6C72F]/15 border border-[#F6C72F]/50 text-slate-900 dark:text-white font-semibold"
+                  ? "bg-[#9D61FF]/15 border border-[#9D61FF]/50 text-slate-900 dark:text-white font-semibold"
                   : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -270,7 +270,7 @@ export default function AdminsManagementPage() {
                 >
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-xl bg-[#F6C72F]/20 border border-[#F6C72F]/40 flex items-center justify-center font-bold text-xs text-[#F6C72F]">
+                      <div className="h-8 w-8 rounded-xl bg-purple-500/15 border border-[#9D61FF]/40 flex items-center justify-center font-bold text-xs text-[#9D61FF]">
                         {adm.name.charAt(0)}
                       </div>
                       <div>
@@ -282,7 +282,7 @@ export default function AdminsManagementPage() {
 
                   <td className="py-3.5 px-4">
                     <div className="flex items-center gap-1.5 text-slate-800 dark:text-zinc-300">
-                      <Building className="w-3.5 h-3.5 text-[#F6C72F] flex-shrink-0" />
+                      <Building className="w-3.5 h-3.5 text-[#9D61FF] flex-shrink-0" />
                       <span className="truncate max-w-[220px]">{adm.assigned_site}</span>
                     </div>
                   </td>
@@ -362,7 +362,7 @@ export default function AdminsManagementPage() {
           <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-6 shadow-2xl space-y-4 text-slate-900 dark:text-white">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-[#F6C72F]">
+                <div className="p-2 rounded-xl bg-purple-500/10 text-[#9D61FF]">
                   <Users className="w-4 h-4" />
                 </div>
                 <div>
@@ -388,7 +388,7 @@ export default function AdminsManagementPage() {
                   onChange={(e) => setNewAdminName(e.target.value)}
                   placeholder="e.g. Sunil Mahapatra"
                   required
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#F6C72F]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
                 />
               </div>
 
@@ -400,7 +400,7 @@ export default function AdminsManagementPage() {
                   onChange={(e) => setNewAdminEmail(e.target.value)}
                   placeholder="e.g. sunil.m@lt-infra.com"
                   required
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#F6C72F]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
                 />
               </div>
 
@@ -409,7 +409,7 @@ export default function AdminsManagementPage() {
                 <select
                   value={newAdminSiteId}
                   onChange={(e) => setNewAdminSiteId(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#F6C72F]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
                 >
                   {sites.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -429,7 +429,7 @@ export default function AdminsManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-[#F6C72F] hover:bg-[#F6C72F]/90 text-slate-950 font-bold text-xs shadow-[0_0_16px_rgba(246,199,47,0.3)] transition-all cursor-pointer"
+                  className="px-4 py-1.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs shadow-[0_0_16px_rgba(157,97,255,0.3)] transition-all cursor-pointer"
                 >
                   Create Admin Account
                 </button>

@@ -269,7 +269,7 @@ export default function CustomDropdown({
                     setFocusedIndex(0);
                   }}
                   placeholder="Filter options..."
-                  className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-slate-50 dark:bg-[#07090e] border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-[#F6C72F] focus:shadow-[0_0_10px_rgba(246,199,47,0.3)] font-mono"
+                  className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-slate-50 dark:bg-[#07090e] border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-[#9D61FF] focus:shadow-[0_0_10px_rgba(157,97,255,0.3)] font-mono"
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>

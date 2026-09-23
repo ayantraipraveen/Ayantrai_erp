@@ -79,7 +79,7 @@ export default function AuthSkeleton({ isSignUp = false }: { isSignUp?: boolean 
 
           {/* Right Column Form Skeleton (5 cols) */}
           <div className="lg:col-span-5 xl:col-span-5 flex justify-center lg:justify-end w-full order-1 lg:order-2">
-            <div className="w-full max-w-md xl:max-w-lg rounded-2xl border border-slate-200 dark:border-[#F6C72F]/20 bg-white/95 dark:bg-[#111520]/95 p-5 sm:p-6 xl:p-7 backdrop-blur-2xl shadow-xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.65)] space-y-4">
+            <div className="w-full max-w-md xl:max-w-lg rounded-2xl border border-slate-200 dark:border-[#9D61FF]/20 bg-white/95 dark:bg-[#111520]/95 p-5 sm:p-6 xl:p-7 backdrop-blur-2xl shadow-xl dark:shadow-[0_20px_50px_rgba(0,0,0,0.65)] space-y-4">
               
               {/* Form Title */}
               <div className="space-y-1.5">

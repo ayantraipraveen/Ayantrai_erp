@@ -222,15 +222,15 @@ export default function SignUpPage() {
                 position="bottom"
                 variant="amber"
               >
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border border-[#F6C72F]/40 bg-[#F6C72F]/10 text-amber-700 dark:text-[#F6C72F] text-[10px] sm:text-[11px] font-mono tracking-wide uppercase shadow-[0_0_15px_rgba(246,199,47,0.15)] cursor-help">
-                  <Sparkles className="w-3 h-3 text-[#F6C72F] animate-pulse" />
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-[#9D61FF] text-[10px] sm:text-[11px] font-mono tracking-wide uppercase shadow-[0_0_15px_rgba(157,97,255,0.15)] cursor-help">
+                  <Sparkles className="w-3 h-3 text-[#9D61FF] animate-pulse" />
                   Pilot Site Onboarding — Launching Feb 2027
                 </div>
               </Tooltip>
 
               <h1 className="text-2xl sm:text-3xl md:text-3xl xl:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
                 Register Your Site for{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-700 dark:from-[#F6C72F] dark:via-[#FFD027] dark:to-amber-200 drop-shadow-[0_0_20px_rgba(246,199,47,0.35)]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-[#9D61FF] dark:via-[#B388FF] dark:to-indigo-300 drop-shadow-[0_0_20px_rgba(157,97,255,0.35)]">
                   Sitesafe ERP.
                 </span>
               </h1>
@@ -242,11 +242,11 @@ export default function SignUpPage() {
             {/* Benefits Showcase Card */}
             <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/85 p-3.5 sm:p-4 backdrop-blur-xl neon-glow-card relative overflow-hidden group shadow-lg dark:shadow-none">
               <div className="absolute top-0 left-0 right-0 shimmer-line opacity-75" />
-              <div className="absolute top-0 right-0 h-32 w-32 bg-amber-500/10 dark:bg-[#F6C72F]/8 rounded-bl-full pointer-events-none filter blur-xl" />
+              <div className="absolute top-0 right-0 h-32 w-32 bg-purple-500/10 dark:bg-[#9D61FF]/10 rounded-bl-full pointer-events-none filter blur-xl" />
 
               <div className="flex flex-wrap items-center justify-between pb-2 mb-2.5 border-b border-slate-200 dark:border-zinc-800/80 gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-[#F6C72F] beacon-active" />
+                  <div className="h-2 w-2 rounded-full bg-[#9D61FF] beacon-active" />
                   <span className="text-xs sm:text-sm font-mono font-semibold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
                     Enterprise Pilot Program Inclusions
                   </span>
@@ -256,7 +256,7 @@ export default function SignUpPage() {
                     Cohort: <span className="text-slate-800 dark:text-zinc-200 font-semibold">Batch 1</span>
                   </span>
                   <Tooltip content="Guaranteed equipment allocation for early enterprise accounts" position="top" variant="amber">
-                    <span className="text-[10px] sm:text-xs font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/70 border border-amber-500/40 px-2.5 py-0.5 rounded font-semibold badge-glow-amber cursor-help">
+                    <span className="text-[10px] sm:text-xs font-mono text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/70 border border-purple-500/40 px-2.5 py-0.5 rounded font-semibold badge-glow-amber cursor-help">
                       EARLY ACCESS OPEN
                     </span>
                   </Tooltip>
@@ -269,11 +269,11 @@ export default function SignUpPage() {
                 <div className="rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/90 dark:bg-[#090c12]/90 p-2.5 sm:p-3 flex flex-col justify-between hover:border-slate-300 dark:hover:border-zinc-700 transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="h-6 w-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-[#F6C72F] shadow-[0_0_10px_rgba(246,199,47,0.15)]">
+                      <div className="h-6 w-6 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-[#9D61FF] shadow-[0_0_10px_rgba(157,97,255,0.15)]">
                         <Boxes className="w-3.5 h-3.5" />
                       </div>
                       <Tooltip content="Dispatched within 48h from Kanpur assembly lines" position="top" variant="amber">
-                        <span className="text-[9px] font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-400/40 dark:border-amber-800/60 px-1.5 py-0.2 rounded font-medium flex items-center gap-1 cursor-help">
+                        <span className="text-[9px] font-mono text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 border border-purple-400/40 dark:border-purple-800/60 px-1.5 py-0.2 rounded font-medium flex items-center gap-1 cursor-help">
                           <CheckCircle className="w-2.5 h-2.5" /> PRIORITY
                         </span>
                       </Tooltip>
@@ -288,10 +288,10 @@ export default function SignUpPage() {
                 </div>
 
                 {/* Inclusion 02 */}
-                <div className="rounded-xl border border-amber-400/60 dark:border-[#F6C72F]/50 bg-amber-50/50 dark:bg-[#0d111a]/95 p-2.5 sm:p-3 flex flex-col justify-between shadow-[0_0_20px_rgba(246,199,47,0.1),inset_0_1px_1px_rgba(246,199,47,0.15)] relative">
+                <div className="rounded-xl border border-purple-400/60 dark:border-[#9D61FF]/50 bg-purple-50/50 dark:bg-[#0d111a]/95 p-2.5 sm:p-3 flex flex-col justify-between shadow-[0_0_20px_rgba(157,97,255,0.1),inset_0_1px_1px_rgba(157,97,255,0.15)] relative">
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="h-6 w-6 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-600 dark:text-[#F6C72F] shadow-[0_0_12px_rgba(246,199,47,0.3)]">
+                      <div className="h-6 w-6 rounded-lg bg-purple-500/20 border border-purple-500/50 flex items-center justify-center text-purple-600 dark:text-[#9D61FF] shadow-[0_0_12px_rgba(157,97,255,0.3)]">
                         <FileCheck2 className="w-3.5 h-3.5" />
                       </div>
                       <Tooltip content="Real-time automated audit records satisfy ISO 45001 EHS requirements" position="top" variant="emerald">
@@ -301,9 +301,9 @@ export default function SignUpPage() {
                       </Tooltip>
                     </div>
                     <div className="text-xs font-bold text-slate-900 dark:text-white">ISO 45001 Compliance Logs</div>
-                    <div className="text-[10px] text-amber-700 dark:text-[#F6C72F] font-mono font-medium mt-0.5">Continuous digital compliance audit trails</div>
+                    <div className="text-[10px] text-purple-700 dark:text-[#9D61FF] font-mono font-medium mt-0.5">Continuous digital compliance audit trails</div>
                   </div>
-                  <div className="mt-2 pt-1.5 border-t border-amber-200 dark:border-zinc-800/80 flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-slate-500 dark:text-zinc-400">
+                  <div className="mt-2 pt-1.5 border-t border-purple-200 dark:border-zinc-800/80 flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-slate-500 dark:text-zinc-400">
                     <span>Zero Manual Paperwork</span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Automated</span>
                   </div>
@@ -313,7 +313,7 @@ export default function SignUpPage() {
                 <div className="rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/90 dark:bg-[#090c12]/90 p-2.5 sm:p-3 flex flex-col justify-between hover:border-slate-300 dark:hover:border-zinc-700 transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="h-6 w-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-[#F6C72F]">
+                      <div className="h-6 w-6 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-[#9D61FF]">
                         <Cpu className="w-3.5 h-3.5" />
                       </div>
                       <Tooltip content="Modular strap brackets retrofit any existing standard PPE in seconds" position="top" variant="sky">
@@ -335,7 +335,7 @@ export default function SignUpPage() {
                 <div className="rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/90 dark:bg-[#090c12]/90 p-2.5 sm:p-3 flex flex-col justify-between hover:border-slate-300 dark:hover:border-zinc-700 transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="h-6 w-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-[#F6C72F]">
+                      <div className="h-6 w-6 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-[#9D61FF]">
                         <Clock className="w-3.5 h-3.5" />
                       </div>
                       <Tooltip content="Automatic geofenced muster roll & shift duration logging" position="top" variant="emerald">
@@ -357,13 +357,13 @@ export default function SignUpPage() {
               {/* Status Bar */}
               <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] text-slate-500 dark:text-zinc-400">
                 <div className="flex items-center gap-1.5 font-mono">
-                  <MapPin className="w-3.5 h-3.5 text-amber-600 dark:text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.5)]" />
+                  <MapPin className="w-3.5 h-3.5 text-purple-600 dark:text-[#9D61FF] drop-shadow-[0_0_6px_rgba(157,97,255,0.5)]" />
                   <span className="truncate text-slate-700 dark:text-zinc-300">Nx-One Tower Pilot Site (Greater Noida)</span>
                 </div>
                 <div className="flex items-center gap-2.5 font-mono text-[9px] sm:text-[10px]">
                   <span className="text-emerald-600 dark:text-emerald-400">● Live Hardware Tested</span>
                   <span className="text-sky-600 dark:text-sky-400">● 0 Capex</span>
-                  <span className="text-amber-600 dark:text-amber-400">● 14-Day Setup</span>
+                  <span className="text-purple-600 dark:text-[#9D61FF]">● 14-Day Setup</span>
                 </div>
               </div>
             </div>
@@ -371,8 +371,8 @@ export default function SignUpPage() {
             {/* Industrial Metric Highlights with Tooltips - Symmetrically Calibrated to Sign In */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
               <Tooltip content="Retrofits 100% of ANSI/EN certified safety gear" position="top">
-                <div className="rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0e1219]/80 p-2 xl:p-2.5 hover:border-amber-500/40 hover:shadow-[0_0_18px_rgba(246,199,47,0.12)] transition-all cursor-help w-full shadow-sm dark:shadow-none">
-                  <div className="text-lg xl:text-xl font-bold font-mono text-amber-600 dark:text-[#F6C72F] drop-shadow-[0_0_10px_rgba(246,199,47,0.35)]">100%</div>
+                <div className="rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0e1219]/80 p-2 xl:p-2.5 hover:border-purple-500/40 hover:shadow-[0_0_18px_rgba(157,97,255,0.12)] transition-all cursor-help w-full shadow-sm dark:shadow-none">
+                  <div className="text-lg xl:text-xl font-bold font-mono text-purple-600 dark:text-[#9D61FF] drop-shadow-[0_0_10px_rgba(157,97,255,0.35)]">100%</div>
                   <div className="text-[11px] text-slate-600 dark:text-zinc-300 font-medium mt-0.5">Standard PPE</div>
                   <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">Zero gear replacement</div>
                 </div>
@@ -406,7 +406,7 @@ export default function SignUpPage() {
 
           {/* ================= RIGHT COLUMN: Registration Form Card (5 Cols) ================= */}
           <div className="lg:col-span-5 xl:col-span-5 flex justify-center lg:justify-end w-full order-1 lg:order-2">
-            <div className="w-full max-w-lg xl:max-w-xl rounded-2xl border border-slate-200 dark:border-[#F6C72F]/35 bg-white/95 dark:bg-[#111520]/95 p-4 sm:p-5 xl:p-6 backdrop-blur-2xl neon-glow-amber-lg relative overflow-visible shadow-2xl dark:shadow-none">
+            <div className="w-full max-w-lg xl:max-w-xl rounded-2xl border border-slate-200 dark:border-[#9D61FF]/35 bg-white/95 dark:bg-[#111520]/95 p-4 sm:p-5 xl:p-6 backdrop-blur-2xl neon-glow-amber-lg relative overflow-visible shadow-2xl dark:shadow-none">
               
               {/* Shimmering Animated Top Line */}
               <div className="absolute top-0 left-0 right-0 shimmer-line" />
@@ -414,7 +414,7 @@ export default function SignUpPage() {
               <div className="mb-3.5">
                 <h2 className="text-lg sm:text-xl xl:text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                   <span>Register Your Site</span>
-                  <span className="inline-block w-2 h-2 rounded-full bg-[#F6C72F] animate-pulse" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-[#9D61FF] animate-pulse" />
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
                   Configure your enterprise details to set up your Sitesafe telemetry account.
@@ -442,7 +442,7 @@ export default function SignUpPage() {
 
               {/* Feedback toast */}
               {feedback && (
-                <div className="mb-3 rounded-xl border border-[#F6C72F]/40 bg-[#F6C72F]/10 p-2.5 text-xs text-amber-700 dark:text-[#F6C72F] flex items-center gap-2 animate-fadeIn badge-glow-amber">
+                <div className="mb-3 rounded-xl border border-purple-500/40 bg-purple-500/10 p-2.5 text-xs text-purple-700 dark:text-[#9D61FF] flex items-center gap-2 animate-fadeIn badge-glow-amber">
                   <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                   <span className="text-xs">{feedback}</span>
                 </div>
@@ -635,7 +635,7 @@ export default function SignUpPage() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F] transition-colors cursor-pointer"
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-[#9D61FF] transition-colors cursor-pointer"
                         >
                           {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         </button>
@@ -673,7 +673,7 @@ export default function SignUpPage() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F] transition-colors cursor-pointer"
+                          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-[#9D61FF] transition-colors cursor-pointer"
                         >
                           {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                         </button>
@@ -718,7 +718,7 @@ export default function SignUpPage() {
                         setAgreeTerms(e.target.checked);
                         if (errors.agreeTerms) setErrors((prev) => ({ ...prev, agreeTerms: "" }));
                       }}
-                      className="h-3.5 w-3.5 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-amber-600 dark:text-[#F6C72F] accent-[#F6C72F] focus:ring-0"
+                      className="h-3.5 w-3.5 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-purple-600 dark:text-[#9D61FF] accent-[#9D61FF] focus:ring-0"
                     />
                     <span className="text-[11px] text-slate-600 dark:text-zinc-400 leading-tight">
                       I agree to the Sitesafe Telemetry Policy & ISO 45001 EHS terms
@@ -736,11 +736,11 @@ export default function SignUpPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full rounded-xl py-2 sm:py-2.5 px-4 text-xs sm:text-sm font-bold text-zinc-950 glow-btn-amber flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer transition-all"
+                  className="w-full rounded-xl py-2 sm:py-2.5 px-4 text-xs sm:text-sm font-bold text-white glow-btn-amber flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer transition-all"
                 >
                   {submitting ? (
                     <>
-                      <div className="h-3.5 w-3.5 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
+                      <div className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       <span>Creating Account...</span>
                     </>
                   ) : (
@@ -767,7 +767,7 @@ export default function SignUpPage() {
                     <button
                       type="button"
                       onClick={() => alert("Connecting to Microsoft Azure Active Directory...")}
-                      className="w-full flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-amber-600 dark:hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] focus:border-[#F6C72F] focus:shadow-[0_0_0_1.5px_#f6c72f,0_0_12px_rgba(246,199,47,0.4)] outline-none transition-all cursor-pointer"
+                      className="w-full flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-purple-600 dark:hover:text-[#9D61FF] hover:border-[#9D61FF]/50 hover:shadow-[0_0_12px_rgba(157,97,255,0.2)] focus:border-[#9D61FF] focus:shadow-[0_0_0_1.5px_#9D61FF,0_0_12px_rgba(157,97,255,0.4)] outline-none transition-all cursor-pointer"
                     >
                       Azure AD
                     </button>
@@ -776,7 +776,7 @@ export default function SignUpPage() {
                     <button
                       type="button"
                       onClick={() => alert("Connecting to Okta Identity...")}
-                      className="w-full flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-amber-600 dark:hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] focus:border-[#F6C72F] focus:shadow-[0_0_0_1.5px_#f6c72f,0_0_12px_rgba(246,199,47,0.4)] outline-none transition-all cursor-pointer"
+                      className="w-full flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-purple-600 dark:hover:text-[#9D61FF] hover:border-[#9D61FF]/50 hover:shadow-[0_0_12px_rgba(157,97,255,0.2)] focus:border-[#9D61FF] focus:shadow-[0_0_0_1.5px_#9D61FF,0_0_12px_rgba(157,97,255,0.4)] outline-none transition-all cursor-pointer"
                     >
                       Okta
                     </button>
@@ -785,7 +785,7 @@ export default function SignUpPage() {
                     <button
                       type="button"
                       onClick={() => alert("Connecting to Google Workspace...")}
-                      className="w-full flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-amber-600 dark:hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] focus:border-[#F6C72F] focus:shadow-[0_0_0_1.5px_#f6c72f,0_0_12px_rgba(246,199,47,0.4)] outline-none transition-all cursor-pointer"
+                      className="w-full flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-purple-600 dark:hover:text-[#9D61FF] hover:border-[#9D61FF]/50 hover:shadow-[0_0_12px_rgba(157,97,255,0.2)] focus:border-[#9D61FF] focus:shadow-[0_0_0_1.5px_#9D61FF,0_0_12px_rgba(157,97,255,0.4)] outline-none transition-all cursor-pointer"
                     >
                       Google
                     </button>
@@ -796,7 +796,7 @@ export default function SignUpPage() {
               {/* Bottom Link to Sign In */}
               <div className="mt-2.5 pt-2 border-t border-slate-200 dark:border-zinc-800/80 text-center text-xs text-slate-600 dark:text-zinc-400">
                 Already have an active account?{" "}
-                <Link href="/signin" className="font-semibold text-amber-600 dark:text-[#F6C72F] hover:underline">
+                <Link href="/signin" className="font-semibold text-purple-600 dark:text-[#9D61FF] hover:underline">
                   Sign in to portal
                 </Link>
               </div>

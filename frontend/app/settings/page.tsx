@@ -44,8 +44,8 @@ export default function SystemSettingsPage() {
     <div className="space-y-6 animate-fadeIn pb-12">
       {/* Toast Feedback */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 text-white border border-[#F6C72F]/60 shadow-[0_0_24px_rgba(246,199,47,0.3)] text-xs font-medium animate-slideUp">
-          <Sparkles className="w-4 h-4 text-[#F6C72F]" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-900 text-white border border-[#9D61FF]/60 shadow-[0_0_24px_rgba(157,97,255,0.3)] text-xs font-medium animate-slideUp">
+          <Sparkles className="w-4 h-4 text-[#9D61FF]" />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -54,7 +54,7 @@ export default function SystemSettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0b0e14]/90 backdrop-blur-xl shadow-lg">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#F6C72F] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 font-bold">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#9D61FF] px-2 py-0.5 rounded-full border border-purple-500/30 bg-purple-500/10 font-bold">
               SUPERADMIN GOVERNANCE
             </span>
             <span className="text-xs text-slate-500 dark:text-zinc-400">Spec Section 1 & 5</span>
@@ -70,7 +70,7 @@ export default function SystemSettingsPage() {
         <button
           type="button"
           onClick={handleSave}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#F6C72F] hover:bg-[#F6C72F]/90 text-slate-950 font-bold text-xs transition-all shadow-[0_0_20px_rgba(246,199,47,0.35)] cursor-pointer"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs transition-all shadow-[0_0_20px_rgba(157,97,255,0.35)] cursor-pointer"
         >
           <Save className="w-4 h-4" />
           <span>Save Changes</span>
@@ -81,7 +81,7 @@ export default function SystemSettingsPage() {
         {/* Section 1: Template Governance & Approval Trigger */}
         <div className="p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white dark:bg-[#0c1017] space-y-4 shadow-sm">
           <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100 dark:border-zinc-800/80">
-            <div className="p-2 rounded-xl bg-amber-500/10 text-[#F6C72F]">
+            <div className="p-2 rounded-xl bg-purple-500/10 text-[#9D61FF]">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <div>
@@ -96,7 +96,7 @@ export default function SystemSettingsPage() {
               <div>
                 <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span>Mandatory Superadmin Template Approval</span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-[#F6C72F] border border-amber-500/30">
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-[#9D61FF] border border-purple-500/30">
                     Spec 1.1
                   </span>
                 </div>
@@ -109,7 +109,7 @@ export default function SystemSettingsPage() {
                 type="button"
                 onClick={() => setRequireApproval(!requireApproval)}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  requireApproval ? "bg-[#F6C72F]" : "bg-slate-300 dark:bg-zinc-700"
+                  requireApproval ? "bg-[#9D61FF]" : "bg-slate-300 dark:bg-zinc-700"
                 }`}
               >
                 <span
@@ -138,7 +138,7 @@ export default function SystemSettingsPage() {
                 type="button"
                 onClick={() => setAutoGen(!autoGen)}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  autoGen ? "bg-[#F6C72F]" : "bg-slate-300 dark:bg-zinc-700"
+                  autoGen ? "bg-[#9D61FF]" : "bg-slate-300 dark:bg-zinc-700"
                 }`}
               >
                 <span
@@ -175,7 +175,7 @@ export default function SystemSettingsPage() {
                 onChange={(e) => setSenderEmail(e.target.value)}
                 placeholder="reports-noreply@ayantrai.com"
                 required
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#F6C72F]"
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#9D61FF]"
               />
             </div>
             <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-1">
@@ -218,7 +218,7 @@ export default function SystemSettingsPage() {
                 key={fmt.id}
                 className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                   exportFormat === fmt.id
-                    ? "border-[#F6C72F]/60 bg-amber-500/5 dark:bg-[#0f131c]"
+                    ? "border-[#9D61FF]/60 bg-purple-500/5 dark:bg-[#0f131c]"
                     : "border-slate-200 dark:border-zinc-800/70 hover:bg-slate-50 dark:hover:bg-zinc-900/50"
                 }`}
               >
@@ -228,7 +228,7 @@ export default function SystemSettingsPage() {
                   value={fmt.id}
                   checked={exportFormat === fmt.id}
                   onChange={() => setExportFormat(fmt.id as any)}
-                  className="mt-0.5 text-[#F6C72F] focus:ring-[#F6C72F]"
+                  className="mt-0.5 text-[#9D61FF] focus:ring-[#9D61FF]"
                 />
                 <div>
                   <div className="text-xs font-semibold text-slate-900 dark:text-white">{fmt.title}</div>
@@ -243,7 +243,7 @@ export default function SystemSettingsPage() {
         <div className="flex items-center justify-end gap-3 pt-2">
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl bg-[#F6C72F] hover:bg-[#F6C72F]/90 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(246,199,47,0.35)] transition-all cursor-pointer"
+            className="px-6 py-2.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(157,97,255,0.35)] transition-all cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>Save System Configuration</span>

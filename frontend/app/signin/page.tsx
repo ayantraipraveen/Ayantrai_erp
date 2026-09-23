@@ -149,13 +149,13 @@ export default function SignInPage() {
             
             {/* Headline */}
             <div className="space-y-1.5 text-center lg:text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-[#F6C72F]/40 bg-[#F6C72F]/10 text-amber-700 dark:text-[#F6C72F] text-[11px] font-mono tracking-wide uppercase shadow-[0_0_15px_rgba(246,199,47,0.15)]">
-                <Sparkles className="w-3 h-3 text-[#F6C72F] animate-pulse" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-purple-500/40 bg-purple-500/10 text-purple-600 dark:text-[#9D61FF] text-[11px] font-mono tracking-wide uppercase shadow-[0_0_15px_rgba(157,97,255,0.15)]">
+                <Sparkles className="w-3 h-3 text-[#9D61FF] animate-pulse" />
                 Connected Industrial Safety Infrastructure
               </div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl xl:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
                 Sign In to{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-700 dark:from-[#F6C72F] dark:via-[#FFD027] dark:to-amber-200 drop-shadow-[0_0_20px_rgba(246,199,47,0.35)]">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-[#9D61FF] dark:via-[#B388FF] dark:to-indigo-300 drop-shadow-[0_0_20px_rgba(157,97,255,0.35)]">
                   Sitesafe Portal.
                 </span>
               </h1>
@@ -167,11 +167,11 @@ export default function SignInPage() {
             {/* 3-Chipset Telemetry Hub Card */}
             <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0f131c]/85 p-4 sm:p-5 backdrop-blur-xl neon-glow-card relative overflow-hidden group shadow-lg dark:shadow-none">
               <div className="absolute top-0 left-0 right-0 shimmer-line opacity-75" />
-              <div className="absolute top-0 right-0 h-32 w-32 bg-amber-500/10 dark:bg-[#F6C72F]/8 rounded-bl-full pointer-events-none filter blur-xl" />
+              <div className="absolute top-0 right-0 h-32 w-32 bg-purple-500/10 dark:bg-[#9D61FF]/10 rounded-bl-full pointer-events-none filter blur-xl" />
 
               <div className="flex flex-wrap items-center justify-between pb-2.5 mb-3 border-b border-slate-200 dark:border-zinc-800/80 gap-2">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-[#F6C72F] beacon-active" />
+                  <div className="h-2 w-2 rounded-full bg-[#9D61FF] beacon-active" />
                   <span className="text-xs font-mono font-semibold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
                     Live Telemetry Stream • Sample Kit AY-9024
                   </span>
@@ -193,7 +193,7 @@ export default function SignInPage() {
                 <div className="rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/90 dark:bg-[#090c12]/90 p-3 flex flex-col justify-between hover:border-slate-300 dark:hover:border-zinc-700 transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-[#F6C72F] shadow-[0_0_10px_rgba(246,199,47,0.15)]">
+                      <div className="h-7 w-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-[#9D61FF] shadow-[0_0_10px_rgba(157,97,255,0.15)]">
                         <HardHat className="w-4 h-4" />
                       </div>
                       <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-400/40 dark:border-emerald-800/60 px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
@@ -211,21 +211,21 @@ export default function SignInPage() {
                 </div>
 
                 {/* Device 02: Vest Hub */}
-                <div className="rounded-xl border border-amber-400/60 dark:border-[#F6C72F]/50 bg-amber-50/50 dark:bg-[#0d111a]/95 p-3 flex flex-col justify-between shadow-[0_0_25px_rgba(246,199,47,0.12),inset_0_1px_1px_rgba(246,199,47,0.2)] relative">
+                <div className="rounded-xl border border-purple-400/60 dark:border-[#9D61FF]/50 bg-purple-50/50 dark:bg-[#0d111a]/95 p-3 flex flex-col justify-between shadow-[0_0_25px_rgba(157,97,255,0.12),inset_0_1px_1px_rgba(157,97,255,0.2)] relative">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <div className="h-7 w-7 rounded-lg bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-600 dark:text-[#F6C72F] shadow-[0_0_12px_rgba(246,199,47,0.3)]">
+                      <div className="h-7 w-7 rounded-lg bg-purple-500/20 border border-purple-500/50 flex items-center justify-center text-purple-600 dark:text-[#9D61FF] shadow-[0_0_12px_rgba(157,97,255,0.3)]">
                         <ShieldCheck className="w-4 h-4" />
                       </div>
-                      <span className="text-[10px] font-mono text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/70 border border-amber-500/40 px-1.5 py-0.5 rounded font-medium flex items-center gap-1 badge-glow-amber">
-                        <Wifi className="w-2.5 h-2.5 text-amber-600 dark:text-[#F6C72F]" /> CELLULAR
+                      <span className="text-[10px] font-mono text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/70 border border-purple-500/40 px-1.5 py-0.5 rounded font-medium flex items-center gap-1 badge-glow-amber">
+                        <Wifi className="w-2.5 h-2.5 text-purple-600 dark:text-[#9D61FF]" /> CELLULAR
                       </span>
                     </div>
                     <div className="text-xs font-bold text-slate-900 dark:text-white">Device 02: Vest Hub</div>
-                    <div className="text-[10px] text-amber-700 dark:text-[#F6C72F] font-mono font-medium">IoT 4G LTE-M + GPS</div>
+                    <div className="text-[10px] text-purple-700 dark:text-[#9D61FF] font-mono font-medium">IoT 4G LTE-M + GPS</div>
                   </div>
 
-                  <div className="mt-2.5 pt-2 border-t border-amber-200 dark:border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-zinc-400">
+                  <div className="mt-2.5 pt-2 border-t border-purple-200 dark:border-zinc-800/80 flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-zinc-400">
                     <span>Sector 4 Yard C</span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-semibold">-58 dBm</span>
                   </div>
@@ -235,7 +235,7 @@ export default function SignInPage() {
                 <div className="rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/90 dark:bg-[#090c12]/90 p-3 flex flex-col justify-between hover:border-slate-300 dark:hover:border-zinc-700 transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-[#F6C72F] shadow-[0_0_10px_rgba(246,199,47,0.15)]">
+                      <div className="h-7 w-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-[#9D61FF] shadow-[0_0_10px_rgba(157,97,255,0.15)]">
                         <Footprints className="w-4 h-4" />
                       </div>
                       <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-400/40 dark:border-emerald-800/60 px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
@@ -256,21 +256,21 @@ export default function SignInPage() {
               {/* Active Site Zone Status Bar */}
               <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-zinc-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-zinc-400">
                 <div className="flex items-center gap-1.5 font-mono">
-                  <MapPin className="w-3 h-3 text-amber-600 dark:text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.5)]" />
+                  <MapPin className="w-3.5 h-3.5 text-purple-600 dark:text-[#9D61FF] drop-shadow-[0_0_6px_rgba(157,97,255,0.5)]" />
                   <span className="truncate text-slate-700 dark:text-zinc-300">Nx-One Tower Pilot Site (Greater Noida)</span>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 font-mono text-[10px]">
                   <span className="text-emerald-600 dark:text-emerald-400">● 48 Zone 1</span>
                   <span className="text-sky-600 dark:text-sky-400">● 64 Zone 2</span>
-                  <span className="text-amber-600 dark:text-amber-400">● 32 Zone 3</span>
+                  <span className="text-purple-600 dark:text-[#9D61FF]">● 32 Zone 3</span>
                 </div>
               </div>
             </div>
 
             {/* Industrial Metric Highlights - 4 Glowing Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
-              <div className="rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0e1219]/80 p-2.5 xl:p-3 shadow-sm dark:shadow-none hover:border-amber-500/40 hover:shadow-[0_0_18px_rgba(246,199,47,0.12)] transition-all">
-                <div className="text-xl xl:text-2xl font-bold font-mono text-amber-600 dark:text-[#F6C72F] drop-shadow-[0_0_10px_rgba(246,199,47,0.35)]">99.4%</div>
+              <div className="rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0e1219]/80 p-2.5 xl:p-3 shadow-sm dark:shadow-none hover:border-purple-500/40 hover:shadow-[0_0_18px_rgba(157,97,255,0.12)] transition-all">
+                <div className="text-xl xl:text-2xl font-bold font-mono text-purple-600 dark:text-[#9D61FF] drop-shadow-[0_0_10px_rgba(157,97,255,0.35)]">99.4%</div>
                 <div className="text-[11px] text-slate-600 dark:text-zinc-300 font-medium">Compliance</div>
                 <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono">+1.8% vs manual</div>
               </div>
@@ -297,7 +297,7 @@ export default function SignInPage() {
 
           {/* ================= RIGHT COLUMN: Form Card (Identical Width & Styling) ================= */}
           <div className="lg:col-span-5 xl:col-span-5 flex justify-center lg:justify-end w-full order-1 lg:order-2">
-            <div className="w-full max-w-md xl:max-w-lg rounded-2xl border border-slate-200 dark:border-[#F6C72F]/35 bg-white/95 dark:bg-[#111520]/95 p-5 sm:p-6 xl:p-7 backdrop-blur-2xl neon-glow-amber-lg relative overflow-hidden shadow-2xl dark:shadow-none">
+            <div className="w-full max-w-md xl:max-w-lg rounded-2xl border border-slate-200 dark:border-[#9D61FF]/35 bg-white/95 dark:bg-[#111520]/95 p-5 sm:p-6 xl:p-7 backdrop-blur-2xl neon-glow-amber-lg relative overflow-hidden shadow-2xl dark:shadow-none">
               
               {/* Shimmering Animated Top Line */}
               <div className="absolute top-0 left-0 right-0 shimmer-line" />
@@ -305,7 +305,7 @@ export default function SignInPage() {
               <div className="mb-4 sm:mb-5">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                   <span>Portal Access</span>
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#F6C72F] animate-pulse" />
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#9D61FF] animate-pulse" />
                 </h2>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
                   Enter your registered enterprise credentials to access your site dashboard.
@@ -314,7 +314,7 @@ export default function SignInPage() {
 
               {/* Feedback toast */}
               {feedback && (
-                <div className="mb-3 rounded-lg border border-[#F6C72F]/40 bg-[#F6C72F]/10 p-2.5 text-xs text-amber-700 dark:text-[#F6C72F] flex items-center gap-2 animate-fadeIn badge-glow-amber">
+                <div className="mb-3 rounded-lg border border-[#9D61FF]/40 bg-[#9D61FF]/10 p-2.5 text-xs text-purple-700 dark:text-[#9D61FF] flex items-center gap-2 animate-fadeIn badge-glow-amber">
                   <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>{feedback}</span>
                 </div>
@@ -381,7 +381,7 @@ export default function SignInPage() {
                     <button
                       type="button"
                       onClick={() => alert("Password reset instructions sent to your registered email.")}
-                      className="text-[10px] text-amber-600 dark:text-[#F6C72F] hover:text-amber-700 dark:hover:text-amber-300 hover:underline cursor-pointer transition-colors"
+                      className="text-[10px] text-purple-600 dark:text-[#9D61FF] hover:text-purple-700 dark:hover:text-purple-300 hover:underline cursor-pointer transition-colors"
                     >
                       Forgot password?
                     </button>
@@ -411,7 +411,7 @@ export default function SignInPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F] cursor-pointer transition-colors"
+                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-[#9D61FF] cursor-pointer transition-colors"
                     >
                       {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                     </button>
@@ -431,7 +431,7 @@ export default function SignInPage() {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-3.5 w-3.5 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-amber-600 dark:text-[#F6C72F] accent-[#F6C72F] focus:ring-0"
+                      className="h-3.5 w-3.5 rounded border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-purple-600 dark:text-[#9D61FF] accent-[#9D61FF] focus:ring-0"
                     />
                     <span className="text-[11px] text-slate-600 dark:text-zinc-400">Keep session active on this workstation</span>
                   </label>
@@ -441,11 +441,11 @@ export default function SignInPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full rounded-xl py-2.5 px-4 text-xs font-bold text-zinc-950 glow-btn-amber flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="w-full rounded-xl py-2.5 px-4 text-xs font-bold text-white glow-btn-amber flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {isLoading ? (
                     <>
-                      <div className="h-3.5 w-3.5 border-2 border-zinc-950 border-t-transparent rounded-full animate-spin" />
+                      <div className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       <span>Login...</span>
                     </>
                   ) : (
@@ -471,21 +471,21 @@ export default function SignInPage() {
                   <button
                     type="button"
                     onClick={() => alert("Redirecting to Microsoft Azure Active Directory...")}
-                    className="flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-amber-600 dark:hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] focus:border-[#F6C72F] focus:shadow-[0_0_0_1.5px_#f6c72f,0_0_12px_rgba(246,199,47,0.4)] outline-none transition-all cursor-pointer"
+                    className="flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-purple-600 dark:hover:text-[#9D61FF] hover:border-[#9D61FF]/50 hover:shadow-[0_0_12px_rgba(157,97,255,0.2)] focus:border-[#9D61FF] focus:shadow-[0_0_0_1.5px_#9D61FF,0_0_12px_rgba(157,97,255,0.4)] outline-none transition-all cursor-pointer"
                   >
                     Azure AD
                   </button>
                   <button
                     type="button"
                     onClick={() => alert("Redirecting to Okta Identity...")}
-                    className="flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-amber-600 dark:hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] focus:border-[#F6C72F] focus:shadow-[0_0_0_1.5px_#f6c72f,0_0_12px_rgba(246,199,47,0.4)] outline-none transition-all cursor-pointer"
+                    className="flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-purple-600 dark:hover:text-[#9D61FF] hover:border-[#9D61FF]/50 hover:shadow-[0_0_12px_rgba(157,97,255,0.2)] focus:border-[#9D61FF] focus:shadow-[0_0_0_1.5px_#9D61FF,0_0_12px_rgba(157,97,255,0.4)] outline-none transition-all cursor-pointer"
                   >
                     Okta
                   </button>
                   <button
                     type="button"
                     onClick={() => alert("Redirecting to Google Workspace...")}
-                    className="flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-amber-600 dark:hover:text-[#F6C72F] hover:border-[#F6C72F]/50 hover:shadow-[0_0_12px_rgba(246,199,47,0.2)] focus:border-[#F6C72F] focus:shadow-[0_0_0_1.5px_#f6c72f,0_0_12px_rgba(246,199,47,0.4)] outline-none transition-all cursor-pointer"
+                    className="flex items-center justify-center py-1.5 px-2 rounded-xl border border-slate-300 dark:border-zinc-800/80 bg-slate-50 dark:bg-zinc-900/60 text-[11px] font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-[#0d111a] hover:text-purple-600 dark:hover:text-[#9D61FF] hover:border-[#9D61FF]/50 hover:shadow-[0_0_12px_rgba(157,97,255,0.2)] focus:border-[#9D61FF] focus:shadow-[0_0_0_1.5px_#9D61FF,0_0_12px_rgba(157,97,255,0.4)] outline-none transition-all cursor-pointer"
                   >
                     Google
                   </button>
@@ -495,7 +495,7 @@ export default function SignInPage() {
               {/* Bottom Link to Sign Up */}
               <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-zinc-800/80 text-center text-xs text-slate-600 dark:text-zinc-400">
                 Don&apos;t have an enterprise account?{" "}
-                <Link href="/signup" className="font-semibold text-amber-600 dark:text-[#F6C72F] hover:text-amber-700 dark:hover:text-amber-300 hover:underline transition-colors">
+                <Link href="/signup" className="font-semibold text-purple-600 dark:text-[#9D61FF] hover:text-purple-700 dark:hover:text-purple-300 hover:underline transition-colors">
                   Register your site
                 </Link>
               </div>

@@ -37,13 +37,13 @@ export default function ActivityLogPage() {
   const getLogBadge = (type: string) => {
     switch (type) {
       case "template":
-        return "bg-amber-950/60 text-[#F6C72F] border-amber-500/40";
+        return "bg-purple-950/60 text-[#9D61FF] border-purple-500/40";
       case "report":
         return "bg-emerald-950/60 text-emerald-400 border-emerald-500/40";
       case "feedback":
         return "bg-sky-950/60 text-sky-400 border-sky-500/40";
       case "admin":
-        return "bg-purple-950/60 text-purple-400 border-purple-500/40";
+        return "bg-indigo-950/60 text-indigo-400 border-indigo-500/40";
       default:
         return "bg-slate-800 text-slate-300 border-slate-700";
     }
@@ -55,7 +55,7 @@ export default function ActivityLogPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/90 dark:bg-[#0b0e14]/90 backdrop-blur-xl shadow-lg">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#F6C72F] px-2 py-0.5 rounded-full border border-amber-500/30 bg-amber-500/10 font-bold">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#9D61FF] px-2 py-0.5 rounded-full border border-purple-500/30 bg-purple-500/10 font-bold">
               SUPERADMIN AUDIT TRAIL
             </span>
             <span className="text-xs text-slate-500 dark:text-zinc-400">Spec Section 1 & 5</span>
@@ -71,9 +71,9 @@ export default function ActivityLogPage() {
         <button
           type="button"
           onClick={() => showToast("Exporting cryptographic audit log (SHA-256 verified)...")}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 font-semibold text-xs hover:border-[#F6C72F] transition-all cursor-pointer shadow-sm"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 font-semibold text-xs hover:border-[#9D61FF] transition-all cursor-pointer shadow-sm"
         >
-          <Download className="w-4 h-4 text-[#F6C72F]" />
+          <Download className="w-4 h-4 text-[#9D61FF]" />
           <span>Export Audit Dossier</span>
         </button>
       </div>
@@ -85,7 +85,7 @@ export default function ActivityLogPage() {
             <div className="text-[11px] text-slate-500 dark:text-zinc-400">Total Audit Events</div>
             <div className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{activityLogs.length} Events</div>
           </div>
-          <div className="p-2 rounded-lg bg-amber-500/10 text-[#F6C72F]">
+          <div className="p-2 rounded-lg bg-purple-500/10 text-[#9D61FF]">
             <Clock className="w-4 h-4" />
           </div>
         </div>
@@ -117,9 +117,9 @@ export default function ActivityLogPage() {
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0d1017] flex items-center justify-between">
           <div>
             <div className="text-[11px] text-slate-500 dark:text-zinc-400">Integrity Stamp</div>
-            <div className="text-lg font-bold text-[#F6C72F] mt-0.5">SHA-256</div>
+            <div className="text-lg font-bold text-[#9D61FF] mt-0.5">SHA-256</div>
           </div>
-          <div className="p-2 rounded-lg bg-[#F6C72F]/10 text-[#F6C72F]">
+          <div className="p-2 rounded-lg bg-purple-500/10 text-[#9D61FF]">
             <ShieldCheck className="w-4 h-4" />
           </div>
         </div>
@@ -134,7 +134,7 @@ export default function ActivityLogPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search actor, action, or target..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#F6C72F]"
+            className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-[#9D61FF]"
           />
         </div>
 
@@ -146,7 +146,7 @@ export default function ActivityLogPage() {
               onClick={() => setFilterType(type)}
               className={`px-3 py-1 rounded-lg text-xs font-medium capitalize transition-all cursor-pointer whitespace-nowrap ${
                 filterType === type
-                  ? "bg-[#F6C72F]/15 border border-[#F6C72F]/50 text-slate-900 dark:text-white font-semibold"
+                  ? "bg-[#9D61FF]/15 border border-[#9D61FF]/50 text-slate-900 dark:text-white font-semibold"
                   : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -162,9 +162,9 @@ export default function ActivityLogPage() {
           {filteredLogs.map((log) => (
             <div key={log.id} className="relative flex items-start gap-4 pl-8 group">
               {/* Timeline Dot */}
-              <div className="absolute left-2 top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-[#0c1017] bg-[#F6C72F] shadow-[0_0_8px_rgba(246,199,47,0.8)] z-10" />
+              <div className="absolute left-2 top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-[#0c1017] bg-[#9D61FF] shadow-[0_0_8px_rgba(157,97,255,0.8)] z-10" />
 
-              <div className="flex-1 p-4 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/40 group-hover:border-amber-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex-1 p-4 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/40 group-hover:border-purple-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-xs text-slate-900 dark:text-white">{log.actor}</span>
