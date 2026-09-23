@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import {
@@ -45,12 +45,12 @@ export default function TemplatesTable() {
 
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] border-b border-slate-200 dark:border-zinc-800/80 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none">
             <tr>
-              <th className="py-2 px-3 font-semibold w-[24%]">Template &amp; Blueprint</th>
+              <th className="py-2 px-3 font-semibold w-[26%]">Template &amp; Blueprint</th>
               <th className="py-2 px-3 font-semibold w-[17%]">Target Site</th>
-              <th className="py-2 px-3 font-semibold w-[15%]">Configured Modules</th>
-              <th className="py-2 px-3 font-semibold w-[5%]">Status</th>
-              <th className="py-2 px-3 font-semibold w-[17%]">Author / Created</th>
-              <th className="py-2 px-3 font-semibold w-[10%] text-right">Actions</th>
+              <th className="py-2 px-3 font-semibold w-[18%]">Configured Modules</th>
+              <th className="py-2 px-3 font-semibold w-[13%]">Status</th>
+              <th className="py-2 px-3 font-semibold w-[18%]">Author / Created</th>
+              <th className="py-2 px-3 font-semibold w-[8%] text-right">Actions</th>
             </tr>
           </thead>
 
@@ -73,10 +73,10 @@ export default function TemplatesTable() {
                       </div>
                       <div className="min-w-0 flex-1 overflow-hidden">
                         <div className="flex items-center gap-1 mb-0.5">
-                          <span className="font-mono text-[12px] px-1 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold border border-slate-200 dark:border-zinc-700/60 flex-shrink-0">
+                          <span className="font-mono text-[10px] px-1 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold border border-slate-200 dark:border-zinc-700/60 flex-shrink-0">
                             {template.id}
                           </span>
-                          <span className="text-[12px] font-mono text-slate-400 dark:text-zinc-500">
+                          <span className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
                             {template.version}
                           </span>
                         </div>
@@ -104,7 +104,7 @@ export default function TemplatesTable() {
                         </span>
                       </div>
                     </Tooltip>
-                    <div className="text-[12px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
+                    <div className="text-[10px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
                       {template.site_id}
                     </div>
                   </td>
@@ -114,7 +114,7 @@ export default function TemplatesTable() {
                     <div className="flex flex-wrap gap-1">
                       {template.blocks.slice(0, 2).map((blk) => (
                         <Tooltip key={blk.id} content={blk.title} position="top">
-                          <span className="text-[12px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700/60 truncate max-w-[90px] cursor-default">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700/60 truncate max-w-[90px] cursor-default">
                             {blk.title}
                           </span>
                         </Tooltip>
@@ -124,7 +124,7 @@ export default function TemplatesTable() {
                           content={template.blocks.slice(2).map((b) => b.title).join(", ")}
                           position="top"
                         >
-                          <span className="text-[12px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border border-purple-500/30 font-bold cursor-default">
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border border-purple-500/30 font-bold cursor-default">
                             +{template.blocks.length - 2}
                           </span>
                         </Tooltip>
@@ -135,7 +135,7 @@ export default function TemplatesTable() {
                   {/* Status */}
                   <td className="py-2 px-3 overflow-hidden">
                     <span
-                      className={`inline-flex items-center gap-1 text-[12px] font-mono px-1.5 py-0.5 rounded-full border uppercase font-bold ${
+                      className={`inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border uppercase font-bold whitespace-nowrap ${
                         isActive
                           ? "bg-emerald-950/60 text-emerald-400 border-emerald-500/40"
                           : isPending
@@ -153,7 +153,7 @@ export default function TemplatesTable() {
                     </span>
                     {isRejected && template.rejection_reason && (
                       <Tooltip content={template.rejection_reason} position="bottom">
-                        <div className="text-[12px] text-rose-500 dark:text-rose-400 mt-0.5 truncate cursor-default">
+                        <div className="text-[10px] text-rose-500 dark:text-rose-400 mt-0.5 truncate cursor-default">
                           {template.rejection_reason}
                         </div>
                       </Tooltip>
@@ -167,7 +167,7 @@ export default function TemplatesTable() {
                         {template.created_by}
                       </div>
                     </Tooltip>
-                    <div className="text-[12px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
+                    <div className="text-[10px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
                       {template.created_at}
                     </div>
                   </td>
@@ -180,9 +180,9 @@ export default function TemplatesTable() {
                           <button
                             type="button"
                             onClick={() => { setSelectedTemplate(template); setReviewModalOpen(true); }}
-                            className="h-6 px-1.5 rounded-md bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-[12px] flex items-center gap-0.5 transition-all cursor-pointer"
+                            className="h-7 px-2 rounded-md bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
                           >
-                            <ShieldCheck className="w-2.5 h-2.5" />
+                            <ShieldCheck className="w-3 h-3" />
                             <span>Review</span>
                           </button>
                         </Tooltip>
