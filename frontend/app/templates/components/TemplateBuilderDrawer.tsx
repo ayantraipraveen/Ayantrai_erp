@@ -71,7 +71,7 @@ export default function TemplateBuilderDrawer() {
           {/* Drawer Header */}
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-4">
             <div>
-              <div className="text-[10px] font-mono text-[#F6C72F] uppercase font-bold tracking-wider">
+              <div className="text-[10px] font-mono text-[#9D61FF] uppercase font-bold tracking-wider">
                 Block-Based Visual Builder
               </div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
@@ -98,7 +98,7 @@ export default function TemplateBuilderDrawer() {
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
                 placeholder="e.g. Monthly Subcontractor Safety & Geotechnical Audit"
-                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#F6C72F]"
+                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
               />
             </div>
 
@@ -124,7 +124,7 @@ export default function TemplateBuilderDrawer() {
                 value={templateDesc}
                 onChange={(e) => setTemplateDesc(e.target.value)}
                 placeholder="Brief description of the reporting scope, telemetry sources, and audit criteria."
-                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#F6C72F]"
+                className="w-full mt-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
               />
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function TemplateBuilderDrawer() {
                   key={blk.id}
                   className={`p-3 rounded-xl border transition-all ${
                     blk.enabled
-                      ? "border-[#F6C72F]/50 bg-amber-500/5 dark:bg-[#0f131c]"
+                      ? "border-[#9D61FF]/50 bg-purple-500/5 dark:bg-[#0f131c]"
                       : "border-slate-200 dark:border-zinc-800/60 opacity-50 bg-slate-50 dark:bg-zinc-950"
                   }`}
                 >
@@ -156,7 +156,7 @@ export default function TemplateBuilderDrawer() {
                         type="checkbox"
                         checked={blk.enabled}
                         onChange={() => toggleBlock(idx)}
-                        className="rounded text-[#F6C72F] focus:ring-[#F6C72F] cursor-pointer"
+                        className="rounded text-[#9D61FF] focus:ring-[#9D61FF] cursor-pointer"
                       />
                       <div>
                         <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -209,7 +209,7 @@ export default function TemplateBuilderDrawer() {
           <button
             type="button"
             onClick={() => onSubmit("pending")}
-            className="px-5 py-2 rounded-xl bg-[#F6C72F] hover:bg-[#F6C72F]/90 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(246,199,47,0.35)] transition-all cursor-pointer"
+            className="px-5 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(157,97,255,0.4)] transition-all cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
             <span>Submit for Approval</span>
