@@ -475,23 +475,23 @@ export default function Sidebar({
                 href="/dashboard"
                 className="flex items-center gap-2 group overflow-hidden min-w-0"
               >
-                <div className="grid grid-cols-1 grid-rows-1 items-center h-7 w-28 flex-shrink-0">
-                  {/* Light Mode: Blue Text */}
+                <div className="grid grid-cols-1 grid-rows-1 items-center h-11 w-auto flex-shrink-0">
+                  {/* Light Mode: Indigo Text */}
                   <Image
                     src="/logo-light.png"
                     alt="AyantrAI Sitesafe"
-                    width={112}
-                    height={30}
-                    className="col-start-1 row-start-1 w-[120px] object-contain logo-light-mode filter brightness-105 select-none"
+                    width={80}
+                    height={50}
+                    className="col-start-1 row-start-1 h-11 w-auto max-w-[90px] object-contain logo-light-mode select-none"
                     priority
                   />
                   {/* Dark Mode: White Text */}
                   <Image
                     src="/logo.png"
                     alt="AyantrAI Sitesafe"
-                    width={112}
-                    height={30}
-                    className="col-start-1 row-start-1 w-[120px] object-contain logo-dark-mode filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)] select-none"
+                    width={80}
+                    height={50}
+                    className="col-start-1 row-start-1 h-11 w-auto max-w-[90px] object-contain logo-dark-mode drop-shadow-[0_0_12px_rgba(157,97,255,0.4)] select-none"
                     priority
                   />
                 </div>
@@ -509,23 +509,34 @@ export default function Sidebar({
               </Tooltip>
             </div>
           ) : (
-            <div className="w-full flex flex-col items-center justify-center">
-              <Tooltip content="Expand sidebar (Ctrl+B)" position="right" variant="amber">
+            <div className="w-full flex items-center justify-center">
+              <Tooltip content="AyantrAI • Expand sidebar (Ctrl+B)" position="right">
                 <button
                   type="button"
                   onClick={() => setSidebarOpen(true)}
                   aria-label="Expand sidebar"
-                  className="group relative h-9 w-9 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/80 flex items-center justify-center hover:border-[#F6C72F]/50 hover:bg-amber-500/10 transition-all cursor-pointer shadow-sm hover:shadow-[0_0_12px_rgba(246,199,47,0.25)]"
+                  className="group flex flex-col items-center justify-center p-1 rounded-xl hover:bg-purple-500/10 transition-all cursor-pointer select-none"
                 >
-                  <Image
-                    src="/icon.png"
-                    alt="AyantrAI"
-                    width={22}
-                    height={22}
-                    className="object-contain filter brightness-110 group-hover:scale-105 transition-transform"
-                    priority
-                  />
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 shadow-sm" />
+                  <div className="grid grid-cols-1 grid-rows-1 items-center h-14 w-12 flex-shrink-0">
+                    {/* Light Mode */}
+                    <Image
+                      src="/logo-light.png"
+                      alt="AyantrAI"
+                      width={48}
+                      height={32}
+                      className="col-start-1 row-start-1 w-12 h-10 object-contain logo-light-mode group-hover:scale-105 transition-transform select-none"
+                      priority
+                    />
+                    {/* Dark Mode */}
+                    <Image
+                      src="/logo.png"
+                      alt="AyantrAI"
+                      width={48}
+                      height={32}
+                      className="col-start-1 row-start-1 w-12 h-10 object-contain logo-dark-mode drop-shadow-[0_0_10px_rgba(157,97,255,0.4)] group-hover:drop-shadow-[0_0_14px_rgba(157,97,255,0.6)] group-hover:scale-105 transition-all select-none"
+                      priority
+                    />
+                  </div>
                 </button>
               </Tooltip>
             </div>
@@ -560,23 +571,23 @@ export default function Sidebar({
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 group"
                 >
-                  <div className="grid grid-cols-1 grid-rows-1 items-center h-7 w-28 flex-shrink-0">
+                  <div className="grid grid-cols-1 grid-rows-1 items-center h-11 w-auto flex-shrink-0">
                     {/* Light Mode */}
                     <Image
                       src="/logo-light.png"
                       alt="AyantrAI Sitesafe"
-                      width={112}
-                      height={30}
-                      className="col-start-1 row-start-1 object-contain logo-light-mode filter brightness-105 select-none"
+                      width={80}
+                      height={50}
+                      className="col-start-1 row-start-1 h-11 w-auto max-w-[90px] object-contain logo-light-mode select-none"
                       priority
                     />
                     {/* Dark Mode */}
                     <Image
                       src="/logo.png"
                       alt="AyantrAI Sitesafe"
-                      width={112}
-                      height={30}
-                      className="col-start-1 row-start-1 object-contain logo-dark-mode filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.3)] select-none"
+                      width={80}
+                      height={50}
+                      className="col-start-1 row-start-1 h-11 w-auto max-w-[90px] object-contain logo-dark-mode drop-shadow-[0_0_12px_rgba(157,97,255,0.4)] select-none"
                       priority
                     />
                   </div>

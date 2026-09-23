@@ -20,11 +20,11 @@ export const metadata: Metadata = {
   description: "Enterprise Resource Planning & Smart PPE Compliance Monitoring for Industrial Sites",
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.png", type: "image/png" },
-      { url: "/logo.png", type: "image/png" },
     ],
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
   },
 };
 

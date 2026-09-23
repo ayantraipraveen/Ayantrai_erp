@@ -383,23 +383,23 @@ export default function DashboardNavbar({
             href="/dashboard"
             className="lg:hidden flex items-center gap-2 group flex-shrink-0 h-9"
           >
-            <div className="grid grid-cols-1 grid-rows-1 items-center h-7 w-24 flex-shrink-0">
+            <div className="grid grid-cols-1 grid-rows-1 items-center h-10 w-auto flex-shrink-0">
               {/* Light Mode */}
               <Image
                 src="/logo-light.png"
                 alt="AyantrAI Sitesafe"
-                width={100}
-                height={28}
-                className="col-start-1 row-start-1 object-contain logo-light-mode filter brightness-105 select-none"
+                width={72}
+                height={44}
+                className="col-start-1 row-start-1 h-10 w-auto max-w-[80px] object-contain logo-light-mode select-none"
                 priority
               />
               {/* Dark Mode */}
               <Image
                 src="/logo.png"
                 alt="AyantrAI Sitesafe"
-                width={100}
-                height={28}
-                className="col-start-1 row-start-1 object-contain logo-dark-mode filter brightness-110 drop-shadow-[0_0_12px_rgba(246,199,47,0.35)] select-none"
+                width={72}
+                height={44}
+                className="col-start-1 row-start-1 h-10 w-auto max-w-[80px] object-contain logo-dark-mode drop-shadow-[0_0_12px_rgba(157,97,255,0.4)] select-none"
                 priority
               />
             </div>

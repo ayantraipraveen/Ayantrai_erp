@@ -57,23 +57,23 @@ export default function AuthNavbar({
         <div className="flex items-center gap-3 sm:gap-4">
           <Link href={resolvedLogoHref} className="flex items-center gap-2.5 sm:gap-3 group">
             <Tooltip content="AyantrAI • Connected Industrial Intelligence" position="bottom">
-              <div className="grid grid-cols-1 grid-rows-1 items-center h-7 sm:h-8 md:h-9 w-28 sm:w-32 md:w-36 flex-shrink-0">
+              <div className="grid grid-cols-1 grid-rows-1 items-center h-11 sm:h-12 w-auto flex-shrink-0">
                 {/* Light Mode */}
                 <Image
                   src="/logo-light.png"
                   alt="AyantrAI Sitesafe"
-                  width={150}
-                  height={42}
-                  className="col-start-1 row-start-1 object-contain logo-light-mode filter brightness-105 select-none"
+                  width={90}
+                  height={56}
+                  className="col-start-1 row-start-1 h-11 sm:h-12 w-auto max-w-[95px] object-contain logo-light-mode select-none"
                   priority
                 />
                 {/* Dark Mode */}
                 <Image
                   src="/logo.png"
                   alt="AyantrAI Sitesafe"
-                  width={150}
-                  height={42}
-                  className="col-start-1 row-start-1 object-contain logo-dark-mode filter brightness-110 drop-shadow-[0_0_16px_rgba(246,199,47,0.3)] group-hover:drop-shadow-[0_0_22px_rgba(246,199,47,0.5)] select-none"
+                  width={90}
+                  height={56}
+                  className="col-start-1 row-start-1 h-11 sm:h-12 w-auto max-w-[95px] object-contain logo-dark-mode drop-shadow-[0_0_14px_rgba(157,97,255,0.45)] group-hover:drop-shadow-[0_0_20px_rgba(157,97,255,0.6)] select-none"
                   priority
                 />
               </div>
