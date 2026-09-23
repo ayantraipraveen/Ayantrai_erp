@@ -16,7 +16,6 @@ import {
 import { setActiveRole } from "@/lib/redux/slices/reportModuleSlice";
 import {
   ShieldCheck,
-  Radio,
   HardHat,
   Footprints,
   Lock,
@@ -27,12 +26,6 @@ import {
   CheckCircle2,
   Sparkles,
   Wifi,
-  Cpu,
-  Building2,
-  Activity,
-  Fingerprint,
-  LogOut,
-  UserCheck,
   MapPin,
   CheckCircle,
   AlertCircle,
@@ -53,7 +46,6 @@ export default function SignInPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [activePersona, setActivePersona] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -65,55 +57,6 @@ export default function SignInPage() {
     return <AuthSkeleton isSignUp={false} />;
   }
 
-  // Quick Demo Personas
-  const demoPersonas = [
-    {
-      role: "Superadmin",
-      name: "Dr. Vikram Seth",
-      email: "superadmin@ayantrai.com",
-      pass: "Sitesafe@2026",
-      company: "AyantrAI HQ Governance",
-      badge: "Full System Control",
-      icon: ShieldCheck,
-    },
-    {
-      role: "Site Admin",
-      name: "Vikram Seth",
-      email: "vikram.seth@lt-infra.com",
-      pass: "Sitesafe@2026",
-      company: "Nx-One Tower Pilot Site",
-      badge: "Site-Scoped Admin",
-      icon: Building2,
-    },
-    {
-      role: "Site Manager",
-      name: "Anita Sharma",
-      email: "anita.sharma@mumbai-metro.in",
-      pass: "Sitesafe@2026",
-      company: "Metro Line 4 Underground Tunnel",
-      badge: "Tunnel Lead",
-      icon: Activity,
-    },
-    {
-      role: "Device Admin",
-      name: "Rajesh Gupta",
-      email: "rajesh.gupta@hsr-infra.gov.in",
-      pass: "Sitesafe@2026",
-      company: "High-Speed Rail Viaduct C-2",
-      badge: "Hardware & Kits",
-      icon: Cpu,
-    },
-  ];
-
-  const handleApplyPersona = (persona: (typeof demoPersonas)[0]) => {
-    setActivePersona(persona.role);
-    setEmail(persona.email);
-    setPassword(persona.pass);
-    setErrors({});
-    setAuthError(null);
-    setFeedback(`Selected ${persona.role} (${persona.email}) • Password auto-filled`);
-    setTimeout(() => setFeedback(null), 3500);
-  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -359,7 +302,7 @@ export default function SignInPage() {
               {/* Shimmering Animated Top Line */}
               <div className="absolute top-0 left-0 right-0 shimmer-line" />
 
-              <div className="mb-3">
+              <div className="mb-4 sm:mb-5">
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
                   <span>Portal Access</span>
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#F6C72F] animate-pulse" />
@@ -392,82 +335,8 @@ export default function SignInPage() {
                 </div>
               )}
 
-              {/* Quick Persona Demo Selector */}
-              <div className="mb-3.5 space-y-2 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/40">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-semibold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#F6C72F]" />
-                    <span>Quick Demo Credentials</span>
-                  </span>
-                  <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
-                    Click to auto-fill
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Superadmin Quick-Fill Card */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleApplyPersona(demoPersonas[0])
-                    }
-                    className={`group p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      activePersona === "Superadmin"
-                        ? "border-[#F6C72F] bg-amber-500/15 shadow-[0_0_15px_rgba(246,199,47,0.25)] ring-1 ring-[#F6C72F]"
-                        : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] hover:border-amber-500/50 dark:hover:border-amber-500/40 hover:bg-amber-500/5 dark:hover:bg-amber-500/10"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#F6C72F] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 group-hover:bg-amber-500/20 transition-colors">
-                        SUPERADMIN
-                      </span>
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#F6C72F] group-hover:scale-110 transition-transform" />
-                    </div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-[#F6C72F] transition-colors truncate">
-                      Dr. Vikram Seth
-                    </div>
-                    <div className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono group-hover:text-slate-800 dark:group-hover:text-zinc-200 transition-colors truncate">
-                      superadmin@ayantrai.com
-                    </div>
-                  </button>
-
-                  {/* Site Admin Quick-Fill Card */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleApplyPersona(demoPersonas[1])
-                    }
-                    className={`group p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      activePersona === "Site Admin"
-                        ? "border-[#F6C72F] bg-amber-500/15 shadow-[0_0_15px_rgba(246,199,47,0.25)] ring-1 ring-[#F6C72F]"
-                        : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] hover:border-sky-500/50 dark:hover:border-sky-500/40 hover:bg-sky-500/5 dark:hover:bg-sky-500/10"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-sky-400 px-1.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 group-hover:bg-sky-500/20 transition-colors">
-                        SITE ADMIN
-                      </span>
-                      <Building2 className="w-3.5 h-3.5 text-sky-400 group-hover:scale-110 transition-transform" />
-                    </div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors truncate">
-                      Vikram Seth
-                    </div>
-                    <div className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono group-hover:text-slate-800 dark:group-hover:text-zinc-200 transition-colors truncate">
-                      vikram.seth@lt-infra.com
-                    </div>
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-1.5 pt-1 text-[10px] text-slate-500 dark:text-zinc-400 font-mono">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-                  <span className="truncate">
-                    LocalStorage synced: Custom admins created in <span className="text-[#F6C72F]">/admins</span> can sign in directly.
-                  </span>
-                </div>
-              </div>
-
               {/* Sign In Form */}
-              <form onSubmit={handleSignIn} className="space-y-2.5 sm:space-y-3">
+              <form onSubmit={handleSignIn} className="space-y-3 sm:space-y-3.5">
                 {/* Email / ID */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-medium text-slate-700 dark:text-zinc-300 flex items-center justify-between">

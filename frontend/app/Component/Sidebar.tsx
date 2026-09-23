@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -161,6 +161,34 @@ export default function Sidebar({
     : roleString.includes("project")
       ? "project_head"
       : "admin";
+
+  // Global shortcut (Ctrl+B / Cmd+B) to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Do not trigger when user is actively typing in an input, textarea, or contentEditable
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        if (window.innerWidth < 1024) {
+          setMobileMenuOpen(!mobileMenuOpen);
+        } else {
+          setSidebarOpen(!sidebarOpen);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [sidebarOpen, mobileMenuOpen, setSidebarOpen, setMobileMenuOpen]);
 
   // Standard Organized Navigation Groups for Superadmin
   const superadminGroups: NavGroup[] = [
@@ -343,7 +371,7 @@ export default function Sidebar({
           <div key={group.label} className="space-y-1">
             {/* Section Category Label */}
             {!isCollapsed ? (
-              <div className="px-3 pt-2 pb-1 text-[10px] font-mono uppercase tracking-widest text-slate-400 dark:text-zinc-500 font-bold select-none flex items-center justify-between">
+              <div className="px-3 pt-2 pb-1 text-xs font-mono uppercase tracking-widest text-slate-400 dark:text-zinc-500 font-bold select-none flex items-center justify-between">
                 <span>{group.label}</span>
               </div>
             ) : (
@@ -364,12 +392,12 @@ export default function Sidebar({
                   onClick={() => {
                     if (isMobile) setMobileMenuOpen(false);
                   }}
-                  className={`relative rounded-xl text-xs font-medium transition-all group select-none flex items-center ${isCollapsed
+                  className={`relative rounded-xl text-[15px] font-medium transition-all group select-none flex items-center ${isCollapsed
                     ? "justify-center w-10 h-10 mx-auto"
                     : "gap-3 px-3 py-2.5 w-full"
                     } ${active
-                      ? "bg-amber-500/15 border border-[#F6C72F]/50 text-slate-950 dark:text-white shadow-[0_0_16px_rgba(246,199,47,0.18)] font-semibold"
-                      : "text-slate-600 dark:text-zinc-400 hover:text-amber-950 dark:hover:text-white hover:bg-amber-500/10 dark:hover:bg-[#F6C72F]/10 border border-transparent hover:border-amber-500/25 dark:hover:border-[#F6C72F]/30"
+                      ? "text-amber-600 dark:text-[#F6C72F] font-semibold"
+                      : "text-slate-600 dark:text-zinc-400 hover:text-amber-600 dark:hover:text-[#F6C72F]"
                     }`}
                 >
                   {/* Active Left Pill Accent (Expanded mode) */}
@@ -380,7 +408,7 @@ export default function Sidebar({
                   {/* Icon */}
                   <div className="relative flex-shrink-0">
                     <Icon
-                      className={`w-4 h-4 transition-all duration-200 ${active
+                      className={`w-5 h-5 transition-all duration-200 ${active
                         ? "text-amber-600 dark:text-[#F6C72F] drop-shadow-[0_0_6px_rgba(246,199,47,0.4)]"
                         : "text-slate-500 dark:text-zinc-400 group-hover:text-amber-600 dark:group-hover:text-[#F6C72F] group-hover:scale-110"
                         }`}
@@ -392,7 +420,7 @@ export default function Sidebar({
                     <div className="flex-1 flex items-center justify-between overflow-hidden min-w-0">
                       <span
                         className={`truncate ${active
-                          ? "font-bold text-slate-950 dark:text-white"
+                          ? "font-bold text-amber-600 dark:text-[#F6C72F]"
                           : ""
                           }`}
                       >
@@ -400,7 +428,7 @@ export default function Sidebar({
                       </span>
                       {item.badge && (
                         <span
-                          className={`text-[9px] font-mono px-1.5 py-0.5 rounded border uppercase font-bold tracking-wider flex-shrink-0 ${item.badgeColor}`}
+                          className={`text-[11px] font-mono px-1.5 py-0.5 rounded border uppercase font-bold tracking-wider flex-shrink-0 ${item.badgeColor}`}
                         >
                           {item.badge}
                         </span>
@@ -441,7 +469,7 @@ export default function Sidebar({
     <>
       {/* ================= DESKTOP SIDEBAR ================= */}
       <aside
-        className={`hidden lg:flex flex-col border-r border-slate-200 dark:border-zinc-800/80 bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 h-full select-none ${sidebarOpen ? "w-64" : "w-16"
+        className={`hidden lg:flex flex-col bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 h-full select-none ${sidebarOpen ? "w-64" : "w-16"
           }`}
       >
         {/* ================= DESKTOP HEADER (BRAND LOGO + EXPAND / COLLAPSE TOGGLE) ================= */}
