@@ -84,8 +84,8 @@ export default function TemplatesGrid() {
           </div>
         </div>
       ) : (
-        /* Grid of cards */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        /* Grid of cards - 3 columns, fitting 6 cards nicely in view */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {paginatedTemplates.map((template) => {
             const isPending  = template.status === "pending";
             const isActive   = template.status === "active";
@@ -94,11 +94,11 @@ export default function TemplatesGrid() {
             return (
               <div
                 key={template.id}
-                className="p-5 rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 hover:border-purple-500/50 transition-all flex flex-col justify-between group shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] relative"
+                className="p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 hover:border-purple-500/50 transition-all flex flex-col justify-between group shadow-sm hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] relative"
               >
                 <div>
                   {/* Top Bar: Site Name & Clean Status */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center justify-between gap-2 mb-2">
                     <Tooltip content={template.site_name} position="top" maxWidth="max-w-[240px]">
                       <span className="text-[11px] font-mono text-slate-600 dark:text-zinc-400 truncate flex items-center gap-1.5 cursor-default">
                         <Building className="w-3.5 h-3.5 text-[#9D61FF] flex-shrink-0" />
@@ -135,7 +135,7 @@ export default function TemplatesGrid() {
                   </div>
 
                   {/* ID + Version + History */}
-                  <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="flex items-center gap-1.5 mb-1">
                     <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold border border-slate-200 dark:border-zinc-700/60">
                       {template.id}
                     </span>
@@ -150,19 +150,19 @@ export default function TemplatesGrid() {
                   </div>
 
                   {/* Title & Description */}
-                  <Tooltip content={template.name} position="top" maxWidth="max-w-[300px]">
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors line-clamp-2 cursor-default">
+                  <Tooltip content={template.name} position="top" maxWidth="max-w-[320px]">
+                    <h3 className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors line-clamp-1 cursor-default">
                       {template.name}
                     </h3>
                   </Tooltip>
-                  <Tooltip content={template.description} position="bottom" maxWidth="max-w-[320px]">
-                    <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 line-clamp-2 cursor-default">
+                  <Tooltip content={template.description} position="bottom" maxWidth="max-w-[340px]">
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5 line-clamp-1 cursor-default">
                       {template.description}
                     </p>
                   </Tooltip>
 
                   {/* Configured Sections — Compact Chip with Full Hover Tooltip */}
-                  <div className="mt-3 flex items-center justify-between">
+                  <div className="mt-2.5 flex items-center justify-between">
                     <Tooltip
                       content={
                         <div className="max-w-xs space-y-1">
@@ -180,7 +180,7 @@ export default function TemplatesGrid() {
                       }
                       position="top"
                     >
-                      <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 cursor-default hover:border-[#9D61FF]/40 transition-colors">
+                      <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 cursor-default hover:border-[#9D61FF]/40 transition-colors">
                         <span className="h-1.5 w-1.5 rounded-full bg-[#9D61FF]" />
                         {template.blocks.length} {template.blocks.length === 1 ? "section" : "sections"}
                       </span>
@@ -200,7 +200,7 @@ export default function TemplatesGrid() {
                   </div>
 
                   {/* Review Info Banner */}
-                  <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-zinc-800/80 text-[10px]">
+                  <div className="mt-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80 text-[10px]">
                     {isActive && (
                       <div className="text-slate-500 dark:text-zinc-400 flex items-center gap-1 truncate">
                         <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Approved</span>
@@ -233,8 +233,8 @@ export default function TemplatesGrid() {
                   </div>
                 </div>
 
-                {/* Card Bottom Actions (Matching Table View exactly) */}
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between text-xs">
+                {/* Card Bottom Actions */}
+                <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-zinc-800/80 flex items-center justify-between text-xs">
                   {/* Left Action: Quick Approve / Inspect / Resubmit */}
                   <div className="flex items-center gap-1.5">
                     {activeRole === "superadmin" && isPending && (
@@ -243,7 +243,7 @@ export default function TemplatesGrid() {
                           <button
                             type="button"
                             onClick={() => handleApprove(template)}
-                            className="h-7 px-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white border border-emerald-500/30 transition-all flex items-center gap-1 font-bold text-[10px] cursor-pointer"
+                            className="h-6 px-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white border border-emerald-500/30 transition-all flex items-center gap-1 font-bold text-[10px] cursor-pointer"
                           >
                             <Check className="w-3 h-3" />
                             <span>Approve</span>
@@ -256,7 +256,7 @@ export default function TemplatesGrid() {
                               setRejectModalTemplate(template);
                               setCustomRejectReason("");
                             }}
-                            className="h-7 px-2 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 transition-all flex items-center gap-1 font-bold text-[10px] cursor-pointer"
+                            className="h-6 px-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 transition-all flex items-center gap-1 font-bold text-[10px] cursor-pointer"
                           >
                             <X className="w-3 h-3" />
                             <span>Reject</span>
@@ -270,7 +270,7 @@ export default function TemplatesGrid() {
                         <button
                           type="button"
                           onClick={() => handleResubmit(template.id)}
-                          className="h-7 px-2 rounded-lg bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white border border-purple-500/30 transition-all flex items-center gap-1 font-bold text-[10px] cursor-pointer"
+                          className="h-6 px-1.5 rounded-lg bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white border border-purple-500/30 transition-all flex items-center gap-1 font-bold text-[10px] cursor-pointer"
                         >
                           <RotateCcw className="w-3 h-3" />
                           <span>Resubmit</span>
@@ -285,7 +285,7 @@ export default function TemplatesGrid() {
                           setSelectedTemplate(template);
                           setReviewModalOpen(true);
                         }}
-                        className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-600 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center gap-1 font-medium text-[10px] cursor-pointer"
+                        className="h-6 px-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-600 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center gap-1 font-medium text-[10px] cursor-pointer"
                       >
                         <Eye className="w-3 h-3" />
                         <span>Inspect</span>
@@ -308,7 +308,7 @@ export default function TemplatesGrid() {
                           setRemarkModalTemplate(template);
                           setRemarkText(template.remarks || "");
                         }}
-                        className={`h-7 w-7 rounded-lg border transition-all flex items-center justify-center cursor-pointer relative ${
+                        className={`h-6 w-6 rounded-lg border transition-all flex items-center justify-center cursor-pointer relative ${
                           template.remarks
                             ? "border-amber-500/50 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
                             : "border-slate-200 dark:border-zinc-800 hover:border-amber-500/50 text-slate-500 dark:text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10"
@@ -326,7 +326,7 @@ export default function TemplatesGrid() {
                       <button
                         type="button"
                         onClick={() => setEditingTemplate(template)}
-                        className="h-7 w-7 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
+                        className="h-6 w-6 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
                       >
                         <Edit3 className="w-3 h-3" />
                       </button>
@@ -337,7 +337,7 @@ export default function TemplatesGrid() {
                       <button
                         type="button"
                         onClick={() => handleDuplicate(template.id)}
-                        className="h-7 w-7 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-blue-500/50 text-slate-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 transition-all flex items-center justify-center cursor-pointer"
+                        className="h-6 w-6 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-blue-500/50 text-slate-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 transition-all flex items-center justify-center cursor-pointer"
                       >
                         <Copy className="w-3 h-3" />
                       </button>
@@ -348,7 +348,7 @@ export default function TemplatesGrid() {
                       <button
                         type="button"
                         onClick={() => setDeleteConfirmId(template.id)}
-                        className="h-7 w-7 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-red-500/50 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all flex items-center justify-center cursor-pointer"
+                        className="h-6 w-6 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-red-500/50 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all flex items-center justify-center cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
