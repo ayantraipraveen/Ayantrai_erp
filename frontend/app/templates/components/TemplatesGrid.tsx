@@ -86,14 +86,14 @@ export default function TemplatesGrid() {
       ) : (
         /* Grid of cards - 3 columns, fitting 6 cards nicely in view */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {paginatedTemplates.map((template) => {
+          {paginatedTemplates.map((template, idx) => {
             const isPending  = template.status === "pending";
             const isActive   = template.status === "active";
             const isRejected = template.status === "rejected";
 
             return (
               <div
-                key={template.id}
+                key={`${template.id}-${idx}`}
                 className="p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 hover:border-purple-500/50 transition-all flex flex-col justify-between group shadow-sm hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] relative"
               >
                 <div>

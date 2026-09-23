@@ -800,7 +800,15 @@ export const reportModuleSlice = createSlice({
     },
     // Template Actions
     addTemplate: (state, action: PayloadAction<Omit<ReportTemplate, "id" | "created_at" | "version">>) => {
-      const newId = `TPL-00${state.templates.length + 1}`;
+      // Find the highest numerical ID suffix among all existing templates to ensure unique keys
+      const maxIdNum = state.templates.reduce((max, t) => {
+        const match = t.id.match(/TPL-(\d+)/);
+        const num = match ? parseInt(match[1], 10) : 0;
+        return num > max ? num : max;
+      }, 0);
+      const nextNum = maxIdNum + 1;
+      const newId = `TPL-${String(nextNum).padStart(3, "0")}`;
+
       const newTemplate: ReportTemplate = {
         ...action.payload,
         id: newId,
@@ -859,7 +867,14 @@ export const reportModuleSlice = createSlice({
     duplicateTemplate: (state, action: PayloadAction<string>) => {
       const source = state.templates.find((t) => t.id === action.payload);
       if (source) {
-        const newId = `TPL-00${state.templates.length + 1}`;
+        const maxIdNum = state.templates.reduce((max, t) => {
+          const match = t.id.match(/TPL-(\d+)/);
+          const num = match ? parseInt(match[1], 10) : 0;
+          return num > max ? num : max;
+        }, 0);
+        const nextNum = maxIdNum + 1;
+        const newId = `TPL-${String(nextNum).padStart(3, "0")}`;
+
         const cloned: ReportTemplate = {
           ...source,
           id: newId,
