@@ -79,8 +79,10 @@ export default function Tooltip({
   const [mounted, setMounted] = useState(false);
   const [activePos, setActivePos] = useState<TooltipPosition>(position);
   const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [arrowShift, setArrowShift] = useState(0);
 
   const triggerRef = useRef<HTMLDivElement | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
   const mousePosRef = useRef<{ x: number; y: number } | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -187,6 +189,26 @@ export default function Tooltip({
     [followCursor, position]
   );
 
+  // Measure tooltip bubble and ensure it doesn't overflow viewport boundaries
+  useEffect(() => {
+    if (!isVisible || !tooltipRef.current) return;
+    const bubbleRect = tooltipRef.current.getBoundingClientRect();
+    const viewportW = typeof window !== "undefined" ? window.innerWidth : 1200;
+    let shift = 0;
+    if (bubbleRect.right > viewportW - 12) {
+      shift = bubbleRect.right - (viewportW - 12);
+    } else if (bubbleRect.left < 12) {
+      shift = bubbleRect.left - 12;
+    }
+
+    if (Math.abs(shift) > 0.5) {
+      setCoords((prev) => ({ ...prev, left: prev.left - shift }));
+      setArrowShift(shift);
+    } else {
+      setArrowShift(0);
+    }
+  }, [isVisible]);
+
   const handleMouseEnter = (e: React.MouseEvent) => {
     if (disabled || !content) return;
     mousePosRef.current = { x: e.clientX, y: e.clientY };
@@ -224,6 +246,7 @@ export default function Tooltip({
       rafRef.current = null;
     }
     setIsVisible(false);
+    setArrowShift(0);
   };
 
   // Keyboard accessibility
@@ -343,6 +366,7 @@ export default function Tooltip({
         typeof document !== "undefined" &&
         createPortal(
           <div
+            ref={tooltipRef}
             role="tooltip"
             style={{
               position: "fixed",
@@ -354,7 +378,11 @@ export default function Tooltip({
               willChange: "top, left",
             }}
             className={`${
-              wrap ? `${maxWidth} whitespace-normal break-words leading-relaxed text-start` : "whitespace-nowrap"
+              typeof content === "string" && content.length <= 40
+                ? "whitespace-nowrap"
+                : wrap
+                ? `${maxWidth} whitespace-normal break-words leading-relaxed text-start`
+                : "whitespace-nowrap"
             } rounded-xl border px-3 py-1.5 text-[10px] font-mono font-medium tracking-tight backdrop-blur-xl animate-fadeIn ${currentVariant.container} ${tooltipClassName}`}
           >
             {content}
@@ -362,6 +390,11 @@ export default function Tooltip({
             {/* Directional Arrow */}
             {showArrow && (
               <span
+                style={
+                  activePos === "top" || activePos === "bottom"
+                    ? { left: `calc(50% + ${arrowShift}px)` }
+                    : undefined
+                }
                 className={`absolute h-1.5 w-1.5 rotate-45 pointer-events-none ${arrowClass} ${currentVariant.arrow}`}
               />
             )}

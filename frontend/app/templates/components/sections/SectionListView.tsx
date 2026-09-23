@@ -27,6 +27,7 @@ import {
   Calendar,
   X,
   PlusCircle,
+  ArrowLeft,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -40,6 +41,7 @@ import { Tooltip } from "@/app/Component";
 
 interface SectionListViewProps {
   onSelectSection: (sectionId: string) => void;
+  onBackToTemplates?: () => void;
 }
 
 type FilterType = "all" | "core" | "custom";
@@ -48,7 +50,7 @@ type FilterType = "all" | "core" | "custom";
  * Dedicated Section & Graph Management List View.
  * Displays all reusable report sections and attached telemetry charts independent of templates.
  */
-export default function SectionListView({ onSelectSection }: SectionListViewProps) {
+export default function SectionListView({ onSelectSection, onBackToTemplates }: SectionListViewProps) {
   const dispatch = useAppDispatch();
   const librarySections = useAppSelector((state) => state.reportModule.librarySections || []);
   const activeRole = useAppSelector((state) => state.reportModule.activeRole);
@@ -251,15 +253,29 @@ export default function SectionListView({ onSelectSection }: SectionListViewProp
           </button>
         </div>
 
-        {/* Create Section Action */}
-        <button
-          type="button"
-          onClick={() => setCreateModalOpen(true)}
-          className="h-9 px-4 rounded-xl glow-btn-primary font-bold text-xs cursor-pointer flex items-center gap-2 flex-shrink-0"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>+ Create Section</span>
-        </button>
+        {/* Actions: Back to Blueprints + Create Section */}
+        <div className="flex items-center gap-2">
+          {onBackToTemplates && (
+            <button
+              type="button"
+              onClick={onBackToTemplates}
+              className="h-9 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Blueprints</span>
+            </button>
+          )}
+
+          {/* Create Section Action */}
+          <button
+            type="button"
+            onClick={() => setCreateModalOpen(true)}
+            className="h-9 px-4 rounded-xl glow-btn-primary font-bold text-xs cursor-pointer flex items-center gap-2 flex-shrink-0"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>+ Create Section</span>
+          </button>
+        </div>
       </div>
 
       {/* 3. SECTION CARDS GRID */}

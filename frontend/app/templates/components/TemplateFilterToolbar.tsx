@@ -4,6 +4,8 @@ import React from "react";
 import { Search, X, Building, Filter, List, LayoutGrid, Plus, Layers } from "lucide-react";
 import { Tooltip, CustomDropdown, DateRangeFilter } from "../../Component";
 import { useTemplates } from "./TemplatesContext";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { setTemplateActiveTab } from "@/lib/redux/slices/reportModuleSlice";
 
 /**
  * Filter and action toolbar for Templates module.
@@ -12,6 +14,7 @@ import { useTemplates } from "./TemplatesContext";
  * view mode toggle, and primary create action.
  */
 export default function TemplateFilterToolbar() {
+  const dispatch = useAppDispatch();
   const {
     searchQuery,
     setSearchQuery,
@@ -151,7 +154,7 @@ export default function TemplateFilterToolbar() {
           {/* Manage Sections & Graphs Button */}
           <button
             type="button"
-            onClick={() => setSectionsModalOpen(true)}
+            onClick={() => dispatch(setTemplateActiveTab("sections"))}
             className="h-9 px-3.5 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] font-semibold text-xs cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0 transition-colors shadow-sm"
           >
             <Layers className="w-3.5 h-3.5" />
