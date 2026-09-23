@@ -68,8 +68,8 @@ export default function TemplatesTable() {
             <tr>
               <th className="py-2.5 px-3 font-semibold w-[21%]">Template &amp; Blueprint</th>
               <th className="py-2.5 px-3 font-semibold w-[14%]">Target Site</th>
-              <th className="py-2.5 px-3 font-semibold w-[11%]">Configured Modules</th>
-              <th className="py-2.5 px-3 font-semibold w-[15%]">Author / Created</th>
+              <th className="py-2.5 px-3 font-semibold w-[12%]">Configured Sections</th>
+              <th className="py-2.5 px-3 font-semibold w-[14%]">Author / Created</th>
               <th className="py-2.5 px-3 font-semibold w-[10%]">Status</th>
               <th className="py-2.5 px-3 font-semibold w-[13%]">Review Info</th>
               <th className="py-2.5 px-3 font-semibold w-[16%] text-center">Actions</th>
@@ -162,13 +162,13 @@ export default function TemplatesTable() {
                     </div>
                   </td>
 
-                  {/* Configured Modules — Compact Chip with Tooltip */}
+                  {/* Configured Sections — Compact Chip with Tooltip */}
                   <td className="py-2.5 px-3 overflow-hidden">
                     <Tooltip
                       content={
                         <div className="max-w-xs space-y-1">
                           <div className="font-bold text-[11px] text-purple-300 border-b border-purple-400/20 pb-0.5">
-                            {template.blocks.length} Configured Modules:
+                            {template.blocks.length} Configured Sections:
                           </div>
                           <div className="text-[10px] leading-relaxed">
                             {template.blocks.map((b, i) => (
@@ -183,7 +183,7 @@ export default function TemplatesTable() {
                     >
                       <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 cursor-default hover:border-[#9D61FF]/40 transition-colors">
                         <span className="h-1.5 w-1.5 rounded-full bg-[#9D61FF]" />
-                        {template.blocks.length} {template.blocks.length === 1 ? "module" : "modules"}
+                        {template.blocks.length} {template.blocks.length === 1 ? "section" : "sections"}
                       </span>
                     </Tooltip>
                   </td>
