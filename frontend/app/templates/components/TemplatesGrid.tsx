@@ -161,13 +161,13 @@ export default function TemplatesGrid() {
                     </p>
                   </Tooltip>
 
-                  {/* Configured Modules — Compact Chip with Full Hover Tooltip */}
-                  <div className="mt-3.5 flex items-center justify-between">
+                  {/* Configured Sections — Compact Chip with Full Hover Tooltip */}
+                  <div className="mt-3 flex items-center justify-between">
                     <Tooltip
                       content={
                         <div className="max-w-xs space-y-1">
                           <div className="font-bold text-[11px] text-purple-300 border-b border-purple-400/20 pb-0.5">
-                            {template.blocks.length} Configured Modules:
+                            {template.blocks.length} Configured Sections:
                           </div>
                           <div className="text-[10px] leading-relaxed">
                             {template.blocks.map((b, i) => (
@@ -182,7 +182,7 @@ export default function TemplatesGrid() {
                     >
                       <span className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 cursor-default hover:border-[#9D61FF]/40 transition-colors">
                         <span className="h-1.5 w-1.5 rounded-full bg-[#9D61FF]" />
-                        {template.blocks.length} {template.blocks.length === 1 ? "module" : "modules"}
+                        {template.blocks.length} {template.blocks.length === 1 ? "section" : "sections"}
                       </span>
                     </Tooltip>
 
@@ -538,70 +538,22 @@ export default function TemplatesGrid() {
         </div>
       )}
 
-      {/* Rejection Reason Modal Dialog */}
-      {rejectModalTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-2xl space-y-4 text-slate-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800/80 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-500">
-                  <X className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Reject Safety Template
-                  </h3>
-                  <p className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
-                    {rejectModalTemplate.id} • {rejectModalTemplate.name}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setRejectModalTemplate(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-slate-700 dark:text-zinc-300">
-                Reason for Rejection <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                rows={3}
-                value={customRejectReason}
-                onChange={(e) => setCustomRejectReason(e.target.value)}
-                placeholder="Specify the compliance gaps, missing blocks, or required modifications..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-rose-500/80 transition-all placeholder:text-slate-400"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setRejectModalTemplate(null)}
-                className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={!customRejectReason.trim()}
-                onClick={() => {
-                  handleReject(rejectModalTemplate, customRejectReason.trim());
-                  setRejectModalTemplate(null);
-                }}
-                className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Confirm Rejection</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Common Reusable Rejection Reason Modal */}
+      <RejectionModal
+        isOpen={!!rejectModalTemplate}
+        onClose={() => setRejectModalTemplate(null)}
+        onConfirm={(reason) => {
+          if (rejectModalTemplate) {
+            handleReject(rejectModalTemplate, reason);
+            setRejectModalTemplate(null);
+          }
+        }}
+        title="Reject Safety Template"
+        itemIdentifier={rejectModalTemplate?.id}
+        itemName={rejectModalTemplate?.name}
+        placeholder="Specify the compliance gaps, missing blocks, or required modifications..."
+        confirmLabel="Confirm Rejection"
+      />
     </div>
   );
 }

@@ -64,15 +64,15 @@ export default function TemplatesTable() {
       <div className="overflow-x-hidden overflow-y-auto flex-1 min-h-0 custom-scrollbar w-full">
         <table className="w-full text-left border-collapse table-fixed">
 
-          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] border-b border-slate-200 dark:border-zinc-800/80 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none">
+          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] border-b border-slate-200 dark:border-zinc-800/80 text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none">
             <tr>
-              <th className="py-2.5 px-3 font-semibold w-[21%]">Template &amp; Blueprint</th>
-              <th className="py-2.5 px-3 font-semibold w-[14%]">Target Site</th>
-              <th className="py-2.5 px-3 font-semibold w-[12%]">Configured Sections</th>
-              <th className="py-2.5 px-3 font-semibold w-[14%]">Author / Created</th>
-              <th className="py-2.5 px-3 font-semibold w-[10%]">Status</th>
-              <th className="py-2.5 px-3 font-semibold w-[13%]">Review Info</th>
-              <th className="py-2.5 px-3 font-semibold w-[16%] text-center">Actions</th>
+              <th className="py-2.5 px-2 font-semibold w-[22%]">Template &amp; Blueprint</th>
+              <th className="py-2.5 px-2 font-semibold w-[15%]">Target Site</th>
+              <th className="py-2.5 px-2 font-semibold w-[12%]">Configured Sections</th>
+              <th className="py-2.5 px-2 font-semibold w-[14%]">Author / Created</th>
+              <th className="py-2.5 px-2 font-semibold w-[9%]">Status</th>
+              <th className="py-2.5 px-2 font-semibold w-[13%]">Review Info</th>
+              <th className="py-2.5 px-2 font-semibold w-[15%] text-center">Actions</th>
             </tr>
           </thead>
 
@@ -85,17 +85,17 @@ export default function TemplatesTable() {
                       <Layers className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                         No Templates Available
                       </h3>
-                      <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                         No safety report blueprints match your current filter or search criteria.
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={resetFilters}
-                      className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-[11px] font-semibold text-slate-800 dark:text-white transition-colors cursor-pointer"
+                      className="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-xs font-semibold text-slate-800 dark:text-white transition-colors cursor-pointer"
                     >
                       Reset All Filters
                     </button>
@@ -114,32 +114,32 @@ export default function TemplatesTable() {
                     className="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/30 transition-colors"
                   >
                   {/* Template & Blueprint */}
-                  <td className="py-2.5 px-3 overflow-hidden">
+                  <td className="py-2.5 px-2 overflow-hidden">
                     <div className="flex items-start gap-2 min-w-0">
                       <div className="p-1.5 rounded-lg bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex-shrink-0 mt-0.5">
-                        <FileText className="w-3.5 h-3.5" />
+                        <FileText className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1 overflow-hidden">
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <span className="font-mono text-[10px] px-1 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold border border-slate-200 dark:border-zinc-700/60 flex-shrink-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold border border-slate-200 dark:border-zinc-700/60 flex-shrink-0">
                             {template.id}
                           </span>
-                          <span className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
+                          <span className="text-[11px] font-mono text-slate-400 dark:text-zinc-500">
                             {template.version}
                           </span>
                           <Tooltip content={`Version History (${template.version})`} position="top">
                             <span className="cursor-pointer text-slate-400 hover:text-[#9D61FF] transition-colors p-0.5">
-                              <History className="w-2.5 h-2.5" />
+                              <History className="w-3 h-3" />
                             </span>
                           </Tooltip>
                         </div>
-                        <Tooltip content={template.name} position="top">
-                          <div className="font-semibold text-[11px] text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors truncate cursor-default">
+                        <Tooltip content={template.name} position="top" maxWidth="max-w-[320px]">
+                          <div className="font-semibold text-[12.5px] leading-snug text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors truncate cursor-default">
                             {template.name}
                           </div>
                         </Tooltip>
-                        <Tooltip content={template.description} position="bottom" maxWidth="max-w-[320px]">
-                          <div className="text-[10px] text-slate-500 dark:text-zinc-400 truncate cursor-default">
+                        <Tooltip content={template.description} position="bottom" maxWidth="max-w-[340px]">
+                          <div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate cursor-default mt-0.5">
                             {template.description}
                           </div>
                         </Tooltip>
@@ -148,22 +148,22 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Target Site */}
-                  <td className="py-2.5 px-3 overflow-hidden">
-                    <Tooltip content={template.site_name} position="top">
-                      <div className="flex items-center gap-1 min-w-0 cursor-default">
-                        <Building className="w-3 h-3 text-[#9D61FF] flex-shrink-0" />
-                        <span className="font-medium text-[11px] text-slate-800 dark:text-zinc-200 truncate">
+                  <td className="py-2.5 px-2 overflow-hidden">
+                    <Tooltip content={template.site_name} position="top" maxWidth="max-w-[260px]">
+                      <div className="flex items-center gap-1.5 min-w-0 cursor-default">
+                        <Building className="w-3.5 h-3.5 text-[#9D61FF] flex-shrink-0" />
+                        <span className="font-medium text-[12px] text-slate-800 dark:text-zinc-200 truncate">
                           {template.site_name}
                         </span>
                       </div>
                     </Tooltip>
-                    <div className="text-[10px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
+                    <div className="text-[11px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
                       {template.site_id}
                     </div>
                   </td>
 
                   {/* Configured Sections — Compact Chip with Tooltip */}
-                  <td className="py-2.5 px-3 overflow-hidden">
+                  <td className="py-2.5 px-2 overflow-hidden">
                     <Tooltip
                       content={
                         <div className="max-w-xs space-y-1">
@@ -181,7 +181,7 @@ export default function TemplatesTable() {
                       }
                       position="top"
                     >
-                      <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 cursor-default hover:border-[#9D61FF]/40 transition-colors">
+                      <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 cursor-default hover:border-[#9D61FF]/40 transition-colors">
                         <span className="h-1.5 w-1.5 rounded-full bg-[#9D61FF]" />
                         {template.blocks.length} {template.blocks.length === 1 ? "section" : "sections"}
                       </span>
@@ -189,21 +189,21 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Author / Created */}
-                  <td className="py-2.5 px-3 overflow-hidden">
-                    <Tooltip content={template.created_by} position="top">
-                      <div className="font-medium text-[11px] text-slate-800 dark:text-zinc-200 truncate cursor-default">
+                  <td className="py-2.5 px-2 overflow-hidden">
+                    <Tooltip content={template.created_by} position="top" maxWidth="max-w-[220px]">
+                      <div className="font-medium text-[12px] text-slate-800 dark:text-zinc-200 truncate cursor-default">
                         {template.created_by}
                       </div>
                     </Tooltip>
-                    <div className="text-[10px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
+                    <div className="text-[10.5px] font-mono text-slate-400 dark:text-zinc-500 mt-0.5 truncate">
                       {template.created_at}
                     </div>
                   </td>
 
                   {/* Status */}
-                  <td className="py-2.5 px-3 overflow-hidden">
+                  <td className="py-2.5 px-2 overflow-hidden">
                     <span
-                      className={`inline-flex items-center gap-1.5 text-[11px] font-medium capitalize whitespace-nowrap ${
+                      className={`inline-flex items-center gap-1.5 text-[12px] font-medium capitalize whitespace-nowrap ${
                         isActive
                           ? "text-emerald-600 dark:text-emerald-400"
                           : isPending
@@ -230,7 +230,7 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Review Info */}
-                  <td className="py-2.5 px-3 overflow-hidden text-[10px]">
+                  <td className="py-2.5 px-2 overflow-hidden text-[11px]">
                     {isActive && (
                       <div className="truncate">
                         <span className="text-emerald-600 dark:text-emerald-400 font-medium">Approved</span>
@@ -267,7 +267,7 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Actions (Fixed position aligned icon slots) */}
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-2">
                     <div className="flex items-center justify-center gap-1.5">
                       {/* Fixed Workflow Action Slot (Approve, Reject, or Resubmit) */}
                       <div className="flex items-center gap-1 flex-shrink-0">

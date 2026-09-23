@@ -222,7 +222,30 @@ export default function Tooltip({
     handleMouseLeave();
   };
 
-  // Recalculate or close on window scroll / resize
+  // Recalculate or close on window scroll / resize / blur / tab-switch
+  useEffect(() => {
+    const handleDismiss = () => {
+      mousePosRef.current = null;
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      setIsVisible(false);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        handleDismiss();
+      }
+    };
+
+    window.addEventListener("blur", handleDismiss);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("blur", handleDismiss);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   useEffect(() => {
     if (!isVisible) return;
     const handleScrollOrResize = () => {
