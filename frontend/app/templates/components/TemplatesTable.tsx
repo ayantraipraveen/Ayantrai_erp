@@ -6,6 +6,8 @@ import {
   Building,
   ShieldCheck,
   Eye,
+  Edit3,
+  Copy,
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -30,6 +32,8 @@ export default function TemplatesTable() {
     totalPages,
     activeRole,
     setSelectedTemplate,
+    setEditingTemplate,
+    handleDuplicate,
     setReviewModalOpen,
     setDeleteConfirmId,
   } = useTemplates();
@@ -45,12 +49,12 @@ export default function TemplatesTable() {
 
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] border-b border-slate-200 dark:border-zinc-800/80 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none">
             <tr>
-              <th className="py-2 px-3 font-semibold w-[26%]">Template &amp; Blueprint</th>
-              <th className="py-2 px-3 font-semibold w-[17%]">Target Site</th>
+              <th className="py-2 px-3 font-semibold w-[25%]">Template &amp; Blueprint</th>
+              <th className="py-2 px-3 font-semibold w-[16%]">Target Site</th>
               <th className="py-2 px-3 font-semibold w-[18%]">Configured Modules</th>
               <th className="py-2 px-3 font-semibold w-[13%]">Status</th>
               <th className="py-2 px-3 font-semibold w-[18%]">Author / Created</th>
-              <th className="py-2 px-3 font-semibold w-[8%] text-right">Actions</th>
+              <th className="py-2 px-3 font-semibold w-[10%] text-right">Actions</th>
             </tr>
           </thead>
 
