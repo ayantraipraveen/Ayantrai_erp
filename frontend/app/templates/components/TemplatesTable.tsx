@@ -71,7 +71,7 @@ export default function TemplatesTable() {
                   {/* Template & Blueprint */}
                   <td className="py-3.5 px-6">
                     <div className="flex items-start gap-2.5">
-                      <div className="p-2 rounded-xl bg-amber-500/10 text-[#F6C72F] border border-amber-500/20 flex-shrink-0 mt-0.5">
+                      <div className="p-2 rounded-xl bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex-shrink-0 mt-0.5">
                         <FileText className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -83,7 +83,7 @@ export default function TemplatesTable() {
                             {template.version}
                           </span>
                         </div>
-                        <div className="font-bold text-slate-900 dark:text-white group-hover:text-[#F6C72F] transition-colors mt-0.5 truncate">
+                        <div className="font-bold text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors mt-0.5 truncate">
                           {template.name}
                         </div>
                         <div className="text-[11px] text-slate-500 dark:text-zinc-400 line-clamp-1 mt-0.5">
@@ -96,7 +96,7 @@ export default function TemplatesTable() {
                   {/* Target Site */}
                   <td className="py-3.5 px-6 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
-                      <Building className="w-3.5 h-3.5 text-[#F6C72F] flex-shrink-0" />
+                      <Building className="w-3.5 h-3.5 text-[#9D61FF] flex-shrink-0" />
                       <span className="font-medium text-slate-800 dark:text-zinc-200 truncate">
                         {template.site_name}
                       </span>
@@ -122,7 +122,7 @@ export default function TemplatesTable() {
                           content={template.blocks.map((b) => b.title).join(", ")}
                           position="top"
                         >
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-[#F6C72F] border border-amber-500/30 font-bold cursor-default">
+                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-[#9D61FF] border border-purple-500/30 font-bold cursor-default">
                             +{template.blocks.length - 3} more
                           </span>
                         </Tooltip>
@@ -182,7 +182,7 @@ export default function TemplatesTable() {
                               setSelectedTemplate(template);
                               setReviewModalOpen(true);
                             }}
-                            className="h-8 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                            className="h-8 px-2.5 rounded-lg bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs flex items-center gap-1 shadow-sm transition-all cursor-pointer"
                           >
                             <ShieldCheck className="w-3.5 h-3.5" />
                             <span>Review</span>
@@ -198,7 +198,7 @@ export default function TemplatesTable() {
                             setSelectedTemplate(template);
                             setReviewModalOpen(true);
                           }}
-                          className="h-8 w-8 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#F6C72F]/50 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-amber-500/10 transition-all flex items-center justify-center cursor-pointer shadow-sm"
+                          className="h-8 w-8 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer shadow-sm"
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
@@ -297,7 +297,7 @@ export default function TemplatesTable() {
                       onClick={() => setCurrentPage(page)}
                       className={`h-8 min-w-[32px] px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center ${
                         currentPage === page
-                          ? "bg-[#F6C72F] text-slate-950 shadow-[0_0_12px_rgba(246,199,47,0.3)] font-bold"
+                          ? "bg-[#9D61FF] text-white shadow-[0_0_12px_rgba(157,97,255,0.4)] font-bold"
                           : "border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white"
                       }`}
                     >
