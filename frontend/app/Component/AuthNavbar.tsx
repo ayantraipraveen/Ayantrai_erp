@@ -56,37 +56,37 @@ export default function AuthNavbar({
         {/* Left: AyantrAI Logo & Sitesafe ERP Subtitle with Tooltip */}
         <div className="flex items-center gap-3 sm:gap-4">
           <Link href={resolvedLogoHref} className="flex items-center gap-2.5 sm:gap-3 group">
+            {/* Logo mark - theme-aware icon size */}
             <Tooltip content="AyantrAI • Connected Industrial Intelligence" position="bottom">
-              <div className="grid grid-cols-1 grid-rows-1 items-center h-11 sm:h-12 w-auto flex-shrink-0">
-                {/* Light Mode */}
+              <div className="grid grid-cols-1 grid-rows-1 flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10">
                 <Image
                   src="/logo-light.png"
-                  alt="AyantrAI Sitesafe"
-                  width={90}
-                  height={56}
-                  className="col-start-1 row-start-1 h-11 sm:h-12 w-auto max-w-[95px] object-contain logo-light-mode select-none"
+                  alt="AyantrAI"
+                  width={40}
+                  height={40}
+                  className="col-start-1 row-start-1 w-full h-full object-contain logo-light-mode select-none"
                   priority
                 />
-                {/* Dark Mode */}
                 <Image
                   src="/logo.png"
-                  alt="AyantrAI Sitesafe"
-                  width={90}
-                  height={56}
-                  className="col-start-1 row-start-1 h-11 sm:h-12 w-auto max-w-[95px] object-contain logo-dark-mode drop-shadow-[0_0_14px_rgba(157,97,255,0.45)] group-hover:drop-shadow-[0_0_20px_rgba(157,97,255,0.6)] select-none"
+                  alt="AyantrAI"
+                  width={40}
+                  height={40}
+                  className="col-start-1 row-start-1 w-full h-full object-contain logo-dark-mode drop-shadow-[0_0_10px_rgba(157,97,255,0.5)] group-hover:drop-shadow-[0_0_16px_rgba(157,97,255,0.7)] transition-all select-none"
                   priority
                 />
               </div>
             </Tooltip>
-            <div className="hidden sm:flex flex-col border-l border-slate-300 dark:border-zinc-700/80 pl-2.5 sm:pl-3">
+            {/* Brand name + subtitle */}
+            <div className="flex flex-col">
+              <span className="text-[14px] sm:text-[15px] font-bold text-slate-900 dark:text-white leading-tight tracking-tight">
+                AyantrAI
+              </span>
               <Tooltip content="Sitesafe Industrial Safety Cloud v2.4" position="bottom" variant="amber">
-                <span className="text-[10px] tracking-widest text-[#9D61FF] font-mono uppercase font-bold drop-shadow-[0_0_8px_rgba(157,97,255,0.4)] cursor-help">
+                <span className="text-[9px] sm:text-[10px] tracking-widest text-[#9D61FF] font-mono uppercase font-bold drop-shadow-[0_0_8px_rgba(157,97,255,0.4)] cursor-help leading-tight">
                   Sitesafe ERP
                 </span>
               </Tooltip>
-              <span className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium hidden md:inline">
-                {resolvedSubtitle}
-              </span>
             </div>
           </Link>
         </div>

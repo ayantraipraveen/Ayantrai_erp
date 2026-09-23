@@ -471,25 +471,33 @@ export default function Sidebar({
                 href="/dashboard"
                 className="flex items-center gap-2 group overflow-hidden min-w-0"
               >
-                <div className="grid grid-cols-1 grid-rows-1 items-center h-11 w-auto flex-shrink-0">
-                  {/* Light Mode: Indigo Text */}
+                {/* Logo mark - theme-aware */}
+                <div className="grid grid-cols-1 grid-rows-1 flex-shrink-0 w-8 h-8">
                   <Image
                     src="/logo-light.png"
-                    alt="AyantrAI Sitesafe"
-                    width={80}
-                    height={50}
-                    className="col-start-1 row-start-1 h-11 w-auto max-w-[90px] object-contain logo-light-mode select-none"
+                    alt="AyantrAI"
+                    width={32}
+                    height={32}
+                    className="col-start-1 row-start-1 w-8 h-8 object-contain logo-light-mode select-none"
                     priority
                   />
-                  {/* Dark Mode: White Text */}
                   <Image
                     src="/logo.png"
-                    alt="AyantrAI Sitesafe"
-                    width={80}
-                    height={50}
-                    className="col-start-1 row-start-1 h-11 w-auto max-w-[90px] object-contain logo-dark-mode drop-shadow-[0_0_12px_rgba(157,97,255,0.4)] select-none"
+                    alt="AyantrAI"
+                    width={32}
+                    height={32}
+                    className="col-start-1 row-start-1 w-8 h-8 object-contain logo-dark-mode drop-shadow-[0_0_8px_rgba(157,97,255,0.5)] group-hover:drop-shadow-[0_0_12px_rgba(157,97,255,0.7)] transition-all select-none"
                     priority
                   />
+                </div>
+                {/* Brand name text */}
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight tracking-tight truncate">
+                    AyantrAI
+                  </span>
+                  <span className="text-[9px] font-mono font-semibold tracking-widest text-[#9D61FF] uppercase leading-tight">
+                    Sitesafe ERP
+                  </span>
                 </div>
               </Link>
 
@@ -511,25 +519,23 @@ export default function Sidebar({
                   type="button"
                   onClick={() => setSidebarOpen(true)}
                   aria-label="Expand sidebar"
-                  className="group flex flex-col items-center justify-center p-1 rounded-xl hover:bg-purple-500/10 transition-all cursor-pointer select-none"
+                  className="group flex items-center justify-center p-1.5 rounded-xl hover:bg-purple-500/10 transition-all cursor-pointer select-none"
                 >
-                  <div className="grid grid-cols-1 grid-rows-1 items-center h-14 w-12 flex-shrink-0">
-                    {/* Light Mode */}
+                  <div className="grid grid-cols-1 grid-rows-1 w-8 h-8">
                     <Image
                       src="/logo-light.png"
                       alt="AyantrAI"
-                      width={48}
+                      width={32}
                       height={32}
-                      className="col-start-1 row-start-1 w-12 h-10 object-contain logo-light-mode group-hover:scale-105 transition-transform select-none"
+                      className="col-start-1 row-start-1 w-8 h-8 object-contain logo-light-mode group-hover:scale-110 transition-transform select-none"
                       priority
                     />
-                    {/* Dark Mode */}
                     <Image
                       src="/logo.png"
                       alt="AyantrAI"
-                      width={48}
+                      width={32}
                       height={32}
-                      className="col-start-1 row-start-1 w-12 h-10 object-contain logo-dark-mode drop-shadow-[0_0_10px_rgba(157,97,255,0.4)] group-hover:drop-shadow-[0_0_14px_rgba(157,97,255,0.6)] group-hover:scale-105 transition-all select-none"
+                      className="col-start-1 row-start-1 w-8 h-8 object-contain logo-dark-mode drop-shadow-[0_0_8px_rgba(157,97,255,0.4)] group-hover:drop-shadow-[0_0_14px_rgba(157,97,255,0.7)] group-hover:scale-110 transition-all select-none"
                       priority
                     />
                   </div>
@@ -567,32 +573,32 @@ export default function Sidebar({
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2 group"
                 >
-                  <div className="grid grid-cols-1 grid-rows-1 items-center h-11 w-auto flex-shrink-0">
-                    {/* Light Mode */}
+                  {/* Logo mark - theme-aware */}
+                  <div className="grid grid-cols-1 grid-rows-1 flex-shrink-0 w-9 h-9">
                     <Image
                       src="/logo-light.png"
-                      alt="AyantrAI Sitesafe"
-                      width={80}
-                      height={50}
-                      className="col-start-1 row-start-1 h-11 w-auto max-w-[90px] object-contain logo-light-mode select-none"
+                      alt="AyantrAI"
+                      width={36}
+                      height={36}
+                      className="col-start-1 row-start-1 w-9 h-9 object-contain logo-light-mode select-none"
                       priority
                     />
-                    {/* Dark Mode */}
                     <Image
                       src="/logo.png"
-                      alt="AyantrAI Sitesafe"
-                      width={80}
-                      height={50}
-                      className="col-start-1 row-start-1 h-11 w-auto max-w-[90px] object-contain logo-dark-mode drop-shadow-[0_0_12px_rgba(157,97,255,0.4)] select-none"
+                      alt="AyantrAI"
+                      width={36}
+                      height={36}
+                      className="col-start-1 row-start-1 w-9 h-9 object-contain logo-dark-mode drop-shadow-[0_0_8px_rgba(157,97,255,0.5)] select-none"
                       priority
                     />
                   </div>
-                  <div className="flex flex-col border-l border-slate-300 dark:border-zinc-700/80 pl-2">
-                    <span className="text-[9px] tracking-wider text-[#9D61FF] font-mono uppercase font-bold">
-                      Sitesafe
+                  {/* Brand name text */}
+                  <div className="flex flex-col">
+                    <span className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight tracking-tight">
+                      AyantrAI
                     </span>
-                    <span className="text-[9px] text-slate-500 dark:text-zinc-400 font-medium">
-                      ERP
+                    <span className="text-[9px] font-mono font-semibold tracking-widest text-[#9D61FF] uppercase leading-tight">
+                      Sitesafe ERP
                     </span>
                   </div>
                 </Link>

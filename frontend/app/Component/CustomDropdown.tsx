@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useId } from "react";
+import React, { useState, useRef, useEffect, useId, useCallback } from "react";
 import { ChevronDown, Check, Search, AlertCircle } from "lucide-react";
+import { createPortal } from "react-dom";
 
 export interface DropdownOption {
   value: string;
@@ -73,8 +74,11 @@ export default function CustomDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Normalize all options to DropdownOption format
@@ -98,25 +102,53 @@ export default function CustomDropdown({
     );
   });
 
-  // Handle click outside to close dropdown
+  // Compute fixed position from the trigger button's bounding rect
+  const updateMenuPosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const estimatedMenuHeight = 260;
+    const openUpward = spaceBelow < estimatedMenuHeight && spaceAbove > spaceBelow;
+    setMenuStyle({
+      position: "fixed",
+      width: rect.width,
+      minWidth: 220,
+      left: align === "right" ? undefined : rect.left,
+      right: align === "right" ? window.innerWidth - rect.right : undefined,
+      top: openUpward ? undefined : rect.bottom + 6,
+      bottom: openUpward ? window.innerHeight - rect.top + 6 : undefined,
+      zIndex: 9999,
+    });
+  }, [align]);
+
+  // Handle click outside — covers both trigger and portal panel
   useEffect(() => {
+    if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+      const insideContainer = containerRef.current?.contains(target);
+      const insidePanel = panelRef.current?.contains(target);
+      if (!insideContainer && !insidePanel) {
         setIsOpen(false);
         setSearchQuery("");
       }
     };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
+
+  // Reposition on scroll / resize while open
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = () => updateMenuPosition();
+    window.addEventListener("scroll", handler, true);
+    window.addEventListener("resize", handler);
+    return () => {
+      window.removeEventListener("scroll", handler, true);
+      window.removeEventListener("resize", handler);
+    };
+  }, [isOpen, updateMenuPosition]);
 
   // Focus search input on open
   useEffect(() => {
@@ -191,28 +223,28 @@ export default function CustomDropdown({
         </label>
       )}
 
-      {/* Main Trigger Button - matches rounded-xl, height, and glowing amber halo of inputs */}
+      {/* Main Trigger Button */}
       <button
+        ref={buttonRef}
         type="button"
         id={dropdownId}
         disabled={disabled}
         onClick={() => {
           if (!disabled) {
+            if (!isOpen) updateMenuPosition();
             setIsOpen(!isOpen);
             setSearchQuery("");
           }
         }}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className={`w-full flex items-center justify-between text-left transition-all border outline-none cursor-pointer rounded-xl ${
-          sizeClasses[size]
-        } ${
-          error
+        className={`w-full flex items-center justify-between text-left transition-all border outline-none cursor-pointer rounded-xl ${sizeClasses[size]
+          } ${error
             ? "input-error border-red-500/90 shadow-[0_0_16px_rgba(239,68,68,0.5)] bg-red-50 dark:bg-[#12080a]"
             : isOpen
-            ? "border-[#9D61FF] bg-purple-50/40 dark:bg-[#0d111a] shadow-[0_0_0_1.5px_#9D61FF,0_0_16px_rgba(157,97,255,0.3)] text-slate-900 dark:text-white"
-            : "border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#080b10] text-slate-800 dark:text-zinc-200 focus-glow-amber hover:border-[#9D61FF]/60 hover:shadow-[0_0_12px_rgba(157,97,255,0.2)] hover:bg-slate-100/90 dark:hover:bg-[#0c0f16]"
-        } ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${buttonClassName}`}
+              ? "border-[#9D61FF] bg-purple-50/40 dark:bg-[#0d111a] shadow-[0_0_0_1.5px_#9D61FF,0_0_16px_rgba(157,97,255,0.3)] text-slate-900 dark:text-white"
+              : "border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#080b10] text-slate-800 dark:text-zinc-200 focus-glow-amber hover:border-[#9D61FF]/60 hover:shadow-[0_0_12px_rgba(157,97,255,0.2)] hover:bg-slate-100/90 dark:hover:bg-[#0c0f16]"
+          } ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${buttonClassName}`}
       >
         <div className="flex items-center gap-2.5 truncate pr-2">
           {selectedOption?.icon ? (
@@ -221,18 +253,16 @@ export default function CustomDropdown({
             <LeadingIcon className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-500 flex-shrink-0" />
           ) : null}
           <span
-            className={`truncate text-xs ${
-              selectedOption ? "text-slate-900 dark:text-white font-medium" : "text-slate-500 dark:text-zinc-500 font-normal"
-            }`}
+            className={`truncate text-xs ${selectedOption ? "text-slate-900 dark:text-white font-medium" : "text-slate-500 dark:text-zinc-500 font-normal"
+              }`}
           >
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           {selectedOption?.badge && (
             <span
-              className={`text-[9px] font-mono px-1.5 py-0.2 rounded border uppercase font-semibold ${
-                selectedOption.badgeColor ||
+              className={`text-[9px] font-mono px-1.5 py-0.2 rounded border uppercase font-semibold ${selectedOption.badgeColor ||
                 "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700"
-              }`}
+                }`}
             >
               {selectedOption.badge}
             </span>
@@ -240,120 +270,122 @@ export default function CustomDropdown({
         </div>
 
         <ChevronDown
-          className={`w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
-            isOpen ? "rotate-180 text-[#9D61FF] drop-shadow-[0_0_6px_rgba(157,97,255,0.6)]" : ""
-          }`}
+          className={`w-3.5 h-3.5 text-slate-400 dark:text-zinc-400 flex-shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180 text-[#9D61FF] drop-shadow-[0_0_6px_rgba(157,97,255,0.6)]" : ""
+            }`}
         />
       </button>
 
-      {/* Floating Dropdown Panel - glowing purple border and rounded-xl */}
-      {isOpen && (
-        <div
-          role="listbox"
-          className={`absolute z-50 mt-1.5 w-full min-w-[220px] rounded-xl border border-slate-200 dark:border-[#9D61FF]/40 bg-white/98 dark:bg-[#0e131e]/98 backdrop-blur-2xl p-1.5 shadow-2xl animate-fadeIn ${
-            align === "right" ? "right-0" : "left-0"
-          } ${menuClassName}`}
-        >
-          {/* Optional Search Input */}
-          {(searchable || normalizedOptions.length > 8) && (
-            <div className="p-1 mb-1 border-b border-slate-100 dark:border-zinc-800/80">
-              <div className="relative flex items-center">
-                <Search className="absolute left-2 w-3 h-3 text-slate-400 dark:text-zinc-500 pointer-events-none" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setFocusedIndex(0);
-                  }}
-                  placeholder="Filter options..."
-                  className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-slate-50 dark:bg-[#07090e] border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-[#9D61FF] focus:shadow-[0_0_10px_rgba(157,97,255,0.3)] font-mono"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Options List */}
-          <div className="max-h-56 overflow-y-auto space-y-0.5 custom-scrollbar">
-            {filteredOptions.length === 0 ? (
-              <div className="py-2 px-3 text-center text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
-                No matching results
-              </div>
-            ) : (
-              filteredOptions.map((option, index) => {
-                const isSelected = option.value === value;
-                const isFocused = index === focusedIndex;
-                const OptionIcon = option.icon;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="option"
-                    aria-selected={isSelected}
-                    disabled={option.disabled}
-                    onClick={() => {
-                      if (!option.disabled) {
-                        onChange(option.value);
-                        setIsOpen(false);
-                        setSearchQuery("");
-                      }
+      {/* Portal Dropdown Panel — renders into document.body to escape overflow/scroll clipping */}
+      {isOpen &&
+        createPortal(
+          <div
+            ref={panelRef}
+            role="listbox"
+            style={menuStyle}
+            className={`rounded-xl border border-slate-200 dark:border-[#9D61FF]/40 bg-white/98 dark:bg-[#0e131e]/98 backdrop-blur-2xl p-1.5 shadow-2xl animate-fadeIn ${menuClassName}`}
+          >
+            {/* Optional Search Input */}
+            {(searchable || normalizedOptions.length > 8) && (
+              <div className="p-1 mb-1 border-b border-slate-100 dark:border-zinc-800/80">
+                <div className="relative flex items-center">
+                  <Search className="absolute left-2 w-3 h-3 text-slate-400 dark:text-zinc-500 pointer-events-none" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setFocusedIndex(0);
                     }}
-                    onMouseEnter={() => setFocusedIndex(index)}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-all cursor-pointer ${
-                      option.disabled
-                        ? "opacity-40 cursor-not-allowed"
-                        : isSelected
-                        ? "bg-purple-500/15 text-purple-700 dark:text-[#9D61FF] font-semibold border border-purple-500/30 dark:border-[#9D61FF]/40 shadow-[0_0_10px_rgba(157,97,255,0.2)]"
-                        : isFocused
-                        ? "bg-slate-100 dark:bg-zinc-800/90 text-slate-900 dark:text-white"
-                        : "text-slate-700 dark:text-zinc-300 hover:bg-purple-500/10 hover:text-slate-900 dark:hover:text-white"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate pr-2">
-                      {OptionIcon && (
-                        <OptionIcon
-                          className={`w-3.5 h-3.5 flex-shrink-0 ${
-                            isSelected ? "text-purple-600 dark:text-[#9D61FF]" : "text-slate-400 dark:text-zinc-400"
-                          }`}
-                        />
-                      )}
-                      <div>
-                        <div className="truncate text-[11px] font-medium leading-tight">
-                          {option.label}
-                        </div>
-                        {option.description && (
-                          <div className="text-[9px] text-slate-500 dark:text-zinc-500 font-mono truncate">
-                            {option.description}
+                    placeholder="Filter options..."
+                    className="w-full pl-7 pr-2 py-1.5 text-[11px] bg-slate-50 dark:bg-[#07090e] border border-slate-200 dark:border-zinc-800 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-[#9D61FF] focus:shadow-[0_0_10px_rgba(157,97,255,0.3)] font-mono"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Options List */}
+            <div className="max-h-56 overflow-y-auto space-y-0.5 custom-scrollbar">
+              {filteredOptions.length === 0 ? (
+                <div className="py-2 px-3 text-center text-[10px] text-slate-400 dark:text-zinc-500 font-mono">
+                  No matching results
+                </div>
+              ) : (
+                filteredOptions.map((option, index) => {
+                  const isSelected = option.value === value;
+                  const isFocused = index === focusedIndex;
+                  const OptionIcon = option.icon;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      disabled={option.disabled}
+                      onClick={() => {
+                        if (!option.disabled) {
+                          onChange(option.value);
+                          setIsOpen(false);
+                          setSearchQuery("");
+                        }
+                      }}
+                      onMouseEnter={() => setFocusedIndex(index)}
+                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-all cursor-pointer ${
+                        option.disabled
+                          ? "opacity-40 cursor-not-allowed"
+                          : isSelected
+                          ? "bg-purple-500/15 text-purple-700 dark:text-[#9D61FF] font-semibold border border-purple-500/30 dark:border-[#9D61FF]/40 shadow-[0_0_10px_rgba(157,97,255,0.2)]"
+                          : isFocused
+                          ? "bg-slate-100 dark:bg-zinc-800/90 text-slate-900 dark:text-white"
+                          : "text-slate-700 dark:text-zinc-300 hover:bg-purple-500/10 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate pr-2">
+                        {OptionIcon && (
+                          <OptionIcon
+                            className={`w-3.5 h-3.5 flex-shrink-0 ${
+                              isSelected ? "text-purple-600 dark:text-[#9D61FF]" : "text-slate-400 dark:text-zinc-400"
+                            }`}
+                          />
+                        )}
+                        <div>
+                          <div className="truncate text-[11px] font-medium leading-tight">
+                            {option.label}
                           </div>
+                          {option.description && (
+                            <div className="text-[9px] text-slate-500 dark:text-zinc-500 font-mono truncate">
+                              {option.description}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {option.badge && (
+                          <span
+                            className={`text-[8px] font-mono px-1 py-0.5 rounded border uppercase ${
+                              option.badgeColor ||
+                              "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
+                            }`}
+                          >
+                            {option.badge}
+                          </span>
+                        )}
+                        {isSelected && (
+                          <Check className="w-3 h-3 text-[#9D61FF] flex-shrink-0" />
                         )}
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {option.badge && (
-                        <span
-                          className={`text-[8px] font-mono px-1 py-0.2 rounded border uppercase ${
-                            option.badgeColor ||
-                            "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700"
-                          }`}
-                        >
-                          {option.badge}
-                        </span>
-                      )}
-                      {isSelected && (
-                        <Check className="w-3 h-3 text-[#9D61FF] flex-shrink-0" />
-                      )}
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>,
+          document.body
+        )
+      }
 
       {/* Validation Error Text */}
       {error && (
