@@ -12,6 +12,7 @@ import {
   updateTemplateRemark,
   approveTemplate,
   rejectTemplate,
+  resubmitTemplate,
   deleteTemplate,
   setTemplateSearchQuery,
   setTemplateStatusFilter,
@@ -383,6 +384,11 @@ export function useTemplates() {
     return true;
   };
 
+  const handleResubmit = (templateId: string) => {
+    dispatch(resubmitTemplate(templateId));
+    showToast("Template resubmitted for Superadmin review!", "info");
+  };
+
   const handleUpdateRemark = (templateId: string, remarks: string) => {
     dispatch(updateTemplateRemark({ templateId, remarks }));
     showToast("Template remark saved.", "success");
@@ -434,6 +440,7 @@ export function useTemplates() {
     showToast,
     handleApprove,
     handleReject,
+    handleResubmit,
     handleDelete,
     handleDuplicate,
     handleCreateTemplate,

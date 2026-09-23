@@ -334,7 +334,10 @@ const initialTemplates: ReportTemplate[] = [
     site_id: "SITE-02",
     site_name: "Metro Line 4 Underground Tunnel (Mumbai)",
     blocks: defaultBlocks.filter((b) => b.type !== "device_utilisation"),
-    status: "pending",
+    status: "rejected",
+    rejection_reason: "Missing toxic gas sensor calibration block and emergency protocol sign-off checklist.",
+    approved_by: "Dr. Vikram Seth (Superadmin)",
+    approved_at: "2026-09-22 11:30 AM",
     created_by: "Anita Sharma (Tunnel Safety Lead)",
     created_at: "2026-09-22 09:10 AM",
     version: "v1.0",
@@ -346,7 +349,7 @@ const initialTemplates: ReportTemplate[] = [
     site_id: "SITE-03",
     site_name: "High-Speed Rail Viaduct C-2 (Ahmedabad)",
     blocks: defaultBlocks,
-    status: "draft",
+    status: "pending",
     created_by: "Rajesh Gupta (Civil Ops Admin)",
     created_at: "2026-09-21 04:45 PM",
     version: "v0.9",
@@ -860,6 +863,22 @@ export const reportModuleSlice = createSlice({
         });
       }
     },
+    resubmitTemplate: (state, action: PayloadAction<string>) => {
+      const template = state.templates.find((t) => t.id === action.payload);
+      if (template) {
+        template.status = "pending";
+        template.rejection_reason = undefined;
+        state.activityLogs.unshift({
+          id: `act-${Date.now()}-resub`,
+          actor: "Site Admin",
+          role: "Site Admin",
+          action: "Resubmitted revised template for Superadmin approval",
+          target: `${template.id} (${template.name})`,
+          timestamp: "Just now",
+          type: "template",
+        });
+      }
+    },
     deleteTemplate: (state, action: PayloadAction<string>) => {
       const tplId = action.payload;
       const tpl = state.templates.find((t) => t.id === tplId);
@@ -1160,6 +1179,7 @@ export const {
   updateTemplateRemark,
   approveTemplate,
   rejectTemplate,
+  resubmitTemplate,
   deleteTemplate,
   setTemplateSearchQuery,
   setTemplateStatusFilter,
