@@ -311,7 +311,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               <Link
                 href="/templates"
-                className="px-3.5 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs flex items-center gap-1.5 shadow-[0_0_16px_rgba(157,97,255,0.35)] transition-all cursor-pointer"
+                className="px-3.5 py-2 rounded-xl glow-btn-primary font-bold text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Layers className="w-3.5 h-3.5" />
                 <span>Review Templates ({pendingTemplates.length})</span>

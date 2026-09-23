@@ -18,8 +18,8 @@ import {
  */
 export default function TemplatesPage() {
   return (
-    <div className="space-y-5 animate-fadeIn pb-12 w-full">
-      <div className="px-4 sm:px-6 lg:px-7 space-y-5">
+    <div className="animate-fadeIn pb-1 w-full space-y-2 sm:space-y-2.5">
+      <div className="px-4 sm:px-6 lg:px-7 space-y-3 sm:space-y-4">
         <TemplateToast />
         <TemplateMetricsBar />
         <TemplateFilterToolbar />

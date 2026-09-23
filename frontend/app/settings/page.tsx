@@ -243,7 +243,7 @@ export default function SystemSettingsPage() {
         <div className="flex items-center justify-end gap-3 pt-2">
           <button
             type="submit"
-            className="px-6 py-2.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(157,97,255,0.35)] transition-all cursor-pointer"
+            className="px-6 py-2.5 rounded-xl glow-btn-primary font-bold text-xs flex items-center gap-2 cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>Save System Configuration</span>

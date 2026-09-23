@@ -141,7 +141,7 @@ export default function AdminsManagementPage() {
           <button
             type="button"
             onClick={() => setAddModalOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-semibold text-xs transition-all shadow-[0_0_20px_rgba(157,97,255,0.35)] cursor-pointer"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl glow-btn-primary font-bold text-xs cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Provision New Admin</span>
@@ -429,7 +429,7 @@ export default function AdminsManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-xs shadow-[0_0_16px_rgba(157,97,255,0.3)] transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl glow-btn-primary font-bold text-xs cursor-pointer"
                 >
                   Create Admin Account
                 </button>

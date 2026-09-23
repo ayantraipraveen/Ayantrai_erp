@@ -151,7 +151,7 @@ export default function TemplateFilterToolbar() {
           <button
             type="button"
             onClick={() => setBuilderOpen(true)}
-            className="h-9 px-4 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-semibold text-xs transition-all shadow-[0_0_18px_rgba(157,97,255,0.4)] cursor-pointer flex items-center justify-center gap-2 flex-shrink-0"
+            className="h-9 px-4 rounded-xl glow-btn-primary font-bold text-xs cursor-pointer flex items-center justify-center gap-2 flex-shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Create Template</span>

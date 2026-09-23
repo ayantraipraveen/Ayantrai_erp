@@ -215,12 +215,11 @@ export default function CustomDropdown({
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${buttonClassName}`}
       >
         <div className="flex items-center gap-2.5 truncate pr-2">
-          {LeadingIcon && (
+          {selectedOption?.icon ? (
+            <selectedOption.icon className="w-3.5 h-3.5 text-[#9D61FF] flex-shrink-0 drop-shadow-[0_0_8px_rgba(157,97,255,0.6)]" />
+          ) : LeadingIcon ? (
             <LeadingIcon className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-500 flex-shrink-0" />
-          )}
-          {selectedOption?.icon && (
-            <selectedOption.icon className="w-3.5 h-3.5 text-[#9D61FF] flex-shrink-0 drop-shadow-[0_0_6px_rgba(157,97,255,0.4)]" />
-          )}
+          ) : null}
           <span
             className={`truncate text-xs ${
               selectedOption ? "text-slate-900 dark:text-white font-medium" : "text-slate-500 dark:text-zinc-500 font-normal"

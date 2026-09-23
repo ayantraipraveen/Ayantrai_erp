@@ -180,7 +180,7 @@ export default function ReportsPage() {
           <Tooltip content="Download complete monthly audit package as ZIP" position="bottom" variant="amber">
             <button
               onClick={() => showToast("Monthly audit bundle (.ZIP) queued for secure download.")}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#9D61FF] hover:bg-[#8B4CF0] text-white shadow-[0_0_16px_rgba(157,97,255,0.35)] flex items-center gap-2 cursor-pointer transition-all"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold glow-btn-primary flex items-center gap-2 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export Audit Package</span>

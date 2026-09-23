@@ -387,7 +387,7 @@ export default function Sidebar({
                   onClick={() => {
                     if (isMobile) setMobileMenuOpen(false);
                   }}
-                  className={`relative rounded-xl text-[15px] font-medium transition-all group select-none flex items-center ${isCollapsed
+                  className={`relative rounded-xl text-[15px] font-medium transition-all group select-none flex items-center border-0 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 ${isCollapsed
                     ? "justify-center w-10 h-10 mx-auto"
                     : "gap-3 px-3 py-2.5 w-full"
                     } ${active
@@ -395,10 +395,6 @@ export default function Sidebar({
                       : "text-slate-600 dark:text-zinc-400 hover:text-[#9D61FF] dark:hover:text-[#9D61FF]"
                     }`}
                 >
-                  {/* Active Left Pill Accent (Expanded mode) */}
-                  {active && !isCollapsed && (
-                    <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-[#9D61FF] shadow-[0_0_10px_rgba(157,97,255,0.8)]" />
-                  )}
 
                   {/* Icon */}
                   <div className="relative flex-shrink-0">

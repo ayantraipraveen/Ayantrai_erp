@@ -238,22 +238,34 @@ body {
 }
 
 /* Glowing Action Button */
-.glow-btn-amber {
-  background: linear-gradient(135deg, #b07dff 0%, #9D61FF 50%, #8B4CF0 100%);
+.glow-btn-amber,
+.glow-btn-purple,
+.glow-btn-primary {
+  background: linear-gradient(135deg, #a76dff 0%, #9D61FF 50%, #853ee0 100%) !important;
+  color: #ffffff !important;
   box-shadow: 
-    0 0 20px rgba(157, 97, 255, 0.45),
-    0 0 45px rgba(157, 97, 255, 0.2),
-    inset 0 1px 1px rgba(255, 255, 255, 0.5);
-  transition: all 0.25s ease-in-out;
+    0 0 22px rgba(157, 97, 255, 0.55),
+    0 4px 14px rgba(157, 97, 255, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.glow-btn-amber:hover {
-  background: linear-gradient(135deg, #be94ff 0%, #a875ff 50%, #7938e3 100%);
+.glow-btn-amber:hover,
+.glow-btn-purple:hover,
+.glow-btn-primary:hover {
+  background: linear-gradient(135deg, #b685ff 0%, #a76dff 50%, #7731d8 100%) !important;
+  color: #ffffff !important;
   box-shadow: 
-    0 0 30px rgba(157, 97, 255, 0.7),
-    0 0 60px rgba(157, 97, 255, 0.35),
-    inset 0 1px 1px rgba(255, 255, 255, 0.7);
+    0 0 32px rgba(157, 97, 255, 0.75),
+    0 6px 20px rgba(157, 97, 255, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
   transform: translateY(-1px);
+}
+
+.glow-btn-amber:active,
+.glow-btn-purple:active,
+.glow-btn-primary:active {
+  transform: translateY(0px) scale(0.98);
 }
 
 /* High-Impact Input Glowing Halo on Focus */
