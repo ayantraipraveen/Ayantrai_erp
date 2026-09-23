@@ -42,13 +42,13 @@ export default function TemplatesGrid() {
         {paginatedTemplates.map((template) => (
           <div
             key={template.id}
-            className="p-5 rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 hover:border-amber-500/50 transition-all flex flex-col justify-between group shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+            className="p-5 rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 hover:border-purple-500/50 transition-all flex flex-col justify-between group shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
           >
             <div>
               {/* Card Header: Site & Status Badge */}
               <div className="flex items-center justify-between gap-2 mb-3">
                 <span className="text-[10px] font-mono text-slate-500 dark:text-zinc-400 truncate flex items-center gap-1">
-                  <Building className="w-3 h-3 text-[#F6C72F]" />
+                  <Building className="w-3 h-3 text-[#9D61FF]" />
                   {template.site_name}
                 </span>
 
@@ -76,7 +76,7 @@ export default function TemplatesGrid() {
                   {template.version}
                 </span>
               </div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#F6C72F] transition-colors line-clamp-2">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors line-clamp-2">
                 {template.name}
               </h3>
               <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 line-clamp-2">
@@ -122,7 +122,7 @@ export default function TemplatesGrid() {
                       setSelectedTemplate(template);
                       setReviewModalOpen(true);
                     }}
-                    className="flex items-center gap-1 text-slate-600 dark:text-zinc-400 hover:text-[#F6C72F] transition-colors cursor-pointer font-medium"
+                    className="flex items-center gap-1 text-slate-600 dark:text-zinc-400 hover:text-[#9D61FF] transition-colors cursor-pointer font-medium"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Inspect</span>
@@ -160,7 +160,7 @@ export default function TemplatesGrid() {
                 onClick={() => setPageSize(size)}
                 className={`h-6 px-2 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
                   pageSize === size
-                    ? "bg-[#F6C72F] text-slate-950 font-bold shadow-sm"
+                    ? "bg-[#9D61FF] text-white font-bold shadow-sm"
                     : "hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400"
                 }`}
               >
@@ -209,7 +209,7 @@ export default function TemplatesGrid() {
                       onClick={() => setCurrentPage(page)}
                       className={`h-8 min-w-[32px] px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center justify-center ${
                         currentPage === page
-                          ? "bg-[#F6C72F] text-slate-950 shadow-[0_0_12px_rgba(246,199,47,0.3)] font-bold"
+                          ? "bg-[#9D61FF] text-white shadow-[0_0_12px_rgba(157,97,255,0.4)] font-bold"
                           : "border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-white"
                       }`}
                     >
