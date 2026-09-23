@@ -40,3 +40,6 @@ export { default as GlobalToast } from "./GlobalToast";
 export * from "./GlobalToast";
 
 export * from "./useToast";
+
+export { default as RejectionModal } from "./RejectionModal";
+export * from "./RejectionModal";

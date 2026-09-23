@@ -20,7 +20,7 @@ import {
   History,
   RotateCcw,
 } from "lucide-react";
-import { Tooltip } from "../../Component";
+import { Tooltip, RejectionModal } from "../../Component";
 import { useTemplates } from "./TemplatesContext";
 
 /**
@@ -66,13 +66,13 @@ export default function TemplatesTable() {
 
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] border-b border-slate-200 dark:border-zinc-800/80 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none">
             <tr>
-              <th className="py-2.5 px-3 font-semibold w-[22%]">Template &amp; Blueprint</th>
-              <th className="py-2.5 px-3 font-semibold w-[15%]">Target Site</th>
+              <th className="py-2.5 px-3 font-semibold w-[21%]">Template &amp; Blueprint</th>
+              <th className="py-2.5 px-3 font-semibold w-[14%]">Target Site</th>
               <th className="py-2.5 px-3 font-semibold w-[11%]">Configured Modules</th>
               <th className="py-2.5 px-3 font-semibold w-[15%]">Author / Created</th>
               <th className="py-2.5 px-3 font-semibold w-[10%]">Status</th>
-              <th className="py-2.5 px-3 font-semibold w-[14%]">Review Info</th>
-              <th className="py-2.5 px-3 font-semibold w-[13%] text-center">Actions</th>
+              <th className="py-2.5 px-3 font-semibold w-[13%]">Review Info</th>
+              <th className="py-2.5 px-3 font-semibold w-[16%] text-center">Actions</th>
             </tr>
           </thead>
 
@@ -266,118 +266,130 @@ export default function TemplatesTable() {
                     )}
                   </td>
 
-                  {/* Actions (Centered Header and Container) */}
+                  {/* Actions (Fixed position aligned icon slots) */}
                   <td className="py-2.5 px-3">
-                    <div className="flex items-center justify-center gap-1">
-                      {/* Quick Approve / Reject for Superadmin on Pending */}
-                      {activeRole === "superadmin" && isPending && (
-                        <>
-                          <Tooltip content="Quick Approve" position="top">
-                            <button
-                              type="button"
-                              onClick={() => handleApprove(template)}
-                              className="h-6 w-6 rounded-md bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white border border-emerald-500/30 transition-all flex items-center justify-center cursor-pointer"
-                            >
-                              <Check className="w-3 h-3" />
-                            </button>
-                          </Tooltip>
-                          <Tooltip content="Reject with Reason" position="top">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setRejectModalTemplate(template);
-                                setCustomRejectReason("");
-                              }}
-                              className="h-6 w-6 rounded-md bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 transition-all flex items-center justify-center cursor-pointer"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Tooltip>
-                        </>
-                      )}
+                    <div className="flex items-center justify-center gap-1.5">
+                      {/* Fixed Workflow Action Slot (Approve, Reject, or Resubmit) */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {activeRole === "superadmin" && isPending ? (
+                          <>
+                            <Tooltip content="Quick Approve" position="top">
+                              <button
+                                type="button"
+                                onClick={() => handleApprove(template)}
+                                className="h-6 w-6 rounded-md bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white border border-emerald-500/30 transition-all flex items-center justify-center cursor-pointer"
+                              >
+                                <Check className="w-3 h-3" />
+                              </button>
+                            </Tooltip>
+                            <Tooltip content="Reject with Reason" position="top">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setRejectModalTemplate(template);
+                                  setCustomRejectReason("");
+                                }}
+                                className="h-6 w-6 rounded-md bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 transition-all flex items-center justify-center cursor-pointer"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </Tooltip>
+                          </>
+                        ) : isRejected ? (
+                          <>
+                            <Tooltip content="Resubmit for Superadmin Review" position="top">
+                              <button
+                                type="button"
+                                onClick={() => handleResubmit(template.id)}
+                                className="h-6 w-6 rounded-md bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white border border-purple-500/30 transition-all flex items-center justify-center cursor-pointer"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                              </button>
+                            </Tooltip>
+                            {/* Empty spacer slot to keep fixed column alignment */}
+                            <div className="w-6 h-6" />
+                          </>
+                        ) : (
+                          /* 2 Empty spacer slots so active/draft templates stay perfectly aligned */
+                          <>
+                            <div className="w-6 h-6" />
+                            <div className="w-6 h-6" />
+                          </>
+                        )}
+                      </div>
 
-                      {/* Resubmit Action for Rejected Templates */}
-                      {isRejected && (
-                        <Tooltip content="Resubmit for Superadmin Review" position="top">
+                      {/* Fixed Standard Actions (Inspect, Remark, Edit, Duplicate, Delete) */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Inspect blueprint */}
+                        <Tooltip content="Inspect blueprint" position="top">
                           <button
                             type="button"
-                            onClick={() => handleResubmit(template.id)}
-                            className="h-6 w-6 rounded-md bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white border border-purple-500/30 transition-all flex items-center justify-center cursor-pointer"
+                            onClick={() => { setSelectedTemplate(template); setReviewModalOpen(true); }}
+                            className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
                           >
-                            <RotateCcw className="w-3 h-3" />
+                            <Eye className="w-3 h-3" />
                           </button>
                         </Tooltip>
-                      )}
 
-                      {/* Inspect blueprint */}
-                      <Tooltip content="Inspect blueprint" position="top">
-                        <button
-                          type="button"
-                          onClick={() => { setSelectedTemplate(template); setReviewModalOpen(true); }}
-                          className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
+                        {/* Remark */}
+                        <Tooltip
+                          content={template.remarks ? `Remark: "${template.remarks}"` : "Add remark"}
+                          position="top"
+                          variant={template.remarks ? "amber" : "default"}
+                          maxWidth="max-w-[260px]"
                         >
-                          <Eye className="w-3 h-3" />
-                        </button>
-                      </Tooltip>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRemarkModalTemplate(template);
+                              setRemarkText(template.remarks || "");
+                            }}
+                            className={`h-6 w-6 rounded-md border transition-all flex items-center justify-center cursor-pointer relative ${
+                              template.remarks
+                                ? "border-amber-500/50 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
+                                : "border-slate-200 dark:border-zinc-800 hover:border-amber-500/50 text-slate-500 dark:text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10"
+                            }`}
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            {template.remarks && (
+                              <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            )}
+                          </button>
+                        </Tooltip>
 
-                      {/* Remark */}
-                      <Tooltip
-                        content={template.remarks ? `Remark: "${template.remarks}"` : "Add remark"}
-                        position="top"
-                        variant={template.remarks ? "amber" : "default"}
-                        maxWidth="max-w-[260px]"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setRemarkModalTemplate(template);
-                            setRemarkText(template.remarks || "");
-                          }}
-                          className={`h-6 w-6 rounded-md border transition-all flex items-center justify-center cursor-pointer relative ${
-                            template.remarks
-                              ? "border-amber-500/50 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20"
-                              : "border-slate-200 dark:border-zinc-800 hover:border-amber-500/50 text-slate-500 dark:text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10"
-                          }`}
-                        >
-                          <MessageSquare className="w-3 h-3" />
-                          {template.remarks && (
-                            <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
-                          )}
-                        </button>
-                      </Tooltip>
+                        {/* Edit */}
+                        <Tooltip content="Edit template" position="top">
+                          <button
+                            type="button"
+                            onClick={() => setEditingTemplate(template)}
+                            className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                        </Tooltip>
 
-                      {/* Edit */}
-                      <Tooltip content="Edit template" position="top">
-                        <button
-                          type="button"
-                          onClick={() => setEditingTemplate(template)}
-                          className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
-                        >
-                          <Edit3 className="w-3 h-3" />
-                        </button>
-                      </Tooltip>
+                        {/* Duplicate */}
+                        <Tooltip content="Duplicate template" position="top">
+                          <button
+                            type="button"
+                            onClick={() => handleDuplicate(template.id)}
+                            className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-blue-500/50 text-slate-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 transition-all flex items-center justify-center cursor-pointer"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </Tooltip>
 
-                      {/* Duplicate */}
-                      <Tooltip content="Duplicate template" position="top">
-                        <button
-                          type="button"
-                          onClick={() => handleDuplicate(template.id)}
-                          className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-blue-500/50 text-slate-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 transition-all flex items-center justify-center cursor-pointer"
-                        >
-                          <Copy className="w-3 h-3" />
-                        </button>
-                      </Tooltip>
-
-                      {/* Delete */}
-                      <Tooltip content="Delete template" position="top" variant="danger">
-                        <button
-                          type="button"
-                          onClick={() => setDeleteConfirmId(template.id)}
-                          className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-red-500/50 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all flex items-center justify-center cursor-pointer"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </Tooltip>
+                        {/* Delete */}
+                        <Tooltip content="Delete template" position="top" variant="danger">
+                          <button
+                            type="button"
+                            onClick={() => setDeleteConfirmId(template.id)}
+                            className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-red-500/50 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all flex items-center justify-center cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </Tooltip>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -547,70 +559,22 @@ export default function TemplatesTable() {
         </div>
       )}
 
-      {/* Rejection Reason Modal Dialog */}
-      {rejectModalTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-2xl space-y-4 text-slate-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800/80 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-500">
-                  <X className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Reject Safety Template
-                  </h3>
-                  <p className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
-                    {rejectModalTemplate.id} • {rejectModalTemplate.name}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setRejectModalTemplate(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-slate-700 dark:text-zinc-300">
-                Reason for Rejection <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                rows={3}
-                value={customRejectReason}
-                onChange={(e) => setCustomRejectReason(e.target.value)}
-                placeholder="Specify the compliance gaps, missing blocks, or required modifications..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-rose-500/80 transition-all placeholder:text-slate-400"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setRejectModalTemplate(null)}
-                className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={!customRejectReason.trim()}
-                onClick={() => {
-                  handleReject(rejectModalTemplate, customRejectReason.trim());
-                  setRejectModalTemplate(null);
-                }}
-                className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-              >
-                <X className="w-3.5 h-3.5" />
-                <span>Confirm Rejection</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Common Reusable Rejection Reason Modal */}
+      <RejectionModal
+        isOpen={!!rejectModalTemplate}
+        onClose={() => setRejectModalTemplate(null)}
+        onConfirm={(reason) => {
+          if (rejectModalTemplate) {
+            handleReject(rejectModalTemplate, reason);
+            setRejectModalTemplate(null);
+          }
+        }}
+        title="Reject Safety Template"
+        itemIdentifier={rejectModalTemplate?.id}
+        itemName={rejectModalTemplate?.name}
+        placeholder="Specify the compliance gaps, missing blocks, or required modifications..."
+        confirmLabel="Confirm Rejection"
+      />
     </div>
   );
 }
