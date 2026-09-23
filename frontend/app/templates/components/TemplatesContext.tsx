@@ -80,6 +80,28 @@ export const availableBlockTypes: {
   },
 ];
 
+export const GRAPH_TYPES: { type: "bar" | "line" | "pie" | "donut" | "table"; label: string }[] = [
+  { type: "bar", label: "Bar Chart" },
+  { type: "line", label: "Line Chart" },
+  { type: "pie", label: "Pie Chart" },
+  { type: "donut", label: "Donut Chart" },
+  { type: "table", label: "Data Table" },
+];
+
+export const GRAPH_DATA_SOURCES: { id: string; label: string; group: string }[] = [
+  { id: "attendance_daily_shifts", label: "Muster Check-Ins (Shift 1 vs Shift 2)", group: "Attendance & Workforce" },
+  { id: "attendance_vendor_distribution", label: "Subcontractor Headcount Share", group: "Attendance & Workforce" },
+  { id: "ppe_sensor_compliance", label: "Overall 3-Point PPE Compliance Rate", group: "Connected PPE" },
+  { id: "helmet_optical_telemetry", label: "Smart Helmet Optical Telemetry & Chinstrap", group: "Connected PPE" },
+  { id: "vest_hub_battery_status", label: "Vest IoT Hub Battery & Signal Online", group: "Connected PPE" },
+  { id: "boot_grounding_checks", label: "Safety Boot Grounding & ESD Impedance", group: "Connected PPE" },
+  { id: "supervisory_response_time", label: "Supervisor Incident Response & Alert Triage", group: "Supervisory Ops" },
+  { id: "device_daily_operating_hours", label: "Sensor Operating Hours vs Permissible Limits", group: "Device Telemetry" },
+  { id: "gas_sensor_ppm_levels", label: "Geotechnical Air Quality & Toxic Gas (PPM)", group: "Environmental Sensors" },
+  { id: "action_plan_completion_rate", label: "Safety Action Plan SLA Resolution Rates", group: "Audit & Compliance" },
+  { id: "custom_telemetry_feed", label: "Custom ERP Migrated Data Stream", group: "Custom Telemetry" },
+];
+
 /**
  * Pure Redux Hook for Templates Module.
  * Connects directly to Redux store with ZERO React Context and ZERO props drilling.

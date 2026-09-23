@@ -31,13 +31,38 @@ export type TemplateBlockType =
   | "operational_remarks"
   | "improvement_action_plan";
 
+export type GraphType = "bar" | "line" | "pie" | "donut" | "table";
+
+export type GraphDataSource =
+  | "attendance_daily_shifts"
+  | "attendance_vendor_distribution"
+  | "ppe_sensor_compliance"
+  | "helmet_optical_telemetry"
+  | "vest_hub_battery_status"
+  | "boot_grounding_checks"
+  | "supervisory_response_time"
+  | "device_daily_operating_hours"
+  | "gas_sensor_ppm_levels"
+  | "action_plan_completion_rate"
+  | "custom_telemetry_feed";
+
+export interface TemplateGraphConfig {
+  id: string;
+  title: string;
+  type: GraphType;
+  dataSource: GraphDataSource | string;
+  description?: string;
+}
+
 export interface TemplateBlock {
   id: string;
-  type: TemplateBlockType;
+  type: TemplateBlockType | string;
   title: string;
   description: string;
   enabled: boolean;
   order: number;
+  isCustom?: boolean;
+  graphs?: TemplateGraphConfig[];
 }
 
 export interface ReportTemplate {
@@ -261,6 +286,15 @@ const defaultBlocks: TemplateBlock[] = [
     description: "KPI row (attendance rate, compliance rate, risk-free hours, devices deployed)",
     enabled: true,
     order: 1,
+    graphs: [
+      {
+        id: "grp-km-1",
+        title: "Workforce Safety KPI Executive Summary",
+        type: "bar",
+        dataSource: "ppe_sensor_compliance",
+        description: "Comparative gauge across active contractors and workforce crews",
+      },
+    ],
   },
   {
     id: "blk-2",
@@ -269,6 +303,22 @@ const defaultBlocks: TemplateBlock[] = [
     description: "Line chart + insight text (department-wise and vendor-wise breakdown)",
     enabled: true,
     order: 2,
+    graphs: [
+      {
+        id: "grp-att-1",
+        title: "Daily Shift Muster Adherence",
+        type: "line",
+        dataSource: "attendance_daily_shifts",
+        description: "Shift 1 vs Shift 2 daily check-in volume",
+      },
+      {
+        id: "grp-att-2",
+        title: "Subcontractor Headcount Distribution",
+        type: "pie",
+        dataSource: "attendance_vendor_distribution",
+        description: "Muster distribution across primary civil and MEP vendors",
+      },
+    ],
   },
   {
     id: "blk-3",
@@ -277,6 +327,22 @@ const defaultBlocks: TemplateBlock[] = [
     description: "Bar chart + insight text (Smart Helmet, Vest IoT Hub, Safety Boot grounding)",
     enabled: true,
     order: 3,
+    graphs: [
+      {
+        id: "grp-ppe-1",
+        title: "Connected PPE Compliance by Zone",
+        type: "bar",
+        dataSource: "helmet_optical_telemetry",
+        description: "Real-time compliance rates from BLE mesh nodes",
+      },
+      {
+        id: "grp-ppe-2",
+        title: "Safety Vest Hub & Boot Grounding Sensor Health",
+        type: "donut",
+        dataSource: "vest_hub_battery_status",
+        description: "Active battery status and electrostatic grounding verification",
+      },
+    ],
   },
   {
     id: "blk-4",
@@ -285,6 +351,15 @@ const defaultBlocks: TemplateBlock[] = [
     description: "Table (per-supervisor efficiency, response time, alert handling)",
     enabled: true,
     order: 4,
+    graphs: [
+      {
+        id: "grp-sup-1",
+        title: "Supervisor Efficiency & Hazard Response Matrix",
+        type: "table",
+        dataSource: "supervisory_response_time",
+        description: "Tabular audit matrix of incident response times and resolution speed",
+      },
+    ],
   },
   {
     id: "blk-5",
@@ -293,6 +368,15 @@ const defaultBlocks: TemplateBlock[] = [
     description: "Progress bar (operating hours vs. permissible hours)",
     enabled: true,
     order: 5,
+    graphs: [
+      {
+        id: "grp-dev-1",
+        title: "IoT Node & Sensor Permissible Operating Hours",
+        type: "bar",
+        dataSource: "device_daily_operating_hours",
+        description: "Logged active operating hours vs permissible safety operating thresholds",
+      },
+    ],
   },
   {
     id: "blk-6",
@@ -301,6 +385,7 @@ const defaultBlocks: TemplateBlock[] = [
     description: "Text summary with environmental and shift-level observations",
     enabled: true,
     order: 6,
+    graphs: [],
   },
   {
     id: "blk-7",
@@ -309,6 +394,15 @@ const defaultBlocks: TemplateBlock[] = [
     description: "Action matrix table (area, focus, owner, target date, status)",
     enabled: true,
     order: 7,
+    graphs: [
+      {
+        id: "grp-act-1",
+        title: "Mitigation Action Plan Progress & Resolution Timeline",
+        type: "table",
+        dataSource: "action_plan_completion_rate",
+        description: "High-priority remedial actions and owner accountability matrix",
+      },
+    ],
   },
 ];
 
