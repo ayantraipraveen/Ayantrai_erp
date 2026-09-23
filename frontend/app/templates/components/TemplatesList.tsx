@@ -41,7 +41,7 @@ export default function TemplatesList() {
   return viewMode === "table" ? (
     <TemplatesTable />
   ) : (
-    <div className="px-4 sm:px-6 lg:px-7">
+    <div className="px-4 sm:px-6 lg:px-7 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
       <TemplatesGrid />
     </div>
   );

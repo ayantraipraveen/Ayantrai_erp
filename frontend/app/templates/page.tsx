@@ -18,13 +18,19 @@ import {
  */
 export default function TemplatesPage() {
   return (
-    <div className="animate-fadeIn pb-1 w-full space-y-2 sm:space-y-2.5">
-      <div className="px-4 sm:px-6 lg:px-7 space-y-3 sm:space-y-4">
+    <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden">
+      {/* Top Controls: Metrics Bar + Filter Toolbar (Fixed Height) */}
+      <div className="px-4 sm:px-6 lg:px-7 space-y-2 sm:space-y-2.5 flex-shrink-0 mb-2">
         <TemplateToast />
         <TemplateMetricsBar />
         <TemplateFilterToolbar />
       </div>
-      <TemplatesList />
+
+      {/* Main Content Area: Flex-1 and fills remaining viewport height */}
+      <div className="flex-1 min-h-0 flex flex-col w-full overflow-hidden">
+        <TemplatesList />
+      </div>
+
       <TemplateReviewModal />
       <TemplateBuilderDrawer />
       <DeleteTemplateModal />
