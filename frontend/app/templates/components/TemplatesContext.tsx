@@ -96,6 +96,7 @@ export function useTemplates() {
     templateCurrentPage: currentPage,
     templatePageSize: pageSize,
     templateSelectedId: selectedTemplateId,
+    templateEditingId: editingTemplateId,
     templateReviewModalOpen: reviewModalOpen,
     templateBuilderOpen: builderOpen,
     templateDeleteConfirmId: deleteConfirmId,
@@ -107,6 +108,12 @@ export function useTemplates() {
     if (!selectedTemplateId) return null;
     return templates.find((t) => t.id === selectedTemplateId) || null;
   }, [templates, selectedTemplateId]);
+
+  // Editing template object derived from editingTemplateId
+  const editingTemplate = useMemo(() => {
+    if (!editingTemplateId) return null;
+    return templates.find((t) => t.id === editingTemplateId) || null;
+  }, [templates, editingTemplateId]);
 
   // Counts
   const totalCount = templates.length;
