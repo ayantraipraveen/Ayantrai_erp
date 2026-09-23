@@ -187,8 +187,14 @@ export default function WorkspaceLayout({
         />
 
         {/* ================= MAIN WORKSPACE AREA ================= */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 space-y-6">
-          <div className="max-w-[1780px] mx-auto w-full">
+        <main
+          className={`flex-1 overflow-y-auto space-y-6 w-full ${
+            pathname === "/templates"
+              ? "py-4 sm:py-6 px-0"
+              : "px-4 sm:px-6 lg:px-7 py-4 sm:py-6"
+          }`}
+        >
+          <div className="w-full">
             {isUnauthorized ? (
               /* RBAC Shield: 403 Forbidden Access Guard */
               <div className="flex flex-col items-center justify-center min-h-[65vh] text-center p-6 sm:p-10 space-y-5 rounded-2xl border border-rose-500/30 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-xl shadow-2xl animate-fadeIn">

@@ -41,19 +41,19 @@ export default function TemplatesTable() {
   const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
 
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-xl shadow-sm flex flex-col overflow-hidden">
+    <div className="w-full border-y border-x-0 border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-xl shadow-sm flex flex-col overflow-hidden">
       {/* Scrollable table container - ONLY this container scrolls */}
-      <div className="overflow-x-auto overflow-y-auto max-h-[580px] min-h-[360px] custom-scrollbar">
+      <div className="overflow-x-auto overflow-y-auto max-h-[620px] min-h-[380px] custom-scrollbar w-full">
         <table className="w-full text-left border-collapse">
           {/* Sticky Header */}
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.5)] border-b border-slate-200 dark:border-zinc-800/80 text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none backdrop-blur-md">
             <tr>
-              <th className="py-3 px-4 font-semibold">Template & Blueprint</th>
-              <th className="py-3 px-4 font-semibold">Target Site</th>
-              <th className="py-3 px-4 font-semibold">Configured Modules</th>
-              <th className="py-3 px-4 font-semibold">Status</th>
-              <th className="py-3 px-4 font-semibold">Author / Created</th>
-              <th className="py-3 px-4 font-semibold text-right">Actions</th>
+              <th className="py-3.5 px-6 font-semibold w-[28%] min-w-[280px]">Template & Blueprint</th>
+              <th className="py-3.5 px-6 font-semibold w-[18%] min-w-[180px]">Target Site</th>
+              <th className="py-3.5 px-6 font-semibold w-[22%] min-w-[220px]">Configured Modules</th>
+              <th className="py-3.5 px-6 font-semibold w-[12%] min-w-[120px]">Status</th>
+              <th className="py-3.5 px-6 font-semibold w-[12%] min-w-[140px]">Author / Created</th>
+              <th className="py-3.5 px-6 font-semibold text-right w-[8%] min-w-[120px]">Actions</th>
             </tr>
           </thead>
 
@@ -69,12 +69,12 @@ export default function TemplatesTable() {
                   className="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/30 transition-colors"
                 >
                   {/* Template & Blueprint */}
-                  <td className="py-3.5 px-4 max-w-xs sm:max-w-sm">
+                  <td className="py-3.5 px-6">
                     <div className="flex items-start gap-2.5">
                       <div className="p-2 rounded-xl bg-amber-500/10 text-[#F6C72F] border border-amber-500/20 flex-shrink-0 mt-0.5">
                         <FileText className="w-4 h-4" />
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-bold border border-slate-200 dark:border-zinc-700/60">
                             {template.id}
@@ -94,10 +94,10 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Target Site */}
-                  <td className="py-3.5 px-4 whitespace-nowrap">
+                  <td className="py-3.5 px-6 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
                       <Building className="w-3.5 h-3.5 text-[#F6C72F] flex-shrink-0" />
-                      <span className="font-medium text-slate-800 dark:text-zinc-200 truncate max-w-[180px]">
+                      <span className="font-medium text-slate-800 dark:text-zinc-200 truncate">
                         {template.site_name}
                       </span>
                     </div>
@@ -107,12 +107,12 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Configured Modules */}
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-1 flex-wrap max-w-xs">
+                  <td className="py-3.5 px-6">
+                    <div className="flex items-center gap-1 flex-wrap">
                       {template.blocks.slice(0, 3).map((blk) => (
                         <span
                           key={blk.id}
-                          className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700/60 truncate max-w-[120px]"
+                          className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700/60 truncate max-w-[140px]"
                         >
                           {blk.title}
                         </span>
@@ -131,7 +131,7 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Status */}
-                  <td className="py-3.5 px-4 whitespace-nowrap">
+                  <td className="py-3.5 px-6 whitespace-nowrap">
                     <span
                       className={`inline-flex items-center gap-1.5 text-[10px] font-mono px-2.5 py-1 rounded-full border uppercase font-bold ${
                         isActive
@@ -161,7 +161,7 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Author / Created */}
-                  <td className="py-3.5 px-4 whitespace-nowrap">
+                  <td className="py-3.5 px-6 whitespace-nowrap">
                     <div className="font-medium text-slate-800 dark:text-zinc-200">
                       {template.created_by}
                     </div>
@@ -171,7 +171,7 @@ export default function TemplatesTable() {
                   </td>
 
                   {/* Actions */}
-                  <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                  <td className="py-3.5 px-6 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-1.5">
                       {/* Superadmin Quick Approve */}
                       {activeRole === "superadmin" && isPending && (
@@ -224,7 +224,7 @@ export default function TemplatesTable() {
       </div>
 
       {/* Pinned Pagination Bar at the bottom of the table card */}
-      <div className="flex-shrink-0 border-t border-slate-200 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-[#0e1219]/90 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs select-none">
+      <div className="flex-shrink-0 border-t border-slate-200 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-[#0e1219]/90 px-6 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs select-none">
         {/* Left: Entries Counter & Rows Per Page */}
         <div className="flex items-center gap-4 flex-wrap">
           <span className="text-slate-500 dark:text-zinc-400">

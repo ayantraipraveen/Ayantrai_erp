@@ -18,10 +18,12 @@ import {
  */
 export default function TemplatesPage() {
   return (
-    <div className="space-y-5 animate-fadeIn pb-12">
-      <TemplateToast />
-      <TemplateMetricsBar />
-      <TemplateFilterToolbar />
+    <div className="space-y-5 animate-fadeIn pb-12 w-full">
+      <div className="px-4 sm:px-6 lg:px-7 space-y-5">
+        <TemplateToast />
+        <TemplateMetricsBar />
+        <TemplateFilterToolbar />
+      </div>
       <TemplatesList />
       <TemplateReviewModal />
       <TemplateBuilderDrawer />
