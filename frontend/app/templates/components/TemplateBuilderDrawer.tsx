@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, MoveUp, MoveDown, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, MoveUp, MoveDown, Sparkles, Save } from "lucide-react";
 import { CustomDropdown } from "../../Component";
 import { useTemplates, availableBlockTypes } from "./TemplatesContext";
 import { TemplateBlock } from "@/lib/redux/slices/reportModuleSlice";
 
 /**
- * Slide-out visual builder drawer for creating new report templates.
+ * Slide-out visual builder drawer for creating and editing report templates.
  * Takes ZERO props - reads directly from TemplatesContext.
  */
 export default function TemplateBuilderDrawer() {
@@ -16,13 +16,16 @@ export default function TemplateBuilderDrawer() {
     setBuilderOpen,
     siteBuilderOptions,
     handleCreateTemplate,
+    handleUpdateTemplate,
+    editingTemplate,
+    setEditingTemplate,
     sites,
   } = useTemplates();
 
   const [templateName, setTemplateName] = useState("");
   const [templateDesc, setTemplateDesc] = useState("");
   const [selectedSiteId, setSelectedSiteId] = useState(sites[0]?.id || "SITE-01");
-  const [builderBlocks, setBuilderBlocks] = useState<TemplateBlock[]>(
+  const [builderBlocks, setBuilderBlocks] = useState<TemplateBlock[]>(() =>
     availableBlockTypes.map((b, idx) => ({
       id: `blk-custom-${idx + 1}`,
       type: b.type,
@@ -33,7 +36,53 @@ export default function TemplateBuilderDrawer() {
     }))
   );
 
+  const isEditing = Boolean(editingTemplate);
+
+  useEffect(() => {
+    if (editingTemplate) {
+      setTemplateName(editingTemplate.name);
+      setTemplateDesc(editingTemplate.description);
+      setSelectedSiteId(editingTemplate.site_id);
+      
+      // Map all available block types, flagging enabled if in editingTemplate
+      const existingBlockMap = new Map(editingTemplate.blocks.map((b) => [b.type, b]));
+      const initialized = availableBlockTypes.map((b, idx) => {
+        const found = existingBlockMap.get(b.type);
+        return {
+          id: found?.id || `blk-custom-${idx + 1}`,
+          type: b.type,
+          title: b.title,
+          description: b.description,
+          enabled: Boolean(found && found.enabled !== false),
+          order: found?.order ?? idx + 1,
+        };
+      });
+      // Sort by order
+      initialized.sort((a, b) => a.order - b.order);
+      setBuilderBlocks(initialized);
+    } else {
+      setTemplateName("");
+      setTemplateDesc("");
+      setSelectedSiteId(sites[0]?.id || "SITE-01");
+      setBuilderBlocks(
+        availableBlockTypes.map((b, idx) => ({
+          id: `blk-custom-${idx + 1}`,
+          type: b.type,
+          title: b.title,
+          description: b.description,
+          enabled: true,
+          order: idx + 1,
+        }))
+      );
+    }
+  }, [editingTemplate, sites]);
+
   if (!builderOpen) return null;
+
+  const handleClose = () => {
+    setEditingTemplate(null);
+    setBuilderOpen(false);
+  };
 
   const toggleBlock = (index: number) => {
     setBuilderBlocks((prev) => {
@@ -57,10 +106,25 @@ export default function TemplateBuilderDrawer() {
   };
 
   const onSubmit = (status: "pending" | "draft") => {
-    const success = handleCreateTemplate(templateName, templateDesc, selectedSiteId, builderBlocks, status);
-    if (success) {
-      setTemplateName("");
-      setTemplateDesc("");
+    if (isEditing && editingTemplate) {
+      const success = handleUpdateTemplate(
+        editingTemplate.id,
+        templateName,
+        templateDesc,
+        selectedSiteId,
+        builderBlocks,
+        status
+      );
+      if (success) {
+        setTemplateName("");
+        setTemplateDesc("");
+      }
+    } else {
+      const success = handleCreateTemplate(templateName, templateDesc, selectedSiteId, builderBlocks, status);
+      if (success) {
+        setTemplateName("");
+        setTemplateDesc("");
+      }
     }
   };
 
