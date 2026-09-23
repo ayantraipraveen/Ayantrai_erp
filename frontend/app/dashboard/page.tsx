@@ -16,14 +16,10 @@ import {
   Clock,
   MapPin,
   Search,
-  Filter,
   RefreshCw,
   Sparkles,
-  Zap,
   Volume2,
-  ArrowUpRight,
-  SlidersHorizontal,
-  ChevronRight,
+  Zap,
   Layers,
   Users,
   Building,
@@ -288,7 +284,7 @@ export default function DashboardPage() {
 
       {/* ================= HERO SITE STATUS BANNER ================= */}
       {activeRole === "superadmin" ? (
-        <div className="rounded-2xl border border-[#F6C72F]/50 bg-gradient-to-r from-amber-500/10 via-slate-50 to-white dark:from-[#141209] dark:via-[#0f1422] dark:to-[#0d121c] p-4 sm:p-5 backdrop-blur-xl relative overflow-hidden shadow-lg transition-colors">
+        <div className="rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-50 to-white dark:from-[#141209] dark:via-[#0f1422] dark:to-[#0d121c] p-4 sm:p-5  relative overflow-hidden shadow-lg transition-colors">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="inline-flex items-center gap-2 text-[11px] font-mono text-slate-500 dark:text-zinc-400">
@@ -372,7 +368,7 @@ export default function DashboardPage() {
 
       {/* ================= PENDING TEMPLATE APPROVALS QUEUE (DIRECT ACTION ON DASHBOARD) ================= */}
       {activeRole === "superadmin" && pendingTemplates.length > 0 && (
-        <div className="p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-[#1a1408] dark:to-[#0f131c] shadow-lg space-y-4">
+        <div className="p-5 rounded-2xl  bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent dark:from-[#1a1408] dark:to-[#0f131c] shadow-lg space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-xl bg-amber-500/20 text-[#F6C72F] border border-amber-500/40">

@@ -13,7 +13,6 @@ import {
   Settings,
   X,
   PanelLeftClose,
-  PanelLeftOpen,
   Layers,
   Building2,
   Sliders,
@@ -205,7 +204,6 @@ export default function Sidebar({
           name: "Templates",
           href: "/templates",
           icon: Layers,
-          badge: "APPROVALS",
           badgeColor: "bg-amber-500/15 text-amber-700 dark:text-[#F6C72F] border-amber-500/40",
           description: "Template inspection & review queue",
         },
@@ -224,7 +222,6 @@ export default function Sidebar({
           name: "Sites",
           href: "/sites",
           icon: Building2,
-          badge: `${0} SITES`,
           badgeColor: "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/40",
           description: "Monitored sites directory & assigned leads",
         },
@@ -232,7 +229,6 @@ export default function Sidebar({
           name: "Admins",
           href: "/admins",
           icon: Users,
-          badge: `${0} ACTIVE`,
           badgeColor: "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/40",
           description: "Manage site-scoped admin accounts",
         },
@@ -245,7 +241,6 @@ export default function Sidebar({
           name: "Activity Log",
           href: "/activity-log",
           icon: Clock,
-          badge: "AUDIT",
           badgeColor: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/40",
           description: "Cryptographic system audit trail",
         },
@@ -469,7 +464,7 @@ export default function Sidebar({
     <>
       {/* ================= DESKTOP SIDEBAR ================= */}
       <aside
-        className={`hidden lg:flex flex-col bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 h-full select-none ${sidebarOpen ? "w-64" : "w-16"
+        className={`hidden lg:flex flex-col bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 h-full select-none ${sidebarOpen ? "w-50" : "w-16"
           }`}
       >
         {/* ================= DESKTOP HEADER (BRAND LOGO + EXPAND / COLLAPSE TOGGLE) ================= */}
@@ -530,9 +525,7 @@ export default function Sidebar({
                     className="object-contain filter brightness-110 group-hover:scale-105 transition-transform"
                     priority
                   />
-                  <span className="absolute -bottom-1 -right-1 p-1.25 rounded-full bg-amber-500 text-slate-950 shadow-sm">
-                    {/* <PanelLeftOpen className="w-2.5 h-2.5" /> */}
-                  </span>
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 shadow-sm" />
                 </button>
               </Tooltip>
             </div>

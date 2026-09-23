@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { logoutUser, restoreSession } from "@/lib/redux/slices/authSlice";
 import { setActiveRole, RoleType } from "@/lib/redux/slices/reportModuleSlice";
-import { ShieldAlert, ArrowLeft, Lock, ShieldCheck, KeyRound, Radio } from "lucide-react";
+import { ShieldAlert, ArrowLeft, Lock, KeyRound } from "lucide-react";
 import DashboardNavbar from "./DashboardNavbar";
 import Sidebar from "./Sidebar";
 import GlobalToast from "./GlobalToast";
