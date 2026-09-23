@@ -245,6 +245,7 @@ export interface ReportModuleState {
   templateCurrentPage: number;
   templatePageSize: number;
   templateSelectedId: string | null;
+  templateEditingId: string | null;
   templateReviewModalOpen: boolean;
   templateBuilderOpen: boolean;
   templateDeleteConfirmId: string | null;
@@ -682,6 +683,7 @@ const initialState: ReportModuleState = {
   templateCurrentPage: 1,
   templatePageSize: 10,
   templateSelectedId: null,
+  templateEditingId: null,
   templateReviewModalOpen: false,
   templateBuilderOpen: false,
   templateDeleteConfirmId: null,
@@ -717,6 +719,75 @@ export const reportModuleSlice = createSlice({
         timestamp: "Just now",
         type: "template",
       });
+    },
+    updateTemplate: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        name: string;
+        description: string;
+        site_id: string;
+        site_name: string;
+        blocks: TemplateBlock[];
+        status?: "draft" | "pending" | "active" | "rejected";
+      }>
+    ) => {
+      const idx = state.templates.findIndex((t) => t.id === action.payload.id);
+      if (idx !== -1) {
+        const existing = state.templates[idx];
+        const prevVer = parseFloat(existing.version.replace("v", "")) || 1.0;
+        const newVer = `v${(prevVer + 0.1).toFixed(1)}`;
+        state.templates[idx] = {
+          ...existing,
+          name: action.payload.name,
+          description: action.payload.description,
+          site_id: action.payload.site_id,
+          site_name: action.payload.site_name,
+          blocks: action.payload.blocks,
+          status: action.payload.status || (existing.status === "rejected" ? "pending" : existing.status),
+          version: newVer,
+        };
+        state.activityLogs.unshift({
+          id: `act-${Date.now()}`,
+          actor: "Vikram Seth (Site Admin)",
+          role: "Site Admin",
+          action: "Updated template blueprint",
+          target: `${existing.id} (${action.payload.name})`,
+          timestamp: "Just now",
+          type: "template",
+        });
+      }
+    },
+    duplicateTemplate: (state, action: PayloadAction<string>) => {
+      const source = state.templates.find((t) => t.id === action.payload);
+      if (source) {
+        const newId = `TPL-00${state.templates.length + 1}`;
+        const cloned: ReportTemplate = {
+          ...source,
+          id: newId,
+          name: `${source.name} (Copy)`,
+          status: "draft",
+          created_at: "Just now",
+          approved_by: undefined,
+          approved_at: undefined,
+          rejection_reason: undefined,
+          version: "v1.0",
+          blocks: source.blocks.map((b, i) => ({
+            ...b,
+            id: `blk-dup-${Date.now()}-${i}`,
+          })),
+        };
+        state.templates.unshift(cloned);
+        state.activityLogs.unshift({
+          id: `act-${Date.now()}`,
+          actor: "Vikram Seth (Site Admin)",
+          role: "Site Admin",
+          action: "Duplicated template blueprint",
+          target: `${newId} from ${source.id}`,
+          timestamp: "Just now",
+          type: "template",
+        });
+      }
     },
     approveTemplate: (state, action: PayloadAction<ApproveTemplatePayload>) => {
       const template = state.templates.find((t) => t.id === action.payload.templateId);
