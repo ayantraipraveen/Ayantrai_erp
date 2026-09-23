@@ -136,15 +136,15 @@ export default function TemplateBuilderDrawer() {
           <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-4">
             <div>
               <div className="text-[10px] font-mono text-[#9D61FF] uppercase font-bold tracking-wider">
-                Block-Based Visual Builder
+                {isEditing ? `Edit Blueprint • ${editingTemplate?.id} (${editingTemplate?.version})` : "Block-Based Visual Builder"}
               </div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
-                New Safety Report Template
+                {isEditing ? "Edit Safety Report Template" : "New Safety Report Template"}
               </h2>
             </div>
             <button
               type="button"
-              onClick={() => setBuilderOpen(false)}
+              onClick={handleClose}
               className="p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
@@ -267,16 +267,16 @@ export default function TemplateBuilderDrawer() {
             onClick={() => onSubmit("draft")}
             className="px-4 py-2 rounded-xl border border-slate-300 dark:border-zinc-700 text-xs font-medium hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer"
           >
-            Save as Draft
+            {isEditing ? "Save as Draft" : "Save as Draft"}
           </button>
 
           <button
             type="button"
-            onClick={() => onSubmit("pending")}
+            onClick={() => onSubmit(isEditing ? (editingTemplate?.status as "pending" | "draft" || "pending") : "pending")}
             className="px-5 py-2 rounded-xl glow-btn-primary font-bold text-xs flex items-center gap-2 cursor-pointer"
           >
-            <Sparkles className="w-4 h-4" />
-            <span>Submit for Approval</span>
+            {isEditing ? <Save className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+            <span>{isEditing ? "Save Changes" : "Submit for Approval"}</span>
           </button>
         </div>
       </div>

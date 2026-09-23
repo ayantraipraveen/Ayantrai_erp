@@ -5,6 +5,8 @@ import {
   Building,
   ShieldCheck,
   Eye,
+  Edit3,
+  Copy,
   Trash2,
   ChevronLeft,
   ChevronRight,
@@ -28,6 +30,8 @@ export default function TemplatesGrid() {
     totalPages,
     activeRole,
     setSelectedTemplate,
+    setEditingTemplate,
+    handleDuplicate,
     setReviewModalOpen,
     setDeleteConfirmId,
   } = useTemplates();
@@ -131,7 +135,26 @@ export default function TemplatesGrid() {
 
                 <button
                   type="button"
+                  onClick={() => setEditingTemplate(template)}
+                  title="Edit template"
+                  className="p-1.5 text-slate-400 hover:text-[#9D61FF] transition-colors cursor-pointer"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDuplicate(template.id)}
+                  title="Duplicate template"
+                  className="p-1.5 text-slate-400 hover:text-blue-500 transition-colors cursor-pointer"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setDeleteConfirmId(template.id)}
+                  title="Delete template"
                   className="p-1.5 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

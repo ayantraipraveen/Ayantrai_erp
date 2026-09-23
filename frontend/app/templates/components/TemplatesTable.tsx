@@ -184,7 +184,7 @@ export default function TemplatesTable() {
                           <button
                             type="button"
                             onClick={() => { setSelectedTemplate(template); setReviewModalOpen(true); }}
-                            className="h-7 px-2 rounded-md bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                            className="h-6 px-1.5 rounded-md bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-[10px] flex items-center gap-0.5 transition-all cursor-pointer whitespace-nowrap"
                           >
                             <ShieldCheck className="w-3 h-3" />
                             <span>Review</span>
@@ -198,6 +198,24 @@ export default function TemplatesTable() {
                           className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
                         >
                           <Eye className="w-3 h-3" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Edit template" position="top">
+                        <button
+                          type="button"
+                          onClick={() => setEditingTemplate(template)}
+                          className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip content="Duplicate template" position="top">
+                        <button
+                          type="button"
+                          onClick={() => handleDuplicate(template.id)}
+                          className="h-6 w-6 rounded-md border border-slate-200 dark:border-zinc-800 hover:border-blue-500/50 text-slate-500 dark:text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 transition-all flex items-center justify-center cursor-pointer"
+                        >
+                          <Copy className="w-3 h-3" />
                         </button>
                       </Tooltip>
                       <Tooltip content="Delete template" position="top" variant="danger">
