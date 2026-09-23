@@ -6,14 +6,9 @@ import {
   Plus,
   Users,
   ShieldCheck,
-  Mail,
-  Phone,
-  CheckCircle2,
   Sparkles,
   MapPin,
-  FileText,
   X,
-  ExternalLink,
   Radio,
 } from "lucide-react";
 import { useAppSelector } from "@/lib/redux/hooks";
