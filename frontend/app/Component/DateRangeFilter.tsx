@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Calendar as CalendarIcon,
   ChevronDown,
@@ -169,6 +170,35 @@ export default function DateRangeFilter({
   const [draftPreset, setDraftPreset] = useState(internalValue.preset || "all_time");
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRef   = useRef<HTMLButtonElement>(null);
+  const panelRef    = useRef<HTMLDivElement>(null);
+
+  // Portal menu position
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0, width: 0, flipUp: false });
+
+  const updatePanelPosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const panelHeight = 420; // estimated max panel height
+    const panelWidth  = 320;
+    const spaceBelow  = window.innerHeight - rect.bottom;
+    const flipUp      = spaceBelow < panelHeight && rect.top > panelHeight;
+
+    // align: left or right
+    let left = align === "right"
+      ? rect.right - panelWidth
+      : rect.left;
+
+    // clamp within viewport
+    left = Math.max(8, Math.min(left, window.innerWidth - panelWidth - 8));
+
+    setMenuPos({
+      top:    flipUp ? rect.top - panelHeight + window.scrollY : rect.bottom + window.scrollY + 4,
+      left:   left + window.scrollX,
+      width:  panelWidth,
+      flipUp,
+    });
+  }, [align]);
 
   // Sync external value updates
   useEffect(() => {
@@ -180,26 +210,32 @@ export default function DateRangeFilter({
     }
   }, [controlledValue]);
 
-  // Click-outside listener
+  // Click-outside listener — checks both trigger and panel
   useEffect(() => {
     if (!isOpen) return;
+    updatePanelPosition();
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current && !containerRef.current.contains(e.target as Node) &&
+        panelRef.current    && !panelRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-      }
+      if (e.key === "Escape") setIsOpen(false);
     };
+    window.addEventListener("resize", updatePanelPosition);
+    window.addEventListener("scroll", updatePanelPosition, true);
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
     return () => {
+      window.removeEventListener("resize", updatePanelPosition);
+      window.removeEventListener("scroll", updatePanelPosition, true);
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePanelPosition]);
 
   const activeValue = controlledValue !== undefined ? controlledValue : internalValue;
   const isFiltered = Boolean(activeValue.startDate || activeValue.endDate || (activeValue.preset && activeValue.preset !== "all_time"));
@@ -288,9 +324,10 @@ export default function DateRangeFilter({
 
   return (
     <div className={`relative inline-block text-left select-none ${className}`} ref={containerRef}>
-      {/* Trigger Button (Standardized h-9 for size="sm") */}
+      {/* Trigger Button */}
       <button
         type="button"
+        ref={buttonRef}
         onClick={handleToggleOpen}
         disabled={disabled}
         aria-expanded={isOpen}
@@ -340,12 +377,18 @@ export default function DateRangeFilter({
         </div>
       </button>
 
-      {/* Popover Dropdown Panel */}
-      {isOpen && (
+      {/* Portal Dropdown Panel */}
+      {isOpen && typeof document !== "undefined" && createPortal(
         <div
-          className={`absolute ${
-            align === "right" ? "right-0" : "left-0"
-          } top-11 z-50 w-72 sm:w-80 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white/98 dark:bg-[#0c1017]/98 backdrop-blur-2xl p-4 shadow-2xl animate-fadeIn space-y-3.5 text-slate-800 dark:text-white`}
+          ref={panelRef}
+          style={{
+            position: "fixed",
+            top:  menuPos.top,
+            left: menuPos.left,
+            width: menuPos.width,
+            zIndex: 9999,
+          }}
+          className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white/98 dark:bg-[#0c1017]/98 backdrop-blur-2xl p-4 shadow-2xl animate-fadeIn space-y-3.5 text-slate-800 dark:text-white"
         >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
@@ -392,34 +435,22 @@ export default function DateRangeFilter({
             <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-zinc-500 font-semibold">
               Custom Range
             </div>
-
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[10px] text-slate-500 dark:text-zinc-400 block mb-1">
-                  Start Date
-                </label>
+                <label className="text-[10px] text-slate-500 dark:text-zinc-400 block mb-1">Start Date</label>
                 <input
                   type="date"
                   value={draftStart}
-                  onChange={(e) => {
-                    setDraftStart(e.target.value);
-                    setDraftPreset("custom");
-                  }}
+                  onChange={(e) => { setDraftStart(e.target.value); setDraftPreset("custom"); }}
                   className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-all"
                 />
               </div>
-
               <div>
-                <label className="text-[10px] text-slate-500 dark:text-zinc-400 block mb-1">
-                  End Date
-                </label>
+                <label className="text-[10px] text-slate-500 dark:text-zinc-400 block mb-1">End Date</label>
                 <input
                   type="date"
                   value={draftEnd}
-                  onChange={(e) => {
-                    setDraftEnd(e.target.value);
-                    setDraftPreset("custom");
-                  }}
+                  onChange={(e) => { setDraftEnd(e.target.value); setDraftPreset("custom"); }}
                   className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-all"
                 />
               </div>
@@ -436,7 +467,6 @@ export default function DateRangeFilter({
               <RotateCcw className="w-3 h-3" />
               <span>Reset</span>
             </button>
-
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
@@ -445,7 +475,6 @@ export default function DateRangeFilter({
               >
                 Cancel
               </button>
-
               <button
                 type="button"
                 onClick={handleApply}
@@ -456,7 +485,8 @@ export default function DateRangeFilter({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
