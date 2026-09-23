@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 export type TooltipPosition = "top" | "bottom" | "left" | "right";
@@ -25,11 +25,11 @@ export interface TooltipProps {
   showArrow?: boolean;
   /** Disable tooltip display */
   disabled?: boolean;
-  /** Whether tooltip should follow the cursor while hovering inside the trigger element (default: true) */
+  /** Whether tooltip should follow the cursor while hovering inside the trigger element (default: false) */
   followCursor?: boolean;
   /** Maximum width for wrapping long text (e.g. "max-w-xs", "max-w-sm", or custom px) */
   maxWidth?: string;
-  /** Whether text should wrap (default: true for long content) */
+  /** Whether text should wrap (default: false for short labels, true only for paragraphs) */
   wrap?: boolean;
 }
 
@@ -56,24 +56,26 @@ const variantStyles: Record<TooltipVariant, { container: string; arrow: string }
   },
 };
 
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 /**
- * Reusable Industrial Tooltip Component
- * Displays an illuminated, accessible popover that follows the mouse cursor while hovering over the trigger element,
- * automatically portaled to document.body to prevent parent container overflow clipping or scrollbar generation.
+ * Reusable Industrial Tooltip Component.
+ * Automatically adjusts position and shifts within viewport boundaries to guarantee
+ * 100% on-screen visibility without edge cut-offs or awkward wrapping.
  */
 export default function Tooltip({
   content,
   children,
   position = "top",
   variant = "default",
-  delay = 100,
+  delay = 80,
   className = "",
   tooltipClassName = "",
   showArrow = true,
   disabled = false,
   followCursor = false,
   maxWidth = "max-w-xs",
-  wrap = true,
+  wrap = false,
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -91,7 +93,7 @@ export default function Tooltip({
     setMounted(true);
   }, []);
 
-  // Compute tooltip coordinates relative to trigger rect or mouse cursor
+  // Compute tooltip coordinates with predictive boundary clamping
   const computeCoords = useCallback(
     (clientX?: number, clientY?: number) => {
       const viewportW = typeof window !== "undefined" ? window.innerWidth : 1200;
@@ -139,16 +141,24 @@ export default function Tooltip({
 
         setActivePos(actualPos);
         setCoords({ top, left });
+        setArrowShift(0);
         return;
       }
 
-      // 2. Element-Anchored Mode (Default & standard for icon buttons)
+      // 2. Element-Anchored Mode (Standard for buttons & interactive elements)
       if (!triggerRef.current) return;
       const rect = triggerRef.current.getBoundingClientRect();
       let actualPos = position;
       let top = 0;
-      let left = rect.left + rect.width / 2;
+      const targetCenterX = rect.left + rect.width / 2;
 
+      // Predictive width estimation based on character length
+      const textLen = typeof content === "string" ? content.length : 16;
+      const estimatedWidth = Math.min(260, Math.max(80, textLen * 8.5 + 28));
+      const halfW = estimatedWidth / 2;
+      const screenPadding = 14;
+
+      // Vertical position & boundary flip detection
       if (position === "top") {
         if (rect.top < 44) {
           actualPos = "bottom";
@@ -164,50 +174,98 @@ export default function Tooltip({
           top = rect.bottom + 8;
         }
       } else if (position === "right") {
-        if (rect.right > viewportW - 80) {
+        if (rect.right + estimatedWidth > viewportW - screenPadding) {
           actualPos = "left";
-          left = rect.left - 8;
+          top = rect.top + rect.height / 2;
         } else {
-          left = rect.right + 8;
+          top = rect.top + rect.height / 2;
         }
-        top = rect.top + rect.height / 2;
       } else if (position === "left") {
-        if (rect.left < 80) {
+        if (rect.left - estimatedWidth < screenPadding) {
           actualPos = "right";
-          left = rect.right + 8;
+          top = rect.top + rect.height / 2;
         } else {
-          left = rect.left - 8;
+          top = rect.top + rect.height / 2;
         }
-        top = rect.top + rect.height / 2;
       }
 
-      // Gentle horizontal clamp to prevent viewport clipping
-      left = Math.max(20, Math.min(viewportW - 20, left));
+      // Horizontal position & boundary clamping for top/bottom
+      let left = targetCenterX;
+      let shift = 0;
+
+      if (actualPos === "top" || actualPos === "bottom") {
+        const minCenter = halfW + screenPadding;
+        const maxCenter = viewportW - halfW - screenPadding;
+
+        if (targetCenterX > maxCenter) {
+          left = maxCenter;
+          shift = targetCenterX - maxCenter;
+        } else if (targetCenterX < minCenter) {
+          left = minCenter;
+          shift = targetCenterX - minCenter;
+        } else {
+          left = targetCenterX;
+          shift = 0;
+        }
+      } else if (actualPos === "right") {
+        left = rect.right + 8;
+        shift = 0;
+      } else if (actualPos === "left") {
+        left = rect.left - 8;
+        shift = 0;
+      }
+
       setActivePos(actualPos);
       setCoords({ top, left });
+      setArrowShift(shift);
     },
-    [followCursor, position]
+    [content, followCursor, position]
   );
 
-  // Measure tooltip bubble and ensure it doesn't overflow viewport boundaries
-  useEffect(() => {
-    if (!isVisible || !tooltipRef.current) return;
+  // Synchronous Layer 2 Adjustment: Measures the actual DOM node and enforces strict viewport containment
+  useIsomorphicLayoutEffect(() => {
+    if (!isVisible || !tooltipRef.current || !triggerRef.current) return;
     const bubbleRect = tooltipRef.current.getBoundingClientRect();
-    const viewportW = typeof window !== "undefined" ? window.innerWidth : 1200;
-    let shift = 0;
-    if (bubbleRect.right > viewportW - 12) {
-      shift = bubbleRect.right - (viewportW - 12);
-    } else if (bubbleRect.left < 12) {
-      shift = bubbleRect.left - 12;
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+    const padding = 12;
+
+    let deltaX = 0;
+    let deltaY = 0;
+    let newPos = activePos;
+
+    // Check right screen boundary overflow
+    if (bubbleRect.right > viewportW - padding) {
+      deltaX = bubbleRect.right - (viewportW - padding);
+    }
+    // Check left screen boundary overflow
+    else if (bubbleRect.left < padding) {
+      deltaX = bubbleRect.left - padding;
     }
 
-    if (Math.abs(shift) > 0.5) {
-      setCoords((prev) => ({ ...prev, left: prev.left - shift }));
-      setArrowShift(shift);
-    } else {
-      setArrowShift(0);
+    // Check top boundary overflow for "top" -> flip to "bottom"
+    if (activePos === "top" && bubbleRect.top < padding) {
+      newPos = "bottom";
+      deltaY = (triggerRect.bottom + 8) - coords.top;
     }
-  }, [isVisible]);
+    // Check bottom boundary overflow for "bottom" -> flip to "top"
+    else if (activePos === "bottom" && bubbleRect.bottom > viewportH - padding) {
+      newPos = "top";
+      deltaY = (triggerRect.top - 8) - coords.top;
+    }
+
+    if (Math.abs(deltaX) > 0.5 || Math.abs(deltaY) > 0.5 || newPos !== activePos) {
+      setCoords((prev) => ({
+        top: prev.top + deltaY,
+        left: prev.left - deltaX,
+      }));
+      setArrowShift((prev) => prev + deltaX);
+      if (newPos !== activePos) {
+        setActivePos(newPos);
+      }
+    }
+  }, [isVisible, coords.top, coords.left, activePos]);
 
   const handleMouseEnter = (e: React.MouseEvent) => {
     if (disabled || !content) return;
@@ -260,30 +318,21 @@ export default function Tooltip({
     handleMouseLeave();
   };
 
-  // Automatically dismiss tooltip when window loses focus, cursor exits browser, or tab switches
+  // Automatically dismiss tooltip when window loses focus or cursor exits browser
   useEffect(() => {
     const handleDismiss = () => {
-      mousePosRef.current = null;
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-        rafRef.current = null;
-      }
       setIsVisible(false);
+      setArrowShift(0);
     };
 
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
+    const handleMouseLeaveDoc = (e: MouseEvent) => {
+      if (!e.relatedTarget) {
         handleDismiss();
       }
     };
 
-    const handleMouseLeaveDoc = (e: MouseEvent) => {
-      // If cursor exits window or document
-      if (!e.relatedTarget) {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
         handleDismiss();
       }
     };
@@ -303,10 +352,11 @@ export default function Tooltip({
     };
   }, []);
 
+  // Update positioning when user scrolls or resizes window
   useEffect(() => {
     if (!isVisible) return;
     const handleScrollOrResize = () => {
-      if (mousePosRef.current) {
+      if (mousePosRef.current && followCursor) {
         computeCoords(mousePosRef.current.x, mousePosRef.current.y);
       } else {
         computeCoords();
@@ -318,7 +368,7 @@ export default function Tooltip({
       window.removeEventListener("scroll", handleScrollOrResize, true);
       window.removeEventListener("resize", handleScrollOrResize);
     };
-  }, [isVisible, computeCoords]);
+  }, [isVisible, computeCoords, followCursor]);
 
   useEffect(() => {
     return () => {
@@ -347,6 +397,15 @@ export default function Tooltip({
     transformStyle = "translate(-100%, -50%)";
     arrowClass = "right-[-4px] top-1/2 -translate-y-1/2 border-r border-t";
   }
+
+  // Safe arrow shift clamp to keep arrow within bubble rounded corners
+  const bubbleWidth = tooltipRef.current?.offsetWidth || 100;
+  const maxSafeArrowShift = Math.max(0, bubbleWidth / 2 - 12);
+  const clampedArrowShift = Math.max(-maxSafeArrowShift, Math.min(maxSafeArrowShift, arrowShift));
+
+  // Determine if text should wrap (crisp nowrap for actions <= 60 chars)
+  const shouldWrap =
+    typeof content === "string" ? content.length > 60 && wrap : Boolean(wrap && typeof content !== "string");
 
   return (
     <div
@@ -378,21 +437,19 @@ export default function Tooltip({
               willChange: "top, left",
             }}
             className={`${
-              typeof content === "string" && content.length <= 40
-                ? "whitespace-nowrap"
-                : wrap
+              shouldWrap
                 ? `${maxWidth} whitespace-normal break-words leading-relaxed text-start`
                 : "whitespace-nowrap"
             } rounded-xl border px-3 py-1.5 text-[10px] font-mono font-medium tracking-tight backdrop-blur-xl animate-fadeIn ${currentVariant.container} ${tooltipClassName}`}
           >
             {content}
 
-            {/* Directional Arrow */}
+            {/* Directional Arrow (Locked to button center, clamped inside bubble) */}
             {showArrow && (
               <span
                 style={
                   activePos === "top" || activePos === "bottom"
-                    ? { left: `calc(50% + ${arrowShift}px)` }
+                    ? { left: `calc(50% + ${clampedArrowShift}px)` }
                     : undefined
                 }
                 className={`absolute h-1.5 w-1.5 rotate-45 pointer-events-none ${arrowClass} ${currentVariant.arrow}`}
@@ -404,4 +461,3 @@ export default function Tooltip({
     </div>
   );
 }
-
