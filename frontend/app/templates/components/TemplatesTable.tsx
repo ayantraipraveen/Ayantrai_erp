@@ -66,13 +66,13 @@ export default function TemplatesTable() {
 
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-[#0e1219] border-b border-slate-200 dark:border-zinc-800/80 text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-zinc-400 select-none">
             <tr>
-              <th className="py-2.5 px-2 font-semibold w-[22%]">Template &amp; Blueprint</th>
-              <th className="py-2.5 px-2 font-semibold w-[15%]">Target Site</th>
-              <th className="py-2.5 px-2 font-semibold w-[12%]">Configured Sections</th>
-              <th className="py-2.5 px-2 font-semibold w-[14%]">Author / Created</th>
-              <th className="py-2.5 px-2 font-semibold w-[9%]">Status</th>
-              <th className="py-2.5 px-2 font-semibold w-[13%]">Review Info</th>
-              <th className="py-2.5 px-2 font-semibold w-[15%] text-center">Actions</th>
+              <th className="py-2.5 px-2.5 font-semibold w-[21%]">Template &amp; Blueprint</th>
+              <th className="py-2.5 px-2.5 font-semibold w-[16%]">Target Site</th>
+              <th className="py-2.5 px-2.5 font-semibold w-[12%]">Configured Sections</th>
+              <th className="py-2.5 px-2.5 font-semibold w-[15%]">Author / Created</th>
+              <th className="py-2.5 px-2.5 font-semibold w-[9%]">Status</th>
+              <th className="py-2.5 px-2.5 font-semibold w-[13%]">Review Info</th>
+              <th className="py-2.5 px-2.5 font-semibold w-[14%] text-center">Actions</th>
             </tr>
           </thead>
 

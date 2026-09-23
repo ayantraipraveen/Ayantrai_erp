@@ -222,12 +222,18 @@ export default function Tooltip({
     handleMouseLeave();
   };
 
-  // Recalculate or close on window scroll / resize / blur / tab-switch
+  // Automatically dismiss tooltip when window loses focus, cursor exits browser, or tab switches
   useEffect(() => {
     const handleDismiss = () => {
       mousePosRef.current = null;
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
       setIsVisible(false);
     };
 
@@ -237,12 +243,25 @@ export default function Tooltip({
       }
     };
 
+    const handleMouseLeaveDoc = (e: MouseEvent) => {
+      // If cursor exits window or document
+      if (!e.relatedTarget) {
+        handleDismiss();
+      }
+    };
+
     window.addEventListener("blur", handleDismiss);
+    window.addEventListener("focus", handleDismiss);
+    window.addEventListener("mouseout", handleMouseLeaveDoc);
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.documentElement.addEventListener("mouseleave", handleMouseLeaveDoc);
 
     return () => {
       window.removeEventListener("blur", handleDismiss);
+      window.removeEventListener("focus", handleDismiss);
+      window.removeEventListener("mouseout", handleMouseLeaveDoc);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.documentElement.removeEventListener("mouseleave", handleMouseLeaveDoc);
     };
   }, []);
 
