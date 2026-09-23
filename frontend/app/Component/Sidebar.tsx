@@ -474,7 +474,7 @@ export default function Sidebar({
                 {/* Logo mark - theme-aware */}
                 <div className="grid grid-cols-1 grid-rows-1 flex-shrink-0 w-8 h-8">
                   <Image
-                    src="/logo-light.png"
+                    src="/icon.png"
                     alt="AyantrAI"
                     width={32}
                     height={32}
@@ -482,7 +482,7 @@ export default function Sidebar({
                     priority
                   />
                   <Image
-                    src="/logo.png"
+                    src="/icon.png"
                     alt="AyantrAI"
                     width={32}
                     height={32}
@@ -523,7 +523,7 @@ export default function Sidebar({
                 >
                   <div className="grid grid-cols-1 grid-rows-1 w-8 h-8">
                     <Image
-                      src="/logo-light.png"
+                      src="/icon.png"
                       alt="AyantrAI"
                       width={32}
                       height={32}
@@ -531,7 +531,7 @@ export default function Sidebar({
                       priority
                     />
                     <Image
-                      src="/logo.png"
+                      src="/icon.png"
                       alt="AyantrAI"
                       width={32}
                       height={32}
@@ -576,7 +576,7 @@ export default function Sidebar({
                   {/* Logo mark - theme-aware */}
                   <div className="grid grid-cols-1 grid-rows-1 flex-shrink-0 w-9 h-9">
                     <Image
-                      src="/logo-light.png"
+                      src="/icon.png"
                       alt="AyantrAI"
                       width={36}
                       height={36}
@@ -584,7 +584,7 @@ export default function Sidebar({
                       priority
                     />
                     <Image
-                      src="/logo.png"
+                      src="/icon.png"
                       alt="AyantrAI"
                       width={36}
                       height={36}
