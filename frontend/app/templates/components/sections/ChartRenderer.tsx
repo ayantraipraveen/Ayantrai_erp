@@ -16,8 +16,8 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
   switch (chart.chartType) {
     case "line":
       return (
-        <div className="w-full h-36 flex flex-col">
-          <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
+        <div className="w-full h-48 sm:h-56 flex flex-col">
+          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             <defs>
               <linearGradient id={`grad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={color} stopOpacity="0.35" />
@@ -32,14 +32,14 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
               <g key={i}>
                 <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="7" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
               </g>
             ))}
             {/* X ticks */}
             {[{ x: 90, l: "08:00" }, { x: 170, l: "12:00" }, { x: 250, l: "16:00" }, { x: 330, l: "20:00" }, { x: 405, l: "24:00" }].map((t, i) => (
               <g key={i}>
                 <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
+                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
               </g>
             ))}
             {/* Area fill */}
@@ -55,8 +55,8 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
               { cx: 405, cy: 14, val: "100" },
             ].map((pt, i) => (
               <g key={i}>
-                <circle cx={pt.cx} cy={pt.cy} r="3.5" fill="#fff" stroke={color} strokeWidth="2" />
-                <text x={pt.cx} y={pt.cy - 7} fontSize="8" fontWeight="bold" textAnchor="middle" fill={color}>{pt.val}</text>
+                <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={color} strokeWidth="2" />
+                <text x={pt.cx} y={pt.cy - 6} fontSize="7.5" fontWeight="bold" textAnchor="middle" fill={color}>{pt.val}</text>
               </g>
             ))}
           </svg>
@@ -253,8 +253,8 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
 
     case "stacked-bar":
       return (
-        <div className="w-full h-36 flex flex-col">
-          <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
+        <div className="w-full h-48 sm:h-56 flex flex-col">
+          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
@@ -263,7 +263,7 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
               <g key={i}>
                 <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="7" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
               </g>
             ))}
             {[
@@ -281,7 +281,7 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
                   <rect x={b.x - 16} y={108 - b.h1 - b.h2 - b.h3} width="32" height={b.h3} fill="#F59E0B" />
                   <rect x={b.x - 16} y={108 - totalH} width="32" height={b.h4} fill="#F43F5E" />
                   <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={b.x} y="120" fontSize="7" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
+                  <text x={b.x} y={122} fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
                 </g>
               );
             })}
@@ -289,7 +289,7 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ c: color, l: "Civil" }, { c: "#10B981", l: "PPE" }, { c: "#F59E0B", l: "Safety" }, { c: "#F43F5E", l: "Risk" }].map((lg, i) => (
               <g key={i}>
                 <rect x={42 + i * 60} y="10" width="7" height="7" fill={lg.c} rx="1" />
-                <text x={52 + i * 60} y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">{lg.l}</text>
+                <text x={52 + i * 60} y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">{lg.l}</text>
               </g>
             ))}
           </svg>
@@ -298,8 +298,8 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
 
     case "grouped-bar":
       return (
-        <div className="w-full h-36 flex flex-col">
-          <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
+        <div className="w-full h-48 sm:h-56 flex flex-col">
+          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
@@ -308,7 +308,7 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
               <g key={i}>
                 <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="7" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
               </g>
             ))}
             {[
@@ -322,20 +322,20 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
                 <rect x={b.x - 18} y={108 - b.v1} width="16" height={b.v1} fill={color} rx="2" />
                 <rect x={b.x + 2} y={108 - b.v2} width="16" height={b.v2} fill="#F43F5E" rx="2" />
                 <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={b.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
+                <text x={b.x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
               </g>
             ))}
             {/* Legend */}
-            <rect x="42" y="10" width="7" height="7" fill={color} rx="1" /><text x="52" y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">Actual</text>
-            <rect x="90" y="10" width="7" height="7" fill="#F43F5E" rx="1" /><text x="100" y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">Target</text>
+            <rect x="42" y="10" width="7" height="7" fill={color} rx="1" /><text x="52" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Actual</text>
+            <rect x="90" y="10" width="7" height="7" fill="#F43F5E" rx="1" /><text x="100" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Target</text>
           </svg>
         </div>
       );
 
     case "multi-line":
       return (
-        <div className="w-full h-36 flex flex-col">
-          <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
+        <div className="w-full h-48 sm:h-56 flex flex-col">
+          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
@@ -344,14 +344,14 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
               <g key={i}>
                 <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="7" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
               </g>
             ))}
             {/* X ticks */}
             {[{ x: 90, l: "Q1" }, { x: 180, l: "Q2" }, { x: 270, l: "Q3" }, { x: 405, l: "Q4" }].map((t, i) => (
               <g key={i}>
                 <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
+                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
               </g>
             ))}
             {/* Line 1 - color */}
@@ -362,9 +362,9 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ cx: 45, cy: 105 }, { cx: 175, cy: 52 }, { cx: 295, cy: 62 }, { cx: 405, cy: 38 }].map((p, i) => <circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#10B981" />)}
             {/* Legend */}
             <rect x="290" y="10" width="8" height="3" fill={color} rx="1" />
-            <text x="301" y="14" fontSize="7" fill="currentColor" fillOpacity="0.6">Zone A</text>
+            <text x="301" y="14" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Zone A</text>
             <rect x="290" y="20" width="8" height="3" fill="#10B981" rx="1" />
-            <text x="301" y="24" fontSize="7" fill="currentColor" fillOpacity="0.6">Zone B</text>
+            <text x="301" y="24" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Zone B</text>
           </svg>
         </div>
       );
@@ -391,8 +391,8 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
 
     case "area":
       return (
-        <div className="w-full h-36 flex flex-col">
-          <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
+        <div className="w-full h-48 sm:h-56 flex flex-col">
+          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             <defs>
               <linearGradient id={`areagrad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={color} stopOpacity="0.5" />
@@ -407,14 +407,14 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
               <g key={i}>
                 <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="7" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
               </g>
             ))}
             {/* X ticks */}
             {[{ x: 90, l: "Jan" }, { x: 180, l: "Apr" }, { x: 270, l: "Jul" }, { x: 405, l: "Oct" }].map((t, i) => (
               <g key={i}>
                 <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
+                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
               </g>
             ))}
             <path d="M 45 108 L 45 95 Q 110 42, 175 65 T 295 28 T 405 14 L 405 108 Z" fill={`url(#areagrad-${chart.id})`} />
@@ -515,8 +515,8 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
 
     case "combo":
       return (
-        <div className="w-full h-36 flex flex-col">
-          <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
+        <div className="w-full h-48 sm:h-56 flex flex-col">
+          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
@@ -525,7 +525,7 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
               <g key={i}>
                 <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="7" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
               </g>
             ))}
             {/* Bars */}
@@ -533,7 +533,7 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
               <g key={i}>
                 <rect x={b.x - 18} y={108 - b.h} width="36" height={b.h} fill="#3B82F6" opacity="0.75" rx="2" />
                 <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={b.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.5">{["Jan", "Feb", "Mar", "Apr", "May"][i]}</text>
+                <text x={b.x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.5">{["Jan", "Feb", "Mar", "Apr", "May"][i]}</text>
               </g>
             ))}
             {/* Trend line */}
@@ -542,16 +542,16 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
               <circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#F43F5E" />
             ))}
             {/* Legend */}
-            <rect x="42" y="10" width="7" height="7" fill="#3B82F6" rx="1" /><text x="52" y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">Volume</text>
-            <line x1="100" y1="14" x2="112" y2="14" stroke="#F43F5E" strokeWidth="2" /><text x="115" y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">Trend</text>
+            <rect x="42" y="10" width="7" height="7" fill="#3B82F6" rx="1" /><text x="52" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Volume</text>
+            <line x1="100" y1="14" x2="112" y2="14" stroke="#F43F5E" strokeWidth="2" /><text x="115" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Trend</text>
           </svg>
         </div>
       );
 
     case "waterfall":
       return (
-        <div className="w-full h-36 flex flex-col">
-          <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
+        <div className="w-full h-48 sm:h-56 flex flex-col">
+          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
@@ -560,7 +560,7 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
               <g key={i}>
                 <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="7" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
               </g>
             ))}
             {/* Connectors */}
@@ -577,7 +577,7 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ x: 75, l: "Start" }, { x: 153, l: "+20" }, { x: 233, l: "-20" }, { x: 313, l: "+10" }, { x: 381, l: "Total" }].map((t, i) => (
               <g key={i}>
                 <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{t.l}</text>
+                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{t.l}</text>
               </g>
             ))}
           </svg>
@@ -649,8 +649,8 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
     case "bar":
     default:
       return (
-        <div className="w-full h-36 flex flex-col">
-          <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
+        <div className="w-full h-48 sm:h-56 flex flex-col">
+          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
@@ -659,22 +659,22 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ y: 108, l: "0%" }, { y: 82, l: "25%" }, { y: 55, l: "50%" }, { y: 28, l: "75%" }, { y: 8, l: "100%" }].map((g, i) => (
               <g key={i}>
                 <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="7" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
               </g>
             ))}
             {/* Bars */}
             {[
-              { x: 80, height: 90, val: "94.2%", label: "L&T Civil" },
-              { x: 160, height: 100, val: "98.7%", label: "Steel Mech" },
-              { x: 240, height: 75, val: "88.4%", label: "Tower Crane" },
-              { x: 320, height: 97, val: "96.5%", label: "Batching" },
-              { x: 400, height: 65, val: "84.0%", label: "Subterra." },
+              { x: 80, height: 82, val: "94.2%", label: "L&T Civil" },
+              { x: 160, height: 92, val: "98.7%", label: "Steel Mech" },
+              { x: 240, height: 70, val: "88.4%", label: "Tower Crane" },
+              { x: 320, height: 88, val: "96.5%", label: "Batching" },
+              { x: 400, height: 60, val: "84.0%", label: "Subterra." },
             ].map((b, i) => (
               <g key={i}>
                 <rect x={b.x - 17} y={108 - b.height} width="34" height={b.height} rx="4" fill={color} />
-                <text x={b.x} y={108 - b.height - 5} fontSize="7.5" fontWeight="bold" textAnchor="middle" fill={color}>{b.val}</text>
+                <text x={b.x} y={108 - b.height - 4} fontSize="7" fontWeight="bold" textAnchor="middle" fill={color}>{b.val}</text>
                 <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={b.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.5">{b.label}</text>
+                <text x={b.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{b.label}</text>
               </g>
             ))}
           </svg>
