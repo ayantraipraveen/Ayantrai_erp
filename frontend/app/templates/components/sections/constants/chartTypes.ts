@@ -202,3 +202,63 @@ export const PALETTE_COLORS: PaletteColorSwatch[] = [
   { color: "#F97316", label: "Orange" },
   { color: "#64748B", label: "Slate" },
 ];
+
+export interface ChartSeriesItem {
+  id: string;
+  label: string;
+  defaultColor: string;
+}
+
+export const MULTI_SERIES_CHART_CONFIG: Partial<Record<GraphType, ChartSeriesItem[]>> = {
+  "multi-line": [
+    { id: "zoneA", label: "Line 1 (Zone A)", defaultColor: "#9D61FF" },
+    { id: "zoneB", label: "Line 2 (Zone B)", defaultColor: "#10B981" },
+  ],
+  "grouped-bar": [
+    { id: "actual", label: "Series 1 (Actual)", defaultColor: "#9D61FF" },
+    { id: "target", label: "Series 2 (Target)", defaultColor: "#F43F5E" },
+  ],
+  "combo": [
+    { id: "volume", label: "Bars (Volume)", defaultColor: "#3B82F6" },
+    { id: "trend", label: "Line (Trend)", defaultColor: "#F43F5E" },
+  ],
+  "stacked-horizontal": [
+    { id: "safe", label: "Safe Hours", defaultColor: "#10B981" },
+    { id: "violations", label: "Violations", defaultColor: "#F43F5E" },
+  ],
+  "stacked-bar": [
+    { id: "civil", label: "Civil", defaultColor: "#9D61FF" },
+    { id: "ppe", label: "PPE", defaultColor: "#10B981" },
+    { id: "safety", label: "Safety", defaultColor: "#F59E0B" },
+    { id: "risk", label: "Risk", defaultColor: "#F43F5E" },
+  ],
+  "donut": [
+    { id: "helmets", label: "Smart Helmets", defaultColor: "#3B82F6" },
+    { id: "vests", label: "Vest Hubs", defaultColor: "#10B981" },
+    { id: "boots", label: "Grounding Boots", defaultColor: "#F59E0B" },
+  ],
+  "pie": [
+    { id: "helmets", label: "Smart Helmets", defaultColor: "#3B82F6" },
+    { id: "vests", label: "Vest Hubs", defaultColor: "#10B981" },
+    { id: "boots", label: "Grounding Boots", defaultColor: "#F59E0B" },
+  ],
+  "two-segment": [
+    { id: "workers", label: "Compliant Workers", defaultColor: "#10B981" },
+    { id: "ppe", label: "PPE Score", defaultColor: "#3B82F6" },
+    { id: "days", label: "Incident-Free Days", defaultColor: "#9D61FF" },
+  ],
+  "sparkline": [
+    { id: "zoneA", label: "Zone A", defaultColor: "#10B981" },
+    { id: "zoneB", label: "Zone B", defaultColor: "#3B82F6" },
+    { id: "zoneC", label: "Zone C", defaultColor: "#F59E0B" },
+  ],
+};
+
+export const getChartSeriesConfig = (chartType: GraphType, primaryColor = "#9D61FF"): ChartSeriesItem[] => {
+  const custom = MULTI_SERIES_CHART_CONFIG[chartType];
+  if (custom && custom.length > 0) {
+    return custom.map((item, idx) => (idx === 0 ? { ...item, defaultColor: primaryColor } : item));
+  }
+  return [{ id: "primary", label: "Chart Color", defaultColor: primaryColor }];
+};
+
