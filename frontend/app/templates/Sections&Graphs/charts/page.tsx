@@ -10,8 +10,6 @@ import {
   GraphType,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { ChartEditorPanel } from "../components";
-import { ArrowLeft, BarChart2 } from "lucide-react";
-import Link from "next/link";
 
 /**
  * Dedicated Full-Page Route for Telemetry Chart Studio (/templates/Sections&Graphs/charts).
@@ -86,40 +84,7 @@ export default function SectionsGraphsChartsPage() {
   };
 
   return (
-    <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden ">
-      {/* Top Breadcrumb Navigation */}
-      <div className="px-4 sm:px-6 lg:px-7 py-2.5 flex-shrink-0 flex items-center justify-between gap-3 border-b border-slate-200/80 dark:border-zinc-800/80 bg-white/50 dark:bg-[#0c1017]/50 backdrop-blur-sm">
-        {/* <div className="flex items-center gap-3">
-          <Link
-            href="/templates/Sections&Graphs"
-            onClick={() => dispatch(setTemplateActiveTab("sections"))}
-            className="h-8.5 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Sections</span>
-          </Link>
-          <div className="h-4 w-[1px] bg-slate-200 dark:bg-zinc-800" />
-          <div className="flex items-center gap-2">
-            <div className="p-1 rounded-lg bg-purple-500/10 text-[#9D61FF]">
-              <BarChart2 className="w-3.5 h-3.5" />
-            </div>
-            <span className="text-xs font-bold text-slate-900 dark:text-white">
-              Sections &amp; Graphs / Telemetry Chart Studio
-            </span>
-          </div>
-        </div> */}
-<div><h3 className="text-lg font-bold">
-         Telemetry Chart
-        </h3></div>
-        <button
-          type="button"
-          onClick={handleReturnToTemplates}
-          className="text-xs font-semibold text-[#9D61FF] hover:underline flex items-center gap-1 cursor-pointer transition-colors"
-        >
-          ← Back to All Sections
-        </button>
-      </div>
-
+    <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden">
       {/* Main Chart Editor Studio */}
       <div className="flex-1 min-h-0 flex flex-col w-full overflow-hidden">
         <ChartEditorPanel
@@ -140,6 +105,8 @@ export default function SectionsGraphsChartsPage() {
           setGridCols={setGridCols}
           onSave={handleSaveChart}
           onClose={handleReturnToTemplates}
+          hideTitleAndCaption={true}
+          hideFooter={true}
         />
       </div>
     </div>

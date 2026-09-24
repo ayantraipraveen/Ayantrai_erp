@@ -27,8 +27,10 @@ interface ChartEditorPanelProps {
   setGridRows?: (val: number) => void;
   gridCols?: number;
   setGridCols?: (val: number) => void;
-  onSave: () => void;
-  onClose: () => void;
+  onSave?: () => void;
+  onClose?: () => void;
+  hideTitleAndCaption?: boolean;
+  hideFooter?: boolean;
 }
 
 /**
@@ -53,6 +55,8 @@ export default function ChartEditorPanel({
   setGridCols,
   onSave,
   onClose,
+  hideTitleAndCaption = false,
+  hideFooter = false,
 }: ChartEditorPanelProps) {
   const [internalGridRows, setInternalGridRows] = useState(editingChart?.gridRows || (chartType === "table" ? 4 : 4));
   const [internalGridCols, setInternalGridCols] = useState(editingChart?.gridCols || (chartType === "table" ? 4 : 7));
@@ -117,47 +121,37 @@ export default function ChartEditorPanel({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn text-slate-900 dark:text-white">
-      {/* Header */}
-      {/* <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 p-6 flex-shrink-0">
-        <h3 className="text-lg font-bold">
-          {editingChart ? "Edit Telemetry Chart" : "Add Telemetry Chart"}
-        </h3>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1 cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div> */}
+     
 
       {/* Compact inputs row - no wasted vertical space */}
-      <div className="flex-shrink-0 flex gap-4 px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20">
-        <div className="flex-1">
-          <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block mb-1">
-            Chart Title *
-          </label>
-          <input
-            type="text"
-            value={chartTitle}
-            onChange={(e) => setChartTitle(e.target.value)}
-            placeholder="e.g. PPE Compliance by Work Zone"
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-[#9D61FF]"
-          />
+      {!hideTitleAndCaption && (
+        <div className="flex-shrink-0 flex gap-4 px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20">
+          <div className="flex-1">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block mb-1">
+              Chart Title *
+            </label>
+            <input
+              type="text"
+              value={chartTitle}
+              onChange={(e) => setChartTitle(e.target.value)}
+              placeholder="e.g. PPE Compliance by Work Zone"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-[#9D61FF]"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block mb-1">
+              Caption / Description
+            </label>
+            <input
+              type="text"
+              value={chartDesc}
+              onChange={(e) => setChartDesc(e.target.value)}
+              placeholder="e.g. Comparative gauge across contractors"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-[#9D61FF]"
+            />
+          </div>
         </div>
-        <div className="flex-1">
-          <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block mb-1">
-            Caption / Description
-          </label>
-          <input
-            type="text"
-            value={chartDesc}
-            onChange={(e) => setChartDesc(e.target.value)}
-            placeholder="e.g. Comparative gauge across contractors"
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-[#9D61FF]"
-          />
-        </div>
-      </div>
+      )}
 
       <div className="flex flex-1 min-h-0">
         {/* Left Column: Chart Type Grid */}
@@ -505,23 +499,29 @@ export default function ChartEditorPanel({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200 dark:border-zinc-800 flex-shrink-0 bg-white dark:bg-[#0c1017]">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={!chartTitle.trim()}
-          className="px-5 py-2.5 rounded-xl bg-[#9D61FF] text-white text-sm font-bold disabled:opacity-50 hover:bg-purple-600 transition-colors cursor-pointer"
-        >
-          Save Chart
-        </button>
-      </div>
+      {!hideFooter && (
+        <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200 dark:border-zinc-800 flex-shrink-0 bg-white dark:bg-[#0c1017]">
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+          )}
+          {onSave && (
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={!chartTitle.trim()}
+              className="px-5 py-2.5 rounded-xl bg-[#9D61FF] text-white text-sm font-bold disabled:opacity-50 hover:bg-purple-600 transition-colors cursor-pointer"
+            >
+              Save Chart
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
