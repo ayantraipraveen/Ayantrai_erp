@@ -37,6 +37,7 @@ import {
   updateGraphInGlobalSection,
   deleteGraphFromGlobalSection,
   showGlobalToast,
+  GraphType,
 } from "@/lib/redux/slices/reportModuleSlice";
 import {
   DropdownOption,
@@ -88,7 +89,7 @@ export const availableBlockTypes: {
   },
 ];
 
-export const GRAPH_TYPES: { type: string; label: string }[] = [
+export const GRAPH_TYPES: { type: GraphType; label: string }[] = [
   { type: "line", label: "Line Chart" },
   { type: "multi-line", label: "Multi-line Chart" },
   { type: "bar", label: "Vertical Bar" },
