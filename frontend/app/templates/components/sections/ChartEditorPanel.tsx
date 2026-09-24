@@ -115,9 +115,9 @@ export default function ChartEditorPanel({
 
         {/* Right Column: Live Preview Area (Clean, Borderless, Spaciously Proportioned) */}
         <div className="flex-1 flex flex-col min-h-0 bg-transparent px-6 py-4">
-          {/* Preview Header: Title + Type + Color Palette */}
+          {/* Preview Header: Title + Type + Central Color Palette */}
           <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0 flex-wrap">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-[160px]">
               <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
                 Chart Live Preview
               </span>
@@ -126,37 +126,42 @@ export default function ChartEditorPanel({
               </span>
             </div>
 
-            {/* Color Palette */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold text-slate-400 mr-1">Color:</span>
-              {PALETTE_COLORS.map((swatch) => (
-                <button
-                  key={swatch.color}
-                  type="button"
-                  title={swatch.label}
-                  onClick={() => setChartColor(swatch.color)}
-                  className="w-5 h-5 rounded-full border-2 transition-all hover:scale-110 flex-shrink-0 cursor-pointer"
-                  style={{
-                    backgroundColor: swatch.color,
-                    borderColor: chartColor === swatch.color ? "white" : "transparent",
-                    boxShadow: chartColor === swatch.color ? `0 0 0 2px ${swatch.color}` : "none",
-                  }}
-                />
-              ))}
-              {/* Custom color picker */}
-              <label
-                title="Custom color"
-                className="w-5 h-5 rounded-full border-2 border-dashed border-slate-300 dark:border-zinc-600 flex items-center justify-center cursor-pointer hover:scale-110 transition-all overflow-hidden flex-shrink-0 relative"
-              >
-                <input
-                  type="color"
-                  value={chartColor}
-                  onChange={(e) => setChartColor(e.target.value)}
-                  className="w-8 h-8 opacity-0 absolute cursor-pointer"
-                />
-                <span className="text-[9px] text-slate-400 font-bold">+</span>
-              </label>
+            {/* Central Color Palette Bubbles */}
+            <div className="flex-1 flex justify-center">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50/90 dark:bg-zinc-900/60 border border-slate-200/70 dark:border-zinc-800 shadow-2xs">
+                <span className="text-[10px] font-semibold text-slate-400 mr-1">Color:</span>
+                {PALETTE_COLORS.map((swatch) => (
+                  <button
+                    key={swatch.color}
+                    type="button"
+                    title={swatch.label}
+                    onClick={() => setChartColor(swatch.color)}
+                    className="w-4.5 h-4.5 rounded-full border-2 transition-all hover:scale-115 flex-shrink-0 cursor-pointer"
+                    style={{
+                      backgroundColor: swatch.color,
+                      borderColor: chartColor === swatch.color ? "white" : "transparent",
+                      boxShadow: chartColor === swatch.color ? `0 0 0 2px ${swatch.color}` : "none",
+                    }}
+                  />
+                ))}
+                {/* Custom color picker */}
+                <label
+                  title="Custom color"
+                  className="w-4.5 h-4.5 rounded-full border-2 border-dashed border-slate-300 dark:border-zinc-600 flex items-center justify-center cursor-pointer hover:scale-115 transition-all overflow-hidden flex-shrink-0 relative"
+                >
+                  <input
+                    type="color"
+                    value={chartColor}
+                    onChange={(e) => setChartColor(e.target.value)}
+                    className="w-8 h-8 opacity-0 absolute cursor-pointer"
+                  />
+                  <span className="text-[9px] text-slate-400 font-bold">+</span>
+                </label>
+              </div>
             </div>
+
+            {/* Balanced right spacer */}
+            <div className="min-w-[160px] hidden md:block" />
           </div>
 
           {/* Full Chart Display (No inner border, no inner bg, zero clipping) */}

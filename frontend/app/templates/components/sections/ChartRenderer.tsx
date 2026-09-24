@@ -451,8 +451,8 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
     case "scatter":
     case "bubble":
       return (
-        <div className="w-full h-36 flex flex-col">
-          <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
+        <div className="w-full h-48 sm:h-56 flex flex-col">
+          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
@@ -461,24 +461,33 @@ export default function ChartRenderer({ chart, color = "#3B82F6" }: ChartRendere
             {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
               <g key={i}>
                 <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="7" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
               </g>
             ))}
             {/* X ticks */}
-            {[{ x: 90, l: "20" }, { x: 180, l: "40" }, { x: 270, l: "60" }, { x: 405, l: "80" }].map((t, i) => (
+            {[{ x: 100, l: "20" }, { x: 180, l: "40" }, { x: 260, l: "60" }, { x: 340, l: "80" }, { x: 405, l: "100" }].map((t, i) => (
               <g key={i}>
                 <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
+                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
               </g>
             ))}
             {[
-              { cx: 80, cy: 95, r: chart.chartType === "bubble" ? 14 : 4 },
-              { cx: 160, cy: 75, r: chart.chartType === "bubble" ? 8 : 4 },
-              { cx: 240, cy: 38, r: chart.chartType === "bubble" ? 22 : 4 },
-              { cx: 320, cy: 85, r: chart.chartType === "bubble" ? 11 : 4 },
-              { cx: 395, cy: 28, r: chart.chartType === "bubble" ? 17 : 4 },
+              { cx: 120, cy: 78, r: chart.chartType === "bubble" ? 15 : 4 },
+              { cx: 185, cy: 50, r: chart.chartType === "bubble" ? 22 : 5 },
+              { cx: 245, cy: 65, r: chart.chartType === "bubble" ? 28 : 6 },
+              { cx: 305, cy: 42, r: chart.chartType === "bubble" ? 19 : 5 },
+              { cx: 365, cy: 68, r: chart.chartType === "bubble" ? 14 : 4 },
             ].map((c, i) => (
-              <circle key={i} cx={c.cx} cy={c.cy} r={c.r} fill="#F59E0B" fillOpacity="0.55" stroke="#F59E0B" strokeWidth="1" />
+              <circle
+                key={i}
+                cx={c.cx}
+                cy={c.cy}
+                r={c.r}
+                fill={color}
+                fillOpacity="0.45"
+                stroke={color}
+                strokeWidth="1.5"
+              />
             ))}
           </svg>
         </div>
