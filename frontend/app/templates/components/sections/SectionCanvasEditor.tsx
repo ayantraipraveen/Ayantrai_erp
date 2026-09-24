@@ -89,6 +89,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
   const [chartDesc, setChartDesc] = useState("");
   const [chartColor, setChartColor] = useState("#9D61FF");
   const [chartColors, setChartColors] = useState<string[]>([]);
+  const [gridRows, setGridRows] = useState(4);
+  const [gridCols, setGridCols] = useState(7);
 
   // Key Insight Modal State
   const [insightModalOpen, setInsightModalOpen] = useState(false);
@@ -210,6 +212,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
     setChartDesc("");
     setChartColor("#9D61FF");
     setChartColors([]);
+    setGridRows(4);
+    setGridCols(7);
     setChartModalOpen(true);
     dispatch(setChartEditorFullscreen(true));
   };
@@ -223,6 +227,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
     const baseColor = chart.color || chart.colors?.[0] || "#9D61FF";
     setChartColor(baseColor);
     setChartColors(chart.colors && chart.colors.length > 0 ? chart.colors : [baseColor]);
+    setGridRows(chart.gridRows || (chart.chartType === "table" ? 4 : 4));
+    setGridCols(chart.gridCols || (chart.chartType === "table" ? 4 : 7));
     setChartModalOpen(true);
     dispatch(setChartEditorFullscreen(true));
   };
@@ -249,6 +255,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
             description: chartDesc.trim(),
             color: chartColor,
             colors: finalColors,
+            gridRows: (chartType === "heatmap" || chartType === "table") ? gridRows : undefined,
+            gridCols: (chartType === "heatmap" || chartType === "table") ? gridCols : undefined,
           },
         })
       );
@@ -264,6 +272,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
             description: chartDesc.trim(),
             color: chartColor,
             colors: finalColors,
+            gridRows: (chartType === "heatmap" || chartType === "table") ? gridRows : undefined,
+            gridCols: (chartType === "heatmap" || chartType === "table") ? gridCols : undefined,
           },
         })
       );
@@ -379,6 +389,10 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
         setChartColor={setChartColor}
         chartColors={chartColors}
         setChartColors={setChartColors}
+        gridRows={gridRows}
+        setGridRows={setGridRows}
+        gridCols={gridCols}
+        setGridCols={setGridCols}
         onSave={() => {
           setChartDataSource("custom_telemetry_feed");
           handleSaveChart();
@@ -701,6 +715,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                       chart={chart}
                       color={chart.color || chart.colors?.[0]}
                       colors={chart.colors}
+                      gridRows={chart.gridRows}
+                      gridCols={chart.gridCols}
                     />
 
                     {chart.description && (

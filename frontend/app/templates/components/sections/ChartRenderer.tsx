@@ -7,19 +7,30 @@ interface ChartRendererProps {
   chart: LibraryChartCard;
   color?: string;
   colors?: string[];
+  gridRows?: number;
+  gridCols?: number;
 }
 
 /**
  * Renders live SVG visualizations for all 25 supported telemetry chart types.
- * Supports multi-series dynamic color palettes for all elements.
+ * Supports multi-series dynamic color palettes and dynamic row/column grid dimensions.
  */
-export default function ChartRenderer({ chart, color = "#3B82F6", colors }: ChartRendererProps) {
+export default function ChartRenderer({
+  chart,
+  color = "#3B82F6",
+  colors,
+  gridRows,
+  gridCols,
+}: ChartRendererProps) {
   const chartColors = colors && colors.length > 0 ? colors : chart.colors || [];
   const c0 = chartColors[0] || chart.color || color;
   const c1 = chartColors[1] || "#10B981";
   const c2 = chartColors[2] || "#F59E0B";
   const c3 = chartColors[3] || "#F43F5E";
   const c4 = chartColors[4] || "#06B6D4";
+
+  const effectiveRows = gridRows ?? chart.gridRows;
+  const effectiveCols = gridCols ?? chart.gridCols;
 
   switch (chart.chartType) {
     case "line":
@@ -143,86 +154,158 @@ export default function ChartRenderer({ chart, color = "#3B82F6", colors }: Char
       );
 
 
-    case "table":
+    case "table": {
+      const rowsCount = effectiveRows || 4;
+      const colsCount = effectiveCols || 4;
+
+      const ALL_COLUMNS = [
+        { id: "supervisor", label: "Supervisor / Area" },
+        { id: "zone", label: "Zone" },
+        { id: "response", label: "Response" },
+        { id: "status", label: "Status" },
+        { id: "shift", label: "Adherence" },
+        { id: "headcount", label: "Headcount" },
+      ];
+      const cols = ALL_COLUMNS.slice(0, colsCount);
+
+      const ALL_DATA = [
+        { supervisor: "Sunil M. (Crew #1)", zone: "Zone 1", response: "18s", status: "Optimal", shift: "98.2%", headcount: "42" },
+        { supervisor: "Pooja K. (Structural)", zone: "Tower L12", response: "24s", status: "Compliant", shift: "95.0%", headcount: "38" },
+        { supervisor: "Anand R. (Subcontractor)", zone: "Batching", response: "42s", status: "Review", shift: "88.4%", headcount: "27" },
+        { supervisor: "Rajesh V. (Electrical)", zone: "Substation", response: "15s", status: "Optimal", shift: "99.1%", headcount: "19" },
+        { supervisor: "Deepa S. (Safety Lead)", zone: "Gate 3", response: "29s", status: "Compliant", shift: "94.6%", headcount: "31" },
+        { supervisor: "Vikram T. (Excavation)", zone: "Pit North", response: "48s", status: "Review", shift: "86.0%", headcount: "22" },
+      ];
+      const dataRows = ALL_DATA.slice(0, rowsCount);
+
       return (
         <div className="w-full h-44 overflow-y-auto rounded-xl border border-slate-200 dark:border-zinc-800 text-xs">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 font-mono text-[10px] uppercase">
-                <th className="py-2 px-3 font-semibold">Supervisor / Area</th>
-                <th className="py-2 px-3 font-semibold">Zone</th>
-                <th className="py-2 px-3 font-semibold">Response</th>
-                <th className="py-2 px-3 font-semibold">Status</th>
+              <tr className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 font-mono text-[10px] uppercase sticky top-0">
+                {cols.map((c) => (
+                  <th key={c.id} className="py-2 px-3 font-semibold">
+                    {c.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
-              <tr className="hover:bg-slate-50 dark:hover:bg-zinc-900/40">
-                <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">Sunil M. (Crew #1)</td>
-                <td className="py-2 px-3 font-mono text-slate-500">Zone 1</td>
-                <td className="py-2 px-3 font-mono font-bold" style={{ color: c0 }}>18s</td>
-                <td className="py-2 px-3">
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: `${c0}18`, color: c0 }}>
-                    Optimal
-                  </span>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50 dark:hover:bg-zinc-900/40">
-                <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">Pooja K. (Structural)</td>
-                <td className="py-2 px-3 font-mono text-slate-500">Tower L12</td>
-                <td className="py-2 px-3 font-mono font-bold" style={{ color: c1 }}>24s</td>
-                <td className="py-2 px-3">
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: `${c1}18`, color: c1 }}>
-                    Compliant
-                  </span>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50 dark:hover:bg-zinc-900/40">
-                <td className="py-2 px-3 font-medium text-slate-900 dark:text-white">Anand R. (Subcontractor)</td>
-                <td className="py-2 px-3 font-mono text-slate-500">Batching</td>
-                <td className="py-2 px-3 font-mono font-bold" style={{ color: c2 }}>42s</td>
-                <td className="py-2 px-3">
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ backgroundColor: `${c2}18`, color: c2 }}>
-                    Review
-                  </span>
-                </td>
-              </tr>
+              {dataRows.map((row, rIdx) => (
+                <tr key={rIdx} className="hover:bg-slate-50 dark:hover:bg-zinc-900/40">
+                  {cols.map((c) => {
+                    if (c.id === "supervisor") {
+                      return (
+                        <td key={c.id} className="py-2 px-3 font-medium text-slate-900 dark:text-white">
+                          {row.supervisor}
+                        </td>
+                      );
+                    }
+                    if (c.id === "status") {
+                      const isOptimal = row.status === "Optimal";
+                      const isReview = row.status === "Review";
+                      const badgeColor = isOptimal ? c0 : isReview ? c2 : c1;
+                      return (
+                        <td key={c.id} className="py-2 px-3">
+                          <span
+                            className="px-1.5 py-0.5 rounded text-[10px] font-bold"
+                            style={{ backgroundColor: `${badgeColor}18`, color: badgeColor }}
+                          >
+                            {row.status}
+                          </span>
+                        </td>
+                      );
+                    }
+                    if (c.id === "response") {
+                      const isFast = parseInt(row.response) <= 20;
+                      return (
+                        <td
+                          key={c.id}
+                          className="py-2 px-3 font-mono font-bold"
+                          style={{ color: isFast ? c0 : c1 }}
+                        >
+                          {row.response}
+                        </td>
+                      );
+                    }
+                    return (
+                      <td key={c.id} className="py-2 px-3 font-mono text-slate-500">
+                        {(row as Record<string, string>)[c.id]}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       );
+    }
 
-    case "heatmap":
+    case "heatmap": {
+      const rowsCount = effectiveRows || 4;
+      const colsCount = effectiveCols || 7;
+
+      const ALL_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const days = ALL_DAYS.slice(0, colsCount);
+
+      const ALL_WEEKS = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"];
+      const weeks = ALL_WEEKS.slice(0, rowsCount);
+
+      const getCellValue = (r: number, c: number) => {
+        const matrix = [
+          [96, 96, 96, 96, 96, 82, 82],
+          [94, 94, 94, 94, 94, 78, 78],
+          [96, 95, 95, 95, 95, 85, 85],
+          [98, 98, 98, 98, 98, 72, 72],
+          [92, 93, 91, 94, 95, 80, 80],
+          [90, 92, 94, 91, 93, 75, 76],
+        ];
+        return matrix[r % 6][c % 7];
+      };
+
       return (
         <div className="w-full h-44 flex flex-col justify-end pt-2 text-xs">
-          <div className="w-full grid grid-cols-8 gap-1 h-full">
-            {/* Header column */}
-            <div className="flex flex-col gap-1 justify-end pb-5 font-mono text-[9px] text-slate-400">
-              <div className="h-7 flex items-center justify-end pr-2">Week 1</div>
-              <div className="h-7 flex items-center justify-end pr-2">Week 2</div>
-              <div className="h-7 flex items-center justify-end pr-2">Week 3</div>
-              <div className="h-7 flex items-center justify-end pr-2">Week 4</div>
+          <div
+            className="w-full grid gap-1.5 h-full items-end"
+            style={{
+              gridTemplateColumns: `auto repeat(${colsCount}, minmax(0, 1fr))`,
+            }}
+          >
+            {/* Header column (Week labels) */}
+            <div className="flex flex-col gap-1 justify-end pb-0.5 font-mono text-[9px] text-slate-400">
+              {weeks.map((w) => (
+                <div key={w} className="h-7 flex items-center justify-end pr-2 font-semibold">
+                  {w}
+                </div>
+              ))}
             </div>
             {/* Day columns */}
-            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => (
-              <div key={day} className="flex flex-col gap-1 h-full">
-                <div className="text-center font-semibold text-slate-600 dark:text-zinc-400 mb-1 h-4 text-[10px] uppercase">{day}</div>
-                <div className="h-7 rounded flex items-center justify-center text-[10px] font-bold text-white shadow-2xs" style={{ backgroundColor: i > 4 ? c1 : c0 }}>
-                  {i > 4 ? "82" : "96"}
+            {days.map((day, cIdx) => (
+              <div key={day} className="flex flex-col gap-1 h-full justify-end">
+                <div className="text-center font-bold text-slate-600 dark:text-zinc-400 mb-1 text-[10px] uppercase">
+                  {day}
                 </div>
-                <div className="h-7 rounded flex items-center justify-center text-[10px] font-bold text-white shadow-2xs" style={{ backgroundColor: i > 4 ? c2 : c0 }}>
-                  {i > 4 ? "78" : "94"}
-                </div>
-                <div className="h-7 rounded flex items-center justify-center text-[10px] font-bold text-white shadow-2xs" style={{ backgroundColor: i > 4 ? c1 : c0 }}>
-                  {i > 4 ? "85" : "95"}
-                </div>
-                <div className="h-7 rounded flex items-center justify-center text-[10px] font-bold text-white shadow-2xs" style={{ backgroundColor: i > 4 ? c2 : c0 }}>
-                  {i > 4 ? "72" : "98"}
-                </div>
+                {weeks.map((_, rIdx) => {
+                  const val = getCellValue(rIdx, cIdx);
+                  const cellColor = val >= 92 ? c0 : val >= 80 ? c1 : c2;
+                  return (
+                    <div
+                      key={rIdx}
+                      className="h-7 rounded-md flex items-center justify-center text-[10px] font-bold text-white shadow-2xs transition-all hover:scale-105"
+                      style={{ backgroundColor: cellColor }}
+                    >
+                      {val}
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
         </div>
       );
+    }
+
 
     case "horizontal-bar":
       return (

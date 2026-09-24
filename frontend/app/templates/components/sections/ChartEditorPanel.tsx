@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Activity } from "lucide-react";
+import { X, Activity, Grid } from "lucide-react";
 import { LibraryChartCard, GraphType } from "@/lib/redux/slices/reportModuleSlice";
 import ChartRenderer from "./ChartRenderer";
 import {
@@ -23,13 +23,17 @@ interface ChartEditorPanelProps {
   setChartColor: (val: string) => void;
   chartColors: string[];
   setChartColors: React.Dispatch<React.SetStateAction<string[]>>;
+  gridRows?: number;
+  setGridRows?: (val: number) => void;
+  gridCols?: number;
+  setGridCols?: (val: number) => void;
   onSave: () => void;
   onClose: () => void;
 }
 
 /**
  * Dedicated Fullscreen/Inline Editor Panel for Telemetry Charts.
- * Includes metadata configuration, 25 visualization types selection, multi-series color theming, and real-time live preview.
+ * Includes metadata configuration, 25 visualization types selection, multi-series color theming, row/column grid dimensions, and real-time live preview.
  */
 export default function ChartEditorPanel({
   editingChart,
@@ -43,9 +47,21 @@ export default function ChartEditorPanel({
   setChartColor,
   chartColors,
   setChartColors,
+  gridRows,
+  setGridRows,
+  gridCols,
+  setGridCols,
   onSave,
   onClose,
 }: ChartEditorPanelProps) {
+  const [internalGridRows, setInternalGridRows] = useState(editingChart?.gridRows || (chartType === "table" ? 4 : 4));
+  const [internalGridCols, setInternalGridCols] = useState(editingChart?.gridCols || (chartType === "table" ? 4 : 7));
+
+  const currentRows = gridRows !== undefined ? gridRows : internalGridRows;
+  const currentCols = gridCols !== undefined ? gridCols : internalGridCols;
+  const changeRows = setGridRows || setInternalGridRows;
+  const changeCols = setGridCols || setInternalGridCols;
+
   const seriesConfig = getChartSeriesConfig(chartType, chartColor);
   const [activeSeriesIndex, setActiveSeriesIndex] = useState(0);
 
@@ -148,11 +164,10 @@ export default function ChartEditorPanel({
                       setChartType(t.id);
                       setActiveSeriesIndex(0);
                     }}
-                    className={`p-1.5 rounded-lg border flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all ${
-                      chartType === t.id
+                    className={`p-1.5 rounded-lg border flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all ${chartType === t.id
                         ? "border-[#9D61FF] bg-purple-500/10 text-[#9D61FF] font-bold"
                         : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:border-[#9D61FF]/50 hover:text-[#9D61FF]"
-                    }`}
+                      }`}
                   >
                     <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                     <span className="text-[8px] text-center leading-tight">{t.label}</span>
@@ -231,11 +246,10 @@ export default function ChartEditorPanel({
                         key={s.id}
                         type="button"
                         onClick={() => setActiveSeriesIndex(idx)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer border ${
-                          isSelected
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer border ${isSelected
                             ? "bg-purple-50 dark:bg-purple-950/40 border-[#9D61FF] text-[#9D61FF] font-bold shadow-2xs"
                             : "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-medium hover:border-slate-300 dark:hover:border-zinc-700"
-                        }`}
+                          }`}
                       >
                         <span
                           className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-black/15 shadow-2xs"
@@ -275,6 +289,69 @@ export default function ChartEditorPanel({
                 </div>
               </div>
             )}
+
+            {/* Grid & Table Row/Column Dimension Controls */}
+            {(chartType === "heatmap" || chartType === "table") && (
+              <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-slate-50/90 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800 text-xs shadow-2xs animate-fadeIn mt-1">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-zinc-200">
+                    <Grid className="w-3.5 h-3.5 text-[#9D61FF]" />
+                    <span>{chartType === "heatmap" ? "Heatmap Grid:" : "Table Dimensions:"}</span>
+                  </div>
+
+                  {/* Row count buttons */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                      Rows:
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {[2, 3, 4, 5, 6].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => changeRows(num)}
+                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${currentRows === num
+                              ? "bg-[#9D61FF] text-white shadow-2xs scale-105"
+                              : "bg-white dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-purple-300"
+                            }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="w-[1px] h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
+
+                  {/* Column count buttons */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
+                      Columns:
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {(chartType === "heatmap" ? [3, 4, 5, 6, 7] : [2, 3, 4, 5, 6]).map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => changeCols(num)}
+                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${currentCols === num
+                              ? "bg-[#9D61FF] text-white shadow-2xs scale-105"
+                              : "bg-white dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-purple-300"
+                            }`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Badge showing current dimensions */}
+                <span className="text-[11px] font-mono font-bold text-[#9D61FF] bg-purple-500/10 px-2.5 py-0.5 rounded-md border border-purple-500/20 flex-shrink-0">
+                  {currentRows} Rows × {currentCols} Cols
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Full Chart Display (No inner border, no inner bg, zero clipping) */}
@@ -289,9 +366,13 @@ export default function ChartEditorPanel({
                   description: chartDesc || "Chart description preview",
                   color: chartColor,
                   colors: chartColors,
+                  gridRows: currentRows,
+                  gridCols: currentCols,
                 }}
                 color={chartColor}
                 colors={chartColors}
+                gridRows={currentRows}
+                gridCols={currentCols}
               />
             </div>
           </div>

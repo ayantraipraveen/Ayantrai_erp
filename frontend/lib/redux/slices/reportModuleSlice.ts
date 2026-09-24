@@ -284,6 +284,8 @@ export interface LibraryChartCard {
   description?: string;
   color?: string;
   colors?: string[];
+  gridRows?: number;
+  gridCols?: number;
 }
 
 export interface LibraryKeyInsightItem {
