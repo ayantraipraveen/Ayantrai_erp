@@ -125,7 +125,7 @@ export default function TemplatesTable() {
                           </span>
                         </div>
                         <Tooltip content={template.name} position="top" maxWidth="max-w-[320px]">
-                          <div className="font-semibold text-[12.5px] leading-snug text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors truncate cursor-default">
+                          <div className="font-semibold text-[12.5px] leading-snug text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors truncate cursor-default turncate">
                             {template.name}
                           </div>
                         </Tooltip>
