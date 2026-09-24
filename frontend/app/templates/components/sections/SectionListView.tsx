@@ -28,6 +28,7 @@ import {
   X,
   PlusCircle,
   ArrowLeft,
+  Stamp,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -255,16 +256,23 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
 
         {/* Actions: Back to Blueprints + Create Section */}
         <div className="flex items-center gap-2">
-          {onBackToTemplates && (
-            <button
-              type="button"
-              onClick={onBackToTemplates}
-              className="h-9 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Blueprints</span>
-            </button>
-          )}
+          {/* Chart Button */}
+          <button
+            type="button"
+            className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
+          >
+            <BarChart2 className="w-3.5 h-3.5 text-[#9D61FF]" />
+            <span>Chart</span>
+          </button>
+
+          {/* Watermark Button */}
+          <button
+            type="button"
+            className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
+          >
+            <Stamp className="w-3.5 h-3.5 text-[#9D61FF]" />
+            <span>Watermark</span>
+          </button>
 
           {/* Create Section Action */}
           <button
