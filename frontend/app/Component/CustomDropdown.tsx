@@ -282,7 +282,7 @@ export default function CustomDropdown({
             ref={panelRef}
             role="listbox"
             style={menuStyle}
-            className={`rounded-xl border border-slate-200 dark:border-[#9D61FF]/40 bg-white/98 dark:bg-[#0e131e]/98 backdrop-blur-2xl p-1.5 shadow-2xl animate-fadeIn ${menuClassName}`}
+            className={`rounded-2xl border border-slate-200 dark:border-[#9D61FF]/40 bg-white/98 dark:bg-[#0e131e]/98 backdrop-blur-2xl p-1.5 shadow-2xl animate-fadeIn ${menuClassName}`}
           >
             {/* Optional Search Input */}
             {(searchable || normalizedOptions.length > 8) && (

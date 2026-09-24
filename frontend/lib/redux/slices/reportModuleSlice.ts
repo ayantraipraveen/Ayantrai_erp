@@ -31,7 +31,12 @@ export type TemplateBlockType =
   | "operational_remarks"
   | "improvement_action_plan";
 
-export type GraphType = "bar" | "line" | "pie" | "donut" | "table";
+export type GraphType = 
+  | "line" | "multi-line" | "bar" | "grouped-bar" | "horizontal-bar" 
+  | "stacked-horizontal" | "donut" | "pie" | "heatmap" | "two-segment" 
+  | "table" | "area" | "stacked-bar" | "radar" | "gauge" | "scatter" 
+  | "bubble" | "funnel" | "sparkline" | "combo" | "waterfall" 
+  | "treemap" | "kpi-card" | "timeline" | "geo-map";
 
 export type GraphDataSource =
   | "attendance_daily_shifts"
@@ -327,6 +332,7 @@ export interface ReportModuleState {
   templateDeleteConfirmId: string | null;
   templateToastMessage: string | null;
   templateActiveTab: "templates" | "sections";
+  chartEditorFullscreen: boolean;
 
   // Master Global Library of Sections & Graphs
   globalSections: TemplateBlock[];
@@ -1401,6 +1407,7 @@ const initialState: ReportModuleState = {
   templateDeleteConfirmId: null,
   templateToastMessage: null,
   templateActiveTab: "templates",
+  chartEditorFullscreen: false,
 
   // Master Global Library of Sections & Graphs
   globalSections: defaultBlocks,
@@ -1679,6 +1686,9 @@ export const reportModuleSlice = createSlice({
     },
     setTemplateActiveTab: (state, action: PayloadAction<"templates" | "sections">) => {
       state.templateActiveTab = action.payload;
+    },
+    setChartEditorFullscreen: (state, action: PayloadAction<boolean>) => {
+      state.chartEditorFullscreen = action.payload;
     },
 
     // Master Global Sections & Graphs Library Reducers
@@ -2256,6 +2266,7 @@ export const {
   setTemplateDeleteConfirmId,
   setTemplateToastMessage,
   setTemplateActiveTab,
+  setChartEditorFullscreen,
   addGlobalSection,
   updateGlobalSection,
   deleteGlobalSection,

@@ -36,6 +36,7 @@ import {
   Activity,
   Calendar,
   Zap,
+  Filter,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -58,6 +59,8 @@ import {
   deleteInsightFromSection,
   reorderInsightsInSection,
   showGlobalToast,
+  GraphType,
+  setChartEditorFullscreen,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { Tooltip } from "@/app/Component";
 
@@ -227,7 +230,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
   const [chartModalOpen, setChartModalOpen] = useState(false);
   const [editingChart, setEditingChart] = useState<LibraryChartCard | null>(null);
   const [chartTitle, setChartTitle] = useState("");
-  const [chartType, setChartType] = useState<"bar" | "line" | "pie" | "donut" | "table">("bar");
+  const [chartType, setChartType] = useState<GraphType>("bar");
   const [chartDataSource, setChartDataSource] = useState("ppe_sensor_compliance");
   const [chartDesc, setChartDesc] = useState("");
 
@@ -350,6 +353,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
     setChartDataSource("ppe_sensor_compliance");
     setChartDesc("");
     setChartModalOpen(true);
+    dispatch(setChartEditorFullscreen(true));
   };
 
   const handleOpenEditChart = (chart: LibraryChartCard) => {
@@ -359,6 +363,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
     setChartDataSource(chart.dataSourceField);
     setChartDesc(chart.description || "");
     setChartModalOpen(true);
+    dispatch(setChartEditorFullscreen(true));
   };
 
   const handleSaveChart = () => {
@@ -409,11 +414,12 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
   };
 
   const handleCycleChartType = (chart: LibraryChartCard) => {
-    const cycle: ("bar" | "line" | "pie" | "donut" | "table")[] = [
-      "bar",
-      "line",
-      "donut",
-      "table",
+    const cycle: GraphType[] = [
+      "line", "multi-line", "bar", "grouped-bar", "horizontal-bar", 
+      "stacked-horizontal", "donut", "pie", "heatmap", "two-segment", 
+      "table", "area", "stacked-bar", "radar", "gauge", "scatter", 
+      "bubble", "funnel", "sparkline", "combo", "waterfall", 
+      "treemap", "kpi-card", "timeline", "geo-map"
     ];
     const currentIdx = cycle.indexOf(chart.chartType);
     const nextType = cycle[(currentIdx + 1) % cycle.length];
@@ -653,6 +659,335 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
           </div>
         );
 
+      case "heatmap":
+        return (
+          <div className="w-full h-44 flex flex-col justify-end pt-2 text-xs">
+            <div className="w-full grid grid-cols-8 gap-1 h-full">
+              {/* Header column */}
+              <div className="flex flex-col gap-1 justify-end pb-5 font-mono text-[9px] text-slate-400">
+                <div className="h-7 flex items-center justify-end pr-2">Week 1</div>
+                <div className="h-7 flex items-center justify-end pr-2">Week 2</div>
+                <div className="h-7 flex items-center justify-end pr-2">Week 3</div>
+                <div className="h-7 flex items-center justify-end pr-2">Week 4</div>
+              </div>
+              {/* Day columns */}
+              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => (
+                <div key={day} className="flex flex-col gap-1 h-full">
+                  <div className="text-center font-semibold text-slate-600 dark:text-zinc-400 mb-1 h-4 text-[10px] uppercase">{day}</div>
+                  <div className={`h-7 rounded flex items-center justify-center text-[10px] font-bold text-white ${i > 4 ? "bg-amber-500" : "bg-emerald-500"}`}>
+                    {i > 4 ? "82" : "96"}
+                  </div>
+                  <div className={`h-7 rounded flex items-center justify-center text-[10px] font-bold text-white ${i > 4 ? "bg-rose-500" : "bg-emerald-400"}`}>
+                    {i > 4 ? "78" : "94"}
+                  </div>
+                  <div className={`h-7 rounded flex items-center justify-center text-[10px] font-bold text-white ${i > 4 ? "bg-amber-400" : "bg-emerald-500"}`}>
+                    {i > 4 ? "85" : "95"}
+                  </div>
+                  <div className={`h-7 rounded flex items-center justify-center text-[10px] font-bold text-white ${i > 4 ? "bg-rose-400" : "bg-emerald-600"}`}>
+                    {i > 4 ? "72" : "98"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case "horizontal-bar":
+        return (
+          <div className="w-full h-44 flex flex-col justify-center py-2 gap-2.5 text-xs">
+            {[
+              { label: "Civil", val: "93%", width: "93%", color: "bg-orange-500" },
+              { label: "Mechanical", val: "88%", width: "88%", color: "bg-emerald-500" },
+              { label: "Electrical", val: "90%", width: "90%", color: "bg-amber-400" },
+              { label: "Fabrication", val: "85%", width: "85%", color: "bg-rose-500" },
+            ].map((row, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <span className="w-20 text-right font-medium text-slate-700 dark:text-zinc-300 truncate">{row.label}</span>
+                <div className="flex-1 h-6 bg-slate-100 dark:bg-zinc-800 rounded-r-md flex items-center">
+                  <div className={`h-full ${row.color} flex items-center justify-end pr-2 rounded-r-md transition-all`} style={{ width: row.width }}>
+                    <span className="text-[10px] font-bold text-white shadow-sm">{row.val}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case "stacked-horizontal":
+        return (
+          <div className="w-full h-44 flex flex-col justify-center py-4 text-xs">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <span className="font-semibold text-slate-700 dark:text-zinc-300">Total Operational Hours</span>
+              <span className="font-bold text-slate-900 dark:text-white">18,750</span>
+            </div>
+            <div className="w-full h-10 flex rounded-lg overflow-hidden shadow-sm mb-4">
+              <div className="bg-emerald-500 flex items-center justify-center text-white font-bold text-xs" style={{ width: '92.4%' }}>
+                92.4% Safe
+              </div>
+              <div className="bg-rose-500 flex items-center justify-center text-white font-bold text-xs" style={{ width: '7.6%' }}>
+                7.6%
+              </div>
+            </div>
+            <div className="flex justify-between text-[10px] font-mono text-slate-500 px-1">
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-emerald-500 rounded-sm"></div> Hours without Violations (17,330)</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 bg-rose-500 rounded-sm"></div> Hours with Violations (1,420)</div>
+            </div>
+          </div>
+        );
+
+      case "stacked-bar":
+        return (
+          <div className="w-full h-44 flex flex-col justify-end pt-3">
+            <svg viewBox="0 0 400 130" className="w-full h-full overflow-visible">
+              {[
+                { x: 40, h1: 35, h2: 40, h3: 15, h4: 10, label: "Civil" },
+                { x: 120, h1: 32, h2: 38, h3: 20, h4: 10, label: "Mech" },
+                { x: 200, h1: 28, h2: 42, h3: 18, h4: 12, label: "Elec" },
+                { x: 280, h1: 40, h2: 35, h3: 15, h4: 10, label: "Fab" },
+                { x: 360, h1: 20, h2: 45, h3: 25, h4: 10, label: "Safety" },
+              ].map((b, i) => {
+                const totalH = b.h1 + b.h2 + b.h3 + b.h4;
+                return (
+                <g key={i}>
+                  <rect x={b.x - 20} y={110 - b.h1} width="40" height={b.h1} fill="#3B82F6" />
+                  <rect x={b.x - 20} y={110 - b.h1 - b.h2} width="40" height={b.h2} fill="#10B981" />
+                  <rect x={b.x - 20} y={110 - b.h1 - b.h2 - b.h3} width="40" height={b.h3} fill="#F59E0B" />
+                  <rect x={b.x - 20} y={110 - totalH} width="40" height={b.h4} fill="#F43F5E" />
+                  <text x={b.x} y="125" fontSize="10" fontWeight="bold" textAnchor="middle" fill="currentColor" className="text-slate-600 dark:text-zinc-400">
+                    {b.label}
+                  </text>
+                </g>
+              )})}
+            </svg>
+          </div>
+        );
+
+      case "grouped-bar":
+        return (
+          <div className="w-full h-44 flex flex-col justify-end pt-3">
+            <svg viewBox="0 0 400 130" className="w-full h-full overflow-visible">
+              {[
+                { x: 50, v1: 60, v2: 40, label: "Civil" },
+                { x: 125, v1: 85, v2: 60, label: "Elec" },
+                { x: 200, v1: 90, v2: 55, label: "Mech" },
+                { x: 275, v1: 30, v2: 20, label: "Safety" },
+                { x: 350, v1: 70, v2: 50, label: "Admin" },
+              ].map((b, i) => (
+                <g key={i}>
+                  <rect x={b.x - 16} y={110 - b.v1} width="14" height={b.v1} fill="#F59E0B" rx="2" />
+                  <rect x={b.x + 2} y={110 - b.v2} width="14" height={b.v2} fill="#EF4444" rx="2" />
+                  <text x={b.x} y="125" fontSize="10" fontWeight="bold" textAnchor="middle" fill="currentColor" className="text-slate-600 dark:text-zinc-400">
+                    {b.label}
+                  </text>
+                </g>
+              ))}
+            </svg>
+          </div>
+        );
+
+      case "multi-line":
+        return (
+          <div className="w-full h-44 flex flex-col justify-end pt-3">
+            <svg viewBox="0 0 400 140" className="w-full h-full overflow-visible">
+              <line x1="0" y1="20" x2="400" y2="20" stroke="currentColor" strokeOpacity="0.1" strokeDasharray="3 3" />
+              <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeOpacity="0.1" strokeDasharray="3 3" />
+              <line x1="0" y1="100" x2="400" y2="100" stroke="currentColor" strokeOpacity="0.1" strokeDasharray="3 3" />
+              {/* Line 1 */}
+              <path d="M 10 100 Q 80 40, 150 70 T 280 30 T 390 15" fill="none" stroke="#9D61FF" strokeWidth="3" strokeLinecap="round" />
+              {/* Line 2 */}
+              <path d="M 10 120 Q 80 80, 150 50 T 280 60 T 390 40" fill="none" stroke="#10B981" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          </div>
+        );
+
+      case "two-segment":
+        return (
+          <div className="w-full h-44 flex flex-col justify-center gap-3 text-xs px-2">
+            {[
+              { label: "Compliant Workers", val: 85, color: "bg-emerald-500" },
+              { label: "PPE Score", val: 73, color: "bg-blue-500" },
+              { label: "Incident-Free Days", val: 92, color: "bg-purple-500" },
+            ].map((item, i) => (
+              <div key={i}>
+                <div className="flex justify-between font-bold text-slate-700 dark:text-zinc-300 mb-1">
+                  <span>{item.label}</span><span>{item.val}%</span>
+                </div>
+                <div className="w-full h-5 bg-slate-100 dark:bg-zinc-800 rounded-lg overflow-hidden flex">
+                  <div className={`h-full ${item.color} rounded-lg transition-all`} style={{ width: `${item.val}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+
+      case "area":
+        return (
+          <div className="w-full h-44 flex flex-col justify-end pt-3">
+            <svg viewBox="0 0 400 140" className="w-full h-full overflow-visible">
+              <path d="M 10 125 L 10 100 Q 80 40, 150 70 T 280 30 T 390 15 L 390 125 Z" fill="#3B82F6" fillOpacity="0.4" />
+              <path d="M 10 100 Q 80 40, 150 70 T 280 30 T 390 15" fill="none" stroke="#3B82F6" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          </div>
+        );
+
+      case "radar":
+        return (
+          <div className="w-full h-44 flex items-center justify-center">
+            <svg viewBox="0 0 100 100" className="h-full w-full">
+              <polygon points="50,5 95,35 80,90 20,90 5,35" fill="none" stroke="currentColor" strokeOpacity="0.2" />
+              <polygon points="50,20 80,45 70,80 30,80 20,45" fill="none" stroke="currentColor" strokeOpacity="0.2" />
+              <polygon points="50,15 85,40 60,75 35,80 15,45" fill="#9D61FF" fillOpacity="0.4" stroke="#9D61FF" strokeWidth="1.5" />
+            </svg>
+          </div>
+        );
+
+      case "gauge":
+        return (
+          <div className="w-full h-44 flex flex-col items-center justify-center relative">
+            <svg viewBox="0 0 100 50" className="w-48 h-24 overflow-visible">
+              <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="currentColor" strokeOpacity="0.1" strokeWidth="15" strokeLinecap="round" />
+              <path d="M 10 50 A 40 40 0 0 1 70 15" fill="none" stroke="#10B981" strokeWidth="15" strokeLinecap="round" />
+            </svg>
+            <div className="absolute bottom-6 font-bold text-2xl text-slate-800 dark:text-white">72%</div>
+          </div>
+        );
+
+      case "scatter":
+      case "bubble":
+        return (
+          <div className="w-full h-44 flex flex-col justify-end pt-3">
+            <svg viewBox="0 0 400 140" className="w-full h-full overflow-visible">
+              <line x1="0" y1="130" x2="400" y2="130" stroke="currentColor" strokeOpacity="0.2" />
+              <line x1="10" y1="0" x2="10" y2="140" stroke="currentColor" strokeOpacity="0.2" />
+              {[
+                {cx: 50, cy: 100, r: chart.chartType === 'bubble' ? 15 : 4},
+                {cx: 120, cy: 80, r: chart.chartType === 'bubble' ? 8 : 4},
+                {cx: 200, cy: 40, r: chart.chartType === 'bubble' ? 25 : 4},
+                {cx: 280, cy: 90, r: chart.chartType === 'bubble' ? 12 : 4},
+                {cx: 350, cy: 30, r: chart.chartType === 'bubble' ? 18 : 4},
+              ].map((c, i) => <circle key={i} cx={c.cx} cy={c.cy} r={c.r} fill="#F59E0B" fillOpacity="0.6" stroke="#F59E0B" />)}
+            </svg>
+          </div>
+        );
+
+      case "funnel":
+        return (
+          <div className="w-full h-44 flex flex-col items-center justify-center gap-1 text-xs text-white font-bold">
+            <div className="h-8 bg-blue-500 flex items-center justify-center" style={{ width: "90%" }}>1,200</div>
+            <div className="h-8 bg-blue-400 flex items-center justify-center" style={{ width: "70%" }}>850</div>
+            <div className="h-8 bg-blue-300 flex items-center justify-center text-blue-900" style={{ width: "50%" }}>420</div>
+            <div className="h-8 bg-blue-200 flex items-center justify-center text-blue-900" style={{ width: "30%" }}>180</div>
+          </div>
+        );
+
+      case "sparkline":
+        return (
+          <div className="w-full h-44 flex flex-col items-center justify-center gap-3">
+            {[
+              { label: "Zone A", d: "M 0 25 L 20 10 L 40 20 L 60 5 L 80 15 L 100 0", color: "#10B981" },
+              { label: "Zone B", d: "M 0 20 L 20 25 L 40 10 L 60 20 L 80 5 L 100 15", color: "#3B82F6" },
+              { label: "Zone C", d: "M 0 30 L 20 15 L 40 25 L 60 10 L 80 20 L 100 5", color: "#F59E0B" },
+            ].map((s, i) => (
+              <div key={i} className="flex items-center gap-3 w-full px-4">
+                <span className="text-[10px] font-bold text-slate-500 w-12 text-right">{s.label}</span>
+                <svg viewBox="0 0 100 30" className="w-48 h-8 overflow-visible flex-shrink-0">
+                  <path d={s.d} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+                <span className="text-[10px] font-bold" style={{ color: s.color }}>↑</span>
+              </div>
+            ))}
+          </div>
+        );
+
+      case "combo":
+        return (
+          <div className="w-full h-44 flex flex-col justify-end pt-3">
+            <svg viewBox="0 0 400 130" className="w-full h-full overflow-visible">
+               <rect x="30" y="50" width="30" height="80" fill="#3B82F6" opacity="0.8" />
+               <rect x="110" y="30" width="30" height="100" fill="#3B82F6" opacity="0.8" />
+               <rect x="190" y="70" width="30" height="60" fill="#3B82F6" opacity="0.8" />
+               <rect x="270" y="20" width="30" height="110" fill="#3B82F6" opacity="0.8" />
+               <rect x="350" y="90" width="30" height="40" fill="#3B82F6" opacity="0.8" />
+               <path d="M 45 40 L 125 15 L 205 85 L 285 10 L 365 75" fill="none" stroke="#F43F5E" strokeWidth="4" />
+            </svg>
+          </div>
+        );
+
+      case "waterfall":
+        return (
+          <div className="w-full h-44 flex flex-col justify-end pt-3">
+            <svg viewBox="0 0 400 130" className="w-full h-full overflow-visible">
+               <rect x="30" y="50" width="40" height="80" fill="#10B981" />
+               <rect x="110" y="20" width="40" height="30" fill="#10B981" />
+               <rect x="190" y="20" width="40" height="50" fill="#F43F5E" />
+               <rect x="270" y="70" width="40" height="20" fill="#10B981" />
+               <rect x="350" y="50" width="40" height="80" fill="#64748B" />
+            </svg>
+          </div>
+        );
+
+      case "treemap":
+        return (
+          <div className="w-full h-44 grid grid-cols-3 gap-1 p-2 text-white font-bold text-[10px]">
+            <div className="col-span-2 row-span-2 bg-blue-500 rounded p-2">Item A</div>
+            <div className="bg-emerald-500 rounded p-2">Item B</div>
+            <div className="bg-amber-500 rounded p-2">Item C</div>
+            <div className="col-span-3 bg-rose-500 rounded p-2">Item D</div>
+          </div>
+        );
+
+      case "kpi-card":
+        return (
+          <div className="w-full h-44 grid grid-cols-2 gap-3 p-2 text-xs">
+            {[
+              { label: "Total Incidents", val: "1,248", trend: "-18%", color: "text-rose-500", icon: "↓" },
+              { label: "PPE Compliance", val: "97.4%", trend: "+2.1%", color: "text-emerald-500", icon: "↑" },
+              { label: "Worker Hours", val: "18,750", trend: "+5.3%", color: "text-blue-500", icon: "↑" },
+              { label: "Near-Misses", val: "12", trend: "-33%", color: "text-amber-500", icon: "↓" },
+            ].map((k, i) => (
+              <div key={i} className="flex flex-col justify-between bg-slate-50 dark:bg-zinc-900 rounded-xl p-3 border border-slate-200 dark:border-zinc-800">
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{k.label}</span>
+                <div className="font-black text-xl text-slate-900 dark:text-white leading-tight">{k.val}</div>
+                <span className={`font-bold ${k.color}`}>{k.icon} {k.trend}</span>
+              </div>
+            ))}
+          </div>
+        );
+
+      case "timeline":
+        return (
+          <div className="w-full h-44 flex flex-col justify-center gap-2 p-2">
+            <div className="flex items-center gap-2"><div className="w-16 text-right text-[10px] font-bold text-slate-500">Task 1</div><div className="h-4 bg-blue-500 rounded" style={{width: "40%", marginLeft: "10%"}}></div></div>
+            <div className="flex items-center gap-2"><div className="w-16 text-right text-[10px] font-bold text-slate-500">Task 2</div><div className="h-4 bg-emerald-500 rounded" style={{width: "30%", marginLeft: "45%"}}></div></div>
+            <div className="flex items-center gap-2"><div className="w-16 text-right text-[10px] font-bold text-slate-500">Task 3</div><div className="h-4 bg-purple-500 rounded" style={{width: "50%", marginLeft: "20%"}}></div></div>
+          </div>
+        );
+
+      case "geo-map":
+        return (
+          <div className="w-full h-44 relative overflow-hidden rounded-xl bg-slate-100 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-700">
+            <svg viewBox="0 0 400 176" className="w-full h-full">
+              {/* Grid lines for map feel */}
+              {[40,80,120,160].map(y => <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="currentColor" strokeOpacity="0.08" strokeDasharray="4 4" />)}
+              {[80,160,240,320].map(x => <line key={x} x1={x} y1="0" x2={x} y2="176" stroke="currentColor" strokeOpacity="0.08" strokeDasharray="4 4" />)}
+              {/* Site location markers */}
+              {[
+                { cx: 120, cy: 80, label: "Site A", color: "#10B981" },
+                { cx: 250, cy: 60, label: "Site B", color: "#3B82F6" },
+                { cx: 180, cy: 130, label: "Site C", color: "#F59E0B" },
+                { cx: 320, cy: 110, label: "Site D", color: "#9D61FF" },
+              ].map((s, i) => (
+                <g key={i}>
+                  <circle cx={s.cx} cy={s.cy} r="14" fill={s.color} fillOpacity="0.2" />
+                  <circle cx={s.cx} cy={s.cy} r="6" fill={s.color} />
+                  <text x={s.cx} y={s.cy + 22} fontSize="9" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.7">{s.label}</text>
+                </g>
+              ))}
+            </svg>
+            <div className="absolute bottom-2 right-2 text-[9px] font-mono text-slate-400 bg-white/70 dark:bg-zinc-900/70 px-2 py-0.5 rounded">Geo / Map Chart</div>
+          </div>
+        );
+
       case "bar":
       default:
         return (
@@ -705,6 +1040,152 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
         );
     }
   };
+
+  if (chartModalOpen) {
+    const closeChartEditor = () => {
+      setChartModalOpen(false);
+      dispatch(setChartEditorFullscreen(false));
+    };
+    return (
+      <div className="flex-1 min-h-0 bg-white dark:bg-[#0c1017] flex flex-col overflow-hidden animate-fadeIn text-slate-900 dark:text-white">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 p-6 flex-shrink-0">
+          <h3 className="text-lg font-bold">
+            {editingChart ? "Edit Telemetry Chart" : "Add Telemetry Chart"}
+          </h3>
+          <button
+            type="button"
+            onClick={closeChartEditor}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Compact inputs row - no wasted vertical space */}
+        <div className="flex-shrink-0 flex gap-4 px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20">
+          <div className="flex-1">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block mb-1">Chart Title *</label>
+            <input
+              type="text"
+              value={chartTitle}
+              onChange={(e) => setChartTitle(e.target.value)}
+              placeholder="e.g. PPE Compliance by Work Zone"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-[#9D61FF]"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block mb-1">Caption / Description</label>
+            <input
+              type="text"
+              value={chartDesc}
+              onChange={(e) => setChartDesc(e.target.value)}
+              placeholder="e.g. Comparative gauge across contractors"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-[#9D61FF]"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-1 min-h-0">
+          {/* Left Column: Chart Type Grid — fills all remaining height */}
+          <div className="w-[42%] border-r border-slate-200 dark:border-zinc-800 flex flex-col min-h-0">
+            <div className="px-4 pt-3 pb-2 flex-shrink-0">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Visualization Type</span>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pb-4">
+              <div className="grid grid-cols-5 gap-2">
+                {[
+                  { id: "line", label: "Line Chart", icon: TrendingUp },
+                  { id: "multi-line", label: "Multi-line", icon: TrendingUp },
+                  { id: "bar", label: "Vertical Bar", icon: BarChart2 },
+                  { id: "grouped-bar", label: "Grouped Bar", icon: BarChart2 },
+                  { id: "horizontal-bar", label: "Horiz. Bar", icon: BarChart2 },
+                  { id: "stacked-horizontal", label: "100% Stacked", icon: Layers },
+                  { id: "donut", label: "Donut", icon: PieChart },
+                  { id: "pie", label: "Pie Chart", icon: PieChart },
+                  { id: "heatmap", label: "Heatmap", icon: Grid },
+                  { id: "two-segment", label: "Progress Bar", icon: CheckCircle2 },
+                  { id: "table", label: "Data Table", icon: TableIcon },
+                  { id: "area", label: "Area Chart", icon: TrendingUp },
+                  { id: "stacked-bar", label: "Stacked Bar", icon: Layers },
+                  { id: "radar", label: "Radar", icon: Activity },
+                  { id: "gauge", label: "Gauge", icon: Clock },
+                  { id: "scatter", label: "Scatter", icon: Sparkles },
+                  { id: "bubble", label: "Bubble", icon: Sparkles },
+                  { id: "funnel", label: "Funnel", icon: Filter },
+                  { id: "sparkline", label: "Sparkline", icon: Activity },
+                  { id: "combo", label: "Combo", icon: Layers },
+                  { id: "waterfall", label: "Waterfall", icon: BarChart2 },
+                  { id: "treemap", label: "Treemap", icon: Grid },
+                  { id: "kpi-card", label: "KPI Card", icon: CheckCircle2 },
+                  { id: "timeline", label: "Timeline", icon: Calendar },
+                  { id: "geo-map", label: "Geo Map", icon: Zap },
+                ].map((t) => {
+                  const Icon = t.icon;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setChartType(t.id as any)}
+                      className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 cursor-pointer transition-all aspect-square ${
+                        chartType === t.id
+                          ? "border-[#9D61FF] bg-purple-500/10 text-[#9D61FF] font-bold"
+                          : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:border-[#9D61FF]/50 hover:text-[#9D61FF]"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="text-[9px] text-center leading-tight">{t.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Live Preview — fills all remaining height */}
+          <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 dark:bg-zinc-900/30">
+            <div className="px-6 pt-3 pb-2 flex items-center justify-between flex-shrink-0">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Chart Live Preview</span>
+              <span className="text-[10px] font-mono uppercase text-slate-400 bg-slate-200 dark:bg-zinc-800 px-2 py-0.5 rounded-lg">
+                {chartType}
+              </span>
+            </div>
+            <div className="flex-1 min-h-0 px-6 pb-6">
+              {renderLiveChart({
+                id: "preview",
+                title: chartTitle || "Preview Chart",
+                chartType: chartType,
+                dataSourceField: "custom_telemetry_feed",
+                description: chartDesc || "Chart description preview",
+              })}
+            </div>
+          </div>
+        </div>
+
+
+        <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200 dark:border-zinc-800 flex-shrink-0 bg-white dark:bg-[#0c1017]">
+          <button
+            type="button"
+            onClick={closeChartEditor}
+            className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setChartDataSource("custom_telemetry_feed");
+              handleSaveChart();
+              dispatch(setChartEditorFullscreen(false));
+            }}
+            disabled={!chartTitle.trim()}
+            className="px-5 py-2.5 rounded-xl bg-[#9D61FF] text-white text-sm font-bold disabled:opacity-50 hover:bg-purple-600 transition-colors"
+          >
+            Save Chart
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn space-y-2">
@@ -1313,123 +1794,6 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
         </div>
       )}
 
-      {/* ================= MODAL: ADD / EDIT CHART ================= */}
-      {chartModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-lg bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
-              <h3 className="text-sm font-bold">
-                {editingChart ? "Edit Telemetry Chart" : "Add Telemetry Chart"}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setChartModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3.5 text-xs">
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300">
-                  Chart Title *
-                </label>
-                <input
-                  type="text"
-                  value={chartTitle}
-                  onChange={(e) => setChartTitle(e.target.value)}
-                  placeholder="e.g. Connected PPE Compliance by Work Zone"
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
-                />
-              </div>
-
-              {/* Chart Type Selector */}
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300">
-                  Visualization Type
-                </label>
-                <div className="grid grid-cols-4 gap-2 mt-1.5">
-                  {[
-                    { id: "bar", label: "Bar Chart", icon: BarChart2 },
-                    { id: "line", label: "Line Chart", icon: TrendingUp },
-                    { id: "donut", label: "Donut Ring", icon: PieChart },
-                    { id: "table", label: "Data Table", icon: TableIcon },
-                  ].map((t) => {
-                    const Icon = t.icon;
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => setChartType(t.id as any)}
-                        className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 cursor-pointer transition-all ${
-                          chartType === t.id
-                            ? "border-[#9D61FF] bg-purple-500/10 text-[#9D61FF] font-bold"
-                            : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:border-slate-300"
-                        }`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        <span className="text-[10px]">{t.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300">
-                  Data Telemetry Source
-                </label>
-                <select
-                  value={chartDataSource}
-                  onChange={(e) => setChartDataSource(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
-                >
-                  <option value="attendance_daily_shifts">Muster Check-Ins (Shift 1 vs Shift 2)</option>
-                  <option value="attendance_vendor_distribution">Subcontractor Workforce Distribution</option>
-                  <option value="ppe_sensor_compliance">Connected PPE BLE Telemetry Index</option>
-                  <option value="helmet_optical_telemetry">Optical Helmet Sensor Latch Stream</option>
-                  <option value="vest_hub_battery_status">Vest IoT Hub & Battery Health</option>
-                  <option value="supervisory_response_time">Supervisor Incident Reaction Matrix</option>
-                  <option value="device_daily_operating_hours">Unit Runtime vs Permissible Limits</option>
-                  <option value="gas_sensor_ppm_levels">Toxic Gas Sensor Continuous PPM</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300">
-                  Caption / Description
-                </label>
-                <input
-                  type="text"
-                  value={chartDesc}
-                  onChange={(e) => setChartDesc(e.target.value)}
-                  placeholder="e.g. Comparative gauge across active civil contractors and workforce crews"
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-zinc-800">
-              <button
-                type="button"
-                onClick={() => setChartModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveChart}
-                disabled={!chartTitle.trim()}
-                className="px-4 py-2 rounded-xl bg-[#9D61FF] text-white text-xs font-bold disabled:opacity-50"
-              >
-                Save Chart
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ================= MODAL: ADD / EDIT KEY INSIGHT ================= */}
       {insightModalOpen && (

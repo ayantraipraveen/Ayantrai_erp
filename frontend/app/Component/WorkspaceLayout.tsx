@@ -53,6 +53,7 @@ export default function WorkspaceLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSite, setActiveSite] = useState("Nx-One Tower Pilot Site (Greater Noida)");
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const chartEditorFullscreen = useAppSelector((state) => state.reportModule.chartEditorFullscreen);
 
   // Restore sidebar state from localStorage on mount
   useEffect(() => {
@@ -156,15 +157,17 @@ export default function WorkspaceLayout({
         <div className="cyan-rim-light opacity-30" />
       </div>
 
-      {/* ================= REUSABLE SIDEBAR (DESKTOP FULL-HEIGHT + MOBILE DRAWER) ================= */}
-      <Sidebar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={handleSetSidebarOpen}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-      />
+      {/* ================= REUSABLE SIDEBAR ================= */}
+      {!chartEditorFullscreen && (
+        <Sidebar
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={handleSetSidebarOpen}
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+          currentUser={currentUser}
+          onLogout={handleLogout}
+        />
+      )}
 
       {/* ================= RIGHT COLUMN (TOP COMMAND BAR + SCROLLABLE WORKSPACE) ================= */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden relative z-20">

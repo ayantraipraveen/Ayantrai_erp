@@ -88,12 +88,32 @@ export const availableBlockTypes: {
   },
 ];
 
-export const GRAPH_TYPES: { type: "bar" | "line" | "pie" | "donut" | "table"; label: string }[] = [
-  { type: "bar", label: "Bar Chart" },
+export const GRAPH_TYPES: { type: string; label: string }[] = [
   { type: "line", label: "Line Chart" },
-  { type: "pie", label: "Pie Chart" },
+  { type: "multi-line", label: "Multi-line Chart" },
+  { type: "bar", label: "Vertical Bar" },
+  { type: "grouped-bar", label: "Grouped Bar" },
+  { type: "horizontal-bar", label: "Horizontal Bar" },
+  { type: "stacked-horizontal", label: "100% Stacked Horizontal" },
   { type: "donut", label: "Donut Chart" },
+  { type: "pie", label: "Pie Chart" },
+  { type: "heatmap", label: "Calendar Heatmap" },
+  { type: "two-segment", label: "Two-Segment Progress" },
   { type: "table", label: "Data Table" },
+  { type: "area", label: "Area Chart" },
+  { type: "stacked-bar", label: "Stacked Vertical Bar" },
+  { type: "radar", label: "Radar / Spider" },
+  { type: "gauge", label: "Gauge Chart" },
+  { type: "scatter", label: "Scatter Plot" },
+  { type: "bubble", label: "Bubble Chart" },
+  { type: "funnel", label: "Funnel Chart" },
+  { type: "sparkline", label: "Sparkline" },
+  { type: "combo", label: "Combo (Bar + Line)" },
+  { type: "waterfall", label: "Waterfall Chart" },
+  { type: "treemap", label: "Treemap" },
+  { type: "kpi-card", label: "KPI / Stat Card" },
+  { type: "timeline", label: "Timeline / Gantt" },
+  { type: "geo-map", label: "Geo/Map Chart" },
 ];
 
 export const GRAPH_DATA_SOURCES: { id: string; label: string; group: string }[] = [

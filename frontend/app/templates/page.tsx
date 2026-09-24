@@ -122,7 +122,7 @@ export default function TemplatesPage() {
           <SectionsCatalogModal />
         </>
       ) : (
-        <div className="flex-1 min-h-0 flex flex-col w-full overflow-hidden pt-2">
+        <div className="flex-1 min-h-0 flex flex-col w-full overflow-hidden">
           {selectedLibrarySectionId ? (
             <SectionCanvasEditor
               sectionId={selectedLibrarySectionId}

@@ -416,7 +416,7 @@ export default function DateRangeFilter({
                     key={preset.id}
                     type="button"
                     onClick={() => handleSelectPreset(preset)}
-                    className={`px-2.5 py-1.5 rounded-xl text-xs font-medium text-left transition-all cursor-pointer flex items-center justify-between border ${
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left transition-all cursor-pointer flex items-center justify-between border ${
                       isSelected
                         ? "bg-[#9D61FF]/15 border-[#9D61FF] text-slate-950 dark:text-white font-semibold shadow-[0_0_10px_rgba(157,97,255,0.2)]"
                         : "border-slate-100 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-zinc-900/40 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/70"
@@ -442,7 +442,7 @@ export default function DateRangeFilter({
                   type="date"
                   value={draftStart}
                   onChange={(e) => { setDraftStart(e.target.value); setDraftPreset("custom"); }}
-                  className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-all"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-all"
                 />
               </div>
               <div>
@@ -451,7 +451,7 @@ export default function DateRangeFilter({
                   type="date"
                   value={draftEnd}
                   onChange={(e) => { setDraftEnd(e.target.value); setDraftPreset("custom"); }}
-                  className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-all"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-all"
                 />
               </div>
             </div>

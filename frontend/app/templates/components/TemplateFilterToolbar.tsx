@@ -150,17 +150,6 @@ export default function TemplateFilterToolbar() {
               </button>
             </Tooltip>
           </div>
-
-          {/* Manage Sections & Graphs Button */}
-          <button
-            type="button"
-            onClick={() => dispatch(setTemplateActiveTab("sections"))}
-            className="h-9 px-3.5 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] font-semibold text-xs cursor-pointer flex items-center justify-center gap-1.5 flex-shrink-0 transition-colors shadow-sm"
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Sections & Graphs</span>
-          </button>
-
           {/* Primary Action Button */}
           <button
             type="button"
