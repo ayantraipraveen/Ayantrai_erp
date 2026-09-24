@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { X } from "lucide-react";
+import { X, Activity } from "lucide-react";
 import { LibraryChartCard, GraphType } from "@/lib/redux/slices/reportModuleSlice";
 import ChartRenderer from "./ChartRenderer";
 import { CHART_TYPE_OPTIONS, PALETTE_COLORS } from "./constants/chartTypes";
@@ -113,18 +113,19 @@ export default function ChartEditorPanel({
           </div>
         </div>
 
-        {/* Right Column: Live Preview — fills all remaining height */}
-        <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 dark:bg-zinc-900/30">
-          {/* Preview header: label + color badge + color palette */}
-          <div className="px-6 pt-3 pb-2 flex-shrink-0 space-y-2">
-            <div className="flex items-center justify-between">
+        {/* Right Column: Live Preview Area (Clean, Borderless, Spaciously Proportioned) */}
+        <div className="flex-1 flex flex-col min-h-0 bg-transparent px-6 py-4">
+          {/* Preview Header: Title + Type + Color Palette */}
+          <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0 flex-wrap">
+            <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
                 Chart Live Preview
               </span>
-              <span className="text-[10px] font-mono uppercase text-slate-400 bg-slate-200 dark:bg-zinc-800 px-2 py-0.5 rounded-lg">
+              <span className="text-[10px] font-mono uppercase text-slate-400 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md font-bold">
                 {chartType}
               </span>
             </div>
+
             {/* Color Palette */}
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] font-semibold text-slate-400 mr-1">Color:</span>
@@ -153,21 +154,25 @@ export default function ChartEditorPanel({
                   onChange={(e) => setChartColor(e.target.value)}
                   className="w-8 h-8 opacity-0 absolute cursor-pointer"
                 />
-                <span className="text-[9px] text-slate-400">+</span>
+                <span className="text-[9px] text-slate-400 font-bold">+</span>
               </label>
             </div>
           </div>
-          <div className="flex-1 min-h-0 px-6 pb-6">
-            <ChartRenderer
-              chart={{
-                id: "preview",
-                title: chartTitle || "Preview Chart",
-                chartType: chartType,
-                dataSourceField: "custom_telemetry_feed",
-                description: chartDesc || "Chart description preview",
-              }}
-              color={chartColor}
-            />
+
+          {/* Full Chart Display (No inner border, no inner bg, zero clipping) */}
+          <div className="flex-1 min-h-0 flex items-center justify-center py-6 px-2 overflow-visible">
+            <div className="w-full">
+              <ChartRenderer
+                chart={{
+                  id: "preview",
+                  title: chartTitle || "Preview Chart",
+                  chartType: chartType,
+                  dataSourceField: "custom_telemetry_feed",
+                  description: chartDesc || "Chart description preview",
+                }}
+                color={chartColor}
+              />
+            </div>
           </div>
         </div>
       </div>
