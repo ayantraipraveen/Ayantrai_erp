@@ -12,7 +12,7 @@ import { FileText, Layers } from "lucide-react";
 import {
   SectionListView,
   SectionCanvasEditor,
-} from "../components";
+} from "./components";
 
 /**
  * Dedicated Route for Sections & Graphs Library (/templates/Sections&Graphs).

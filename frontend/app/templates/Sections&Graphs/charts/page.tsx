@@ -9,7 +9,7 @@ import {
   setTemplateActiveTab,
   GraphType,
 } from "@/lib/redux/slices/reportModuleSlice";
-import ChartEditorPanel from "../../components/sections/ChartEditorPanel";
+import { ChartEditorPanel } from "../components";
 import { ArrowLeft, BarChart2 } from "lucide-react";
 import Link from "next/link";
 
