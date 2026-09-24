@@ -164,7 +164,7 @@ export default function ChartEditorPanel({
               25 Available
             </span>
           </div>
-          <div className="flex-1 overflow-hidden px-3.5 pb-3.5">
+          <div className="flex-1 overflow-hidden px-3.5 pb-3.5 pt-1 bg-transparent">
             <div className="grid grid-cols-5 gap-2 h-full auto-rows-fr">
               {CHART_TYPE_OPTIONS.map((t) => {
                 const Icon = t.icon;
