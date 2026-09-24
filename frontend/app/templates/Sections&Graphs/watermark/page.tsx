@@ -131,11 +131,10 @@ export default function WatermarkPage() {
           return;
         }
       }
-      // First visit ever: set initial seeds
-      setWatermarks(INITIAL_SEEDS);
-      setSelectedId(INITIAL_SEEDS[0].id);
-      setSizeScale(INITIAL_SEEDS[0].scale ?? 100);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_SEEDS));
+      // First visit: start with empty list so only user-uploaded SVGs are shown
+      setWatermarks([]);
+      setSelectedId(null);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
     } catch (e) {
       console.warn("Failed to load watermarks from localStorage:", e);
       setWatermarks([]);
@@ -355,17 +354,6 @@ export default function WatermarkPage() {
             <span className="hidden sm:inline">Paste SVG Code</span>
           </button>
 
-          {/* Reset Defaults button */}
-          <button
-            type="button"
-            onClick={handleResetToSeeds}
-            className="h-8.5 px-3 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-slate-600 dark:text-zinc-400 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
-            title="Restore default presets"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Reset Defaults</span>
-          </button>
-
           {/* Back to Sections button */}
           <Link
             href="/templates/Sections&Graphs"
@@ -430,17 +418,35 @@ export default function WatermarkPage() {
 
             {/* Error Banner */}
             {uploadError && (
-              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-start gap-2 animate-fadeIn">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>{uploadError}</span>
+              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center justify-between animate-fadeIn">
+                <div className="flex items-center gap-2 min-w-0">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{uploadError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUploadError(null)}
+                  className="text-rose-500 hover:text-rose-700 text-xs font-mono ml-2 p-0.5 cursor-pointer"
+                >
+                  ✕
+                </button>
               </div>
             )}
 
             {/* Success Banner */}
             {uploadSuccess && (
-              <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs flex items-start gap-2 animate-fadeIn">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>{uploadSuccess}</span>
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs flex items-center justify-between animate-fadeIn">
+                <div className="flex items-center gap-2 min-w-0">
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">{uploadSuccess}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUploadSuccess(null)}
+                  className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 text-xs font-mono ml-2 p-0.5 cursor-pointer"
+                >
+                  ✕
+                </button>
               </div>
             )}
           </div>
@@ -467,14 +473,27 @@ export default function WatermarkPage() {
                 Loading watermarks...
               </div>
             ) : watermarks.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400 space-y-2">
-                <Stamp className="w-8 h-8 mx-auto opacity-30 text-slate-400" />
-                <p className="font-semibold text-slate-600 dark:text-zinc-400">
-                  No SVGs in library
-                </p>
-                <p className="text-[11px] text-slate-400">
-                  Upload an SVG file above or paste SVG code to add to the list.
-                </p>
+              <div className="p-8 text-center text-xs text-slate-400 space-y-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex items-center justify-center mx-auto">
+                  <Stamp className="w-5 h-5 opacity-70" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-700 dark:text-zinc-300 text-xs">
+                    No SVGs uploaded yet
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Drop your SVG file above or browse to upload.
+                  </p>
+                </div>
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={handleResetToSeeds}
+                    className="text-[10.5px] text-[#9D61FF] hover:underline cursor-pointer"
+                  >
+                    + Load sample vector stamps
+                  </button>
+                </div>
               </div>
             ) : (
               watermarks.map((wm) => {
@@ -651,6 +670,18 @@ export default function WatermarkPage() {
                 >
                   ± Flip
                 </button>
+
+                {/* Quick 100% Reset Chip */}
+                {sizeScale !== 100 && (
+                  <button
+                    type="button"
+                    onClick={() => handleUpdateScale(100)}
+                    className="px-1.5 py-0.5 rounded text-[10.5px] font-mono font-bold bg-purple-500/10 text-[#9D61FF] hover:bg-[#9D61FF] hover:text-white transition-all cursor-pointer"
+                    title="Reset scale to default 100%"
+                  >
+                    100%
+                  </button>
+                )}
               </div>
 
               {/* Theme / Background Toggle */}
@@ -709,12 +740,12 @@ export default function WatermarkPage() {
           </div>
 
           {/* Live Preview Canvas Stage */}
-          <div className="flex-1 min-h-0 overflow-auto custom-scrollbar p-8 flex items-center justify-center">
+          <div className="flex-1 min-h-0 overflow-auto custom-scrollbar p-6 flex items-center justify-center">
             {selectedWatermark ? (
               <div
-                className={`w-[660px] min-h-[480px] rounded-3xl shadow-2xl relative overflow-hidden border p-10 flex flex-col items-center justify-center transition-colors ${
+                className={`w-full max-w-[640px] h-[480px] max-h-[calc(100vh-210px)] rounded-3xl shadow-xl relative overflow-hidden border p-6 flex flex-col justify-between transition-colors ${
                   previewTheme === "light"
-                    ? "bg-white text-slate-900 border-slate-200"
+                    ? "bg-white text-slate-900 border-slate-200/90"
                     : previewTheme === "dark"
                     ? "bg-zinc-900 text-white border-zinc-800"
                     : "bg-[#0b101b] text-white border-zinc-800"
@@ -742,29 +773,43 @@ export default function WatermarkPage() {
                   />
                 )}
 
-                {/* Scale Status Indicator if Scaled or Negative */}
-                <div className="absolute top-4 left-6 flex items-center gap-2 text-[11px] font-mono">
-                  <span className="text-slate-400">SCALE:</span>
-                  <span className={`font-bold ${sizeScale < 0 ? "text-amber-500" : "text-[#9D61FF]"}`}>
-                    {sizeScale}% {sizeScale < 0 ? "(INVERTED / MINUS)" : sizeScale === 100 ? "(DEFAULT)" : ""}
-                  </span>
+                {/* Top Header inside preview card */}
+                <div className="relative z-10 flex items-center justify-between text-[11px] font-mono pb-2 border-b border-current/10">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400">SCALE:</span>
+                    <span className={`font-bold ${sizeScale < 0 ? "text-amber-500" : "text-[#9D61FF]"}`}>
+                      {sizeScale}% {sizeScale < 0 ? "(INVERTED / MINUS)" : sizeScale === 100 ? "(DEFAULT)" : ""}
+                    </span>
+                  </div>
+
+                  {sizeScale !== 100 && (
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateScale(100)}
+                      className="text-[10.5px] font-mono font-bold text-[#9D61FF] hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      <RefreshCw className="w-3 h-3" /> Reset 100%
+                    </button>
+                  )}
                 </div>
 
-                {/* Centered SVG Render with Negative Scale Support */}
-                <div
-                  className="relative z-10 w-full max-w-[520px] flex items-center justify-center drop-shadow-md p-4 transition-transform duration-150"
-                  style={{
-                    transform: `scale(${sizeScale === 0 ? 0.01 : sizeScale / 100})`,
-                    transformOrigin: "center center",
-                  }}
-                  dangerouslySetInnerHTML={{ __html: selectedWatermark.svgContent }}
-                />
+                {/* Centered SVG Render with Proportional Bounds & Negative Scale Support */}
+                <div className="relative z-10 w-full flex-1 flex items-center justify-center p-4 overflow-hidden">
+                  <div
+                    className="transition-transform duration-150 flex items-center justify-center [&>svg]:max-w-[340px] [&>svg]:max-h-[250px] [&>svg]:w-auto [&>svg]:h-auto [&>svg]:object-contain drop-shadow-sm"
+                    style={{
+                      transform: `scale(${sizeScale === 0 ? 0.01 : sizeScale / 100})`,
+                      transformOrigin: "center center",
+                    }}
+                    dangerouslySetInnerHTML={{ __html: selectedWatermark.svgContent }}
+                  />
+                </div>
 
                 {/* SVG Metadata Footer Badge */}
-                <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between text-[11px] font-mono opacity-60 border-t pt-2.5 border-current/10">
-                  <span>NAME: {selectedWatermark.fileName}</span>
+                <div className="relative z-10 flex items-center justify-between text-[11px] font-mono opacity-65 border-t pt-2.5 border-current/10">
+                  <span className="truncate max-w-[220px]">NAME: {selectedWatermark.fileName}</span>
                   <span>SIZE: {formatBytes(selectedWatermark.sizeBytes)}</span>
-                  <span>TIMESTAMP: {selectedWatermark.uploadedAt}</span>
+                  <span className="hidden sm:inline">DATE: {selectedWatermark.uploadedAt}</span>
                 </div>
               </div>
             ) : (
