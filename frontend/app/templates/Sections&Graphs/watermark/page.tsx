@@ -767,18 +767,31 @@ export default function WatermarkPage() {
                     ? "bg-white text-slate-900 border-slate-200/90"
                     : previewTheme === "dark"
                     ? "bg-zinc-900 text-white border-zinc-800"
-                    : "bg-[#0b101b] text-white border-zinc-800"
+                    : "bg-[#090D18] text-white border-[#9D61FF]/40 shadow-[0_0_30px_rgba(157,97,255,0.12)]"
                 }`}
               >
-                {/* Blueprint grid pattern overlay if selected */}
+                {/* Technical Blueprint Engineering Grid */}
                 {previewTheme === "grid" && (
-                  <div
-                    className="absolute inset-0 pointer-events-none opacity-25"
-                    style={{
-                      backgroundImage: "radial-gradient(#9D61FF 1px, transparent 1px)",
-                      backgroundSize: "22px 22px",
-                    }}
-                  />
+                  <>
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        backgroundImage: `
+                          linear-gradient(to right, rgba(157, 97, 255, 0.38) 1.5px, transparent 1.5px),
+                          linear-gradient(to bottom, rgba(157, 97, 255, 0.38) 1.5px, transparent 1.5px),
+                          linear-gradient(to right, rgba(157, 97, 255, 0.14) 1px, transparent 1px),
+                          linear-gradient(to bottom, rgba(157, 97, 255, 0.14) 1px, transparent 1px)
+                        `,
+                        backgroundSize: "80px 80px, 80px 80px, 20px 20px, 20px 20px",
+                      }}
+                    />
+                    {/* Center Crosshair Alignment Guides */}
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                      <div className="w-full h-[1px] bg-[#9D61FF]/30" />
+                      <div className="h-full w-[1px] bg-[#9D61FF]/30 absolute" />
+                      <div className="w-6 h-6 rounded-full border border-[#9D61FF]/30 absolute" />
+                    </div>
+                  </>
                 )}
 
                 {/* Light canvas subtle dot pattern */}
