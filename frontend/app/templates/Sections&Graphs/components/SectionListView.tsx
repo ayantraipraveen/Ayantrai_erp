@@ -54,6 +54,7 @@ type FilterType = "all" | "core" | "custom";
 export default function SectionListView({ onSelectSection, onBackToTemplates }: SectionListViewProps) {
   const dispatch = useAppDispatch();
   const librarySections = useAppSelector((state) => state.reportModule.librarySections || []);
+  const watermarks = useAppSelector((state) => state.reportModule.watermarks || []);
   const activeRole = useAppSelector((state) => state.reportModule.activeRole);
 
   const [search, setSearch] = useState("");
@@ -265,14 +266,14 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
             <span>Chart</span>
           </Link>
 
-          {/* Watermark Button */}
-          <button
-            type="button"
+          {/* Watermark Button navigating to /templates/Sections&Graphs/watermark */}
+          <Link
+            href="/templates/Sections&Graphs/watermark"
             className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
           >
             <Stamp className="w-3.5 h-3.5 text-[#9D61FF]" />
             <span>Watermark</span>
-          </button>
+          </Link>
 
           {/* Create Section Action */}
           <button
@@ -350,7 +351,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                       {sec.description}
                     </p>
 
-                    {/* Stats pills */}
+                    {/* Stats pills & Assigned Watermark */}
                     <div className="flex items-center gap-2 flex-wrap pt-1">
                       <div className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-[11px] font-mono text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-blue-500" />
@@ -364,6 +365,20 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
                         <span>{insightsCount} Insights</span>
                       </div>
+                      {(() => {
+                        const assignedWm = watermarks.find((w) => w.id === sec.watermarkId) || watermarks.find((w) => w.isDefault);
+                        if (!assignedWm) return null;
+                        return (
+                          <Link
+                            href="/templates/Sections&Graphs/watermark"
+                            className="px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 text-[11px] font-mono text-[#9D61FF] flex items-center gap-1.5 font-medium transition-colors"
+                            title="Manage watermark in Watermark Studio"
+                          >
+                            <Stamp className="w-3 h-3 text-[#9D61FF]" />
+                            <span className="truncate max-w-[150px]">{assignedWm.name}</span>
+                          </Link>
+                        );
+                      })()}
                     </div>
                   </div>
 

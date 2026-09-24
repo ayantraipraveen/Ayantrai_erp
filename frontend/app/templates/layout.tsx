@@ -33,12 +33,13 @@ export default function TemplatesLayout({
     pathname?.includes("/Sections&Graphs") ||
     pathname?.includes("/Sections%26Graphs");
 
-  const isChartsPage = pathname?.includes("/charts");
+  const isStudioPage =
+    pathname?.includes("/charts") || pathname?.includes("/watermark");
 
   return (
     <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden bg-transparent">
-      {/* 1. Sub-Navigation Switcher (Report Blueprints vs Sections & Graphs) - hidden on full-screen charts page */}
-      {!isChartsPage && (
+      {/* 1. Sub-Navigation Switcher (Report Blueprints vs Sections & Graphs) - hidden on full-screen studio pages */}
+      {!isStudioPage && (
         <div className="px-4 sm:px-6 lg:px-7 pt-2 pb-2 flex-shrink-0 flex items-center justify-between gap-3 border-b border-slate-200/80 dark:border-zinc-800/80 bg-white/50 dark:bg-[#0c1017]/50 backdrop-blur-sm">
           <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100/90 dark:bg-zinc-900/90 border border-slate-200/90 dark:border-zinc-800 shadow-inner">
             <Link

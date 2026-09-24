@@ -376,7 +376,17 @@ export default function ChartRenderer({
 
     case "stacked-bar":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
+          {/* Nomenclature / Legend placed safely above chart bars */}
+          <div className="flex items-center justify-center gap-5 pt-1 text-[11px] font-mono font-medium flex-wrap">
+            {[{ c: c0, l: "Civil" }, { c: c1, l: "PPE" }, { c: c2, l: "Safety" }, { c: c3, l: "Risk" }].map((lg, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: lg.c }} />
+                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{lg.l}</span>
+              </div>
+            ))}
+          </div>
+
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -408,20 +418,25 @@ export default function ChartRenderer({
                 </g>
               );
             })}
-            {/* Legend */}
-            {[{ c: c0, l: "Civil" }, { c: c1, l: "PPE" }, { c: c2, l: "Safety" }, { c: c3, l: "Risk" }].map((lg, i) => (
-              <g key={i}>
-                <rect x={42 + i * 60} y="10" width="7" height="7" fill={lg.c} rx="1" />
-                <text x={52 + i * 60} y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">{lg.l}</text>
-              </g>
-            ))}
           </svg>
         </div>
       );
 
     case "grouped-bar":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
+          {/* Nomenclature / Legend */}
+          <div className="flex items-center justify-center gap-5 pt-1 text-[11px] font-mono font-medium flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c0 }} />
+              <span className="text-slate-600 dark:text-zinc-300 font-semibold">Actual</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c1 }} />
+              <span className="text-slate-600 dark:text-zinc-300 font-semibold">Target</span>
+            </div>
+          </div>
+
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -448,9 +463,6 @@ export default function ChartRenderer({
                 <text x={b.x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
               </g>
             ))}
-            {/* Legend */}
-            <rect x="42" y="10" width="7" height="7" fill={c0} rx="1" /><text x="52" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Actual</text>
-            <rect x="90" y="10" width="7" height="7" fill={c1} rx="1" /><text x="100" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Target</text>
           </svg>
         </div>
       );

@@ -71,7 +71,7 @@ export default function TemplatesTable() {
               <th className="py-2.5 px-2.5 font-semibold w-[15%]">Author / Created</th>
               <th className="py-2.5 px-2.5 font-semibold w-[9%]">Status</th>
               <th className="py-2.5 px-2.5 font-semibold w-[13%]">Review Info</th>
-              <th className="py-2.5 px-2.5 font-semibold w-[14%] text-center">Actions</th>
+              <th className="py-2.5 pl-2.5 pr-6 font-semibold w-[14%] text-center">Actions</th>
             </tr>
           </thead>
 
@@ -260,9 +260,9 @@ export default function TemplatesTable() {
                     )}
                   </td>
 
-                  {/* Actions (Fixed position aligned icon slots) */}
-                  <td className="py-2.5 px-2">
-                    <div className="flex items-center justify-center gap-1.5">
+                  {/* Actions (Fixed position aligned icon slots with right padding) */}
+                  <td className="py-2.5 pl-2 pr-6">
+                    <div className="flex items-center justify-end gap-1.5">
                       {/* Fixed Workflow Action Slot (Approve, Reject, or Resubmit) */}
                       <div className="flex items-center gap-1 flex-shrink-0">
                         {activeRole === "superadmin" && isPending ? (
@@ -291,6 +291,8 @@ export default function TemplatesTable() {
                           </>
                         ) : isRejected ? (
                           <>
+                          {/* Empty spacer slot to keep fixed column alignment */}
+                          <div className="w-6 h-6" />
                             <Tooltip content="Resubmit for Superadmin Review" position="top">
                               <button
                                 type="button"
@@ -300,8 +302,6 @@ export default function TemplatesTable() {
                                 <RotateCcw className="w-3 h-3" />
                               </button>
                             </Tooltip>
-                            {/* Empty spacer slot to keep fixed column alignment */}
-                            <div className="w-6 h-6" />
                           </>
                         ) : (
                           /* 2 Empty spacer slots so active/draft templates stay perfectly aligned */
