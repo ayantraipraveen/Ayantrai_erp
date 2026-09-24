@@ -62,6 +62,21 @@ export default function ChartEditorPanel({
   const changeRows = setGridRows || setInternalGridRows;
   const changeCols = setGridCols || setInternalGridCols;
 
+  const [inputRowsText, setInputRowsText] = useState<string | null>(null);
+  const [inputColsText, setInputColsText] = useState<string | null>(null);
+
+  const handleUpdateRows = (newRows: number) => {
+    const clamped = Math.max(1, Math.min(50, newRows));
+    changeRows(clamped);
+    setInputRowsText(null);
+  };
+
+  const handleUpdateCols = (newCols: number) => {
+    const clamped = Math.max(1, Math.min(30, newCols));
+    changeCols(clamped);
+    setInputColsText(null);
+  };
+
   const seriesConfig = getChartSeriesConfig(chartType, chartColor);
   const [activeSeriesIndex, setActiveSeriesIndex] = useState(0);
 
@@ -292,14 +307,14 @@ export default function ChartEditorPanel({
 
             {/* Grid & Table Row/Column Dimension Controls */}
             {(chartType === "heatmap" || chartType === "table") && (
-              <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-slate-50/90 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800 text-xs shadow-2xs animate-fadeIn mt-1">
+              <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-slate-50/90 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800 text-xs shadow-2xs animate-fadeIn mt-1 flex-wrap">
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-zinc-200">
                     <Grid className="w-3.5 h-3.5 text-[#9D61FF]" />
                     <span>{chartType === "heatmap" ? "Heatmap Grid:" : "Table Dimensions:"}</span>
                   </div>
 
-                  {/* Row count buttons */}
+                  {/* Row count buttons + Custom Stepper */}
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                       Rows:
@@ -309,21 +324,76 @@ export default function ChartEditorPanel({
                         <button
                           key={num}
                           type="button"
-                          onClick={() => changeRows(num)}
-                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${currentRows === num
+                          onClick={() => handleUpdateRows(num)}
+                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                            currentRows === num
                               ? "bg-[#9D61FF] text-white shadow-2xs scale-105"
                               : "bg-white dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-purple-300"
-                            }`}
+                          }`}
                         >
                           {num}
                         </button>
                       ))}
                     </div>
+
+                    {/* Custom Row Stepper & Direct Input */}
+                    <div className="flex items-center border border-slate-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-950 overflow-hidden h-6 ml-0.5 shadow-2xs focus-within:border-[#9D61FF] transition-all">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateRows(currentRows - 1)}
+                        className="w-5 h-full flex items-center justify-center font-bold text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer text-xs"
+                        title="Decrease rows"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={inputRowsText !== null ? inputRowsText : currentRows}
+                        onFocus={() => setInputRowsText(String(currentRows))}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, "");
+                          setInputRowsText(raw);
+                          const parsed = parseInt(raw, 10);
+                          if (!isNaN(parsed) && parsed >= 1 && parsed <= 50) {
+                            changeRows(parsed);
+                          }
+                        }}
+                        onBlur={() => {
+                          if (inputRowsText !== null) {
+                            const parsed = parseInt(inputRowsText, 10);
+                            if (isNaN(parsed) || parsed < 1) {
+                              handleUpdateRows(1);
+                            } else if (parsed > 50) {
+                              handleUpdateRows(50);
+                            } else {
+                              handleUpdateRows(parsed);
+                            }
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            (e.target as HTMLInputElement).blur();
+                          }
+                        }}
+                        className="w-8 h-full text-center text-xs font-mono font-bold text-[#9D61FF] dark:text-[#a78bfa] bg-transparent outline-none p-0"
+                        title="Custom row count (1-50)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateRows(currentRows + 1)}
+                        className="w-5 h-full flex items-center justify-center font-bold text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer text-xs"
+                        title="Increase rows"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
 
                   <div className="w-[1px] h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
 
-                  {/* Column count buttons */}
+                  {/* Column count buttons + Custom Stepper */}
                   <div className="flex items-center gap-1.5">
                     <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider">
                       Columns:
@@ -333,15 +403,70 @@ export default function ChartEditorPanel({
                         <button
                           key={num}
                           type="button"
-                          onClick={() => changeCols(num)}
-                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${currentCols === num
+                          onClick={() => handleUpdateCols(num)}
+                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                            currentCols === num
                               ? "bg-[#9D61FF] text-white shadow-2xs scale-105"
                               : "bg-white dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-purple-300"
-                            }`}
+                          }`}
                         >
                           {num}
                         </button>
                       ))}
+                    </div>
+
+                    {/* Custom Column Stepper & Direct Input */}
+                    <div className="flex items-center border border-slate-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-950 overflow-hidden h-6 ml-0.5 shadow-2xs focus-within:border-[#9D61FF] transition-all">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateCols(currentCols - 1)}
+                        className="w-5 h-full flex items-center justify-center font-bold text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer text-xs"
+                        title="Decrease columns"
+                      >
+                        -
+                      </button>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={inputColsText !== null ? inputColsText : currentCols}
+                        onFocus={() => setInputColsText(String(currentCols))}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, "");
+                          setInputColsText(raw);
+                          const parsed = parseInt(raw, 10);
+                          if (!isNaN(parsed) && parsed >= 1 && parsed <= 30) {
+                            changeCols(parsed);
+                          }
+                        }}
+                        onBlur={() => {
+                          if (inputColsText !== null) {
+                            const parsed = parseInt(inputColsText, 10);
+                            if (isNaN(parsed) || parsed < 1) {
+                              handleUpdateCols(1);
+                            } else if (parsed > 30) {
+                              handleUpdateCols(30);
+                            } else {
+                              handleUpdateCols(parsed);
+                            }
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            (e.target as HTMLInputElement).blur();
+                          }
+                        }}
+                        className="w-8 h-full text-center text-xs font-mono font-bold text-[#9D61FF] dark:text-[#a78bfa] bg-transparent outline-none p-0"
+                        title="Custom column count (1-30)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateCols(currentCols + 1)}
+                        className="w-5 h-full flex items-center justify-center font-bold text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer text-xs"
+                        title="Increase columns"
+                      >
+                        +
+                      </button>
                     </div>
                   </div>
                 </div>

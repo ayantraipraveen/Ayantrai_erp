@@ -285,15 +285,16 @@ export default function ChartRenderer({
       };
 
       return (
-        <div className="w-full h-48 sm:h-56 overflow-auto flex flex-col justify-end pt-2 text-xs">
+        <div className="w-full h-48 sm:h-56 overflow-auto pt-2 text-xs">
           <div
-            className="w-full grid gap-1.5 h-full items-end min-w-max pb-1"
+            className="w-full grid gap-1.5 min-w-max pb-1"
             style={{
               gridTemplateColumns: `auto repeat(${colsCount}, minmax(36px, 1fr))`,
             }}
           >
             {/* Header column (Week labels) */}
-            <div className="flex flex-col gap-1 justify-end pb-0.5 font-mono text-[9px] text-slate-400 sticky left-0 bg-white/90 dark:bg-[#0c1017]/90 z-10">
+            <div className="flex flex-col gap-1 font-mono text-[9px] text-slate-400 sticky left-0 bg-white/95 dark:bg-[#0c1017]/95 z-10">
+              <div className="h-4 mb-1" />
               {weeks.map((w) => (
                 <div key={w} className="h-7 flex items-center justify-end pr-2 font-semibold whitespace-nowrap">
                   {w}
@@ -302,8 +303,8 @@ export default function ChartRenderer({
             </div>
             {/* Day columns */}
             {days.map((day, cIdx) => (
-              <div key={day} className="flex flex-col gap-1 h-full justify-end min-w-[36px]">
-                <div className="text-center font-bold text-slate-600 dark:text-zinc-400 mb-1 text-[10px] uppercase truncate">
+              <div key={day} className="flex flex-col gap-1 min-w-[36px]">
+                <div className="text-center font-bold text-slate-600 dark:text-zinc-400 mb-1 text-[10px] uppercase truncate h-4 flex items-center justify-center">
                   {day}
                 </div>
                 {weeks.map((_, rIdx) => {
