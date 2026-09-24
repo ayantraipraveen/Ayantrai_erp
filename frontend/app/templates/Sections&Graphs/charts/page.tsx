@@ -89,13 +89,18 @@ export default function SectionsGraphsChartsPage() {
     <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden bg-transparent">
       {/* Top Bar with Back to Sections Button */}
       <div className="px-6 py-2.5 flex-shrink-0 flex items-center justify-between border-b border-slate-200/60 dark:border-zinc-800/60 bg-transparent">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="p-1.5 rounded-lg bg-purple-500/10 text-[#9D61FF]">
             <BarChart2 className="w-4 h-4" />
           </div>
-          <span className="text-xs font-bold text-slate-900 dark:text-white">
-            Telemetry Chart Studio
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-900 dark:text-white">
+              Telemetry Chart Studio
+            </span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-500/10 text-[#9D61FF] font-bold border border-purple-500/20 uppercase">
+              {chartType}
+            </span>
+          </div>
         </div>
         <Link
           href="/templates/Sections&Graphs"

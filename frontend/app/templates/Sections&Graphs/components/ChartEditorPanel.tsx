@@ -160,7 +160,7 @@ export default function ChartEditorPanel({
             <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
               Visualization Type
             </span>
-            <span className="text-[10px] font-mono text-[#9D61FF] font-semibold bg-purple-500/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-mono text-[#9D61FF] font-bold bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-md">
               25 Available
             </span>
           </div>
@@ -202,7 +202,7 @@ export default function ChartEditorPanel({
                 <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
                   Chart Live Preview
                 </span>
-                <span className="text-[10px] font-mono uppercase text-slate-400 bg-slate-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md font-bold">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-500/10 text-[#9D61FF] font-bold border border-purple-500/20 uppercase">
                   {chartType}
                 </span>
               </div>
