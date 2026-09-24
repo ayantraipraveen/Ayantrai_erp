@@ -165,26 +165,44 @@ export default function ChartRenderer({
         { id: "status", label: "Status" },
         { id: "shift", label: "Adherence" },
         { id: "headcount", label: "Headcount" },
+        { id: "incidents", label: "Incidents" },
+        { id: "ppeScore", label: "PPE Score" },
+        { id: "inspection", label: "Inspection" },
+        { id: "permit", label: "Permit #" },
       ];
-      const cols = ALL_COLUMNS.slice(0, colsCount);
+      const cols = Array.from({ length: colsCount }, (_, i) => ALL_COLUMNS[i] || { id: `col_${i + 1}`, label: `Col ${i + 1}` });
 
       const ALL_DATA = [
-        { supervisor: "Sunil M. (Crew #1)", zone: "Zone 1", response: "18s", status: "Optimal", shift: "98.2%", headcount: "42" },
-        { supervisor: "Pooja K. (Structural)", zone: "Tower L12", response: "24s", status: "Compliant", shift: "95.0%", headcount: "38" },
-        { supervisor: "Anand R. (Subcontractor)", zone: "Batching", response: "42s", status: "Review", shift: "88.4%", headcount: "27" },
-        { supervisor: "Rajesh V. (Electrical)", zone: "Substation", response: "15s", status: "Optimal", shift: "99.1%", headcount: "19" },
-        { supervisor: "Deepa S. (Safety Lead)", zone: "Gate 3", response: "29s", status: "Compliant", shift: "94.6%", headcount: "31" },
-        { supervisor: "Vikram T. (Excavation)", zone: "Pit North", response: "48s", status: "Review", shift: "86.0%", headcount: "22" },
+        { supervisor: "Sunil M. (Crew #1)", zone: "Zone 1", response: "18s", status: "Optimal", shift: "98.2%", headcount: "42", incidents: "0", ppeScore: "99%", inspection: "Passed", permit: "WP-1041" },
+        { supervisor: "Pooja K. (Structural)", zone: "Tower L12", response: "24s", status: "Compliant", shift: "95.0%", headcount: "38", incidents: "0", ppeScore: "96%", inspection: "Passed", permit: "WP-1042" },
+        { supervisor: "Anand R. (Subcontractor)", zone: "Batching", response: "42s", status: "Review", shift: "88.4%", headcount: "27", incidents: "1", ppeScore: "87%", inspection: "Flagged", permit: "WP-1043" },
+        { supervisor: "Rajesh V. (Electrical)", zone: "Substation", response: "15s", status: "Optimal", shift: "99.1%", headcount: "19", incidents: "0", ppeScore: "100%", inspection: "Passed", permit: "WP-1044" },
+        { supervisor: "Deepa S. (Safety Lead)", zone: "Gate 3", response: "29s", status: "Compliant", shift: "94.6%", headcount: "31", incidents: "0", ppeScore: "94%", inspection: "Passed", permit: "WP-1045" },
+        { supervisor: "Vikram T. (Excavation)", zone: "Pit North", response: "48s", status: "Review", shift: "86.0%", headcount: "22", incidents: "2", ppeScore: "82%", inspection: "Review", permit: "WP-1046" },
       ];
-      const dataRows = ALL_DATA.slice(0, rowsCount);
+      const dataRows = Array.from({ length: rowsCount }, (_, i) => {
+        if (i < ALL_DATA.length) return ALL_DATA[i];
+        return {
+          supervisor: `Operator #${i + 1} (${["Mech", "Civil", "Elec", "Safety"][i % 4]})`,
+          zone: `Zone ${(i % 6) + 1}`,
+          response: `${14 + (i * 4) % 35}s`,
+          status: i % 3 === 0 ? "Optimal" : i % 3 === 1 ? "Compliant" : "Review",
+          shift: `${90 + (i * 2) % 10}%`,
+          headcount: `${20 + (i * 3) % 30}`,
+          incidents: `${i % 3}`,
+          ppeScore: `${85 + (i * 3) % 15}%`,
+          inspection: i % 3 === 2 ? "Review" : "Passed",
+          permit: `WP-${1040 + i}`,
+        };
+      });
 
       return (
-        <div className="w-full h-44 overflow-y-auto rounded-xl border border-slate-200 dark:border-zinc-800 text-xs">
+        <div className="w-full h-48 sm:h-56 overflow-auto rounded-xl border border-slate-200 dark:border-zinc-800 text-xs">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 font-mono text-[10px] uppercase sticky top-0">
+              <tr className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 font-mono text-[10px] uppercase sticky top-0 z-10 shadow-2xs">
                 {cols.map((c) => (
-                  <th key={c.id} className="py-2 px-3 font-semibold">
+                  <th key={c.id} className="py-2 px-3 font-semibold whitespace-nowrap">
                     {c.label}
                   </th>
                 ))}
@@ -196,7 +214,7 @@ export default function ChartRenderer({
                   {cols.map((c) => {
                     if (c.id === "supervisor") {
                       return (
-                        <td key={c.id} className="py-2 px-3 font-medium text-slate-900 dark:text-white">
+                        <td key={c.id} className="py-2 px-3 font-medium text-slate-900 dark:text-white whitespace-nowrap">
                           {row.supervisor}
                         </td>
                       );
@@ -206,7 +224,7 @@ export default function ChartRenderer({
                       const isReview = row.status === "Review";
                       const badgeColor = isOptimal ? c0 : isReview ? c2 : c1;
                       return (
-                        <td key={c.id} className="py-2 px-3">
+                        <td key={c.id} className="py-2 px-3 whitespace-nowrap">
                           <span
                             className="px-1.5 py-0.5 rounded text-[10px] font-bold"
                             style={{ backgroundColor: `${badgeColor}18`, color: badgeColor }}
@@ -221,7 +239,7 @@ export default function ChartRenderer({
                       return (
                         <td
                           key={c.id}
-                          className="py-2 px-3 font-mono font-bold"
+                          className="py-2 px-3 font-mono font-bold whitespace-nowrap"
                           style={{ color: isFast ? c0 : c1 }}
                         >
                           {row.response}
@@ -229,8 +247,8 @@ export default function ChartRenderer({
                       );
                     }
                     return (
-                      <td key={c.id} className="py-2 px-3 font-mono text-slate-500">
-                        {(row as Record<string, string>)[c.id]}
+                      <td key={c.id} className="py-2 px-3 font-mono text-slate-500 whitespace-nowrap">
+                        {(row as Record<string, string>)[c.id] || "—"}
                       </td>
                     );
                   })}
@@ -246,11 +264,10 @@ export default function ChartRenderer({
       const rowsCount = effectiveRows || 4;
       const colsCount = effectiveCols || 7;
 
-      const ALL_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      const days = ALL_DAYS.slice(0, colsCount);
+      const standardDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const days = Array.from({ length: colsCount }, (_, i) => standardDays[i] || `Day ${i + 1}`);
 
-      const ALL_WEEKS = ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"];
-      const weeks = ALL_WEEKS.slice(0, rowsCount);
+      const weeks = Array.from({ length: rowsCount }, (_, i) => i < 12 ? `Week ${i + 1}` : `W${i + 1}`);
 
       const getCellValue = (r: number, c: number) => {
         const matrix = [
@@ -261,29 +278,32 @@ export default function ChartRenderer({
           [92, 93, 91, 94, 95, 80, 80],
           [90, 92, 94, 91, 93, 75, 76],
         ];
-        return matrix[r % 6][c % 7];
+        if (r < 6 && c < 7) {
+          return matrix[r][c];
+        }
+        return ((r * 11 + c * 7 + 83) % 27) + 72;
       };
 
       return (
-        <div className="w-full h-44 flex flex-col justify-end pt-2 text-xs">
+        <div className="w-full h-48 sm:h-56 overflow-auto flex flex-col justify-end pt-2 text-xs">
           <div
-            className="w-full grid gap-1.5 h-full items-end"
+            className="w-full grid gap-1.5 h-full items-end min-w-max pb-1"
             style={{
-              gridTemplateColumns: `auto repeat(${colsCount}, minmax(0, 1fr))`,
+              gridTemplateColumns: `auto repeat(${colsCount}, minmax(36px, 1fr))`,
             }}
           >
             {/* Header column (Week labels) */}
-            <div className="flex flex-col gap-1 justify-end pb-0.5 font-mono text-[9px] text-slate-400">
+            <div className="flex flex-col gap-1 justify-end pb-0.5 font-mono text-[9px] text-slate-400 sticky left-0 bg-white/90 dark:bg-[#0c1017]/90 z-10">
               {weeks.map((w) => (
-                <div key={w} className="h-7 flex items-center justify-end pr-2 font-semibold">
+                <div key={w} className="h-7 flex items-center justify-end pr-2 font-semibold whitespace-nowrap">
                   {w}
                 </div>
               ))}
             </div>
             {/* Day columns */}
             {days.map((day, cIdx) => (
-              <div key={day} className="flex flex-col gap-1 h-full justify-end">
-                <div className="text-center font-bold text-slate-600 dark:text-zinc-400 mb-1 text-[10px] uppercase">
+              <div key={day} className="flex flex-col gap-1 h-full justify-end min-w-[36px]">
+                <div className="text-center font-bold text-slate-600 dark:text-zinc-400 mb-1 text-[10px] uppercase truncate">
                   {day}
                 </div>
                 {weeks.map((_, rIdx) => {
