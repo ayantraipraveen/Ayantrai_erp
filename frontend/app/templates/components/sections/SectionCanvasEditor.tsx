@@ -233,6 +233,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
   const [chartType, setChartType] = useState<GraphType>("bar");
   const [chartDataSource, setChartDataSource] = useState("ppe_sensor_compliance");
   const [chartDesc, setChartDesc] = useState("");
+  const [chartColor, setChartColor] = useState("#9D61FF");
 
   // Key Insight Modal
   const [insightModalOpen, setInsightModalOpen] = useState(false);
@@ -491,8 +492,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
     dispatch(showGlobalToast({ message: "Insight removed.", type: "info" }));
   };
 
-  // Chart SVG Renderers
-  const renderLiveChart = (chart: LibraryChartCard) => {
+  // Chart SVG Renderers — accepts optional override color
+  const renderLiveChart = (chart: LibraryChartCard, color = "#3B82F6") => {
     switch (chart.chartType) {
       case "line":
         return (
@@ -500,8 +501,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
             <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
               <defs>
                 <linearGradient id={`grad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#9D61FF" stopOpacity="0.35" />
-                  <stop offset="100%" stopColor="#9D61FF" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+                  <stop offset="100%" stopColor={color} stopOpacity="0.0" />
                 </linearGradient>
               </defs>
               {/* Y-axis */}
@@ -525,7 +526,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
               {/* Area fill */}
               <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14 L 405 108 L 45 108 Z" fill={`url(#grad-${chart.id})`} />
               {/* Line */}
-              <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14" fill="none" stroke="#9D61FF" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
               {/* Points */}
               {[
                 {cx:45,cy:95,val:"88"},
@@ -535,8 +536,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                 {cx:405,cy:14,val:"100"},
               ].map((pt,i)=>(
                 <g key={i}>
-                  <circle cx={pt.cx} cy={pt.cy} r="3.5" fill="#fff" stroke="#9D61FF" strokeWidth="2" />
-                  <text x={pt.cx} y={pt.cy-7} fontSize="8" fontWeight="bold" textAnchor="middle" fill="#9D61FF">{pt.val}</text>
+                  <circle cx={pt.cx} cy={pt.cy} r="3.5" fill="#fff" stroke={color} strokeWidth="2" />
+                  <text x={pt.cx} y={pt.cy-7} fontSize="8" fontWeight="bold" textAnchor="middle" fill={color}>{pt.val}</text>
                 </g>
               ))}
             </svg>
@@ -756,7 +757,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                 const totalH = b.h1 + b.h2 + b.h3 + b.h4;
                 return (
                   <g key={i}>
-                    <rect x={b.x-16} y={108-b.h1} width="32" height={b.h1} fill="#3B82F6" />
+                    <rect x={b.x-16} y={108-b.h1} width="32" height={b.h1} fill={color} />
                     <rect x={b.x-16} y={108-b.h1-b.h2} width="32" height={b.h2} fill="#10B981" />
                     <rect x={b.x-16} y={108-b.h1-b.h2-b.h3} width="32" height={b.h3} fill="#F59E0B" />
                     <rect x={b.x-16} y={108-totalH} width="32" height={b.h4} fill="#F43F5E" />
@@ -766,7 +767,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                 );
               })}
               {/* Legend */}
-              {[{c:"#3B82F6",l:"Civil"},{c:"#10B981",l:"PPE"},{c:"#F59E0B",l:"Safety"},{c:"#F43F5E",l:"Risk"}].map((lg,i)=>(
+              {[{c:color,l:"Civil"},{c:"#10B981",l:"PPE"},{c:"#F59E0B",l:"Safety"},{c:"#F43F5E",l:"Risk"}].map((lg,i)=>(
                 <g key={i}><rect x={42+i*60} y="10" width="7" height="7" fill={lg.c} rx="1" /><text x={52+i*60} y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">{lg.l}</text></g>
               ))}
             </svg>
@@ -796,15 +797,15 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                 { x: 400, v1: 70, v2: 50, label: "Admin" },
               ].map((b, i) => (
                 <g key={i}>
-                  <rect x={b.x-18} y={108-b.v1} width="16" height={b.v1} fill="#F59E0B" rx="2" />
-                  <rect x={b.x+2}  y={108-b.v2} width="16" height={b.v2} fill="#EF4444" rx="2" />
+                  <rect x={b.x-18} y={108-b.v1} width="16" height={b.v1} fill={color} rx="2" />
+                  <rect x={b.x+2}  y={108-b.v2} width="16" height={b.v2} fill="#F43F5E" rx="2" />
                   <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
                   <text x={b.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
                 </g>
               ))}
               {/* Legend */}
-              <rect x="42" y="10" width="7" height="7" fill="#F59E0B" rx="1" /><text x="52" y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">Actual</text>
-              <rect x="90" y="10" width="7" height="7" fill="#EF4444" rx="1" /><text x="100" y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">Target</text>
+              <rect x="42" y="10" width="7" height="7" fill={color} rx="1" /><text x="52" y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">Actual</text>
+              <rect x="90" y="10" width="7" height="7" fill="#F43F5E" rx="1" /><text x="100" y="16" fontSize="7" fill="currentColor" fillOpacity="0.6">Target</text>
             </svg>
           </div>
         );
@@ -831,14 +832,14 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                   <text x={t.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
                 </g>
               ))}
-              {/* Line 1 - Purple */}
-              <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14" fill="none" stroke="#9D61FF" strokeWidth="2.5" strokeLinecap="round" />
-              {[{cx:45,cy:95},{cx:175,cy:65},{cx:295,cy:28},{cx:405,cy:14}].map((p,i)=><circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#9D61FF" />)}
-              {/* Line 2 - Emerald */}
+              {/* Line 1 - color */}
+              <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+              {[{cx:45,cy:95},{cx:175,cy:65},{cx:295,cy:28},{cx:405,cy:14}].map((p,i)=><circle key={i} cx={p.cx} cy={p.cy} r="3" fill={color} />)}
+              {/* Line 2 - complementary */}
               <path d="M 45 105 Q 110 78, 175 52 T 295 62 T 405 38" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="5 2" />
               {[{cx:45,cy:105},{cx:175,cy:52},{cx:295,cy:62},{cx:405,cy:38}].map((p,i)=><circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#10B981" />)}
               {/* Legend */}
-              <rect x="290" y="10" width="8" height="3" fill="#9D61FF" rx="1" />
+              <rect x="290" y="10" width="8" height="3" fill={color} rx="1" />
               <text x="301" y="14" fontSize="7" fill="currentColor" fillOpacity="0.6">Zone A</text>
               <rect x="290" y="20" width="8" height="3" fill="#10B981" rx="1" />
               <text x="301" y="24" fontSize="7" fill="currentColor" fillOpacity="0.6">Zone B</text>
@@ -872,8 +873,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
             <svg viewBox="0 0 420 130" className="w-full flex-1 overflow-visible">
               <defs>
                 <linearGradient id={`areagrad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.03" />
+                  <stop offset="0%" stopColor={color} stopOpacity="0.5" />
+                  <stop offset="100%" stopColor={color} stopOpacity="0.03" />
                 </linearGradient>
               </defs>
               {/* Y-axis */}
@@ -895,9 +896,9 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                 </g>
               ))}
               <path d="M 45 108 L 45 95 Q 110 42, 175 65 T 295 28 T 405 14 L 405 108 Z" fill={`url(#areagrad-${chart.id})`} />
-              <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
               {[{cx:45,cy:95},{cx:130,cy:50},{cx:220,cy:46},{cx:310,cy:24},{cx:405,cy:14}].map((p,i)=>(
-                <circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#fff" stroke="#3B82F6" strokeWidth="2" />
+                <circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#fff" stroke={color} strokeWidth="2" />
               ))}
             </svg>
           </div>
@@ -1146,8 +1147,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                 { x: 400, height: 65, val: "84.0%",  label: "Subterra." },
               ].map((b, i) => (
                 <g key={i}>
-                  <rect x={b.x-17} y={108-b.height} width="34" height={b.height} rx="4" fill="#3B82F6" />
-                  <text x={b.x} y={108-b.height-5} fontSize="7.5" fontWeight="bold" textAnchor="middle" fill="#3B82F6">{b.val}</text>
+                  <rect x={b.x-17} y={108-b.height} width="34" height={b.height} rx="4" fill={color} />
+                  <text x={b.x} y={108-b.height-5} fontSize="7.5" fontWeight="bold" textAnchor="middle" fill={color}>{b.val}</text>
                   <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
                   <text x={b.x} y="120" fontSize="7" textAnchor="middle" fill="currentColor" fillOpacity="0.5">{b.label}</text>
                 </g>
@@ -1208,8 +1209,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
             <div className="px-4 pt-3 pb-2 flex-shrink-0">
               <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Visualization Type</span>
             </div>
-            <div className="flex-1 overflow-y-auto px-4 pb-4">
-              <div className="grid grid-cols-5 gap-2">
+            <div className="flex-1 overflow-hidden px-3 pb-3">
+              <div className="grid grid-cols-5 gap-1.5 h-full content-start">
                 {[
                   { id: "line", label: "Line Chart", icon: TrendingUp },
                   { id: "multi-line", label: "Multi-line", icon: TrendingUp },
@@ -1243,14 +1244,14 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                       key={t.id}
                       type="button"
                       onClick={() => setChartType(t.id as any)}
-                      className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 cursor-pointer transition-all aspect-square ${
+                      className={`p-1.5 rounded-lg border flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all ${
                         chartType === t.id
                           ? "border-[#9D61FF] bg-purple-500/10 text-[#9D61FF] font-bold"
                           : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:border-[#9D61FF]/50 hover:text-[#9D61FF]"
                       }`}
                     >
-                      <Icon className="w-4 h-4" />
-                      <span className="text-[9px] text-center leading-tight">{t.label}</span>
+                      <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="text-[8px] text-center leading-tight">{t.label}</span>
                     </button>
                   );
                 })}
@@ -1260,20 +1261,62 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
 
           {/* Right Column: Live Preview — fills all remaining height */}
           <div className="flex-1 flex flex-col min-h-0 bg-slate-50/50 dark:bg-zinc-900/30">
-            <div className="px-6 pt-3 pb-2 flex items-center justify-between flex-shrink-0">
-              <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Chart Live Preview</span>
-              <span className="text-[10px] font-mono uppercase text-slate-400 bg-slate-200 dark:bg-zinc-800 px-2 py-0.5 rounded-lg">
-                {chartType}
-              </span>
+            {/* Preview header: label + color badge + color palette */}
+            <div className="px-6 pt-3 pb-2 flex-shrink-0 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">Chart Live Preview</span>
+                <span className="text-[10px] font-mono uppercase text-slate-400 bg-slate-200 dark:bg-zinc-800 px-2 py-0.5 rounded-lg">{chartType}</span>
+              </div>
+              {/* Color Palette */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-slate-400 mr-1">Color:</span>
+                {[
+                  { color: "#9D61FF", label: "Violet" },
+                  { color: "#3B82F6", label: "Blue" },
+                  { color: "#10B981", label: "Emerald" },
+                  { color: "#F59E0B", label: "Amber" },
+                  { color: "#F43F5E", label: "Rose" },
+                  { color: "#06B6D4", label: "Cyan" },
+                  { color: "#8B5CF6", label: "Purple" },
+                  { color: "#F97316", label: "Orange" },
+                  { color: "#64748B", label: "Slate" },
+                ].map((swatch) => (
+                  <button
+                    key={swatch.color}
+                    type="button"
+                    title={swatch.label}
+                    onClick={() => setChartColor(swatch.color)}
+                    className="w-5 h-5 rounded-full border-2 transition-all hover:scale-110 flex-shrink-0"
+                    style={{
+                      backgroundColor: swatch.color,
+                      borderColor: chartColor === swatch.color ? "white" : "transparent",
+                      boxShadow: chartColor === swatch.color ? `0 0 0 2px ${swatch.color}` : "none",
+                    }}
+                  />
+                ))}
+                {/* Custom color picker */}
+                <label
+                  title="Custom color"
+                  className="w-5 h-5 rounded-full border-2 border-dashed border-slate-300 dark:border-zinc-600 flex items-center justify-center cursor-pointer hover:scale-110 transition-all overflow-hidden flex-shrink-0"
+                >
+                  <input
+                    type="color"
+                    value={chartColor}
+                    onChange={(e) => setChartColor(e.target.value)}
+                    className="w-8 h-8 opacity-0 absolute cursor-pointer"
+                  />
+                  <span className="text-[9px] text-slate-400">+</span>
+                </label>
+              </div>
             </div>
-            <div className="flex-1 min-h-0 px-6 pb-6 flex flex-col [&>div]:flex-1 [&>div]:min-h-0 [&>div]:h-auto [&_svg]:h-full [&_svg]:w-full">
+            <div className="flex-1 min-h-0 px-6 pb-6">
               {renderLiveChart({
                 id: "preview",
                 title: chartTitle || "Preview Chart",
                 chartType: chartType,
                 dataSourceField: "custom_telemetry_feed",
                 description: chartDesc || "Chart description preview",
-              })}
+              }, chartColor)}
             </div>
           </div>
         </div>
