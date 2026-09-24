@@ -73,67 +73,75 @@ export default function ChartRenderer({ chart, color = "#3B82F6", colors }: Char
 
     case "donut":
     case "pie":
+      const isPie = chart.chartType === "pie";
       return (
-        <div className="w-full h-44 flex items-center justify-around py-2">
-          <div className="relative w-32 h-32 flex items-center justify-center">
-            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+        <div className="w-full h-48 sm:h-56 flex items-center justify-center gap-8 sm:gap-14 py-2">
+          <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center flex-shrink-0">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 overflow-visible">
               {/* Segment 1 */}
               <circle
                 cx="50"
                 cy="50"
-                r="38"
+                r={isPie ? "25" : "38"}
                 fill="transparent"
                 stroke={c0}
-                strokeWidth="15"
-                strokeDasharray="131 238"
+                strokeWidth={isPie ? "50" : "15"}
+                strokeDasharray={isPie ? "86 157" : "131 238"}
                 strokeDashoffset="0"
               />
               {/* Segment 2 */}
               <circle
                 cx="50"
                 cy="50"
-                r="38"
+                r={isPie ? "25" : "38"}
                 fill="transparent"
                 stroke={c1}
-                strokeWidth="15"
-                strokeDasharray="71 238"
-                strokeDashoffset="-131"
+                strokeWidth={isPie ? "50" : "15"}
+                strokeDasharray={isPie ? "47 157" : "71 238"}
+                strokeDashoffset={isPie ? "-86" : "-131"}
               />
               {/* Segment 3 */}
               <circle
                 cx="50"
                 cy="50"
-                r="38"
+                r={isPie ? "25" : "38"}
                 fill="transparent"
                 stroke={c2}
-                strokeWidth="15"
-                strokeDasharray="36 238"
-                strokeDashoffset="-202"
+                strokeWidth={isPie ? "50" : "15"}
+                strokeDasharray={isPie ? "24 157" : "36 238"}
+                strokeDashoffset={isPie ? "-133" : "-202"}
               />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-base font-extrabold font-mono text-slate-900 dark:text-white">98.7%</span>
-              <span className="text-[9px] font-bold uppercase text-slate-400">Compliant</span>
-            </div>
+            {!isPie && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white leading-none">
+                  98.7%
+                </span>
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+                  Compliant
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Legend */}
-          <div className="space-y-2 text-xs font-mono">
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: c0 }} />
-              <span className="text-slate-700 dark:text-zinc-300">Smart Helmets: 55%</span>
+          <div className="space-y-3 text-xs sm:text-sm font-medium">
+            <div className="flex items-center gap-2.5">
+              <div className="w-3 h-3 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: c0 }} />
+              <span className="text-slate-700 dark:text-zinc-300">Smart Helmets: <b className="font-bold">55%</b></span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: c1 }} />
-              <span className="text-slate-700 dark:text-zinc-300">Vest Hubs: 30%</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-3 h-3 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: c1 }} />
+              <span className="text-slate-700 dark:text-zinc-300">Vest Hubs: <b className="font-bold">30%</b></span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: c2 }} />
-              <span className="text-slate-700 dark:text-zinc-300">Grounding Boots: 15%</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-3 h-3 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: c2 }} />
+              <span className="text-slate-700 dark:text-zinc-300">Grounding Boots: <b className="font-bold">15%</b></span>
             </div>
           </div>
         </div>
       );
+
 
     case "table":
       return (
