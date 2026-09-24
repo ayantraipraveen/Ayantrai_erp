@@ -304,6 +304,9 @@ export default function WatermarkPage() {
   // Clear all watermarks from list & localStorage
   const handleClearAll = () => {
     if (watermarks.length === 0) return;
+    if (typeof window !== "undefined" && !window.confirm("Are you sure you want to remove all uploaded SVGs from this library?")) {
+      return;
+    }
     persistWatermarks([]);
     setSelectedId(null);
     setSizeScale(100);
@@ -671,17 +674,6 @@ export default function WatermarkPage() {
                   ± Flip
                 </button>
 
-                {/* Quick 100% Reset Chip */}
-                {sizeScale !== 100 && (
-                  <button
-                    type="button"
-                    onClick={() => handleUpdateScale(100)}
-                    className="px-1.5 py-0.5 rounded text-[10.5px] font-mono font-bold bg-purple-500/10 text-[#9D61FF] hover:bg-[#9D61FF] hover:text-white transition-all cursor-pointer"
-                    title="Reset scale to default 100%"
-                  >
-                    100%
-                  </button>
-                )}
 
                 {/* Quick Presets */}
                 <div className="hidden xl:flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-zinc-800">
