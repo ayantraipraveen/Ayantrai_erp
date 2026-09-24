@@ -19,6 +19,7 @@ import {
   setSelectedLibrarySectionId,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { FileText, Layers, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 /**
  * Templates & Reusable Sections Hub Page.
@@ -65,8 +66,8 @@ export default function TemplatesPage() {
             </span>
           </button>
 
-          <button
-            type="button"
+          <Link
+            href="/templates/Sections&Graphs"
             onClick={() => {
               dispatch(setTemplateActiveTab("sections"));
               dispatch(setSelectedLibrarySectionId(null));
@@ -78,7 +79,7 @@ export default function TemplatesPage() {
             }`}
           >
             <Layers className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Sections & Graphs</span>
+            <span>Sections &amp; Graphs</span>
             <span
               className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
                 templateActiveTab === "sections"
@@ -88,7 +89,7 @@ export default function TemplatesPage() {
             >
               {librarySections.length}
             </span>
-          </button>
+          </Link>
         </div>
 
         {templateActiveTab === "sections" && selectedLibrarySectionId && (
