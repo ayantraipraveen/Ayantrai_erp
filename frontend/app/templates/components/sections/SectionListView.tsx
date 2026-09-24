@@ -37,11 +37,9 @@ import {
   duplicateLibrarySection,
   deleteLibrarySection,
   showGlobalToast,
-  addChartToSection,
-  GraphType,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { Tooltip } from "@/app/Component";
-import ChartEditorPanel from "./ChartEditorPanel";
+import Link from "next/link";
 
 interface SectionListViewProps {
   onSelectSection: (sectionId: string) => void;
@@ -70,61 +68,6 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
 
   // Delete confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  // Chart editor state for direct list-view telemetry authoring
-  const [chartEditorOpen, setChartEditorOpen] = useState(false);
-  const [chartTitle, setChartTitle] = useState("");
-  const [chartType, setChartType] = useState<GraphType>("bar");
-  const [chartDesc, setChartDesc] = useState("");
-  const [chartColor, setChartColor] = useState("#9D61FF");
-  const [chartColors, setChartColors] = useState<string[]>(["#9D61FF"]);
-  const [gridRows, setGridRows] = useState(4);
-  const [gridCols, setGridCols] = useState(7);
-
-  const handleOpenChartEditor = () => {
-    setChartTitle("");
-    setChartType("bar");
-    setChartDesc("");
-    setChartColor("#9D61FF");
-    setChartColors(["#9D61FF"]);
-    setGridRows(4);
-    setGridCols(7);
-    setChartEditorOpen(true);
-    
-  };
-
-  const handleSaveChartFromListView = () => {
-    if (!chartTitle.trim()) {
-      dispatch(showGlobalToast({ message: "Please provide a chart title.", type: "warning" }));
-      return;
-    }
-
-    const finalColors = chartColors && chartColors.length > 0 ? chartColors : [chartColor];
-    const targetSection = librarySections[0];
-
-    if (targetSection) {
-      dispatch(
-        addChartToSection({
-          sectionId: targetSection.id,
-          chart: {
-            title: chartTitle.trim(),
-            chartType,
-            dataSourceField: "custom_telemetry_feed",
-            description: chartDesc.trim(),
-            color: chartColor,
-            colors: finalColors,
-            gridRows: (chartType === "heatmap" || chartType === "table") ? gridRows : undefined,
-            gridCols: (chartType === "heatmap" || chartType === "table") ? gridCols : undefined,
-          },
-        })
-      );
-      dispatch(showGlobalToast({ message: `Chart added to "${targetSection.name}"!`, type: "success" }));
-    } else {
-      dispatch(showGlobalToast({ message: "Telemetry chart saved!", type: "success" }));
-    }
-
-    setChartEditorOpen(false);
-  };
 
   // Statistics
   const coreSectionsCount = useMemo(
@@ -207,30 +150,6 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
     setDeleteConfirmId(null);
     dispatch(showGlobalToast({ message: `Deleted custom section "${name}".`, type: "info" }));
   };
-
-  if (chartEditorOpen) {
-    return (
-      <ChartEditorPanel
-        editingChart={null}
-        chartTitle={chartTitle}
-        setChartTitle={setChartTitle}
-        chartType={chartType}
-        setChartType={setChartType}
-        chartDesc={chartDesc}
-        setChartDesc={setChartDesc}
-        chartColor={chartColor}
-        setChartColor={setChartColor}
-        chartColors={chartColors}
-        setChartColors={setChartColors}
-        gridRows={gridRows}
-        setGridRows={setGridRows}
-        gridCols={gridCols}
-        setGridCols={setGridCols}
-        onSave={handleSaveChartFromListView}
-        onClose={() => setChartEditorOpen(false)}
-      />
-    );
-  }
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-4 sm:px-6 lg:px-7 space-y-3.5 animate-fadeIn">
@@ -336,17 +255,27 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           </button>
         </div>
 
-        {/* Actions: Back to Blueprints + Create Section */}
+        {/* Actions: Back to Blueprints + Chart + Watermark + Create Section */}
         <div className="flex items-center gap-2">
-          {/* Chart Button */}
-          <button
-            type="button"
-            onClick={handleOpenChartEditor}
+          {onBackToTemplates && (
+            <button
+              type="button"
+              onClick={onBackToTemplates}
+              className="h-9 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Blueprints</span>
+            </button>
+          )}
+
+          {/* Chart Button navigating to /templates/Sections&Graphs/charts */}
+          <Link
+            href="/templates/Sections&Graphs/charts"
             className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
           >
             <BarChart2 className="w-3.5 h-3.5 text-[#9D61FF]" />
             <span>Chart</span>
-          </button>
+          </Link>
 
           {/* Watermark Button */}
           <button
