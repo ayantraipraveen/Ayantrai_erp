@@ -88,6 +88,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
   const [chartDataSource, setChartDataSource] = useState("ppe_sensor_compliance");
   const [chartDesc, setChartDesc] = useState("");
   const [chartColor, setChartColor] = useState("#9D61FF");
+  const [chartColors, setChartColors] = useState<string[]>([]);
 
   // Key Insight Modal State
   const [insightModalOpen, setInsightModalOpen] = useState(false);
@@ -208,6 +209,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
     setChartDataSource("ppe_sensor_compliance");
     setChartDesc("");
     setChartColor("#9D61FF");
+    setChartColors([]);
     setChartModalOpen(true);
     dispatch(setChartEditorFullscreen(true));
   };
@@ -218,6 +220,9 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
     setChartType(chart.chartType);
     setChartDataSource(chart.dataSourceField);
     setChartDesc(chart.description || "");
+    const baseColor = chart.color || chart.colors?.[0] || "#9D61FF";
+    setChartColor(baseColor);
+    setChartColors(chart.colors && chart.colors.length > 0 ? chart.colors : [baseColor]);
     setChartModalOpen(true);
     dispatch(setChartEditorFullscreen(true));
   };
@@ -230,6 +235,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
   const handleSaveChart = () => {
     if (!chartTitle.trim()) return;
 
+    const finalColors = chartColors && chartColors.length > 0 ? chartColors : [chartColor];
+
     if (editingChart) {
       dispatch(
         updateChartInSection({
@@ -240,6 +247,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
             chartType,
             dataSourceField: chartDataSource,
             description: chartDesc.trim(),
+            color: chartColor,
+            colors: finalColors,
           },
         })
       );
@@ -253,6 +262,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
             chartType,
             dataSourceField: chartDataSource,
             description: chartDesc.trim(),
+            color: chartColor,
+            colors: finalColors,
           },
         })
       );
@@ -366,6 +377,8 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
         setChartDesc={setChartDesc}
         chartColor={chartColor}
         setChartColor={setChartColor}
+        chartColors={chartColors}
+        setChartColors={setChartColors}
         onSave={() => {
           setChartDataSource("custom_telemetry_feed");
           handleSaveChart();
@@ -684,7 +697,11 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                     </div>
 
                     {/* Live SVG Rendering */}
-                    <ChartRenderer chart={chart} />
+                    <ChartRenderer
+                      chart={chart}
+                      color={chart.color || chart.colors?.[0]}
+                      colors={chart.colors}
+                    />
 
                     {chart.description && (
                       <p className="text-[11px] text-slate-500 dark:text-zinc-400 pt-1 border-t border-slate-100 dark:border-zinc-800/80">

@@ -282,6 +282,7 @@ export interface LibraryChartCard {
   chartType: GraphType;
   dataSourceField: string;
   description?: string;
+  color?: string;
   colors?: string[];
 }
 

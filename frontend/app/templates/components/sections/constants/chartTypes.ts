@@ -232,6 +232,12 @@ export const MULTI_SERIES_CHART_CONFIG: Partial<Record<GraphType, ChartSeriesIte
     { id: "safety", label: "Safety", defaultColor: "#F59E0B" },
     { id: "risk", label: "Risk", defaultColor: "#F43F5E" },
   ],
+  "horizontal-bar": [
+    { id: "civil", label: "Civil", defaultColor: "#F97316" },
+    { id: "mech", label: "Mechanical", defaultColor: "#10B981" },
+    { id: "elec", label: "Electrical", defaultColor: "#F59E0B" },
+    { id: "fab", label: "Fabrication", defaultColor: "#F43F5E" },
+  ],
   "donut": [
     { id: "helmets", label: "Smart Helmets", defaultColor: "#3B82F6" },
     { id: "vests", label: "Vest Hubs", defaultColor: "#10B981" },
@@ -252,7 +258,35 @@ export const MULTI_SERIES_CHART_CONFIG: Partial<Record<GraphType, ChartSeriesIte
     { id: "zoneB", label: "Zone B", defaultColor: "#3B82F6" },
     { id: "zoneC", label: "Zone C", defaultColor: "#F59E0B" },
   ],
+  "waterfall": [
+    { id: "increase", label: "Positive (+)", defaultColor: "#10B981" },
+    { id: "decrease", label: "Negative (-)", defaultColor: "#F43F5E" },
+    { id: "base", label: "Base / Total", defaultColor: "#64748B" },
+  ],
+  "treemap": [
+    { id: "itemA", label: "Item A", defaultColor: "#3B82F6" },
+    { id: "itemB", label: "Item B", defaultColor: "#10B981" },
+    { id: "itemC", label: "Item C", defaultColor: "#F59E0B" },
+    { id: "itemD", label: "Item D", defaultColor: "#F43F5E" },
+  ],
+  "heatmap": [
+    { id: "optimal", label: "High / Optimal", defaultColor: "#10B981" },
+    { id: "moderate", label: "Moderate", defaultColor: "#F59E0B" },
+    { id: "risk", label: "Attention / Risk", defaultColor: "#F43F5E" },
+  ],
 };
+
+export interface ThemePreset {
+  name: string;
+  colors: string[];
+}
+
+export const THEME_PRESETS: ThemePreset[] = [
+  { name: "Vibrant", colors: ["#9D61FF", "#10B981", "#F59E0B", "#F43F5E"] },
+  { name: "Ocean", colors: ["#3B82F6", "#06B6D4", "#10B981", "#8B5CF6"] },
+  { name: "Sunset", colors: ["#F43F5E", "#F97316", "#F59E0B", "#9D61FF"] },
+  { name: "Emerald", colors: ["#10B981", "#06B6D4", "#3B82F6", "#F59E0B"] },
+];
 
 export const getChartSeriesConfig = (chartType: GraphType, primaryColor = "#9D61FF"): ChartSeriesItem[] => {
   const custom = MULTI_SERIES_CHART_CONFIG[chartType];
@@ -261,4 +295,5 @@ export const getChartSeriesConfig = (chartType: GraphType, primaryColor = "#9D61
   }
   return [{ id: "primary", label: "Chart Color", defaultColor: primaryColor }];
 };
+
 
