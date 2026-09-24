@@ -410,7 +410,7 @@ export default function Tooltip({
   return (
     <div
       ref={triggerRef}
-      className={`relative inline-flex items-center ${className}`}
+      className={`relative inline-flex items-center max-w-full ${className || ""}`}
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}

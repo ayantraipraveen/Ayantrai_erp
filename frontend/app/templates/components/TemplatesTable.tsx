@@ -124,8 +124,8 @@ export default function TemplatesTable() {
                             {template.id}
                           </span>
                         </div>
-                        <Tooltip content={template.name} position="top" maxWidth="max-w-[320px]">
-                          <div className="font-semibold text-[12.5px] leading-snug text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors truncate cursor-default turncate">
+                        <Tooltip content={template.name} position="top" maxWidth="max-w-[320px]" className="w-full min-w-0 block">
+                          <div className="w-full block truncate font-semibold text-[12.5px] leading-snug text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors cursor-default">
                             {template.name}
                           </div>
                         </Tooltip>
@@ -135,10 +135,10 @@ export default function TemplatesTable() {
 
                   {/* Target Site */}
                   <td className="py-2.5 px-2 overflow-hidden">
-                    <Tooltip content={template.site_name} position="top" maxWidth="max-w-[260px]">
-                      <div className="flex items-center gap-1.5 min-w-0 cursor-default">
+                    <Tooltip content={template.site_name} position="top" maxWidth="max-w-[260px]" className="w-full min-w-0 block">
+                      <div className="flex items-center gap-1.5 w-full min-w-0 cursor-default">
                         <Building className="w-3.5 h-3.5 text-[#9D61FF] flex-shrink-0" />
-                        <span className="font-medium text-[12px] text-slate-800 dark:text-zinc-200 truncate">
+                        <span className="font-medium text-[12px] text-slate-800 dark:text-zinc-200 truncate flex-1 min-w-0">
                           {template.site_name}
                         </span>
                       </div>

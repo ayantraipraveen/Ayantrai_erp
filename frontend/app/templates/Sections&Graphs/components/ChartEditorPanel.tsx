@@ -153,9 +153,9 @@ export default function ChartEditorPanel({
         </div>
       )}
 
-      <div className="flex flex-1 min-h-0 h-full bg-transparent">
-        {/* Left Column: Chart Type Grid */}
-        <div className="w-[42%] lg:w-[40%] xl:w-[38%] border-r border-slate-200/80 dark:border-zinc-800/80 flex flex-col min-h-0 h-full bg-transparent">
+      <div className="flex flex-1 min-h-0 h-full overflow-hidden bg-transparent">
+        {/* Left Column: Chart Type Grid (Fixed Width with flex-shrink-0 for 100% stability) */}
+        <div className="w-[380px] lg:w-[410px] xl:w-[430px] flex-shrink-0 border-r border-slate-200/80 dark:border-zinc-800/80 flex flex-col min-h-0 h-full bg-transparent">
           <div className="px-4 pt-3 pb-2 flex-shrink-0 flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
               Visualization Type
@@ -193,7 +193,7 @@ export default function ChartEditorPanel({
         </div>
 
         {/* Right Column: Live Preview Area (Clean, Borderless, Spaciously Proportioned) */}
-        <div className="flex-1 flex flex-col min-h-0 bg-transparent px-6 py-3 overflow-hidden">
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col bg-transparent px-6 py-3 overflow-hidden">
           {/* Preview Toolbar */}
           <div className="flex flex-col gap-2.5 pb-3 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0">
             {/* Top row: Live Preview badge + Active color swatch palette */}
@@ -479,8 +479,8 @@ export default function ChartEditorPanel({
           </div>
 
           {/* Full Chart Display (Scroll isolated strictly to chart section) */}
-          <div className="flex-1 min-h-0 flex items-center justify-center py-2 px-1 overflow-auto custom-scrollbar w-full h-full">
-            <div className="w-full h-full flex items-center justify-center">
+          <div className="flex-1 min-w-0 min-h-0 flex items-center justify-center py-2 px-1 overflow-auto custom-scrollbar w-full h-full">
+            <div className="w-full h-full min-w-0 min-h-0 flex items-center justify-center">
               <ChartRenderer
                 chart={{
                   id: "preview",

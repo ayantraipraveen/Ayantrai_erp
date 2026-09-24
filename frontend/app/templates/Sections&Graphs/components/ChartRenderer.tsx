@@ -198,7 +198,7 @@ export default function ChartRenderer({
 
       return (
         <div className="w-full h-full max-h-[520px] overflow-auto rounded-xl border border-slate-200/80 dark:border-zinc-800/80 text-xs custom-scrollbar bg-white/40 dark:bg-zinc-900/40 backdrop-blur-sm">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-max text-left border-collapse">
             <thead>
               <tr className="bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 font-mono text-[10px] uppercase sticky top-0 z-10 shadow-2xs backdrop-blur-sm">
                 {cols.map((c) => (
