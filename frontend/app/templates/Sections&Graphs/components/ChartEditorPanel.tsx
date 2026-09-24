@@ -193,7 +193,7 @@ export default function ChartEditorPanel({
         </div>
 
         {/* Right Column: Live Preview Area (Clean, Borderless, Spaciously Proportioned) */}
-        <div className="flex-1 flex flex-col min-h-0 bg-transparent px-6 py-4 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-h-0 bg-transparent px-6 py-3 overflow-hidden">
           {/* Preview Toolbar */}
           <div className="flex flex-col gap-2.5 pb-3 border-b border-slate-100 dark:border-zinc-800/80 flex-shrink-0">
             {/* Top row: Live Preview badge + Active color swatch palette */}
@@ -478,9 +478,9 @@ export default function ChartEditorPanel({
             )}
           </div>
 
-          {/* Full Chart Display (No inner border, no inner bg, zero clipping) */}
-          <div className="flex-1 min-h-0 flex items-center justify-center py-4 px-2 overflow-visible w-full h-full">
-            <div className="w-full h-full max-h-[580px] flex items-center justify-center">
+          {/* Full Chart Display (Scroll isolated strictly to chart section) */}
+          <div className="flex-1 min-h-0 flex items-center justify-center py-2 px-1 overflow-auto custom-scrollbar w-full h-full">
+            <div className="w-full h-full flex items-center justify-center">
               <ChartRenderer
                 chart={{
                   id: "preview",

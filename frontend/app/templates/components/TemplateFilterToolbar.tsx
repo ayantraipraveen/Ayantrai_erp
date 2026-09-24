@@ -37,11 +37,11 @@ export default function TemplateFilterToolbar() {
 
   return (
     <div className="p-0 bg-transparent">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {/* Left Side: Search + Status Dropdown + Site Dropdown + Reset */}
-        <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-2.5 flex-wrap">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-2.5">
+        {/* Left Side: Search + Status Dropdown + Site Dropdown + Date Range + Reset */}
+        <div className="flex flex-1 items-center gap-2 flex-wrap min-w-0">
           {/* Search Input (Standardized h-9) */}
-          <div className="relative flex-1 min-w-[200px] max-w-sm h-9">
+          <div className="relative flex-1 min-w-[160px] max-w-[220px] h-9">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
             <input
               type="text"
@@ -62,7 +62,7 @@ export default function TemplateFilterToolbar() {
           </div>
 
           {/* Status Dropdown Filter (Standardized h-9) */}
-          <div className="w-full sm:w-48 h-9">
+          <div className="w-36 sm:w-40 h-9 flex-shrink-0">
             <CustomDropdown
               options={statusFilterOptions}
               value={statusFilter}
@@ -75,7 +75,7 @@ export default function TemplateFilterToolbar() {
           </div>
 
           {/* Industrial Site Dropdown Filter (Standardized h-9) */}
-          <div className="w-full sm:w-56 h-9">
+          <div className="w-40 sm:w-44 h-9 flex-shrink-0">
             <CustomDropdown
               options={siteFilterOptions}
               value={siteFilter}
@@ -88,7 +88,7 @@ export default function TemplateFilterToolbar() {
           </div>
 
           {/* Universal Date Range Filter (Standardized h-9) */}
-          <div className="w-full sm:w-52 h-9">
+          <div className="w-38 sm:w-42 h-9 flex-shrink-0">
             <DateRangeFilter
               value={dateRange}
               onChange={setDateRange}
@@ -112,7 +112,7 @@ export default function TemplateFilterToolbar() {
         </div>
 
         {/* Right Side: Results counter + View Mode Toggle + Create Button */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 flex-shrink-0 ml-auto xl:ml-0">
           <span className="text-xs text-slate-500 dark:text-zinc-400 font-mono">
             Showing <strong className="text-slate-900 dark:text-white">{filteredTemplates.length}</strong> of {totalCount}
           </span>

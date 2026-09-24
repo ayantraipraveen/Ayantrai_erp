@@ -27,7 +27,6 @@ import {
   Calendar,
   X,
   PlusCircle,
-  ArrowLeft,
   Stamp,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
@@ -255,19 +254,8 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           </button>
         </div>
 
-        {/* Actions: Back to Blueprints + Chart + Watermark + Create Section */}
+        {/* Actions: Chart + Watermark + Create Section */}
         <div className="flex items-center gap-2">
-          {onBackToTemplates && (
-            <button
-              type="button"
-              onClick={onBackToTemplates}
-              className="h-9 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Blueprints</span>
-            </button>
-          )}
-
           {/* Chart Button navigating to /templates/Sections&Graphs/charts */}
           <Link
             href="/templates/Sections&Graphs/charts"

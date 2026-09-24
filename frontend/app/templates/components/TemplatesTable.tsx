@@ -17,7 +17,6 @@ import {
   MessageSquare,
   X,
   Check,
-  History,
   RotateCcw,
 } from "lucide-react";
 import { Tooltip, RejectionModal } from "../../Component";
@@ -113,10 +112,10 @@ export default function TemplatesTable() {
                     key={template.id}
                     className="group hover:bg-slate-50/80 dark:hover:bg-zinc-800/30 transition-colors"
                   >
-                  {/* Template & Blueprint */}
+                  {/* Template & Blueprint (Code and Name only) */}
                   <td className="py-2.5 px-2 overflow-hidden">
-                    <div className="flex items-start gap-2 min-w-0">
-                      <div className="p-1.5 rounded-lg bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex-shrink-0 mt-0.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="p-1.5 rounded-lg bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex-shrink-0">
                         <FileText className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1 overflow-hidden">
@@ -124,23 +123,10 @@ export default function TemplatesTable() {
                           <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold border border-slate-200 dark:border-zinc-700/60 flex-shrink-0">
                             {template.id}
                           </span>
-                          <span className="text-[11px] font-mono text-slate-400 dark:text-zinc-500">
-                            {template.version}
-                          </span>
-                          <Tooltip content={`Version History (${template.version})`} position="top">
-                            <span className="cursor-pointer text-slate-400 hover:text-[#9D61FF] transition-colors p-0.5">
-                              <History className="w-3 h-3" />
-                            </span>
-                          </Tooltip>
                         </div>
                         <Tooltip content={template.name} position="top" maxWidth="max-w-[320px]">
                           <div className="font-semibold text-[12.5px] leading-snug text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors truncate cursor-default">
                             {template.name}
-                          </div>
-                        </Tooltip>
-                        <Tooltip content={template.description} position="bottom" maxWidth="max-w-[340px]">
-                          <div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate cursor-default mt-0.5">
-                            {template.description}
                           </div>
                         </Tooltip>
                       </div>
