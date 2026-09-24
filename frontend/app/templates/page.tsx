@@ -9,7 +9,6 @@ import {
   TemplateReviewModal,
   TemplateBuilderDrawer,
   DeleteTemplateModal,
-  SectionsCatalogModal,
 } from "./components";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -78,7 +77,6 @@ export default function TemplatesPage() {
       <TemplateReviewModal />
       <TemplateBuilderDrawer />
       <DeleteTemplateModal />
-      <SectionsCatalogModal />
     </div>
   );
 }

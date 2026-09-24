@@ -4,11 +4,7 @@
 export * from "./template-management";
 
 // ============================================================================
-// 2. Sections & Telemetry Graphs Management Components (Sub-Module)
-// ============================================================================
-export * from "./sections";
-
-// ============================================================================
-// 3. Shared Context, Hooks & Bridge Helpers
+// 2. Shared Context, Hooks & Bridge Helpers
 // ============================================================================
 export * from "./TemplatesContext";
+

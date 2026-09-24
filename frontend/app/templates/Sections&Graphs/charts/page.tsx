@@ -34,7 +34,7 @@ export default function SectionsGraphsChartsPage() {
 
   const handleReturnToTemplates = () => {
     dispatch(setTemplateActiveTab("sections"));
-    router.push("/templates");
+    router.push("/templates/Sections&Graphs");
   };
 
   const handleSaveChart = () => {
@@ -86,12 +86,12 @@ export default function SectionsGraphsChartsPage() {
   };
 
   return (
-    <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden bg-white dark:bg-[#0c1017]">
+    <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden ">
       {/* Top Breadcrumb Navigation */}
       <div className="px-4 sm:px-6 lg:px-7 py-2.5 flex-shrink-0 flex items-center justify-between gap-3 border-b border-slate-200/80 dark:border-zinc-800/80 bg-white/50 dark:bg-[#0c1017]/50 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <Link
-            href="/templates"
+            href="/templates/Sections&Graphs"
             onClick={() => dispatch(setTemplateActiveTab("sections"))}
             className="h-8.5 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
           >
@@ -107,8 +107,10 @@ export default function SectionsGraphsChartsPage() {
               Sections &amp; Graphs / Telemetry Chart Studio
             </span>
           </div>
-        </div>
-
+        </div> */}
+<div><h3 className="text-lg font-bold">
+         Telemetry Chart
+        </h3></div>
         <button
           type="button"
           onClick={handleReturnToTemplates}

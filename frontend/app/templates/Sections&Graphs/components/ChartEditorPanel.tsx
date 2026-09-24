@@ -116,9 +116,9 @@ export default function ChartEditorPanel({
   };
 
   return (
-    <div className="flex-1 min-h-0 bg-white dark:bg-[#0c1017] flex flex-col overflow-hidden animate-fadeIn text-slate-900 dark:text-white">
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn text-slate-900 dark:text-white">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 p-6 flex-shrink-0">
+      {/* <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 p-6 flex-shrink-0">
         <h3 className="text-lg font-bold">
           {editingChart ? "Edit Telemetry Chart" : "Add Telemetry Chart"}
         </h3>
@@ -129,7 +129,7 @@ export default function ChartEditorPanel({
         >
           <X className="w-5 h-5" />
         </button>
-      </div>
+      </div> */}
 
       {/* Compact inputs row - no wasted vertical space */}
       <div className="flex-shrink-0 flex gap-4 px-6 py-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/30 dark:bg-zinc-900/20">

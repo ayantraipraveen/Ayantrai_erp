@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Layers, Clock, CheckCircle2, FileCheck2 } from "lucide-react";
 import { useTemplates } from "./TemplatesContext";
 
@@ -9,7 +10,7 @@ import { useTemplates } from "./TemplatesContext";
  * Takes ZERO props - reads directly from TemplatesContext / Redux.
  */
 export default function TemplateMetricsBar() {
-  const { totalCount, pendingCount, activeCount, globalSections, setSectionsModalOpen } = useTemplates();
+  const { totalCount, pendingCount, activeCount, globalSections } = useTemplates();
 
   const totalSectionsCount = globalSections.length;
   const customSectionsCount = globalSections.filter((s) => s.isCustom).length;
@@ -46,8 +47,8 @@ export default function TemplateMetricsBar() {
         </div>
       </div>
 
-      <div
-        onClick={() => setSectionsModalOpen(true)}
+      <Link
+        href="/templates/Sections&Graphs"
         className="py-2 px-3 sm:py-2.5 sm:px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0c1017]/90 backdrop-blur-md flex items-center justify-between shadow-sm hover:border-[#9D61FF]/60 hover:shadow-[0_0_20px_rgba(157,97,255,0.18)] transition-all cursor-pointer group"
       >
         <div>
@@ -66,7 +67,7 @@ export default function TemplateMetricsBar() {
         <div className="p-2 rounded-lg bg-purple-500/10 text-[#9D61FF] shadow-[0_0_12px_rgba(157,97,255,0.2)] group-hover:scale-110 transition-transform">
           <FileCheck2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </div>
-      </div>
+      </Link>
     </div>
   );
 }

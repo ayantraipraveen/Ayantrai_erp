@@ -31,7 +31,6 @@ export default function TemplateFilterToolbar() {
     viewMode,
     setViewMode,
     setBuilderOpen,
-    setSectionsModalOpen,
     filteredTemplates,
     totalCount,
   } = useTemplates();
