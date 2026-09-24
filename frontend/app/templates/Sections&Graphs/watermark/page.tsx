@@ -682,6 +682,25 @@ export default function WatermarkPage() {
                     100%
                   </button>
                 )}
+
+                {/* Quick Presets */}
+                <div className="hidden xl:flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-zinc-800">
+                  {[-100, -50, 50, 100, 150].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => handleUpdateScale(preset)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                        sizeScale === preset
+                          ? "bg-[#9D61FF] text-white shadow-2xs"
+                          : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+                      }`}
+                      title={`Set scale to ${preset}%`}
+                    >
+                      {preset}%
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Theme / Background Toggle */}
@@ -794,9 +813,9 @@ export default function WatermarkPage() {
                 </div>
 
                 {/* Centered SVG Render with Proportional Bounds & Negative Scale Support */}
-                <div className="relative z-10 w-full flex-1 flex items-center justify-center p-4 overflow-hidden">
+                <div className="relative z-10 w-full flex-1 flex items-center justify-center p-6 overflow-hidden">
                   <div
-                    className="transition-transform duration-150 flex items-center justify-center [&>svg]:max-w-[340px] [&>svg]:max-h-[250px] [&>svg]:w-auto [&>svg]:h-auto [&>svg]:object-contain drop-shadow-sm"
+                    className="w-full h-full max-w-[480px] max-h-[270px] flex items-center justify-center transition-transform duration-150 drop-shadow-sm [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
                     style={{
                       transform: `scale(${sizeScale === 0 ? 0.01 : sizeScale / 100})`,
                       transformOrigin: "center center",
