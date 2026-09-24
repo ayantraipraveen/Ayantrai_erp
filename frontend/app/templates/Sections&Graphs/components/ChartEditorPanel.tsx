@@ -120,7 +120,7 @@ export default function ChartEditorPanel({
   };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn text-slate-900 dark:text-white">
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn text-slate-900 dark:text-white bg-transparent h-full">
      
 
       {/* Compact inputs row - no wasted vertical space */}
@@ -153,18 +153,22 @@ export default function ChartEditorPanel({
         </div>
       )}
 
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 h-full bg-transparent">
         {/* Left Column: Chart Type Grid */}
-        <div className="w-[42%] border-r border-slate-200 dark:border-zinc-800 flex flex-col min-h-0">
-          <div className="px-4 pt-3 pb-2 flex-shrink-0">
+        <div className="w-[42%] lg:w-[40%] xl:w-[38%] border-r border-slate-200/80 dark:border-zinc-800/80 flex flex-col min-h-0 h-full bg-transparent">
+          <div className="px-4 pt-3 pb-2 flex-shrink-0 flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide">
               Visualization Type
             </span>
+            <span className="text-[10px] font-mono text-[#9D61FF] font-semibold bg-purple-500/10 px-2 py-0.5 rounded-full">
+              25 Available
+            </span>
           </div>
-          <div className="flex-1 overflow-hidden px-3 pb-3">
-            <div className="grid grid-cols-5 gap-1.5 h-full content-start">
+          <div className="flex-1 overflow-hidden px-3.5 pb-3.5">
+            <div className="grid grid-cols-5 gap-2 h-full auto-rows-fr">
               {CHART_TYPE_OPTIONS.map((t) => {
                 const Icon = t.icon;
+                const isSelected = chartType === t.id;
                 return (
                   <button
                     key={t.id}
@@ -173,13 +177,14 @@ export default function ChartEditorPanel({
                       setChartType(t.id);
                       setActiveSeriesIndex(0);
                     }}
-                    className={`p-1.5 rounded-lg border flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all ${chartType === t.id
-                        ? "border-[#9D61FF] bg-purple-500/10 text-[#9D61FF] font-bold"
-                        : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:border-[#9D61FF]/50 hover:text-[#9D61FF]"
-                      }`}
+                    className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+                      isSelected
+                        ? "border-[#9D61FF] bg-[#9D61FF]/15 text-[#9D61FF] font-bold shadow-[0_0_14px_rgba(157,97,255,0.25)] scale-[1.02]"
+                        : "border-slate-200/80 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 text-slate-600 dark:text-zinc-400 hover:border-[#9D61FF]/50 hover:text-[#9D61FF] hover:bg-purple-500/5"
+                    }`}
                   >
-                    <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="text-[8px] text-center leading-tight">{t.label}</span>
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+                    <span className="text-[9px] sm:text-[10px] text-center leading-tight font-medium">{t.label}</span>
                   </button>
                 );
               })}
@@ -474,8 +479,8 @@ export default function ChartEditorPanel({
           </div>
 
           {/* Full Chart Display (No inner border, no inner bg, zero clipping) */}
-          <div className="flex-1 min-h-0 flex items-center justify-center py-6 px-2 overflow-visible">
-            <div className="w-full">
+          <div className="flex-1 min-h-0 flex items-center justify-center py-4 px-2 overflow-visible w-full h-full">
+            <div className="w-full h-full max-h-[580px] flex items-center justify-center">
               <ChartRenderer
                 chart={{
                   id: "preview",

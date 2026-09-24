@@ -35,7 +35,7 @@ export default function ChartRenderer({
   switch (chart.chartType) {
     case "line":
       return (
-        <div className="w-full h-48 sm:h-56 flex flex-col">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             <defs>
               <linearGradient id={`grad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -86,8 +86,8 @@ export default function ChartRenderer({
     case "pie":
       const isPie = chart.chartType === "pie";
       return (
-        <div className="w-full h-48 sm:h-56 flex items-center justify-center gap-8 sm:gap-14 py-2">
-          <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center flex-shrink-0">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex items-center justify-center gap-8 sm:gap-14 py-2">
+          <div className="relative w-44 h-44 sm:w-56 sm:h-56 flex items-center justify-center flex-shrink-0">
             <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 overflow-visible">
               {/* Segment 1 */}
               <circle
@@ -197,10 +197,10 @@ export default function ChartRenderer({
       });
 
       return (
-        <div className="w-full h-48 sm:h-56 overflow-auto rounded-xl border border-slate-200 dark:border-zinc-800 text-xs">
+        <div className="w-full h-full max-h-[520px] overflow-auto rounded-xl border border-slate-200/80 dark:border-zinc-800/80 text-xs custom-scrollbar bg-white/40 dark:bg-zinc-900/40 backdrop-blur-sm">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 font-mono text-[10px] uppercase sticky top-0 z-10 shadow-2xs">
+              <tr className="bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 font-mono text-[10px] uppercase sticky top-0 z-10 shadow-2xs backdrop-blur-sm">
                 {cols.map((c) => (
                   <th key={c.id} className="py-2 px-3 font-semibold whitespace-nowrap">
                     {c.label}
@@ -285,7 +285,7 @@ export default function ChartRenderer({
       };
 
       return (
-        <div className="w-full h-48 sm:h-56 overflow-auto pt-2 text-xs">
+        <div className="w-full h-full max-h-[520px] overflow-auto pt-2 text-xs custom-scrollbar bg-transparent">
           <div
             className="w-full grid gap-1.5 min-w-max pb-1"
             style={{
@@ -293,7 +293,7 @@ export default function ChartRenderer({
             }}
           >
             {/* Header column (Week labels) */}
-            <div className="flex flex-col gap-1 font-mono text-[9px] text-slate-400 sticky left-0 bg-white/95 dark:bg-[#0c1017]/95 z-10">
+            <div className="flex flex-col gap-1 font-mono text-[9px] text-slate-400 sticky left-0 bg-white/80 dark:bg-[#0c1017]/80 backdrop-blur-sm z-10">
               <div className="h-4 mb-1" />
               {weeks.map((w) => (
                 <div key={w} className="h-7 flex items-center justify-end pr-2 font-semibold whitespace-nowrap">
@@ -376,7 +376,7 @@ export default function ChartRenderer({
 
     case "stacked-bar":
       return (
-        <div className="w-full h-48 sm:h-56 flex flex-col">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -421,7 +421,7 @@ export default function ChartRenderer({
 
     case "grouped-bar":
       return (
-        <div className="w-full h-48 sm:h-56 flex flex-col">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -457,7 +457,7 @@ export default function ChartRenderer({
 
     case "multi-line":
       return (
-        <div className="w-full h-48 sm:h-56 flex flex-col">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -514,7 +514,7 @@ export default function ChartRenderer({
 
     case "area":
       return (
-        <div className="w-full h-48 sm:h-56 flex flex-col">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             <defs>
               <linearGradient id={`areagrad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -574,7 +574,7 @@ export default function ChartRenderer({
     case "scatter":
     case "bubble":
       return (
-        <div className="w-full h-48 sm:h-56 flex flex-col">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -647,7 +647,7 @@ export default function ChartRenderer({
 
     case "combo":
       return (
-        <div className="w-full h-48 sm:h-56 flex flex-col">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -682,7 +682,7 @@ export default function ChartRenderer({
 
     case "waterfall":
       return (
-        <div className="w-full h-48 sm:h-56 flex flex-col">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -728,17 +728,26 @@ export default function ChartRenderer({
 
     case "kpi-card":
       return (
-        <div className="w-full h-44 grid grid-cols-2 gap-3 p-2 text-xs">
+        <div className="w-full h-full max-h-[460px] grid grid-cols-2 gap-4 p-2 text-xs auto-rows-fr">
           {[
             { label: "Total Incidents", val: "1,248", trend: "-18%", color: c3, icon: "↓" },
             { label: "PPE Compliance", val: "97.4%", trend: "+2.1%", color: c0, icon: "↑" },
             { label: "Worker Hours", val: "18,750", trend: "+5.3%", color: c1, icon: "↑" },
             { label: "Near-Misses", val: "12", trend: "-33%", color: c2, icon: "↓" },
           ].map((k, i) => (
-            <div key={i} className="flex flex-col justify-between bg-slate-50 dark:bg-zinc-900 rounded-xl p-3 border border-slate-200 dark:border-zinc-800">
-              <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">{k.label}</span>
-              <div className="font-black text-xl text-slate-900 dark:text-white leading-tight">{k.val}</div>
-              <span className="font-bold text-xs" style={{ color: k.color }}>{k.icon} {k.trend}</span>
+            <div
+              key={i}
+              className="flex flex-col justify-between bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-zinc-800/80 shadow-xs hover:border-[#9D61FF]/40 transition-all"
+            >
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                {k.label}
+              </span>
+              <div className="font-black text-3xl sm:text-4xl text-slate-900 dark:text-white leading-tight my-auto">
+                {k.val}
+              </div>
+              <span className="font-bold text-xs sm:text-sm flex items-center gap-1" style={{ color: k.color }}>
+                {k.icon} {k.trend}
+              </span>
             </div>
           ))}
         </div>
@@ -790,7 +799,7 @@ export default function ChartRenderer({
     case "bar":
     default:
       return (
-        <div className="w-full h-48 sm:h-56 flex flex-col">
+        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
