@@ -2,7 +2,6 @@
 
 import { useAppSelector } from "@/lib/redux/hooks";
 import {
-  TemplateToast,
   TemplateMetricsBar,
   TemplateFilterToolbar,
   TemplatesTable,
@@ -26,7 +25,6 @@ export default function TemplatesPage() {
 
       {/* Top Controls: Metrics Bar + Filter Toolbar (Fixed Height) */}
       <div className="px-4 sm:px-6 lg:px-7 space-y-2 sm:space-y-2.5 flex-shrink-0 my-2">
-        <TemplateToast />
         <TemplateMetricsBar />
         <TemplateFilterToolbar />
       </div>

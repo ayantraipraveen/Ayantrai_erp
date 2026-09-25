@@ -279,10 +279,10 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           <button
             type="button"
             onClick={() => setCreateModalOpen(true)}
-            className="h-9 px-4 rounded-xl glow-btn-primary font-bold text-xs cursor-pointer flex items-center gap-2 flex-shrink-0"
+            className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#9D61FF] to-[#8B4CF0] hover:from-[#9254f8] hover:to-[#7e3beb] text-white font-bold text-xs cursor-pointer flex items-center gap-2 flex-shrink-0 shadow-[0_2px_10px_rgba(157,97,255,0.25)] hover:shadow-[0_4px_16px_rgba(157,97,255,0.4)] transition-all active:scale-[0.98] border border-purple-400/20"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>+ Create Section</span>
+            <span>Create Section</span>
           </button>
         </div>
       </div>
