@@ -1715,7 +1715,7 @@ export function CanvasStudio({
 
   const handleInsertRowAtIndex = useCallback(
     (insertIndex: number) => {
-      dispatch(addCanvasRow({ sectionId: section.id }));
+      dispatch(addCanvasRow({ sectionId: section.id, insertAtIndex: insertIndex }));
       dispatch(showGlobalToast({ message: "New row added to section", type: "success" }));
     },
     [dispatch, section.id]
