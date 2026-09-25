@@ -348,6 +348,7 @@ export interface CanvasCell {
 export interface CanvasRow {
   id: string;
   cells: CanvasCell[];
+  pageBreakBefore?: boolean;
 }
 
 export interface LibrarySection {

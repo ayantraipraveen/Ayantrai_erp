@@ -142,6 +142,7 @@ export const {
   migrateToCanvasRows,
   addCanvasRow,
   addRowWithCell,
+  toggleRowPageBreak,
   removeCanvasRow,
   addCellToRow,
   moveCellBetweenRows,

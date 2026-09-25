@@ -327,12 +327,32 @@ export const sectionsStudioReducers = {
     },
 
     /** Add a new empty row to the section canvas */
-    addCanvasRow: (state: ReportModuleState, action: PayloadAction<string>) => {
-      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload);
+    addCanvasRow: (
+      state: ReportModuleState,
+      action: PayloadAction<string | { sectionId: string; pageBreakBefore?: boolean }>
+    ) => {
+      const targetId = typeof action.payload === "string" ? action.payload : action.payload?.sectionId;
+      const pageBreakBefore = typeof action.payload === "object" ? Boolean(action.payload?.pageBreakBefore) : false;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === targetId);
       if (sec) {
         if (!sec.canvasRows) sec.canvasRows = [];
-        sec.canvasRows.push({ id: `row-${Date.now()}`, cells: [] });
+        sec.canvasRows.push({ id: `row-${Date.now()}`, cells: [], pageBreakBefore });
         sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Toggle page break before a row */
+    toggleRowPageBreak: (
+      state: ReportModuleState,
+      action: PayloadAction<{ sectionId: string; rowId: string }>
+    ) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
+      if (sec && sec.canvasRows) {
+        const row = sec.canvasRows.find((r: CanvasRow) => r.id === action.payload.rowId);
+        if (row) {
+          row.pageBreakBefore = !row.pageBreakBefore;
+          sec.updatedAt = "Just now";
+        }
       }
     },
 
