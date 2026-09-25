@@ -1,6 +1,6 @@
 "use client";
 
-import { PayloadAction, SliceCaseReducers } from "@reduxjs/toolkit";
+import { PayloadAction } from "@reduxjs/toolkit";
 import { DEFAULT_DATE_RANGE, DateRangeValue } from "@/app/Component/DateRangeFilter";
 import {
   ReportModuleState,
@@ -13,10 +13,10 @@ import {
 } from "../../types/reportModuleTypes";
 import { sampleContent } from "../../mockData/mockGovernance";
 
-export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
-    addTemplate: (state, action: PayloadAction<Omit<ReportTemplate, "id" | "created_at" | "version">>) => {
+export const templatesReducers = {
+    addTemplate: (state: ReportModuleState, action: PayloadAction<Omit<ReportTemplate, "id" | "created_at" | "version">>) => {
       // Find the highest numerical ID suffix among all existing templates to ensure unique keys
-      const maxIdNum = state.templates.reduce((max, t) => {
+      const maxIdNum = state.templates.reduce((max: number, t: ReportTemplate) => {
         const match = t.id.match(/TPL-(\d+)/);
         const num = match ? parseInt(match[1], 10) : 0;
         return num > max ? num : max;
@@ -42,7 +42,7 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
       });
     },
     updateTemplate: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         id: string;
         name: string;
@@ -53,7 +53,7 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
         status?: "draft" | "pending" | "active" | "rejected";
       }>
     ) => {
-      const idx = state.templates.findIndex((t) => t.id === action.payload.id);
+      const idx = state.templates.findIndex((t: ReportTemplate) => t.id === action.payload.id);
       if (idx !== -1) {
         const existing = state.templates[idx];
         const prevVer = parseFloat(existing.version.replace("v", "")) || 1.0;
@@ -79,10 +79,10 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
         });
       }
     },
-    duplicateTemplate: (state, action: PayloadAction<string>) => {
-      const source = state.templates.find((t) => t.id === action.payload);
+    duplicateTemplate: (state: ReportModuleState, action: PayloadAction<string>) => {
+      const source = state.templates.find((t: ReportTemplate) => t.id === action.payload);
       if (source) {
-        const maxIdNum = state.templates.reduce((max, t) => {
+        const maxIdNum = state.templates.reduce((max: number, t: ReportTemplate) => {
           const match = t.id.match(/TPL-(\d+)/);
           const num = match ? parseInt(match[1], 10) : 0;
           return num > max ? num : max;
@@ -100,7 +100,7 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
           approved_at: undefined,
           rejection_reason: undefined,
           version: "v1.0",
-          blocks: source.blocks.map((b, i) => ({
+          blocks: source.blocks.map((b: TemplateBlock, i: number) => ({
             ...b,
             id: `blk-dup-${Date.now()}-${i}`,
           })),
@@ -118,10 +118,10 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     updateTemplateRemark: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ templateId: string; remarks: string }>
     ) => {
-      const template = state.templates.find((t) => t.id === action.payload.templateId);
+      const template = state.templates.find((t: ReportTemplate) => t.id === action.payload.templateId);
       if (template) {
         template.remarks = action.payload.remarks;
         state.activityLogs.unshift({
@@ -135,8 +135,8 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
         });
       }
     },
-    approveTemplate: (state, action: PayloadAction<ApproveTemplatePayload>) => {
-      const template = state.templates.find((t) => t.id === action.payload.templateId);
+    approveTemplate: (state: ReportModuleState, action: PayloadAction<ApproveTemplatePayload>) => {
+      const template = state.templates.find((t: ReportTemplate) => t.id === action.payload.templateId);
       if (template) {
         template.status = "active";
         template.approved_by = action.payload.superadminName;
@@ -169,8 +169,8 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
         });
       }
     },
-    rejectTemplate: (state, action: PayloadAction<RejectTemplatePayload>) => {
-      const template = state.templates.find((t) => t.id === action.payload.templateId);
+    rejectTemplate: (state: ReportModuleState, action: PayloadAction<RejectTemplatePayload>) => {
+      const template = state.templates.find((t: ReportTemplate) => t.id === action.payload.templateId);
       if (template) {
         template.status = "rejected";
         template.rejection_reason = action.payload.reason;
@@ -187,8 +187,8 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
         });
       }
     },
-    resubmitTemplate: (state, action: PayloadAction<string>) => {
-      const template = state.templates.find((t) => t.id === action.payload);
+    resubmitTemplate: (state: ReportModuleState, action: PayloadAction<string>) => {
+      const template = state.templates.find((t: ReportTemplate) => t.id === action.payload);
       if (template) {
         template.status = "pending";
         template.rejection_reason = undefined;
@@ -203,7 +203,7 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
         });
       }
     },
-    deleteTemplate: (state, action: PayloadAction<string>) => {
+    deleteTemplate: (state: ReportModuleState, action: PayloadAction<string>) => {
       const tplId = action.payload;
       const tpl = state.templates.find((t) => t.id === tplId);
       state.templates = state.templates.filter((t) => t.id !== tplId);
@@ -218,69 +218,69 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
       });
     },
     // Template Pure Redux UI, Filters & Pagination Reducers
-    setTemplateSearchQuery: (state, action: PayloadAction<string>) => {
+    setTemplateSearchQuery: (state: ReportModuleState, action: PayloadAction<string>) => {
       state.templateSearchQuery = action.payload;
       state.templateCurrentPage = 1;
     },
-    setTemplateStatusFilter: (state, action: PayloadAction<string>) => {
+    setTemplateStatusFilter: (state: ReportModuleState, action: PayloadAction<string>) => {
       state.templateStatusFilter = action.payload;
       state.templateCurrentPage = 1;
     },
-    setTemplateSiteFilter: (state, action: PayloadAction<string>) => {
+    setTemplateSiteFilter: (state: ReportModuleState, action: PayloadAction<string>) => {
       state.templateSiteFilter = action.payload;
       state.templateCurrentPage = 1;
     },
-    setTemplateDateRange: (state, action: PayloadAction<DateRangeValue>) => {
+    setTemplateDateRange: (state: ReportModuleState, action: PayloadAction<DateRangeValue>) => {
       state.templateDateRange = action.payload;
       state.templateCurrentPage = 1;
     },
-    setTemplateViewMode: (state, action: PayloadAction<"table" | "grid">) => {
+    setTemplateViewMode: (state: ReportModuleState, action: PayloadAction<"table" | "grid">) => {
       state.templateViewMode = action.payload;
     },
-    setTemplateCurrentPage: (state, action: PayloadAction<number>) => {
+    setTemplateCurrentPage: (state: ReportModuleState, action: PayloadAction<number>) => {
       state.templateCurrentPage = action.payload;
     },
-    setTemplatePageSize: (state, action: PayloadAction<number>) => {
+    setTemplatePageSize: (state: ReportModuleState, action: PayloadAction<number>) => {
       state.templatePageSize = action.payload;
       state.templateCurrentPage = 1;
     },
-    resetTemplateFilters: (state) => {
+    resetTemplateFilters: (state: ReportModuleState) => {
       state.templateSearchQuery = "";
       state.templateStatusFilter = "all";
       state.templateSiteFilter = "all";
       state.templateDateRange = DEFAULT_DATE_RANGE;
       state.templateCurrentPage = 1;
     },
-    setTemplateSelectedId: (state, action: PayloadAction<string | null>) => {
+    setTemplateSelectedId: (state: ReportModuleState, action: PayloadAction<string | null>) => {
       state.templateSelectedId = action.payload;
     },
-    setTemplateEditingId: (state, action: PayloadAction<string | null>) => {
+    setTemplateEditingId: (state: ReportModuleState, action: PayloadAction<string | null>) => {
       state.templateEditingId = action.payload;
     },
-    setTemplateReviewModalOpen: (state, action: PayloadAction<boolean>) => {
+    setTemplateReviewModalOpen: (state: ReportModuleState, action: PayloadAction<boolean>) => {
       state.templateReviewModalOpen = action.payload;
     },
-    setTemplateBuilderOpen: (state, action: PayloadAction<boolean>) => {
+    setTemplateBuilderOpen: (state: ReportModuleState, action: PayloadAction<boolean>) => {
       state.templateBuilderOpen = action.payload;
     },
-    setTemplateSectionsModalOpen: (state, action: PayloadAction<boolean>) => {
+    setTemplateSectionsModalOpen: (state: ReportModuleState, action: PayloadAction<boolean>) => {
       state.templateSectionsModalOpen = action.payload;
     },
-    setTemplateDeleteConfirmId: (state, action: PayloadAction<string | null>) => {
+    setTemplateDeleteConfirmId: (state: ReportModuleState, action: PayloadAction<string | null>) => {
       state.templateDeleteConfirmId = action.payload;
     },
-    setTemplateToastMessage: (state, action: PayloadAction<string | null>) => {
+    setTemplateToastMessage: (state: ReportModuleState, action: PayloadAction<string | null>) => {
       state.templateToastMessage = action.payload;
     },
-    setTemplateActiveTab: (state, action: PayloadAction<"templates" | "sections">) => {
+    setTemplateActiveTab: (state: ReportModuleState, action: PayloadAction<"templates" | "sections">) => {
       state.templateActiveTab = action.payload;
     },
-    setChartEditorFullscreen: (state, action: PayloadAction<boolean>) => {
+    setChartEditorFullscreen: (state: ReportModuleState, action: PayloadAction<boolean>) => {
       state.chartEditorFullscreen = action.payload;
     },
 
     // Master Global Sections & Graphs Library Reducers
-    addGlobalSection: (state, action: PayloadAction<Omit<TemplateBlock, "id" | "order">>) => {
+    addGlobalSection: (state: ReportModuleState, action: PayloadAction<Omit<TemplateBlock, "id" | "order">>) => {
       const newSection: TemplateBlock = {
         ...action.payload,
         id: `blk-custom-${Date.now()}`,
@@ -300,10 +300,10 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
       });
     },
     updateGlobalSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ id: string; title: string; description: string; enabled?: boolean }>
     ) => {
-      const sec = state.globalSections.find((s) => s.id === action.payload.id);
+      const sec = state.globalSections.find((s: TemplateBlock) => s.id === action.payload.id);
       if (sec) {
         sec.title = action.payload.title;
         sec.description = action.payload.description;
@@ -312,14 +312,14 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
         }
       }
     },
-    deleteGlobalSection: (state, action: PayloadAction<string>) => {
-      state.globalSections = state.globalSections.filter((s) => s.id !== action.payload);
+    deleteGlobalSection: (state: ReportModuleState, action: PayloadAction<string>) => {
+      state.globalSections = state.globalSections.filter((s: TemplateBlock) => s.id !== action.payload);
     },
     addGraphToGlobalSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; graph: Omit<TemplateGraphConfig, "id"> }>
     ) => {
-      const sec = state.globalSections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.globalSections.find((s: TemplateBlock) => s.id === action.payload.sectionId);
       if (sec) {
         if (!sec.graphs) sec.graphs = [];
         sec.graphs.push({
@@ -329,24 +329,24 @@ export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     updateGraphInGlobalSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; graph: TemplateGraphConfig }>
     ) => {
-      const sec = state.globalSections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.globalSections.find((s: TemplateBlock) => s.id === action.payload.sectionId);
       if (sec && sec.graphs) {
-        const idx = sec.graphs.findIndex((g) => g.id === action.payload.graph.id);
+        const idx = sec.graphs.findIndex((g: TemplateGraphConfig) => g.id === action.payload.graph.id);
         if (idx !== -1) {
           sec.graphs[idx] = action.payload.graph;
         }
       }
     },
     deleteGraphFromGlobalSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; graphId: string }>
     ) => {
-      const sec = state.globalSections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.globalSections.find((s: TemplateBlock) => s.id === action.payload.sectionId);
       if (sec && sec.graphs) {
-        sec.graphs = sec.graphs.filter((g) => g.id !== action.payload.graphId);
+        sec.graphs = sec.graphs.filter((g: TemplateGraphConfig) => g.id !== action.payload.graphId);
       }
     },
 

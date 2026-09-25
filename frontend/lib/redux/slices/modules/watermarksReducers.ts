@@ -1,21 +1,22 @@
 "use client";
 
-import { PayloadAction, SliceCaseReducers } from "@reduxjs/toolkit";
+import { PayloadAction } from "@reduxjs/toolkit";
 import {
   ReportModuleState,
   WatermarkConfig,
   WatermarkItem,
+  LibrarySection,
 } from "../../types/reportModuleTypes";
 
-export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
-    setWatermarkConfig: (state, action: PayloadAction<Partial<WatermarkConfig>>) => {
+export const watermarksReducers = {
+    setWatermarkConfig: (state: ReportModuleState, action: PayloadAction<Partial<WatermarkConfig>>) => {
       state.watermarkConfig = {
         ...state.watermarkConfig,
         ...action.payload,
       };
     },
     createWatermark: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<Omit<WatermarkItem, "id" | "createdAt"> & { id?: string; createdAt?: string }>
     ) => {
       const id = action.payload.id || `wm-${Date.now()}`;
@@ -26,7 +27,7 @@ export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
         assignedSectionIds: action.payload.assignedSectionIds || [],
       };
       if (newWatermark.isDefault) {
-        state.watermarks.forEach((w) => {
+        state.watermarks.forEach((w: WatermarkItem) => {
           w.isDefault = false;
         });
       }
@@ -41,7 +42,7 @@ export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
         placement: (newWatermark.placement as any) || "center",
       };
       if (newWatermark.assignedSectionIds.length > 0) {
-        state.librarySections.forEach((sec) => {
+        state.librarySections.forEach((sec: LibrarySection) => {
           if (newWatermark.assignedSectionIds.includes(sec.id)) {
             sec.watermarkId = id;
           }
@@ -49,14 +50,14 @@ export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     updateWatermark: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ id: string; changes: Partial<WatermarkItem> }>
     ) => {
       const { id, changes } = action.payload;
-      const index = state.watermarks.findIndex((w) => w.id === id);
+      const index = state.watermarks.findIndex((w: WatermarkItem) => w.id === id);
       if (index !== -1) {
         if (changes.isDefault) {
-          state.watermarks.forEach((w) => {
+          state.watermarks.forEach((w: WatermarkItem) => {
             w.isDefault = false;
           });
         }
@@ -77,7 +78,7 @@ export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
           };
         }
         if (changes.assignedSectionIds !== undefined) {
-          state.librarySections.forEach((sec) => {
+          state.librarySections.forEach((sec: LibrarySection) => {
             if (changes.assignedSectionIds!.includes(sec.id)) {
               sec.watermarkId = id;
             } else if (sec.watermarkId === id) {
@@ -87,10 +88,10 @@ export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
         }
       }
     },
-    deleteWatermark: (state, action: PayloadAction<string>) => {
+    deleteWatermark: (state: ReportModuleState, action: PayloadAction<string>) => {
       const id = action.payload;
-      state.watermarks = state.watermarks.filter((w) => w.id !== id);
-      state.librarySections.forEach((sec) => {
+      state.watermarks = state.watermarks.filter((w: WatermarkItem) => w.id !== id);
+      state.librarySections.forEach((sec: LibrarySection) => {
         if (sec.watermarkId === id) {
           sec.watermarkId = undefined;
         }
@@ -112,8 +113,8 @@ export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
         }
       }
     },
-    duplicateWatermark: (state, action: PayloadAction<string>) => {
-      const target = state.watermarks.find((w) => w.id === action.payload);
+    duplicateWatermark: (state: ReportModuleState, action: PayloadAction<string>) => {
+      const target = state.watermarks.find((w: WatermarkItem) => w.id === action.payload);
       if (target) {
         const cloneId = `wm-${Date.now()}`;
         const cloned: WatermarkItem = {
@@ -136,9 +137,9 @@ export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
         };
       }
     },
-    setSelectedWatermarkId: (state, action: PayloadAction<string>) => {
+    setSelectedWatermarkId: (state: ReportModuleState, action: PayloadAction<string>) => {
       state.selectedWatermarkId = action.payload;
-      const found = state.watermarks.find((w) => w.id === action.payload);
+      const found = state.watermarks.find((w: WatermarkItem) => w.id === action.payload);
       if (found) {
         state.watermarkConfig = {
           svgContent: found.svgContent,
@@ -150,20 +151,20 @@ export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
         };
       }
     },
-    setDefaultWatermark: (state, action: PayloadAction<string>) => {
-      state.watermarks.forEach((w) => {
+    setDefaultWatermark: (state: ReportModuleState, action: PayloadAction<string>) => {
+      state.watermarks.forEach((w: WatermarkItem) => {
         w.isDefault = w.id === action.payload;
       });
     },
     assignWatermarkToSections: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ watermarkId: string; sectionIds: string[] }>
     ) => {
       const { watermarkId, sectionIds } = action.payload;
-      const target = state.watermarks.find((w) => w.id === watermarkId);
+      const target = state.watermarks.find((w: WatermarkItem) => w.id === watermarkId);
       if (target) {
         target.assignedSectionIds = sectionIds;
-        state.librarySections.forEach((sec) => {
+        state.librarySections.forEach((sec: LibrarySection) => {
           if (sectionIds.includes(sec.id)) {
             sec.watermarkId = watermarkId;
           } else if (sec.watermarkId === watermarkId) {
@@ -173,23 +174,23 @@ export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     setSectionWatermark: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; watermarkId?: string | null }>
     ) => {
       const { sectionId, watermarkId } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       if (sec) {
         const oldWmId = sec.watermarkId;
         sec.watermarkId = watermarkId || undefined;
         sec.updatedAt = "Just now";
         if (oldWmId && oldWmId !== watermarkId) {
-          const oldWm = state.watermarks.find((w) => w.id === oldWmId);
+          const oldWm = state.watermarks.find((w: WatermarkItem) => w.id === oldWmId);
           if (oldWm) {
-            oldWm.assignedSectionIds = oldWm.assignedSectionIds.filter((id) => id !== sectionId);
+            oldWm.assignedSectionIds = oldWm.assignedSectionIds.filter((id: string) => id !== sectionId);
           }
         }
         if (watermarkId) {
-          const newWm = state.watermarks.find((w) => w.id === watermarkId);
+          const newWm = state.watermarks.find((w: WatermarkItem) => w.id === watermarkId);
           if (newWm && !newWm.assignedSectionIds.includes(sectionId)) {
             newWm.assignedSectionIds.push(sectionId);
           }

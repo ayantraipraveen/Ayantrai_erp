@@ -1,6 +1,6 @@
 "use client";
 
-import { PayloadAction, SliceCaseReducers } from "@reduxjs/toolkit";
+import { PayloadAction } from "@reduxjs/toolkit";
 import {
   ReportModuleState,
   RoleType,
@@ -14,18 +14,20 @@ import {
   SystemSettings,
   AdminAccount,
   SectionFeedback,
+  GeneratedReport,
+  SiteInfo,
 } from "../../types/reportModuleTypes";
 import { ADMINS_STORAGE_KEY, initialAdmins } from "../../mockData/mockGovernance";
 
-export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
-    setActiveRole: (state, action: PayloadAction<RoleType>) => {
+export const governanceReducers = {
+    setActiveRole: (state: ReportModuleState, action: PayloadAction<RoleType>) => {
       state.activeRole = action.payload;
     },
-    setSelectedReportId: (state, action: PayloadAction<string | null>) => {
+    setSelectedReportId: (state: ReportModuleState, action: PayloadAction<string | null>) => {
       state.selectedReportId = action.payload;
     },
     // Template Actions
-    showGlobalToast: (state, action: PayloadAction<ShowGlobalToastPayload>) => {
+    showGlobalToast: (state: ReportModuleState, action: PayloadAction<ShowGlobalToastPayload>) => {
       const payload = action.payload;
       if (typeof payload === "string") {
         state.globalToast = {
@@ -43,24 +45,24 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
         };
       }
     },
-    clearGlobalToast: (state) => {
+    clearGlobalToast: (state: ReportModuleState) => {
       state.globalToast = null;
     },
     // Report Actions
-    updateReportRemarks: (state, action: PayloadAction<UpdateReportRemarksPayload>) => {
-      const report = state.reports.find((r) => r.id === action.payload.reportId);
+    updateReportRemarks: (state: ReportModuleState, action: PayloadAction<UpdateReportRemarksPayload>) => {
+      const report = state.reports.find((r: GeneratedReport) => r.id === action.payload.reportId);
       if (report) {
         report.content.operational_remarks = action.payload.remarks;
       }
     },
-    updateActionPlan: (state, action: PayloadAction<UpdateActionPlanPayload>) => {
-      const report = state.reports.find((r) => r.id === action.payload.reportId);
+    updateActionPlan: (state: ReportModuleState, action: PayloadAction<UpdateActionPlanPayload>) => {
+      const report = state.reports.find((r: GeneratedReport) => r.id === action.payload.reportId);
       if (report) {
         report.content.improvement_action_plan = action.payload.items;
       }
     },
-    sendReportToProjectHead: (state, action: PayloadAction<SendReportPayload>) => {
-      const report = state.reports.find((r) => r.id === action.payload.reportId);
+    sendReportToProjectHead: (state: ReportModuleState, action: PayloadAction<SendReportPayload>) => {
+      const report = state.reports.find((r: GeneratedReport) => r.id === action.payload.reportId);
       if (report) {
         report.status = "sent";
         report.sent_to = action.payload.recipientEmail;
@@ -78,8 +80,8 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     // Project Head Feedback Actions
-    addSectionFeedback: (state, action: PayloadAction<AddSectionFeedbackPayload>) => {
-      const report = state.reports.find((r) => r.id === action.payload.reportId);
+    addSectionFeedback: (state: ReportModuleState, action: PayloadAction<AddSectionFeedbackPayload>) => {
+      const report = state.reports.find((r: GeneratedReport) => r.id === action.payload.reportId);
       if (report) {
         const newFeedback: SectionFeedback = {
           id: `fb-${Date.now()}`,
@@ -106,8 +108,8 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
         });
       }
     },
-    resolveSectionFeedback: (state, action: PayloadAction<ResolveSectionFeedbackPayload>) => {
-      const report = state.reports.find((r) => r.id === action.payload.reportId);
+    resolveSectionFeedback: (state: ReportModuleState, action: PayloadAction<ResolveSectionFeedbackPayload>) => {
+      const report = state.reports.find((r: GeneratedReport) => r.id === action.payload.reportId);
       if (report) {
         const fb = report.feedbacks.find((f) => f.id === action.payload.feedbackId);
         if (fb) {
@@ -116,8 +118,8 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     // Site Setting Action
-    updateSiteSetting: (state, action: PayloadAction<UpdateSiteSettingPayload>) => {
-      const site = state.sites.find((s) => s.id === action.payload.siteId);
+    updateSiteSetting: (state: ReportModuleState, action: PayloadAction<UpdateSiteSettingPayload>) => {
+      const site = state.sites.find((s: SiteInfo) => s.id === action.payload.siteId);
       if (site) {
         site.project_head_name = action.payload.projectHeadName;
         site.project_head_email = action.payload.projectHeadEmail;
@@ -136,7 +138,7 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     // System Settings Action
-    updateSystemSettings: (state, action: PayloadAction<Partial<SystemSettings>>) => {
+    updateSystemSettings: (state: ReportModuleState, action: PayloadAction<Partial<SystemSettings>>) => {
       state.systemSettings = { ...state.systemSettings, ...action.payload };
       state.activityLogs.unshift({
         id: `act-${Date.now()}-sys`,
@@ -150,7 +152,7 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
     },
     // Admin Management Actions (Persisted in localStorage: 'ayantrai_admins')
     addAdminAccount: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<Omit<AdminAccount, "id" | "last_active">>
     ) => {
       const newAdmin: AdminAccount = {
@@ -174,8 +176,8 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
         type: "admin",
       });
     },
-    toggleAdminAccountStatus: (state, action: PayloadAction<string>) => {
-      const adm = state.admins.find((a) => a.id === action.payload);
+    toggleAdminAccountStatus: (state: ReportModuleState, action: PayloadAction<string>) => {
+      const adm = state.admins.find((a: AdminAccount) => a.id === action.payload);
       if (adm) {
         adm.status = adm.status === "Active" ? "Inactive" : "Active";
         if (typeof window !== "undefined") {
@@ -194,9 +196,9 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
         });
       }
     },
-    deleteAdminAccount: (state, action: PayloadAction<string>) => {
-      const target = state.admins.find((a) => a.id === action.payload);
-      state.admins = state.admins.filter((a) => a.id !== action.payload);
+    deleteAdminAccount: (state: ReportModuleState, action: PayloadAction<string>) => {
+      const target = state.admins.find((a: AdminAccount) => a.id === action.payload);
+      state.admins = state.admins.filter((a: AdminAccount) => a.id !== action.payload);
       if (typeof window !== "undefined") {
         try {
           localStorage.setItem(ADMINS_STORAGE_KEY, JSON.stringify(state.admins));
@@ -214,7 +216,7 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
         });
       }
     },
-    syncAdminsFromStorage: (state) => {
+    syncAdminsFromStorage: (state: ReportModuleState) => {
       if (typeof window !== "undefined") {
         try {
           const stored = localStorage.getItem(ADMINS_STORAGE_KEY);
@@ -229,7 +231,7 @@ export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
         } catch (e) {}
       }
     },
-    resetAdminsToDefault: (state) => {
+    resetAdminsToDefault: (state: ReportModuleState) => {
       state.admins = initialAdmins;
       if (typeof window !== "undefined") {
         try {

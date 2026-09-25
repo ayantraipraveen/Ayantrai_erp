@@ -1,6 +1,6 @@
 "use client";
 
-import { PayloadAction, SliceCaseReducers } from "@reduxjs/toolkit";
+import { PayloadAction } from "@reduxjs/toolkit";
 import {
   ReportModuleState,
   LibrarySection,
@@ -12,15 +12,16 @@ import {
   CanvasCellStyle,
   CanvasTextBlock,
   CanvasBadgeStrip,
+  CanvasBadgeItem,
   GraphType,
 } from "../../types/reportModuleTypes";
 
-export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
-    setSelectedLibrarySectionId: (state, action: PayloadAction<string | null>) => {
+export const sectionsStudioReducers = {
+    setSelectedLibrarySectionId: (state: ReportModuleState, action: PayloadAction<string | null>) => {
       state.selectedLibrarySectionId = action.payload;
     },
     createLibrarySection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         id?: string;
         name: string;
@@ -60,7 +61,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       });
     },
     updateLibrarySection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         id: string;
         name: string;
@@ -70,7 +71,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
         watermarkId?: string;
       }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.id);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.id);
       if (sec) {
         sec.name = action.payload.name;
         if (action.payload.eyebrow !== undefined) sec.eyebrow = action.payload.eyebrow;
@@ -80,8 +81,8 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
         sec.updatedAt = "Just now";
       }
     },
-    duplicateLibrarySection: (state, action: PayloadAction<string>) => {
-      const src = state.librarySections.find((s) => s.id === action.payload);
+    duplicateLibrarySection: (state: ReportModuleState, action: PayloadAction<string>) => {
+      const src = state.librarySections.find((s: LibrarySection) => s.id === action.payload);
       if (src) {
         const cloned: LibrarySection = {
           ...src,
@@ -115,10 +116,10 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
         });
       }
     },
-    deleteLibrarySection: (state, action: PayloadAction<string>) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload);
+    deleteLibrarySection: (state: ReportModuleState, action: PayloadAction<string>) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload);
       if (sec && sec.type !== "core") {
-        state.librarySections = state.librarySections.filter((s) => s.id !== action.payload);
+        state.librarySections = state.librarySections.filter((s: LibrarySection) => s.id !== action.payload);
         if (state.selectedLibrarySectionId === action.payload) {
           state.selectedLibrarySectionId = null;
         }
@@ -134,10 +135,10 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     addCardToSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; card: Omit<LibraryMetricCard, "id"> }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
         sec.metricCards.push({
           ...action.payload.card,
@@ -147,12 +148,12 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     updateCardInSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; card: LibraryMetricCard }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
-        const idx = sec.metricCards.findIndex((c) => c.id === action.payload.card.id);
+        const idx = sec.metricCards.findIndex((c: LibraryMetricCard) => c.id === action.payload.card.id);
         if (idx !== -1) {
           sec.metricCards[idx] = action.payload.card;
           sec.updatedAt = "Just now";
@@ -160,30 +161,30 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     deleteCardFromSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; cardId: string }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
-        sec.metricCards = sec.metricCards.filter((c) => c.id !== action.payload.cardId);
+        sec.metricCards = sec.metricCards.filter((c: LibraryMetricCard) => c.id !== action.payload.cardId);
         sec.updatedAt = "Just now";
       }
     },
     reorderCardsInSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; cards: LibraryMetricCard[] }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
         sec.metricCards = action.payload.cards;
         sec.updatedAt = "Just now";
       }
     },
     addChartToSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; chart: Omit<LibraryChartCard, "id"> }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
         sec.charts.push({
           ...action.payload.chart,
@@ -193,12 +194,12 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     updateChartInSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; chart: LibraryChartCard }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
-        const idx = sec.charts.findIndex((ch) => ch.id === action.payload.chart.id);
+        const idx = sec.charts.findIndex((ch: LibraryChartCard) => ch.id === action.payload.chart.id);
         if (idx !== -1) {
           sec.charts[idx] = action.payload.chart;
           sec.updatedAt = "Just now";
@@ -206,30 +207,30 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     deleteChartFromSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; chartId: string }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
-        sec.charts = sec.charts.filter((ch) => ch.id !== action.payload.chartId);
+        sec.charts = sec.charts.filter((ch: LibraryChartCard) => ch.id !== action.payload.chartId);
         sec.updatedAt = "Just now";
       }
     },
     reorderChartsInSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; charts: LibraryChartCard[] }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
         sec.charts = action.payload.charts;
         sec.updatedAt = "Just now";
       }
     },
     addInsightToSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; text: string }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
         sec.keyInsights.push({
           id: `ki-${Date.now()}`,
@@ -239,12 +240,12 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     updateInsightInSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; insight: LibraryKeyInsightItem }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
-        const idx = sec.keyInsights.findIndex((ki) => ki.id === action.payload.insight.id);
+        const idx = sec.keyInsights.findIndex((ki: LibraryKeyInsightItem) => ki.id === action.payload.insight.id);
         if (idx !== -1) {
           sec.keyInsights[idx] = action.payload.insight;
           sec.updatedAt = "Just now";
@@ -252,20 +253,20 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }
     },
     deleteInsightFromSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; insightId: string }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
-        sec.keyInsights = sec.keyInsights.filter((ki) => ki.id !== action.payload.insightId);
+        sec.keyInsights = sec.keyInsights.filter((ki: LibraryKeyInsightItem) => ki.id !== action.payload.insightId);
         sec.updatedAt = "Just now";
       }
     },
     reorderInsightsInSection: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; keyInsights: LibraryKeyInsightItem[] }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
         sec.keyInsights = action.payload.keyInsights;
         sec.updatedAt = "Just now";
@@ -274,8 +275,8 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     // ── Canvas Row/Cell Reducers (Canva-like Section Editor) ─────────────────
     /** Auto-migrate a section's flat arrays → canvasRows (called on first canvas open) */
-    migrateToCanvasRows: (state, action: PayloadAction<string>) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload);
+    migrateToCanvasRows: (state: ReportModuleState, action: PayloadAction<string>) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload);
       if (!sec || sec.canvasRows) return; // already migrated
 
       const rows: CanvasRow[] = [];
@@ -312,7 +313,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       if (sec.keyInsights && sec.keyInsights.length > 0) {
         rows.push({
           id: `row-ki-${Date.now()}`,
-          cells: sec.keyInsights.map((ki) => ({
+          cells: sec.keyInsights.map((ki: LibraryKeyInsightItem) => ({
             id: `cell-ki-${ki.id}`,
             colSpan: 4 as const,
             blockType: "insight" as const,
@@ -326,8 +327,8 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
     },
 
     /** Add a new empty row to the section canvas */
-    addCanvasRow: (state, action: PayloadAction<string>) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload);
+    addCanvasRow: (state: ReportModuleState, action: PayloadAction<string>) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload);
       if (sec) {
         if (!sec.canvasRows) sec.canvasRows = [];
         sec.canvasRows.push({ id: `row-${Date.now()}`, cells: [] });
@@ -337,13 +338,13 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Atomically add a new row with a first cell (for sidebar block drops) */
     addRowWithCell: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         cell: CanvasCell;
       }>
     ) => {
-      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
         if (!sec.canvasRows) sec.canvasRows = [];
         sec.canvasRows.push({
@@ -357,15 +358,15 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Remove a row from the canvas */
     removeCanvasRow: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{ sectionId: string; rowId: string }>
     ) => {
       const sec = state.librarySections.find(
-        (s) => s.id === action.payload.sectionId
+        (s: LibrarySection) => s.id === action.payload.sectionId
       );
       if (sec && sec.canvasRows) {
         sec.canvasRows = sec.canvasRows.filter(
-          (r) => r.id !== action.payload.rowId
+          (r: CanvasRow) => r.id !== action.payload.rowId
         );
         sec.updatedAt = "Just now";
       }
@@ -373,7 +374,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Add a new cell to a specific row */
     addCellToRow: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -381,9 +382,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const sec = state.librarySections.find(
-        (s) => s.id === action.payload.sectionId
+        (s: LibrarySection) => s.id === action.payload.sectionId
       );
-      const row = sec?.canvasRows?.find((r) => r.id === action.payload.rowId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === action.payload.rowId);
       if (row) {
         row.cells.push(action.payload.cell);
         if (sec) sec.updatedAt = "Just now";
@@ -392,7 +393,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Move a cell between rows (cross-row drag) */
     moveCellBetweenRows: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         fromRowId: string;
@@ -402,14 +403,14 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, fromRowId, toRowId, cellId, toIndex } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       if (!sec?.canvasRows) return;
 
-      const fromRow = sec.canvasRows.find((r) => r.id === fromRowId);
-      const toRow = sec.canvasRows.find((r) => r.id === toRowId);
+      const fromRow = sec.canvasRows.find((r: CanvasRow) => r.id === fromRowId);
+      const toRow = sec.canvasRows.find((r: CanvasRow) => r.id === toRowId);
       if (!fromRow || !toRow) return;
 
-      const cellIdx = fromRow.cells.findIndex((c) => c.id === cellId);
+      const cellIdx = fromRow.cells.findIndex((c: CanvasCell) => c.id === cellId);
       if (cellIdx === -1) return;
 
       const [cell] = fromRow.cells.splice(cellIdx, 1);
@@ -419,7 +420,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Reorder cells within the same row (same-row drag) */
     reorderCellsInRow: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -427,9 +428,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const sec = state.librarySections.find(
-        (s) => s.id === action.payload.sectionId
+        (s: LibrarySection) => s.id === action.payload.sectionId
       );
-      const row = sec?.canvasRows?.find((r) => r.id === action.payload.rowId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === action.payload.rowId);
       if (row) {
         row.cells = action.payload.cells;
         if (sec) sec.updatedAt = "Just now";
@@ -438,14 +439,14 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Reorder rows themselves */
     reorderCanvasRows: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rows: CanvasRow[];
       }>
     ) => {
       const sec = state.librarySections.find(
-        (s) => s.id === action.payload.sectionId
+        (s: LibrarySection) => s.id === action.payload.sectionId
       );
       if (sec) {
         sec.canvasRows = action.payload.rows;
@@ -455,7 +456,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Duplicate a cell within its row */
     duplicateCanvasCell: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -463,11 +464,11 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
       if (!row) return;
 
-      const cellIdx = row.cells.findIndex((c) => c.id === cellId);
+      const cellIdx = row.cells.findIndex((c: CanvasCell) => c.id === cellId);
       if (cellIdx === -1) return;
 
       const original = row.cells[cellIdx];
@@ -491,7 +492,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
           ? {
               ...original.badgeStrip,
               id: `bs-dup-${ts}`,
-              badges: original.badgeStrip.badges.map((b, i) => ({
+              badges: original.badgeStrip.badges.map((b: CanvasBadgeItem, i: number) => ({
                 ...b,
                 id: `badge-dup-${ts}-${i}`,
               })),
@@ -504,7 +505,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Delete a cell from a row */
     deleteCanvasCell: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -512,17 +513,17 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
       if (row) {
-        row.cells = row.cells.filter((c) => c.id !== cellId);
+        row.cells = row.cells.filter((c: CanvasCell) => c.id !== cellId);
         if (sec) sec.updatedAt = "Just now";
       }
     },
 
     /** Update a cell's colSpan & optional adjustable width */
     updateCellColSpan: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -532,9 +533,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId, colSpan, customWidth } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
-      const cell = row?.cells.find((c) => c.id === cellId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
       if (cell) {
         cell.colSpan = colSpan;
         if (customWidth !== undefined) {
@@ -546,7 +547,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Update a cell's width to any arbitrary percentage (15% to 100%) */
     updateCellWidth: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -555,9 +556,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId, customWidth } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
-      const cell = row?.cells.find((c) => c.id === cellId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
       if (cell) {
         const clamped = Math.max(15, Math.min(100, Math.round(customWidth)));
         cell.customWidth = clamped;
@@ -568,7 +569,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Update a cell's style (font, color, bg, border, align) */
     updateCellStyleInCell: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -577,9 +578,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId, style } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
-      const cell = row?.cells.find((c) => c.id === cellId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
       if (cell) {
         cell.style = { ...(cell.style || {}), ...style };
         if (sec) sec.updatedAt = "Just now";
@@ -588,7 +589,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Update text block content in a cell */
     updateTextBlockInCell: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -597,9 +598,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId, content } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
-      const cell = row?.cells.find((c) => c.id === cellId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
       if (cell && cell.textBlock) {
         cell.textBlock.content = content;
         if (sec) sec.updatedAt = "Just now";
@@ -608,7 +609,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Update badge strip in a cell */
     updateBadgeStripInCell: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -617,9 +618,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId, badgeStrip } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
-      const cell = row?.cells.find((c) => c.id === cellId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
       if (cell) {
         cell.badgeStrip = badgeStrip;
         if (sec) sec.updatedAt = "Just now";
@@ -628,7 +629,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Update metric card data inside a canvas cell */
     updateMetricCardInCell: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -637,9 +638,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId, card } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
-      const cell = row?.cells.find((c) => c.id === cellId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
       if (cell) {
         cell.metricCard = card;
         if (sec) sec.updatedAt = "Just now";
@@ -648,7 +649,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Update chart data inside a canvas cell */
     updateChartInCell: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -657,9 +658,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId, chart } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
-      const cell = row?.cells.find((c) => c.id === cellId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
       if (cell) {
         cell.chart = chart;
         if (sec) sec.updatedAt = "Just now";
@@ -668,7 +669,7 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
 
     /** Update insight text inside a canvas cell */
     updateInsightInCell: (
-      state,
+      state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         rowId: string;
@@ -677,9 +678,9 @@ export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
       }>
     ) => {
       const { sectionId, rowId, cellId, insight } = action.payload;
-      const sec = state.librarySections.find((s) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r) => r.id === rowId);
-      const cell = row?.cells.find((c) => c.id === cellId);
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
       if (cell) {
         cell.insight = insight;
         if (sec) sec.updatedAt = "Just now";
