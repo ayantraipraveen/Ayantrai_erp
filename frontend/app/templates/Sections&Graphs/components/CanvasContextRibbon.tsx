@@ -50,6 +50,7 @@ export interface CanvasContextRibbonProps {
   sectionName: string;
   sectionEyebrow: string;
   onUpdateColSpan: (span: 1 | 2 | 3 | 4) => void;
+  onUpdateWidth?: (customWidth: number) => void;
   onUpdateMetricCard?: (card: LibraryMetricCard) => void;
   onUpdateChart?: (chart: LibraryChartCard) => void;
   onOpenChartEditor?: () => void;
@@ -121,6 +122,7 @@ export function CanvasContextRibbon({
   sectionName,
   sectionEyebrow,
   onUpdateColSpan,
+  onUpdateWidth,
   onUpdateMetricCard,
   onUpdateChart,
   onOpenChartEditor,
@@ -451,24 +453,60 @@ export function CanvasContextRibbon({
             </>
           )}
 
-          {/* Width Pills */}
-          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
-            <span className="text-[10px] font-mono font-bold text-slate-400 px-1">W:</span>
-            {([1, 2, 3, 4] as const).map((s) => (
+          {/* Fluid Width Controls (Adjustable % and Presets) */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+            <span className="text-[10px] font-mono font-bold text-slate-400 px-1">Width:</span>
+            {([25, 33, 50, 75, 100] as const).map((w) => (
               <button
-                key={s}
+                key={w}
                 type="button"
-                onClick={() => onUpdateColSpan(s)}
-                className={`w-5 h-5 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                  selectedCell.colSpan === s
+                onClick={() => {
+                  if (onUpdateWidth) onUpdateWidth(w);
+                  else {
+                    const span = (w <= 30 ? 1 : w <= 55 ? 2 : w <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
+                    onUpdateColSpan(span);
+                  }
+                }}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                  (selectedCell.customWidth ?? (selectedCell.colSpan * 25)) === w
                     ? "bg-[#9D61FF] text-white shadow-xs"
                     : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
                 }`}
-                title={`Set block width to ${s} of 4 columns`}
+                title={`Set block width to ${w}%`}
               >
-                {s}
+                {w}%
               </button>
             ))}
+            {/* Steppers for fluid adjustable width */}
+            <div className="flex items-center border-l border-slate-200 dark:border-zinc-700 pl-1 ml-0.5 gap-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const curr = selectedCell.customWidth ?? (selectedCell.colSpan * 25);
+                  const next = Math.max(15, curr - 5);
+                  if (onUpdateWidth) onUpdateWidth(next);
+                }}
+                className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
+                title="Decrease width by 5%"
+              >
+                -
+              </button>
+              <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[28px] text-center">
+                {selectedCell.customWidth ?? (selectedCell.colSpan * 25)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const curr = selectedCell.customWidth ?? (selectedCell.colSpan * 25);
+                  const next = Math.min(100, curr + 5);
+                  if (onUpdateWidth) onUpdateWidth(next);
+                }}
+                className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
+                title="Increase width by 5%"
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
 

@@ -455,8 +455,8 @@ interface SortableRowProps {
   onEditCell: (cell: CanvasCell, rowId: string) => void;
   onDuplicateCell: (cellId: string, rowId: string) => void;
   onDeleteCell: (cellId: string, rowId: string) => void;
-  onColSpanChange: (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => void;
-  onWidthChange: (cellId: string, rowId: string, customWidth: number) => void;
+  onColSpanChange?: (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => void;
+  onWidthChange?: (cellId: string, rowId: string, customWidth: number) => void;
   onUpdateMetricCard?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateInsight?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;

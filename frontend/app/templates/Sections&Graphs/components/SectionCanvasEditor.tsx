@@ -502,6 +502,15 @@ export default function SectionCanvasEditor({
     [dispatch, sectionId, selectedRowId, selectedCellId]
   );
 
+  const handleUpdateWidth = useCallback(
+    (customWidth: number) => {
+      if (!selectedRowId || !selectedCellId) return;
+      const colSpan = (customWidth <= 30 ? 1 : customWidth <= 55 ? 2 : customWidth <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
+      dispatch(updateCellColSpan({ sectionId, rowId: selectedRowId, cellId: selectedCellId, colSpan, customWidth }));
+    },
+    [dispatch, sectionId, selectedRowId, selectedCellId]
+  );
+
   const handleDuplicateActive = useCallback(() => {
     if (!selectedRowId || !selectedCellId) return;
     dispatch(duplicateCanvasCell({ sectionId, rowId: selectedRowId, cellId: selectedCellId }));
@@ -679,6 +688,7 @@ export default function SectionCanvasEditor({
         sectionName={section.name}
         sectionEyebrow={section.eyebrow}
         onUpdateColSpan={handleUpdateColSpan}
+        onUpdateWidth={handleUpdateWidth}
         onUpdateMetricCard={(card) => {
           if (selectedRowId && selectedCellId) {
             handleUpdateMetricCardInCell(selectedRowId, selectedCellId, card);
