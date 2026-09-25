@@ -671,15 +671,19 @@ export function CanvasStudio({
   const [internalShowGrid, setInternalShowGrid] = useState(true);
   const [internalShowGuides, setInternalShowGuides] = useState(false);
   const [internalIsPreview, setInternalIsPreview] = useState(false);
-  const [headerValuesBySection, setHeaderValuesBySection] = useState<Record<string, { title: string; period: string }>>({});
-  const [editingHeaderValue, setEditingHeaderValue] = useState<"title" | "period" | null>(null);
+  const [headerValuesBySection, setHeaderValuesBySection] = useState<Record<string, { taglinePrimary: string; taglineSecondary: string; title: string; period: string }>>({});
+  const [editingHeaderValue, setEditingHeaderValue] = useState<"taglinePrimary" | "taglineSecondary" | "title" | "period" | null>(null);
+  const [footerValuesBySection, setFooterValuesBySection] = useState<Record<string, { company: string; websites: string; quote: string }>>({});
+  const [editingFooterValue, setEditingFooterValue] = useState<"company" | "websites" | "quote" | null>(null);
 
   const headerValues = headerValuesBySection[section.id] || {
+    taglinePrimary: "Visibility for Every Worker;",
+    taglineSecondary: "Intelligence for Every Site.",
     title: "Monthly Report",
     period: "01 Sept 2025 - 30 Sept 2025",
   };
 
-  const updateHeaderValue = (field: "title" | "period", value: string) => {
+  const updateHeaderValue = (field: "taglinePrimary" | "taglineSecondary" | "title" | "period", value: string) => {
     setHeaderValuesBySection((current) => ({
       ...current,
       [section.id]: { ...headerValues, [field]: value },
@@ -687,6 +691,21 @@ export function CanvasStudio({
   };
 
   const commitHeaderValue = () => setEditingHeaderValue(null);
+
+  const footerValues = footerValuesBySection[section.id] || {
+    company: "AyantrAI Private Limited",
+    websites: "www.ayantrai.com  |  www.sitesafe.ai",
+    quote: "Every Worker Returns Home Safe",
+  };
+
+  const updateFooterValue = (field: "company" | "websites" | "quote", value: string) => {
+    setFooterValuesBySection((current) => ({
+      ...current,
+      [section.id]: { ...footerValues, [field]: value },
+    }));
+  };
+
+  const commitFooterValue = () => setEditingFooterValue(null);
 
   const activeSelectedCellId = selectedCellId !== undefined ? selectedCellId : internalSelectedCellId;
   const activeSelectedRowId = selectedRowId !== undefined ? selectedRowId : internalSelectedRowId;
@@ -1260,12 +1279,50 @@ export function CanvasStudio({
                 </div>
 
                 <div className="min-w-0 border-l-2 border-[#2454d8] pl-6">
-                  <p className="text-[17px] font-semibold italic leading-tight text-[#2454d8]">
-                    Visibility for Every Worker;
-                  </p>
-                  <p className="text-[17px] font-semibold italic leading-tight text-[#2454d8]">
-                    Intelligence for Every Site.
-                  </p>
+                  {editingHeaderValue === "taglinePrimary" ? (
+                    <input
+                      autoFocus
+                      value={headerValues.taglinePrimary}
+                      onChange={(event) => updateHeaderValue("taglinePrimary", event.target.value)}
+                      onBlur={commitHeaderValue}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
+                      }}
+                      className="w-full bg-transparent text-[17px] font-semibold italic leading-tight text-[#2454d8] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                      aria-label="Primary report tagline"
+                    />
+                  ) : (
+                    <p
+                      className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                      onClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
+                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
+                      title="Click to edit primary report tagline"
+                    >
+                      {headerValues.taglinePrimary}
+                    </p>
+                  )}
+                  {editingHeaderValue === "taglineSecondary" ? (
+                    <input
+                      autoFocus
+                      value={headerValues.taglineSecondary}
+                      onChange={(event) => updateHeaderValue("taglineSecondary", event.target.value)}
+                      onBlur={commitHeaderValue}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
+                      }}
+                      className="w-full bg-transparent text-[17px] font-semibold italic leading-tight text-[#2454d8] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                      aria-label="Secondary report tagline"
+                    />
+                  ) : (
+                    <p
+                      className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                      onClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
+                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
+                      title="Click to edit secondary report tagline"
+                    >
+                      {headerValues.taglineSecondary}
+                    </p>
+                  )}
                 </div>
 
                 <div className="relative self-stretch flex items-center justify-between gap-4 pl-6 border-l-2 border-[#2454d8]">
@@ -1285,6 +1342,7 @@ export function CanvasStudio({
                     ) : (
                       <p
                         className="cursor-text text-[19px] font-black leading-tight text-[#1836a0]"
+                        onClick={() => !activeIsPreview && setEditingHeaderValue("title")}
                         onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("title")}
                         title="Double-click to edit report title"
                       >
@@ -1306,6 +1364,7 @@ export function CanvasStudio({
                     ) : (
                       <p
                         className="mt-1 cursor-text text-[12px] font-semibold leading-tight text-[#1836a0]"
+                        onClick={() => !activeIsPreview && setEditingHeaderValue("period")}
                         onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("period")}
                         title="Double-click to edit report period"
                       >
@@ -1426,6 +1485,81 @@ export function CanvasStudio({
                 </button>
               )}
             </div>
+
+            {/* Fixed report footer: only the text values are editable per section. */}
+            <footer
+              className="relative z-10 grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-6 pb-2"
+              style={{ backgroundColor: getPaperToneColor(paperTone) }}
+            >
+              <div className="min-w-0">
+                {editingFooterValue === "company" ? (
+                  <input
+                    autoFocus
+                    value={footerValues.company}
+                    onChange={(event) => updateFooterValue("company", event.target.value)}
+                    onBlur={commitFooterValue}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
+                    }}
+                    className="w-full bg-transparent text-sm font-bold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                    aria-label="Footer company name"
+                  />
+                ) : (
+                  <p
+                    className="cursor-text text-sm font-bold text-[#1836a0]"
+                    onDoubleClick={() => !activeIsPreview && setEditingFooterValue("company")}
+                    title="Double-click to edit company name"
+                  >
+                    {footerValues.company}
+                  </p>
+                )}
+                {editingFooterValue === "websites" ? (
+                  <input
+                    autoFocus
+                    value={footerValues.websites}
+                    onChange={(event) => updateFooterValue("websites", event.target.value)}
+                    onBlur={commitFooterValue}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
+                    }}
+                    className="mt-1 w-full bg-transparent text-xs font-semibold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                    aria-label="Footer website links"
+                  />
+                ) : (
+                  <p
+                    className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
+                    onDoubleClick={() => !activeIsPreview && setEditingFooterValue("websites")}
+                    title="Double-click to edit website links"
+                  >
+                    {footerValues.websites}
+                  </p>
+                )}
+              </div>
+
+              <div className="h-[2px] w-full bg-[#1836a0]/60" />
+
+              {editingFooterValue === "quote" ? (
+                <input
+                  autoFocus
+                  value={footerValues.quote}
+                  onChange={(event) => updateFooterValue("quote", event.target.value)}
+                  onBlur={commitFooterValue}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
+                  }}
+                  className="w-full bg-transparent text-right text-sm font-semibold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                  aria-label="Footer safety quote"
+                />
+              ) : (
+                <p
+                  className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
+                  onDoubleClick={() => !activeIsPreview && setEditingFooterValue("quote")}
+                  title="Double-click to edit safety quote"
+                >
+                  “{footerValues.quote}”
+                </p>
+              )}
+            </footer>
             </div>
           </div>
         </div>
