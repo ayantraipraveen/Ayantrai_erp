@@ -595,6 +595,7 @@ export interface CanvasStudioProps {
   onUpdateInsightInCell?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlockInCell?: (rowId: string, cellId: string, content: string) => void;
   paperTone?: string;
+  sectionTextColor?: string;
   showGrid?: boolean;
   onToggleGrid?: () => void;
   showGuides?: boolean;
@@ -633,6 +634,7 @@ export function CanvasStudio({
   onUpdateInsightInCell,
   onUpdateTextBlockInCell,
   paperTone = "white",
+  sectionTextColor,
   showGrid = true,
   onToggleGrid,
   showGuides = false,
@@ -978,7 +980,10 @@ export function CanvasStudio({
             {/* Document Header Bar */}
             <div className={`relative z-10 px-8 sm:px-10 pt-8 pb-5 border-b border-slate-100 dark:border-zinc-800/60 ${isDarkPaper ? "bg-black/30 backdrop-blur-md" : "bg-white/40 dark:bg-black/20 backdrop-blur-[2px]"}`}>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 font-mono">
+                <span
+                  className="text-xs font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400"
+                  style={sectionTextColor ? { color: sectionTextColor } : undefined}
+                >
                   {section.eyebrow}
                 </span>
                 <div className="flex items-center gap-2">
@@ -993,11 +998,17 @@ export function CanvasStudio({
                   </span>
                 </div>
               </div>
-              <h1 className={`text-2xl font-black tracking-tight ${isDarkPaper ? "text-white" : "text-slate-900 dark:text-white"}`}>
+              <h1
+                className={`text-2xl font-black tracking-tight ${isDarkPaper && !sectionTextColor ? "text-white" : !sectionTextColor ? "text-slate-900 dark:text-white" : ""}`}
+                style={sectionTextColor ? { color: sectionTextColor } : undefined}
+              >
                 {section.name}
               </h1>
               {section.description && (
-                <p className={`text-xs mt-1 max-w-3xl leading-relaxed ${isDarkPaper ? "text-zinc-300" : "text-slate-500 dark:text-zinc-400"}`}>
+                <p
+                  className={`text-xs mt-1 max-w-3xl leading-relaxed ${isDarkPaper && !sectionTextColor ? "text-zinc-300" : !sectionTextColor ? "text-slate-500 dark:text-zinc-400" : ""}`}
+                  style={sectionTextColor ? { color: sectionTextColor, opacity: 0.85 } : undefined}
+                >
                   {section.description}
                 </p>
               )}

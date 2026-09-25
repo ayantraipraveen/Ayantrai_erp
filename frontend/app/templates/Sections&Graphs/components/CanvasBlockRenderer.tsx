@@ -455,11 +455,13 @@ export function getCellStyleClasses(style?: CanvasCell["style"]) {
   }
 
   const styleProps: React.CSSProperties = {};
+  let textColorClass = "";
   if (style.textColor) {
     styleProps.color = style.textColor;
+    textColorClass = "[&_p]:!text-[inherit] [&_span]:!text-[inherit] [&_h1]:!text-[inherit] [&_h2]:!text-[inherit] [&_h3]:!text-[inherit] [&_h4]:!text-[inherit]";
   }
 
-  return { fontClass, alignClass, bgClass, styleProps };
+  return { fontClass, alignClass, bgClass, textColorClass, styleProps };
 }
 
 
@@ -472,7 +474,7 @@ export function CanvasBlockRenderer({
   onUpdateInsight,
   onUpdateTextBlock,
 }: BlockRendererProps) {
-  const { fontClass, alignClass, bgClass, styleProps } = getCellStyleClasses(cell.style);
+  const { fontClass, alignClass, bgClass, textColorClass, styleProps } = getCellStyleClasses(cell.style);
 
   const renderInner = () => {
     switch (cell.blockType) {
@@ -513,7 +515,7 @@ export function CanvasBlockRenderer({
 
   return (
     <div
-      className={`w-full h-full transition-all ${fontClass} ${alignClass} ${bgClass}`}
+      className={`w-full h-full transition-all ${fontClass} ${alignClass} ${bgClass} ${textColorClass}`}
       style={styleProps}
     >
       {renderInner()}

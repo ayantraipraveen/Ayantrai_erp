@@ -94,6 +94,7 @@ export default function SectionCanvasEditor({
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [paperTone, setPaperTone] = useState<string>("white");
+  const [sectionTextColor, setSectionTextColor] = useState<string | undefined>(undefined);
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -704,6 +705,8 @@ export default function SectionCanvasEditor({
         onDelete={handleDeleteActive}
         paperTone={paperTone}
         onSetPaperTone={setPaperTone}
+        sectionTextColor={sectionTextColor}
+        onSetSectionTextColor={setSectionTextColor}
         showGrid={showGrid}
         onToggleGrid={() => setShowGrid(!showGrid)}
         showGuides={showGuides}
@@ -746,6 +749,7 @@ export default function SectionCanvasEditor({
           onUpdateInsightInCell={handleUpdateInsightInCell}
           onUpdateTextBlockInCell={handleUpdateTextBlockInCell}
           paperTone={paperTone}
+          sectionTextColor={sectionTextColor}
           showGrid={showGrid}
           onToggleGrid={() => setShowGrid(!showGrid)}
           showGuides={showGuides}
