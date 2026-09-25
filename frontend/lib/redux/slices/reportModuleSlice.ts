@@ -2446,7 +2446,7 @@ export const reportModuleSlice = createSlice({
 
       const original = row.cells[cellIdx];
       const ts = Date.now();
-      const cloned: import("./reportModuleSlice").CanvasCell = {
+      const cloned: CanvasCell = {
         ...original,
         id: `cell-dup-${ts}`,
         metricCard: original.metricCard
