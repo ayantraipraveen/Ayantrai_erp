@@ -30,6 +30,7 @@ import {
   Trash2,
   Copy,
   Edit2,
+  Check,
   GripVertical,
   ChevronDown,
   ChevronUp,
@@ -607,6 +608,8 @@ export interface CanvasStudioProps {
   // Watermark Support
   activeWatermark?: UploadedSvgWatermark | null;
   watermarkConfig?: WatermarkStampConfig;
+  onUpdateWatermarkConfig?: (cfg: Partial<WatermarkStampConfig>) => void;
+  onSelectWatermark?: (id: string | null) => void;
 }
 
 function isColorDark(colorStr?: string): boolean {
@@ -645,6 +648,8 @@ export function CanvasStudio({
   onTogglePreview,
   activeWatermark = null,
   watermarkConfig,
+  onUpdateWatermarkConfig,
+  onSelectWatermark,
 }: CanvasStudioProps) {
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
@@ -853,6 +858,7 @@ export function CanvasStudio({
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       handleSelectCell(null, null);
+      setIsWatermarkSelected(false);
     }
   };
 
@@ -894,6 +900,94 @@ export function CanvasStudio({
   const wmScale = (watermarkConfig?.scale ?? 100) / 100;
   const wmRotation = watermarkConfig?.rotation ?? -18;
   const wmPlacement = watermarkConfig?.placement ?? "center";
+  const wmXOffset = watermarkConfig?.xOffset ?? 0;
+  const wmYOffset = watermarkConfig?.yOffset ?? 0;
+
+  const [isWatermarkSelected, setIsWatermarkSelected] = useState(false);
+  const [isDraggingWatermark, setIsDraggingWatermark] = useState(false);
+  const [isResizingWatermark, setIsResizingWatermark] = useState(false);
+
+  const getPlacementClass = (pos: string) => {
+    switch (pos) {
+      case "top-left":
+        return "items-start justify-start";
+      case "top-center":
+        return "items-start justify-center";
+      case "top-right":
+        return "items-start justify-end";
+      case "center-left":
+        return "items-center justify-start";
+      case "center":
+        return "items-center justify-center";
+      case "center-right":
+        return "items-center justify-end";
+      case "bottom-left":
+        return "items-end justify-start";
+      case "bottom-center":
+        return "items-end justify-center";
+      case "bottom-right":
+        return "items-end justify-end";
+      case "tiled":
+        return "items-center justify-around flex-wrap opacity-60";
+      default:
+        return "items-center justify-center";
+    }
+  };
+
+  const handleWatermarkDragStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsDraggingWatermark(true);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startXOffset = wmXOffset;
+    const startYOffset = wmYOffset;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaXPercent = Math.round(((moveEvent.clientX - startX) / 800) * 100);
+      const deltaYPercent = Math.round(((moveEvent.clientY - startY) / 1000) * 100);
+      const newX = Math.min(50, Math.max(-50, startXOffset + deltaXPercent));
+      const newY = Math.min(50, Math.max(-50, startYOffset + deltaYPercent));
+      if (onUpdateWatermarkConfig) {
+        onUpdateWatermarkConfig({ xOffset: newX, yOffset: newY });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingWatermark(false);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleWatermarkResizeStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsResizingWatermark(true);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startScale = Math.round(wmScale * 100);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const delta = (moveEvent.clientX - startX) - (moveEvent.clientY - startY);
+      const newScale = Math.min(300, Math.max(20, Math.round(startScale + delta * 0.5)));
+      if (onUpdateWatermarkConfig) {
+        onUpdateWatermarkConfig({ scale: newScale });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingWatermark(false);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
 
   return (
     <DndContext
@@ -936,15 +1030,9 @@ export function CanvasStudio({
             {/* ── Realistic Corporate Document Watermark Stamp Layer ── */}
             {activeWatermark?.svgContent && (
               <div
-                className={`absolute inset-0 pointer-events-none select-none z-10 overflow-hidden flex p-10 transition-all duration-300 ${
-                  wmPlacement === "top-right"
-                    ? "items-start justify-end"
-                    : wmPlacement === "bottom-right"
-                    ? "items-end justify-end"
-                    : wmPlacement === "tiled"
-                    ? "items-center justify-around flex-wrap opacity-60"
-                    : "items-center justify-center"
-                }`}
+                className={`absolute inset-0 select-none z-10 overflow-hidden flex p-8 sm:p-12 transition-all duration-300 ${
+                  getPlacementClass(wmPlacement)
+                } ${isWatermarkSelected ? "pointer-events-auto" : "pointer-events-none"}`}
               >
                 {wmPlacement === "tiled" ? (
                   <div className="grid grid-cols-2 gap-24 w-full h-full p-8 place-items-center">
@@ -953,7 +1041,7 @@ export function CanvasStudio({
                         key={idx}
                         style={{
                           opacity: wmOpacity * 0.7,
-                          transform: `rotate(${wmRotation}deg) scale(${wmScale * 0.75})`,
+                          transform: `translate(${wmXOffset}%, ${wmYOffset}%) rotate(${wmRotation}deg) scale(${wmScale * 0.75})`,
                           transformOrigin: "center center",
                           mixBlendMode: isDarkPaper ? "screen" : "multiply",
                         }}
@@ -965,14 +1053,147 @@ export function CanvasStudio({
                 ) : (
                   <div
                     style={{
-                      opacity: wmOpacity,
-                      transform: `rotate(${wmRotation}deg) scale(${wmScale})`,
+                      transform: `translate(${wmXOffset}%, ${wmYOffset}%)`,
                       transformOrigin: "center center",
-                      mixBlendMode: isDarkPaper ? "screen" : "multiply",
                     }}
-                    className="w-full max-w-[500px] flex items-center justify-center transition-all duration-300 filter drop-shadow-sm select-none"
-                    dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
-                  />
+                    className="relative flex items-center justify-center transition-transform duration-75 max-w-full"
+                  >
+                    {/* SVG Graphic Stamp */}
+                    <div
+                      style={{
+                        opacity: wmOpacity,
+                        transform: `rotate(${wmRotation}deg) scale(${wmScale})`,
+                        transformOrigin: "center center",
+                        mixBlendMode: isDarkPaper ? "screen" : "multiply",
+                      }}
+                      className="w-full max-w-[500px] flex items-center justify-center filter drop-shadow-sm select-none cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (!activeIsPreview) setIsWatermarkSelected(true);
+                      }}
+                      dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
+                    />
+
+                    {/* Interactive Selection Bounding Box & HUD (Visible when selected in non-preview mode) */}
+                    {isWatermarkSelected && !activeIsPreview && (
+                      <div
+                        className="absolute inset-0 -m-3 border-2 border-[#8B3DFF] rounded-2xl ring-4 ring-[#8B3DFF]/20 pointer-events-auto cursor-move flex items-center justify-center select-none"
+                        onMouseDown={handleWatermarkDragStart}
+                        title="Drag to reposition watermark anywhere on page"
+                      >
+                        {/* 4 Corner Resize Handles */}
+                        <div
+                          onMouseDown={handleWatermarkResizeStart}
+                          className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
+                          title="Drag corner to resize scale"
+                        />
+                        <div
+                          onMouseDown={handleWatermarkResizeStart}
+                          className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
+                          title="Drag corner to resize scale"
+                        />
+                        <div
+                          onMouseDown={handleWatermarkResizeStart}
+                          className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
+                          title="Drag corner to resize scale"
+                        />
+                        <div
+                          onMouseDown={handleWatermarkResizeStart}
+                          className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
+                          title="Drag corner to resize scale"
+                        />
+
+                        {/* Floating Quick Action HUD Bar above watermark */}
+                        <div
+                          className="absolute -top-11 left-1/2 -translate-x-1/2 h-8 px-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-zinc-200 z-50 whitespace-nowrap cursor-default"
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          <span title="Drag watermark" className="flex items-center">
+                            <Move className="w-3.5 h-3.5 text-[#8B3DFF] cursor-move" />
+                          </span>
+                          <span className="font-semibold text-slate-600 dark:text-zinc-300 max-w-[120px] truncate">
+                            {activeWatermark.name.split(" ")[0]}
+                          </span>
+
+                          <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
+
+                          {/* Quick Sizing Steppers */}
+                          <div className="flex items-center gap-1 font-mono">
+                            <button
+                              type="button"
+                              onClick={() => onUpdateWatermarkConfig && onUpdateWatermarkConfig({ scale: Math.max(20, Math.round(wmScale * 100) - 10) })}
+                              className="w-5 h-5 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300 cursor-pointer"
+                              title="Smaller"
+                            >
+                              -
+                            </button>
+                            <span className="text-[#8B3DFF] font-bold px-1 text-[11px]">
+                              {Math.round(wmScale * 100)}%
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateWatermarkConfig && onUpdateWatermarkConfig({ scale: Math.min(300, Math.round(wmScale * 100) + 10) })}
+                              className="w-5 h-5 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300 cursor-pointer"
+                              title="Larger"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
+
+                          {/* Quick Placement Dropdown / Cycle */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!onUpdateWatermarkConfig) return;
+                              const placements = [
+                                "center",
+                                "top-left",
+                                "top-right",
+                                "bottom-left",
+                                "bottom-right",
+                                "tiled",
+                              ] as const;
+                              const nextIdx = (placements.indexOf(wmPlacement as any) + 1) % placements.length;
+                              onUpdateWatermarkConfig({ placement: placements[nextIdx] });
+                            }}
+                            className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 hover:bg-purple-100 text-[10px] font-mono uppercase text-slate-700 dark:text-zinc-300 cursor-pointer"
+                            title="Cycle Placement Location"
+                          >
+                            Pos: {wmPlacement}
+                          </button>
+
+                          <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
+
+                          {/* Done / Deselect */}
+                          <button
+                            type="button"
+                            onClick={() => setIsWatermarkSelected(false)}
+                            className="w-5 h-5 rounded hover:bg-purple-100 text-purple-600 flex items-center justify-center cursor-pointer"
+                            title="Done"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+
+                          {/* Remove */}
+                          {onSelectWatermark && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onSelectWatermark(null);
+                                setIsWatermarkSelected(false);
+                              }}
+                              className="w-5 h-5 rounded hover:bg-rose-100 text-rose-500 flex items-center justify-center cursor-pointer"
+                              title="Remove Watermark"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -988,10 +1209,23 @@ export function CanvasStudio({
                 </span>
                 <div className="flex items-center gap-2">
                   {activeWatermark && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 font-bold">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsWatermarkSelected(!isWatermarkSelected);
+                      }}
+                      className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
+                        isWatermarkSelected
+                          ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
+                          : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
+                      }`}
+                      title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
+                    >
                       <Stamp className="w-2.5 h-2.5" />
                       <span>{activeWatermark.name}</span>
-                    </span>
+                      <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
+                    </button>
                   )}
                   <span className={`text-[10px] font-mono tracking-widest uppercase ${isDarkPaper ? "text-slate-400" : "text-slate-300 dark:text-zinc-600"}`}>
                     CANVA STUDIO · INDUSTRIAL REPORT

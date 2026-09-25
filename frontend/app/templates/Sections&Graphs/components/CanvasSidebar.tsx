@@ -39,7 +39,7 @@ import {
   ChartTypeOption,
 } from "./constants/chartTypes";
 import ChartRenderer from "./ChartRenderer";
-import { UploadedSvgWatermark } from "./watermarkStorage";
+import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
 
 export interface SidebarAddBlockEvent {
   blockType: CanvasBlockType;
@@ -55,6 +55,8 @@ export interface CanvasSidebarProps {
   uploadedWatermarks?: UploadedSvgWatermark[];
   activeWatermarkId?: string | null;
   onSelectWatermark?: (watermarkId: string | null) => void;
+  watermarkConfig?: WatermarkStampConfig;
+  onUpdateWatermarkConfig?: (cfg: Partial<WatermarkStampConfig>) => void;
   isCollapsed?: boolean;
 }
 
@@ -358,6 +360,8 @@ export function CanvasSidebar({
   uploadedWatermarks = [],
   activeWatermarkId,
   onSelectWatermark,
+  watermarkConfig,
+  onUpdateWatermarkConfig,
   isCollapsed,
 }: CanvasSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -771,6 +775,51 @@ export function CanvasSidebar({
                             )}
                           </button>
                         </div>
+
+                        {/* If applied, show quick resize & placement controls */}
+                        {isApplied && onUpdateWatermarkConfig && watermarkConfig && (
+                          <div
+                            className="pt-2 border-t border-purple-500/20 flex items-center justify-between gap-1 text-[10px]"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {/* Scale Stepper */}
+                            <div className="flex items-center gap-1 bg-white dark:bg-zinc-900 px-1.5 py-0.5 rounded-lg border border-purple-200 dark:border-purple-800">
+                              <button
+                                type="button"
+                                onClick={() => onUpdateWatermarkConfig({ scale: Math.max(20, (watermarkConfig.scale ?? 100) - 10) })}
+                                className="w-4 h-4 rounded hover:bg-purple-100 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300"
+                                title="Smaller"
+                              >
+                                -
+                              </button>
+                              <span className="font-mono font-bold text-[#8B3DFF]">
+                                {watermarkConfig.scale ?? 100}%
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateWatermarkConfig({ scale: Math.min(300, (watermarkConfig.scale ?? 100) + 10) })}
+                                className="w-4 h-4 rounded hover:bg-purple-100 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300"
+                                title="Larger"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            {/* Placement Cycler */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const placements = ["center", "top-left", "top-right", "bottom-left", "bottom-right", "tiled"] as const;
+                                const nextIdx = (placements.indexOf(watermarkConfig.placement as any) + 1) % placements.length;
+                                onUpdateWatermarkConfig({ placement: placements[nextIdx] });
+                              }}
+                              className="px-2 py-0.5 rounded-lg bg-white dark:bg-zinc-900 border border-purple-200 dark:border-purple-800 text-[10px] font-mono uppercase text-slate-700 dark:text-zinc-300 hover:bg-purple-50 cursor-pointer"
+                              title="Cycle Location"
+                            >
+                              Pos: {watermarkConfig.placement ?? "center"}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

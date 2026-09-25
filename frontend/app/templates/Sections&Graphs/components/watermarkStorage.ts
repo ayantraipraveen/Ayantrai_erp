@@ -10,12 +10,27 @@ export interface UploadedSvgWatermark {
   scale?: number;
 }
 
+export type WatermarkPlacement =
+  | "center"
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "center-left"
+  | "center-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right"
+  | "tiled"
+  | "custom";
+
 export interface WatermarkStampConfig {
   watermarkId: string | null;
-  opacity: number;      // 5 to 60 (percent)
-  scale: number;        // 50 to 150 (percent)
-  rotation: number;     // -45 to 45 (degrees)
-  placement: "center" | "top-right" | "bottom-right" | "tiled";
+  opacity: number;      // 5 to 80 (percent)
+  scale: number;        // 20 to 300 (percent)
+  rotation: number;     // -90 to 90 (degrees)
+  placement: WatermarkPlacement;
+  xOffset?: number;     // -50 to 50 (% horizontal offset)
+  yOffset?: number;     // -50 to 50 (% vertical offset)
 }
 
 export const STORAGE_KEY = "ayantrai_uploaded_watermark_svgs";
@@ -27,6 +42,8 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkStampConfig = {
   scale: 100,
   rotation: -18,
   placement: "center",
+  xOffset: 0,
+  yOffset: 0,
 };
 
 export const INITIAL_SEEDS: UploadedSvgWatermark[] = [

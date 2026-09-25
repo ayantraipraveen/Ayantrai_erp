@@ -732,6 +732,8 @@ export default function SectionCanvasEditor({
             uploadedWatermarks={uploadedWatermarks}
             activeWatermarkId={watermarkConfig.watermarkId}
             onSelectWatermark={handleSelectWatermark}
+            watermarkConfig={watermarkConfig}
+            onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
           />
         )}
 
@@ -760,6 +762,8 @@ export default function SectionCanvasEditor({
           onTogglePreview={() => setIsPreview(!isPreview)}
           activeWatermark={uploadedWatermarks.find((w) => w.id === watermarkConfig.watermarkId) || null}
           watermarkConfig={watermarkConfig}
+          onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
+          onSelectWatermark={handleSelectWatermark}
         />
       </div>
 
