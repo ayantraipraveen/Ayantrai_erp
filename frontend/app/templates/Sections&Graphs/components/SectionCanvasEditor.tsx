@@ -27,12 +27,23 @@ import {
   updateInsightInCell,
   updateTextBlockInCell,
   updateCellColSpan,
+  updateCellStyleInCell,
+  setSectionWatermark,
+  CanvasCellStyle,
   duplicateCanvasCell,
   deleteCanvasCell,
   showGlobalToast,
   setChartEditorFullscreen,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasSidebar, SidebarAddBlockEvent } from "./CanvasSidebar";
+import {
+  getUploadedWatermarks,
+  getSectionWatermarkConfig,
+  saveSectionWatermarkConfig,
+  UploadedSvgWatermark,
+  WatermarkStampConfig,
+  DEFAULT_WATERMARK_CONFIG,
+} from "./watermarkStorage";
 import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
 import { CanvasStudio } from "./CanvasStudio";
 import { CanvasContextRibbon } from "./CanvasContextRibbon";
@@ -58,6 +69,18 @@ export default function SectionCanvasEditor({
   const librarySections = useAppSelector((s) => s.reportModule.librarySections || []);
   const section = librarySections.find((s) => s.id === sectionId);
   const chartEditorFullscreen = useAppSelector((s) => s.reportModule.chartEditorFullscreen);
+
+  // ── Document Watermark Studio State ─────────────────────────────────────────
+  const [uploadedWatermarks, setUploadedWatermarks] = useState<UploadedSvgWatermark[]>([]);
+  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkStampConfig>(DEFAULT_WATERMARK_CONFIG);
+
+  useEffect(() => {
+    setUploadedWatermarks(getUploadedWatermarks());
+    if (section) {
+      setWatermarkConfig(getSectionWatermarkConfig(section.id, section.watermarkId));
+    }
+  }, [section?.id, section?.watermarkId]);
+
 
   // Auto-migrate legacy sections to canvas rows
   useEffect(() => {
@@ -438,6 +461,39 @@ export default function SectionCanvasEditor({
     [dispatch, sectionId, selectedRowId, selectedCellId]
   );
 
+    const handleUpdateCellStyle = useCallback(
+    (style: Partial<CanvasCellStyle>) => {
+      if (!selectedRowId || !selectedCellId) return;
+      dispatch(updateCellStyleInCell({ sectionId, rowId: selectedRowId, cellId: selectedCellId, style }));
+    },
+    [dispatch, sectionId, selectedRowId, selectedCellId]
+  );
+
+  const handleSelectWatermark = useCallback(
+    (watermarkId: string | null) => {
+      const updated = { ...watermarkConfig, watermarkId };
+      setWatermarkConfig(updated);
+      saveSectionWatermarkConfig(sectionId, updated);
+      dispatch(setSectionWatermark({ sectionId, watermarkId }));
+      dispatch(
+        showGlobalToast({
+          message: watermarkId ? "Corporate watermark stamp applied to section" : "Watermark removed",
+          type: "success",
+        })
+      );
+    },
+    [dispatch, sectionId, watermarkConfig]
+  );
+
+  const handleUpdateWatermarkConfig = useCallback(
+    (patch: Partial<WatermarkStampConfig>) => {
+      const updated = { ...watermarkConfig, ...patch };
+      setWatermarkConfig(updated);
+      saveSectionWatermarkConfig(sectionId, updated);
+    },
+    [sectionId, watermarkConfig]
+  );
+
   const handleUpdateColSpan = useCallback(
     (colSpan: 1 | 2 | 3 | 4) => {
       if (!selectedRowId || !selectedCellId) return;
@@ -644,6 +700,12 @@ export default function SectionCanvasEditor({
         onToggleGuides={() => setShowGuides(!showGuides)}
         isPreview={isPreview}
         onTogglePreview={() => setIsPreview(!isPreview)}
+        onUpdateCellStyle={handleUpdateCellStyle}
+        uploadedWatermarks={uploadedWatermarks}
+        activeWatermarkId={watermarkConfig.watermarkId}
+        onSelectWatermark={handleSelectWatermark}
+        watermarkConfig={watermarkConfig}
+        onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
       />
 
       {/* ── Main Studio Workspace ── */}
@@ -679,6 +741,8 @@ export default function SectionCanvasEditor({
           setZoom={setZoom}
           isPreview={isPreview}
           onTogglePreview={() => setIsPreview(!isPreview)}
+          activeWatermark={uploadedWatermarks.find((w) => w.id === watermarkConfig.watermarkId) || null}
+          watermarkConfig={watermarkConfig}
         />
       </div>
 

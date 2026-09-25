@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   PaletteRamp,
   GraphType,
   CanvasCell,
+  CanvasCellStyle,
   LibraryMetricCard,
   LibraryChartCard,
 } from "@/lib/redux/slices/reportModuleSlice";
@@ -27,10 +28,21 @@ import {
   BarChart2,
   Lightbulb,
   AlignLeft,
+  AlignCenter,
+  AlignRight,
   LayoutGrid,
   Minus,
   Sparkles,
+  Type,
+  Palette,
+  Droplet,
+  Stamp,
+  Check,
+  RotateCw,
+  ExternalLink,
+  ChevronDown,
 } from "lucide-react";
+import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
 
 export interface CanvasContextRibbonProps {
   selectedCell: CanvasCell | null;
@@ -51,6 +63,16 @@ export interface CanvasContextRibbonProps {
   onToggleGuides: () => void;
   isPreview: boolean;
   onTogglePreview: () => void;
+
+  // Font, Color & Background Management
+  onUpdateCellStyle?: (style: Partial<CanvasCellStyle>) => void;
+
+  // Watermark Management
+  uploadedWatermarks?: UploadedSvgWatermark[];
+  activeWatermarkId?: string | null;
+  onSelectWatermark?: (watermarkId: string | null) => void;
+  watermarkConfig?: WatermarkStampConfig;
+  onUpdateWatermarkConfig?: (config: Partial<WatermarkStampConfig>) => void;
 }
 
 const COLOR_RAMP_DOTS: { id: PaletteRamp; bg: string; label: string }[] = [
@@ -61,6 +83,36 @@ const COLOR_RAMP_DOTS: { id: PaletteRamp; bg: string; label: string }[] = [
   { id: "cyan",    bg: "bg-cyan-500",    label: "Cyan" },
   { id: "red",     bg: "bg-rose-500",    label: "Rose" },
   { id: "slate",   bg: "bg-slate-500",   label: "Slate" },
+];
+
+const FONT_OPTIONS: { id: "sans" | "serif" | "mono" | "rounded"; label: string; previewClass: string }[] = [
+  { id: "sans",    label: "Inter Sans",       previewClass: "font-sans" },
+  { id: "serif",   label: "Merriweather Serif", previewClass: "font-serif" },
+  { id: "mono",    label: "JetBrains Mono",   previewClass: "font-mono" },
+  { id: "rounded", label: "Outfit Modern",    previewClass: "font-sans tracking-wide" },
+];
+
+const CARD_BG_PRESETS: { id: string; label: string; color: string; border: string; darkBg: string }[] = [
+  { id: "white",    label: "Pure White",  color: "#ffffff", border: "#e2e8f0", darkBg: "#0c1017" },
+  { id: "slate",    label: "Crisp Slate", color: "#f8fafc", border: "#cbd5e1", darkBg: "#1e293b" },
+  { id: "glass",    label: "Frosted Glass", color: "rgba(255,255,255,0.7)", border: "rgba(255,255,255,0.5)", darkBg: "rgba(20,25,35,0.7)" },
+  { id: "purple",   label: "Soft Purple", color: "#f5f3ff", border: "#ddd6fe", darkBg: "#2e1065" },
+  { id: "indigo",   label: "Soft Indigo", color: "#eef2ff", border: "#c7d2fe", darkBg: "#1e1b4b" },
+  { id: "emerald",  label: "Soft Mint",   color: "#ecfdf5", border: "#a7f3d0", darkBg: "#064e3b" },
+  { id: "amber",    label: "Soft Amber",  color: "#fffbeb", border: "#fde68a", darkBg: "#78350f" },
+  { id: "rose",     label: "Soft Rose",   color: "#fff1f2", border: "#fecdd3", darkBg: "#881337" },
+  { id: "dark",     label: "Midnight",    color: "#0f172a", border: "#334155", darkBg: "#0f172a" },
+];
+
+const TEXT_COLOR_SWATCHES = [
+  { hex: "#0f172a", label: "Slate Dark" },
+  { hex: "#475569", label: "Slate Gray" },
+  { hex: "#8b3dff", label: "Canva Purple" },
+  { hex: "#2563eb", label: "Royal Blue" },
+  { hex: "#059669", label: "Emerald" },
+  { hex: "#d97706", label: "Amber" },
+  { hex: "#dc2626", label: "Crimson" },
+  { hex: "#0891b2", label: "Cyan" },
 ];
 
 export function CanvasContextRibbon({
@@ -82,7 +134,34 @@ export function CanvasContextRibbon({
   onToggleGuides,
   isPreview,
   onTogglePreview,
+  onUpdateCellStyle,
+  uploadedWatermarks = [],
+  activeWatermarkId,
+  onSelectWatermark,
+  watermarkConfig,
+  onUpdateWatermarkConfig,
 }: CanvasContextRibbonProps) {
+  // Popover menus state
+  const [fontMenuOpen, setFontMenuOpen] = useState(false);
+  const [colorMenuOpen, setColorMenuOpen] = useState(false);
+  const [bgMenuOpen, setBgMenuOpen] = useState(false);
+  const [watermarkMenuOpen, setWatermarkMenuOpen] = useState(false);
+
+  // Close menus when clicking outside
+  const ribbonRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ribbonRef.current && !ribbonRef.current.contains(e.target as Node)) {
+        setFontMenuOpen(false);
+        setColorMenuOpen(false);
+        setBgMenuOpen(false);
+        setWatermarkMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   if (isPreview) {
     return (
       <div className="h-10 flex-shrink-0 flex items-center justify-between px-4 sm:px-6 bg-slate-900 text-white text-xs border-b border-zinc-800">
@@ -102,14 +181,20 @@ export function CanvasContextRibbon({
     );
   }
 
-  // ── Render Block Context Ribbon ─────────────────────────────────────────────
+  const currentStyle = selectedCell?.style || {};
+  const currentWm = uploadedWatermarks.find((w) => w.id === activeWatermarkId);
+
+  // ── Render Block Context Ribbon (When a cell is active) ─────────────────────
   if (selectedCell) {
     const card = selectedCell.metricCard;
     const chart = selectedCell.chart;
 
     return (
-      <div className="h-10 flex-shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 bg-slate-50/95 dark:bg-[#090d14]/95 border-b border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md overflow-x-auto select-none animate-fadeIn">
-        <div className="flex items-center gap-2.5 flex-nowrap">
+      <div
+        ref={ribbonRef}
+        className="relative h-11 flex-shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 bg-slate-50/95 dark:bg-[#090d14]/95 border-b border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md overflow-x-auto select-none animate-fadeIn z-30"
+      >
+        <div className="flex items-center gap-2 flex-nowrap">
           {/* Active Block Type Tag */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#9D61FF]/15 text-[#9D61FF] border border-[#9D61FF]/30 text-xs font-bold font-mono">
             {selectedCell.blockType === "metric-card" && <Activity className="w-3.5 h-3.5" />}
@@ -121,131 +206,306 @@ export function CanvasContextRibbon({
             <span className="capitalize">{selectedCell.blockType.replace("-", " ")}</span>
           </div>
 
-          <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800" />
+          <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
 
-          {/* Metric Card Context Controls */}
-          {selectedCell.blockType === "metric-card" && card && onUpdateMetricCard && (
-            <>
-              {/* Color Ramp Dots */}
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] uppercase font-bold text-slate-400 mr-0.5">Tint:</span>
-                {COLOR_RAMP_DOTS.map((dot) => (
+          {/* ── Font Family Dropdown ── */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setFontMenuOpen(!fontMenuOpen);
+                setColorMenuOpen(false);
+                setBgMenuOpen(false);
+                setWatermarkMenuOpen(false);
+              }}
+              className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-purple-400 bg-white dark:bg-zinc-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-slate-700 dark:text-zinc-200"
+              title="Change Font Family"
+            >
+              <Type className="w-3.5 h-3.5 text-[#8B3DFF]" />
+              <span className="capitalize">{currentStyle.fontFamily || "Sans"}</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+
+            {fontMenuOpen && (
+              <div className="absolute top-9 left-0 w-44 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl p-1.5 z-50 space-y-1 animate-fadeIn">
+                <div className="px-2 py-1 text-[10px] font-mono uppercase text-slate-400 font-bold">Typography</div>
+                {FONT_OPTIONS.map((f) => (
                   <button
-                    key={dot.id}
+                    key={f.id}
                     type="button"
-                    onClick={() => onUpdateMetricCard({ ...card, tintColor: dot.id })}
-                    title={dot.label}
-                    className={`w-4 h-4 rounded-full ${dot.bg} transition-transform cursor-pointer ${
-                      card.tintColor === dot.id ? "ring-2 ring-offset-1 ring-[#9D61FF] scale-110" : "opacity-70 hover:opacity-100"
+                    onClick={() => {
+                      if (onUpdateCellStyle) onUpdateCellStyle({ fontFamily: f.id });
+                      setFontMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                      (currentStyle.fontFamily || "sans") === f.id
+                        ? "bg-[#8B3DFF]/10 text-[#8B3DFF] font-bold"
+                        : "hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
                     }`}
-                  />
+                  >
+                    <span className={f.previewClass}>{f.label}</span>
+                    {(currentStyle.fontFamily || "sans") === f.id && <Check className="w-3.5 h-3.5" />}
+                  </button>
                 ))}
               </div>
+            )}
+          </div>
 
-              <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800" />
+          {/* ── Text Align Controls ── */}
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+            <button
+              type="button"
+              onClick={() => onUpdateCellStyle && onUpdateCellStyle({ textAlign: "left" })}
+              className={`p-1 rounded cursor-pointer transition-colors ${
+                (currentStyle.textAlign || "left") === "left"
+                  ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              }`}
+              title="Align Left"
+            >
+              <AlignLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onUpdateCellStyle && onUpdateCellStyle({ textAlign: "center" })}
+              className={`p-1 rounded cursor-pointer transition-colors ${
+                currentStyle.textAlign === "center"
+                  ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              }`}
+              title="Align Center"
+            >
+              <AlignCenter className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onUpdateCellStyle && onUpdateCellStyle({ textAlign: "right" })}
+              className={`p-1 rounded cursor-pointer transition-colors ${
+                currentStyle.textAlign === "right"
+                  ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+              }`}
+              title="Align Right"
+            >
+              <AlignRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
 
-              {/* Trend Direction Picker */}
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] uppercase font-bold text-slate-400 mr-0.5">Trend:</span>
+          {/* ── Text Color Swatches Dropdown ── */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setColorMenuOpen(!colorMenuOpen);
+                setFontMenuOpen(false);
+                setBgMenuOpen(false);
+                setWatermarkMenuOpen(false);
+              }}
+              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-purple-400 bg-white dark:bg-zinc-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-slate-700 dark:text-zinc-200"
+              title="Text Color"
+            >
+              <div
+                className="w-3.5 h-3.5 rounded-full border border-slate-300 dark:border-zinc-600"
+                style={{ backgroundColor: currentStyle.textColor || "#0f172a" }}
+              />
+              <span className="hidden sm:inline">Color</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+
+            {colorMenuOpen && (
+              <div className="absolute top-9 left-0 w-48 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl p-2 z-50 space-y-2 animate-fadeIn">
+                <div className="text-[10px] font-mono uppercase text-slate-400 font-bold">Text Color</div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {TEXT_COLOR_SWATCHES.map((swatch) => (
+                    <button
+                      key={swatch.hex}
+                      type="button"
+                      onClick={() => {
+                        if (onUpdateCellStyle) onUpdateCellStyle({ textColor: swatch.hex });
+                        setColorMenuOpen(false);
+                      }}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform hover:scale-110 cursor-pointer shadow-xs border border-slate-200 dark:border-zinc-700"
+                      style={{ backgroundColor: swatch.hex }}
+                      title={swatch.label}
+                    >
+                      {currentStyle.textColor === swatch.hex && <Check className="w-4 h-4 text-white drop-shadow" />}
+                    </button>
+                  ))}
+                </div>
                 <button
                   type="button"
-                  onClick={() => onUpdateMetricCard({ ...card, trendDirection: "up" })}
-                  className={`h-6 px-1.5 rounded text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
-                    card.trendDirection === "up" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-black" : "text-slate-400 hover:text-slate-700"
-                  }`}
+                  onClick={() => {
+                    if (onUpdateCellStyle) onUpdateCellStyle({ textColor: undefined });
+                    setColorMenuOpen(false);
+                  }}
+                  className="w-full text-center py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
                 >
-                  <ArrowUp className="w-3 h-3" /> Up
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateMetricCard({ ...card, trendDirection: "down" })}
-                  className={`h-6 px-1.5 rounded text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
-                    card.trendDirection === "down" ? "bg-rose-500/20 text-rose-600 dark:text-rose-400 font-black" : "text-slate-400 hover:text-slate-700"
-                  }`}
-                >
-                  <ArrowDown className="w-3 h-3" /> Down
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onUpdateMetricCard({ ...card, trendDirection: "no-change" })}
-                  className={`h-6 px-1.5 rounded text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
-                    card.trendDirection === "no-change" ? "bg-blue-500/20 text-blue-600 dark:text-blue-400 font-black" : "text-slate-400 hover:text-slate-700"
-                  }`}
-                >
-                  Neutral
+                  Reset to Default Color
                 </button>
               </div>
+            )}
+          </div>
 
-              <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800" />
-            </>
+          {/* ── Card Background (Bg) Presets Dropdown ── */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setBgMenuOpen(!bgMenuOpen);
+                setFontMenuOpen(false);
+                setColorMenuOpen(false);
+                setWatermarkMenuOpen(false);
+              }}
+              className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-purple-400 bg-white dark:bg-zinc-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-slate-700 dark:text-zinc-200"
+              title="Card Background"
+            >
+              <Palette className="w-3.5 h-3.5 text-[#8B3DFF]" />
+              <span>Card Bg</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+
+            {bgMenuOpen && (
+              <div className="absolute top-9 left-0 w-60 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl p-2.5 z-50 space-y-2 animate-fadeIn">
+                <div className="text-[10px] font-mono uppercase text-slate-400 font-bold">Card Background Surface</div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {CARD_BG_PRESETS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        if (onUpdateCellStyle) onUpdateCellStyle({ cardBg: p.id });
+                        setBgMenuOpen(false);
+                      }}
+                      className={`h-11 rounded-lg border p-1 text-[10px] font-bold flex flex-col items-center justify-center transition-all cursor-pointer ${
+                        currentStyle.cardBg === p.id
+                          ? "ring-2 ring-[#8B3DFF] shadow-sm"
+                          : "hover:scale-105"
+                      }`}
+                      style={{ backgroundColor: p.color, borderColor: p.border }}
+                      title={p.label}
+                    >
+                      <span className={p.id === "dark" ? "text-white" : "text-slate-800"}>{p.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onUpdateCellStyle) onUpdateCellStyle({ cardBg: undefined });
+                    setBgMenuOpen(false);
+                  }}
+                  className="w-full text-center py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white cursor-pointer"
+                >
+                  Reset to Default Background
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
+
+          {/* Metric Card Context Controls (if metric-card) */}
+          {selectedCell.blockType === "metric-card" && card && onUpdateMetricCard && (
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] uppercase font-bold text-slate-400 mr-0.5 hidden md:inline">Tint:</span>
+              {COLOR_RAMP_DOTS.map((dot) => (
+                <button
+                  key={dot.id}
+                  type="button"
+                  onClick={() => onUpdateMetricCard({ ...card, tintColor: dot.id })}
+                  title={dot.label}
+                  className={`w-4 h-4 rounded-full ${dot.bg} transition-transform cursor-pointer ${
+                    card.tintColor === dot.id ? "ring-2 ring-offset-1 ring-[#9D61FF] scale-110" : "opacity-70 hover:opacity-100"
+                  }`}
+                />
+              ))}
+            </div>
           )}
 
-          {/* Chart Context Controls */}
-          {selectedCell.blockType === "chart" && chart && (
+          {/* Chart Context Controls (if chart) */}
+          {selectedCell.blockType === "chart" && chart && onUpdateChart && (
             <>
-              {/* Chart Type Selector */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] uppercase font-bold text-slate-400">Type:</span>
-                <select
-                  value={chart.chartType}
-                  onChange={(e) => onUpdateChart && onUpdateChart({ ...chart, chartType: e.target.value as GraphType })}
-                  className="h-6 rounded-md bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 px-2 text-[11px] font-bold text-slate-800 dark:text-zinc-200 outline-none cursor-pointer"
-                >
-                  {CHART_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.id} value={opt.id}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={chart.chartType}
+                onChange={(e) => onUpdateChart({ ...chart, chartType: e.target.value as GraphType })}
+                className="h-7 px-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-800 dark:text-zinc-200 outline-none cursor-pointer"
+              >
+                {CHART_TYPE_OPTIONS.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
 
               {onOpenChartEditor && (
                 <button
                   type="button"
                   onClick={onOpenChartEditor}
-                  className="h-6 px-2 rounded-md bg-[#9D61FF]/10 hover:bg-[#9D61FF]/20 text-[#9D61FF] text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer border border-[#9D61FF]/30"
-                  title="Open Fullscreen Telemetry Studio"
+                  className="h-7 px-2.5 rounded-lg border border-purple-300 dark:border-purple-800/80 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Open Deep Telemetry Configurator"
                 >
-                  <Sliders className="w-3 h-3" /> Full Designer
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Config</span>
                 </button>
               )}
-
-              <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800" />
             </>
           )}
 
-          {/* ColSpan Width Selector (Common to all) */}
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] uppercase font-bold text-slate-400 mr-0.5">Width:</span>
-            {([1, 2, 3, 4] as const).map((span) => (
+          {/* Width Pills */}
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+            <span className="text-[10px] font-mono font-bold text-slate-400 px-1">W:</span>
+            {([1, 2, 3, 4] as const).map((s) => (
               <button
-                key={span}
+                key={s}
                 type="button"
-                onClick={() => onUpdateColSpan(span)}
-                className={`h-6 px-2 rounded text-[11px] font-bold transition-all cursor-pointer ${
-                  selectedCell.colSpan === span
-                    ? "bg-[#9D61FF] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-200 dark:hover:bg-zinc-800"
+                onClick={() => onUpdateColSpan(s)}
+                className={`w-5 h-5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                  selectedCell.colSpan === s
+                    ? "bg-[#9D61FF] text-white shadow-xs"
+                    : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
                 }`}
+                title={`Set block width to ${s} of 4 columns`}
               >
-                {span === 1 && "¼"}
-                {span === 2 && "½"}
-                {span === 3 && "¾"}
-                {span === 4 && "Full"}
+                {s}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Right Action Icons: Duplicate, Delete */}
-        <div className="flex items-center gap-1">
+        {/* Right action group */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {/* Watermark Quick Access */}
+          <button
+            type="button"
+            onClick={() => {
+              setWatermarkMenuOpen(!watermarkMenuOpen);
+              setFontMenuOpen(false);
+              setColorMenuOpen(false);
+              setBgMenuOpen(false);
+            }}
+            className={`h-7 px-2.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              currentWm
+                ? "bg-purple-500/15 border-purple-400/40 text-[#8B3DFF]"
+                : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+            }`}
+            title="Document Watermark & Corporate Stamp"
+          >
+            <Stamp className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">{currentWm ? currentWm.name.split(" ")[0] : "Watermark"}</span>
+          </button>
+
+          {/* Duplicate Button */}
           <button
             type="button"
             onClick={onDuplicate}
-            className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             title="Duplicate Block (Ctrl+D)"
           >
-            <Copy className="w-3.5 h-3.5 text-emerald-500" />
+            <Copy className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Duplicate</span>
           </button>
+
+          {/* Delete Button */}
           <button
             type="button"
             onClick={onDelete}
@@ -256,13 +516,30 @@ export function CanvasContextRibbon({
             <span className="hidden sm:inline">Delete</span>
           </button>
         </div>
+
+        {/* ── Watermark Popover Modal ── */}
+        {watermarkMenuOpen && (
+          <WatermarkPopover
+            uploadedWatermarks={uploadedWatermarks}
+            activeWatermarkId={activeWatermarkId}
+            onSelectWatermark={(id) => {
+              if (onSelectWatermark) onSelectWatermark(id);
+            }}
+            config={watermarkConfig}
+            onUpdateConfig={onUpdateWatermarkConfig}
+            onClose={() => setWatermarkMenuOpen(false)}
+          />
+        )}
       </div>
     );
   }
 
   // ── Render Global Canvas Ribbon (Nothing selected) ──────────────────────────
   return (
-    <div className="h-10 flex-shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 bg-slate-50/95 dark:bg-[#090d14]/95 border-b border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md overflow-x-auto select-none">
+    <div
+      ref={ribbonRef}
+      className="relative h-11 flex-shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 bg-slate-50/95 dark:bg-[#090d14]/95 border-b border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md overflow-x-auto select-none z-30"
+    >
       <div className="flex items-center gap-3">
         {/* Section info badge */}
         <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
@@ -312,6 +589,41 @@ export function CanvasContextRibbon({
 
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
 
+        {/* Watermark Selector & Stamp Button */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              setWatermarkMenuOpen(!watermarkMenuOpen);
+            }}
+            className={`h-7 px-2.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              currentWm
+                ? "bg-purple-500/15 border-purple-400/50 text-[#8B3DFF] shadow-xs"
+                : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+            }`}
+            title="Configure Document Watermark Stamp"
+          >
+            <Stamp className="w-3.5 h-3.5 text-[#8B3DFF]" />
+            <span>Watermark: {currentWm ? currentWm.name.split(" ")[0] : "None"}</span>
+            <ChevronDown className="w-3 h-3 opacity-60" />
+          </button>
+
+          {watermarkMenuOpen && (
+            <WatermarkPopover
+              uploadedWatermarks={uploadedWatermarks}
+              activeWatermarkId={activeWatermarkId}
+              onSelectWatermark={(id) => {
+                if (onSelectWatermark) onSelectWatermark(id);
+              }}
+              config={watermarkConfig}
+              onUpdateConfig={onUpdateWatermarkConfig}
+              onClose={() => setWatermarkMenuOpen(false)}
+            />
+          )}
+        </div>
+
+        <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
+
         {/* Grid and Guides Toggles */}
         <div className="flex items-center gap-1">
           <button
@@ -351,6 +663,179 @@ export function CanvasContextRibbon({
           <span>Preview Report</span>
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Watermark Popover Panel ───────────────────────────────────────────────────
+interface WatermarkPopoverProps {
+  uploadedWatermarks: UploadedSvgWatermark[];
+  activeWatermarkId?: string | null;
+  onSelectWatermark: (id: string | null) => void;
+  config?: WatermarkStampConfig;
+  onUpdateConfig?: (cfg: Partial<WatermarkStampConfig>) => void;
+  onClose: () => void;
+}
+
+function WatermarkPopover({
+  uploadedWatermarks,
+  activeWatermarkId,
+  onSelectWatermark,
+  config,
+  onUpdateConfig,
+  onClose,
+}: WatermarkPopoverProps) {
+  const current = uploadedWatermarks.find((w) => w.id === activeWatermarkId);
+
+  return (
+    <div className="absolute top-11 right-6 sm:right-auto sm:left-48 w-80 sm:w-96 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-4 z-50 space-y-4 animate-fadeIn">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-[#8B3DFF] flex items-center justify-center font-bold">
+            <Stamp className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white">Document Watermark Stamp</h4>
+            <p className="text-[10px] text-slate-400">Manage uploaded compliance stamps</p>
+          </div>
+        </div>
+        <a
+          href="/templates/Sections&Graphs/watermark"
+          target="_blank"
+          rel="noreferrer"
+          className="text-[10px] text-[#8B3DFF] hover:underline flex items-center gap-1 font-semibold"
+          title="Go to Watermark Studio to upload more SVGs"
+        >
+          <span>Upload SVG</span>
+          <ExternalLink className="w-3 h-3" />
+        </a>
+      </div>
+
+      {/* Watermarks List (Uploaded SVGs) */}
+      <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+        {/* Option: None */}
+        <button
+          type="button"
+          onClick={() => {
+            onSelectWatermark(null);
+          }}
+          className={`w-full p-2 rounded-xl border text-left flex items-center justify-between cursor-pointer transition-all ${
+            !activeWatermarkId
+              ? "border-[#8B3DFF] bg-[#8B3DFF]/10 text-[#8B3DFF] font-bold"
+              : "border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-600 dark:text-zinc-400"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-400">
+              <Minus className="w-3.5 h-3.5" />
+            </div>
+            <span className="text-xs">No Watermark</span>
+          </div>
+          {!activeWatermarkId && <Check className="w-4 h-4 text-[#8B3DFF]" />}
+        </button>
+
+        {uploadedWatermarks.map((wm) => {
+          const isSelected = activeWatermarkId === wm.id;
+          return (
+            <button
+              key={wm.id}
+              type="button"
+              onClick={() => onSelectWatermark(wm.id)}
+              className={`w-full p-2 rounded-xl border text-left flex items-center justify-between cursor-pointer transition-all ${
+                isSelected
+                  ? "border-[#8B3DFF] bg-[#8B3DFF]/10 text-[#8B3DFF] font-bold shadow-sm"
+                  : "border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-zinc-300"
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className="w-10 h-6 rounded border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-0.5 flex items-center justify-center flex-shrink-0 overflow-hidden"
+                  dangerouslySetInnerHTML={{ __html: wm.svgContent }}
+                />
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold truncate">{wm.name}</div>
+                  <div className="text-[9px] font-mono text-slate-400 truncate">{wm.fileName}</div>
+                </div>
+              </div>
+              {isSelected && <Check className="w-4 h-4 text-[#8B3DFF] flex-shrink-0" />}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Watermark Parameters (if one is selected) */}
+      {current && onUpdateConfig && config && (
+        <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/80 space-y-3">
+          {/* Opacity Slider */}
+          <div>
+            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 dark:text-zinc-300 mb-1">
+              <span>Stamp Opacity</span>
+              <span className="font-mono text-[#8B3DFF]">{config.opacity}%</span>
+            </div>
+            <input
+              type="range"
+              min={5}
+              max={60}
+              step={1}
+              value={config.opacity}
+              onChange={(e) => onUpdateConfig({ opacity: parseInt(e.target.value, 10) })}
+              className="w-full accent-[#8B3DFF] cursor-pointer"
+            />
+          </div>
+
+          {/* Scale Slider */}
+          <div>
+            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-600 dark:text-zinc-300 mb-1">
+              <span>Stamp Scale</span>
+              <span className="font-mono text-[#8B3DFF]">{config.scale}%</span>
+            </div>
+            <input
+              type="range"
+              min={50}
+              max={150}
+              step={5}
+              value={config.scale}
+              onChange={(e) => onUpdateConfig({ scale: parseInt(e.target.value, 10) })}
+              className="w-full accent-[#8B3DFF] cursor-pointer"
+            />
+          </div>
+
+          {/* Placement Pills */}
+          <div>
+            <div className="text-[11px] font-semibold text-slate-600 dark:text-zinc-300 mb-1.5">Stamp Placement</div>
+            <div className="grid grid-cols-4 gap-1 text-[10px] font-bold">
+              {[
+                { id: "center", label: "Center" },
+                { id: "top-right", label: "Top-R" },
+                { id: "bottom-right", label: "Btm-R" },
+                { id: "tiled", label: "Tiled" },
+              ].map((pos) => (
+                <button
+                  key={pos.id}
+                  type="button"
+                  onClick={() => onUpdateConfig({ placement: pos.id as any })}
+                  className={`py-1 rounded-md border text-center transition-all cursor-pointer ${
+                    config.placement === pos.id
+                      ? "bg-[#8B3DFF] text-white border-transparent"
+                      : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                  }`}
+                >
+                  {pos.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Done Button */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+      >
+        Done
+      </button>
     </div>
   );
 }

@@ -413,6 +413,56 @@ function DividerBlock() {
   );
 }
 
+// ── Helper to resolve CanvasCellStyle overrides ──────────────────────────────
+export function getCellStyleClasses(style?: CanvasCell["style"]) {
+  if (!style) return { fontClass: "", alignClass: "", bgClass: "", styleProps: {} };
+
+  const fontClass =
+    style.fontFamily === "serif"
+      ? "font-serif"
+      : style.fontFamily === "mono"
+      ? "font-mono"
+      : style.fontFamily === "rounded"
+      ? "font-sans tracking-wide"
+      : "font-sans";
+
+  const alignClass =
+    style.textAlign === "center"
+      ? "text-center"
+      : style.textAlign === "right"
+      ? "text-right"
+      : "";
+
+  let bgClass = "";
+  if (style.cardBg === "white") {
+    bgClass = "[&>div]:!bg-white dark:[&>div]:!bg-[#0c1017] [&>div]:!border-slate-200 dark:[&>div]:!border-zinc-800";
+  } else if (style.cardBg === "slate") {
+    bgClass = "[&>div]:!bg-slate-50 dark:[&>div]:!bg-zinc-900 [&>div]:!border-slate-300 dark:[&>div]:!border-zinc-700";
+  } else if (style.cardBg === "glass") {
+    bgClass = "[&>div]:!bg-white/75 dark:[&>div]:!bg-zinc-900/75 [&>div]:!backdrop-blur-md [&>div]:!border-white/60 dark:[&>div]:!border-zinc-700/60";
+  } else if (style.cardBg === "purple") {
+    bgClass = "[&>div]:!bg-purple-50/80 dark:[&>div]:!bg-purple-950/30 [&>div]:!border-purple-200 dark:[&>div]:!border-purple-800/40";
+  } else if (style.cardBg === "indigo") {
+    bgClass = "[&>div]:!bg-indigo-50/80 dark:[&>div]:!bg-indigo-950/30 [&>div]:!border-indigo-200 dark:[&>div]:!border-indigo-800/40";
+  } else if (style.cardBg === "emerald") {
+    bgClass = "[&>div]:!bg-emerald-50/80 dark:[&>div]:!bg-emerald-950/30 [&>div]:!border-emerald-200 dark:[&>div]:!border-emerald-800/40";
+  } else if (style.cardBg === "amber") {
+    bgClass = "[&>div]:!bg-amber-50/80 dark:[&>div]:!bg-amber-950/30 [&>div]:!border-amber-200 dark:[&>div]:!border-amber-800/40";
+  } else if (style.cardBg === "rose") {
+    bgClass = "[&>div]:!bg-rose-50/80 dark:[&>div]:!bg-rose-950/30 [&>div]:!border-rose-200 dark:[&>div]:!border-rose-800/40";
+  } else if (style.cardBg === "dark") {
+    bgClass = "[&>div]:!bg-[#0f172a] [&>div]:!text-white [&>div]:!border-slate-700";
+  }
+
+  const styleProps: React.CSSProperties = {};
+  if (style.textColor) {
+    styleProps.color = style.textColor;
+  }
+
+  return { fontClass, alignClass, bgClass, styleProps };
+}
+
+
 // ── Main export ───────────────────────────────────────────────────────────────
 export function CanvasBlockRenderer({
   cell,
@@ -422,38 +472,52 @@ export function CanvasBlockRenderer({
   onUpdateInsight,
   onUpdateTextBlock,
 }: BlockRendererProps) {
-  switch (cell.blockType) {
-    case "metric-card":
-      return (
-        <MetricCardBlock
-          cell={cell}
-          isPreview={isPreview}
-          onUpdateMetricCard={onUpdateMetricCard}
-        />
-      );
-    case "chart":
-      return <ChartBlock cell={cell} />;
-    case "insight":
-      return (
-        <InsightBlock
-          cell={cell}
-          isPreview={isPreview}
-          onUpdateInsight={onUpdateInsight}
-        />
-      );
-    case "text":
-      return (
-        <TextBlock
-          cell={cell}
-          isPreview={isPreview}
-          onUpdateTextBlock={onUpdateTextBlock}
-        />
-      );
-    case "badge-strip":
-      return <BadgeStripBlock cell={cell} />;
-    case "divider":
-      return <DividerBlock />;
-    default:
-      return null;
-  }
+  const { fontClass, alignClass, bgClass, styleProps } = getCellStyleClasses(cell.style);
+
+  const renderInner = () => {
+    switch (cell.blockType) {
+      case "metric-card":
+        return (
+          <MetricCardBlock
+            cell={cell}
+            isPreview={isPreview}
+            onUpdateMetricCard={onUpdateMetricCard}
+          />
+        );
+      case "chart":
+        return <ChartBlock cell={cell} />;
+      case "insight":
+        return (
+          <InsightBlock
+            cell={cell}
+            isPreview={isPreview}
+            onUpdateInsight={onUpdateInsight}
+          />
+        );
+      case "text":
+        return (
+          <TextBlock
+            cell={cell}
+            isPreview={isPreview}
+            onUpdateTextBlock={onUpdateTextBlock}
+          />
+        );
+      case "badge-strip":
+        return <BadgeStripBlock cell={cell} />;
+      case "divider":
+        return <DividerBlock />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div
+      className={`w-full h-full transition-all ${fontClass} ${alignClass} ${bgClass}`}
+      style={styleProps}
+    >
+      {renderInner()}
+    </div>
+  );
 }
+

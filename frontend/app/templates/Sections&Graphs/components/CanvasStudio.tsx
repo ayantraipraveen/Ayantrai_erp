@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -43,6 +43,8 @@ import {
   Square,
   Sparkles,
   Layers,
+  Stamp,
+  Sliders,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
@@ -63,6 +65,7 @@ import {
   showGlobalToast,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
+import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
 
 // ─── ColSpan class map ────────────────────────────────────────────────────────
 const COL_SPAN_CLASS: Record<number, string> = {
@@ -72,7 +75,7 @@ const COL_SPAN_CLASS: Record<number, string> = {
   4: "col-span-4",
 };
 
-// ─── Sortable Cell (Authentic Canva Bounding Box) ─────────────────────────────
+// ─── Sortable Cell (Authentic Canva Bounding Box + Drag Resizer) ───────────────
 interface SortableCellProps {
   sectionId: string;
   rowId: string;
@@ -115,13 +118,62 @@ function SortableCell({
     isDragging,
   } = useSortable({ id: cell.id, data: { rowId, cell }, disabled: isPreview });
 
+  // ── Drag Resizing State (Canva corner and edge drag resize) ─────────────────
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeSpan, setResizeSpan] = useState<1 | 2 | 3 | 4>(cell.colSpan);
+  const cellDomRef = useRef<HTMLDivElement | null>(null);
+
+  // Keep internal resizeSpan in sync if external colSpan changes
+  useEffect(() => {
+    setResizeSpan(cell.colSpan);
+  }, [cell.colSpan]);
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsResizing(true);
+    setResizeSpan(cell.colSpan);
+
+    const startX = e.clientX;
+    const startSpan = cell.colSpan;
+
+    // Find the enclosing grid container to compute exact column track width
+    const gridEl = cellDomRef.current?.closest(".grid") as HTMLElement | null;
+    const gridWidth = gridEl ? gridEl.getBoundingClientRect().width : 800;
+    // Standard 4-column layout
+    const colWidth = gridWidth / 4;
+
+    let computedSpan: 1 | 2 | 3 | 4 = startSpan;
+
+    const handleMouseMove = (ev: MouseEvent) => {
+      const deltaX = ev.clientX - startX;
+      const stepCols = Math.round(deltaX / colWidth);
+      const nextSpan = Math.max(1, Math.min(4, startSpan + stepCols)) as 1 | 2 | 3 | 4;
+      computedSpan = nextSpan;
+      setResizeSpan(nextSpan);
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      setIsResizing(false);
+      if (computedSpan !== cell.colSpan && typeof onColSpanChange === "function") {
+        onColSpanChange(cell.id, rowId, computedSpan);
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isResizing ? "none" : transition,
     opacity: isDragging ? 0.25 : 1,
   };
 
-  const colClass = COL_SPAN_CLASS[cell.colSpan] || "col-span-1";
+  const activeColSpan = isResizing ? resizeSpan : cell.colSpan;
+  const colClass = COL_SPAN_CLASS[activeColSpan] || "col-span-1";
 
   // Ghost placeholder when dragged
   if (isDragging) {
@@ -140,39 +192,72 @@ function SortableCell({
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        cellDomRef.current = node;
+      }}
       style={style}
-      className={`relative group ${colClass} min-w-0 transition-shadow`}
+      className={`relative group ${colClass} min-w-0 transition-all duration-150 ${
+        isResizing ? "z-40 ring-2 ring-[#8B3DFF] ring-offset-2 rounded-2xl shadow-xl" : ""
+      }`}
       onClick={(e) => {
-        if (isPreview) return;
+        if (isPreview || isResizing) return;
         e.stopPropagation();
         if (typeof onSelect === "function") {
           onSelect(cell.id, rowId);
         }
       }}
     >
-      {/* ── Canva Selection Bounding Box with 4 Corner Handles ── */}
+      {/* ── Canva Selection Bounding Box with Draggable Handles ── */}
       {isSelected && !isPreview && !isDraggingOverlay && (
         <div className="absolute inset-0 rounded-2xl border-2 border-[#8B3DFF] pointer-events-none z-20 shadow-[0_0_0_1px_rgba(139,61,255,0.2)]">
           {/* Top-Left Corner Handle */}
           <div className="absolute -top-1.5 -left-1.5 w-3 h-3 rounded-full bg-white border-2 border-[#8B3DFF] shadow-md z-30" />
-          {/* Top-Right Corner Handle */}
-          <div className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full bg-white border-2 border-[#8B3DFF] shadow-md z-30" />
+
+          {/* Top-Right Corner Resizer Handle */}
+          <div
+            onMouseDown={handleResizeStart}
+            className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white border-2 border-[#8B3DFF] shadow-md z-30 cursor-ne-resize pointer-events-auto hover:scale-125 active:scale-110 active:bg-[#8B3DFF] transition-all"
+            title="Drag corner to resize width"
+          />
+
           {/* Bottom-Left Corner Handle */}
           <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 rounded-full bg-white border-2 border-[#8B3DFF] shadow-md z-30" />
-          {/* Bottom-Right Corner Handle */}
-          <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 rounded-full bg-white border-2 border-[#8B3DFF] shadow-md z-30" />
+
+          {/* Bottom-Right Corner Master Resizer Handle (Primary Tactile Handle) */}
+          <div
+            onMouseDown={handleResizeStart}
+            className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full bg-white border-2 border-[#8B3DFF] shadow-xl z-30 cursor-se-resize pointer-events-auto hover:scale-125 active:scale-110 active:bg-[#8B3DFF] transition-all flex items-center justify-center group/resize"
+            title="Drag corner to resize block width (1-4 columns)"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-[#8B3DFF] group-hover/resize:bg-[#7c3aed]" />
+          </div>
 
           {/* Left Middle Pill Handle */}
           <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-1.5 h-4 rounded-full bg-[#8B3DFF] shadow-md z-30" />
-          {/* Right Middle Pill Handle */}
-          <div className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-1.5 h-4 rounded-full bg-[#8B3DFF] shadow-md z-30" />
+
+          {/* Right Middle Pill Resizer Handle */}
+          <div
+            onMouseDown={handleResizeStart}
+            className="absolute top-1/2 -right-2 -translate-y-1/2 w-2 h-6 rounded-full bg-[#8B3DFF] shadow-md z-30 cursor-ew-resize pointer-events-auto hover:scale-125 active:scale-110 transition-all flex items-center justify-center"
+            title="Drag edge to resize block width"
+          >
+            <div className="w-0.5 h-2.5 bg-white/70 rounded-full" />
+          </div>
 
           {/* Block Type Tag (Top-Left Pill) */}
           <div className="absolute -top-5.5 left-0 px-2 py-0.5 rounded-t-md bg-[#8B3DFF] text-white text-[10px] font-mono font-bold tracking-wider uppercase z-30 shadow-sm flex items-center gap-1">
             <span>{cell.blockType.replace("-", " ")}</span>
-            <span className="opacity-80">· {cell.colSpan}/4</span>
+            <span className="opacity-80">· {activeColSpan}/4</span>
           </div>
+
+          {/* Live Drag-Resize Canva HUD Tooltip */}
+          {isResizing && (
+            <div className="absolute -bottom-9 right-0 z-50 px-2.5 py-1 rounded-lg bg-[#0F172A] text-white text-[10px] font-mono font-bold shadow-2xl flex items-center gap-1.5 border border-[#8B3DFF] whitespace-nowrap animate-pulse">
+              <Maximize2 className="w-3 h-3 text-[#8B3DFF]" />
+              <span>Width: {activeColSpan} / 4 cols ({activeColSpan * 25}%)</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -209,9 +294,14 @@ function SortableCell({
             <button
               key={s}
               type="button"
-              onClick={(e) => { e.stopPropagation(); onColSpanChange(cell.id, rowId, s); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (typeof onColSpanChange === "function") {
+                  onColSpanChange(cell.id, rowId, s);
+                }
+              }}
               className={`w-5 h-5 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                cell.colSpan === s
+                activeColSpan === s
                   ? "bg-[#8B3DFF] text-white shadow-sm"
                   : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"
               }`}
@@ -226,7 +316,12 @@ function SortableCell({
           {/* Quick Edit */}
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onEdit(cell, rowId); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (typeof onEdit === "function") {
+                onEdit(cell, rowId);
+              }
+            }}
             className="p-1 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer rounded"
             title="Edit block properties"
           >
@@ -236,7 +331,12 @@ function SortableCell({
           {/* Duplicate */}
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onDuplicate(cell.id, rowId); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (typeof onDuplicate === "function") {
+                onDuplicate(cell.id, rowId);
+              }
+            }}
             className="p-1 text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer rounded"
             title="Duplicate block (Ctrl+D)"
           >
@@ -246,7 +346,12 @@ function SortableCell({
           {/* Delete */}
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onDelete(cell.id, rowId); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (typeof onDelete === "function") {
+                onDelete(cell.id, rowId);
+              }
+            }}
             className="p-1 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer rounded"
             title="Delete block (Del)"
           >
@@ -255,29 +360,41 @@ function SortableCell({
         </div>
       )}
 
-      {/* Block Content with Live Inline Editing */}
-      <div className="h-full">
+      {/* Render the actual cell content block */}
+      <div className="w-full h-full">
         <CanvasBlockRenderer
           cell={cell}
           isSelected={isSelected}
           isPreview={isPreview}
-          onUpdateMetricCard={(card) => onUpdateMetricCard && onUpdateMetricCard(rowId, cell.id, card)}
-          onUpdateInsight={(text) => onUpdateInsight && onUpdateInsight(rowId, cell.id, text)}
-          onUpdateTextBlock={(content) => onUpdateTextBlock && onUpdateTextBlock(rowId, cell.id, content)}
+          onUpdateMetricCard={(card) => {
+            if (typeof onUpdateMetricCard === "function") {
+              onUpdateMetricCard(rowId, cell.id, card);
+            }
+          }}
+          onUpdateInsight={(text) => {
+            if (typeof onUpdateInsight === "function") {
+              onUpdateInsight(rowId, cell.id, text);
+            }
+          }}
+          onUpdateTextBlock={(content) => {
+            if (typeof onUpdateTextBlock === "function") {
+              onUpdateTextBlock(rowId, cell.id, content);
+            }
+          }}
         />
       </div>
     </div>
   );
 }
 
-// ─── Sortable Row ─────────────────────────────────────────────────────────────
+// ─── Sortable Row (Canva Row Container) ───────────────────────────────────────
 interface SortableRowProps {
   sectionId: string;
   row: CanvasRow;
-  selectedCellId: string | null;
-  selectedRowId: string | null;
+  selectedCellId?: string | null;
+  selectedRowId?: string | null;
   isPreview?: boolean;
-  onSelectCell?: (cellId: string, rowId: string) => void;
+  onSelectCell?: (cellId: string | null, rowId: string | null) => void;
   onEditCell: (cell: CanvasCell, rowId: string) => void;
   onDuplicateCell: (cellId: string, rowId: string) => void;
   onDeleteCell: (cellId: string, rowId: string) => void;
@@ -311,7 +428,7 @@ function SortableRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: row.id, data: { type: "row" }, disabled: isPreview });
+  } = useSortable({ id: row.id, data: { isRow: true, row }, disabled: isPreview });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -319,55 +436,58 @@ function SortableRow({
     opacity: isDragging ? 0.3 : 1,
   };
 
+  const isRowSelected = selectedRowId === row.id;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="relative group/row"
+      className={`relative group/row transition-all duration-150 ${
+        isRowSelected && !isPreview ? "ring-1 ring-purple-300/40 rounded-2xl" : ""
+      }`}
+      onClick={() => {
+        if (!isPreview && typeof onSelectCell === "function") {
+          onSelectCell(null, row.id);
+        }
+      }}
     >
-      {/* Row drag handle (left gutter) */}
+      {/* Row Control Strip (Top-right corner, visible on hover) */}
       {!isPreview && (
-        <div className="absolute -left-8 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity z-10">
-          <button
-            type="button"
-            className="p-1 rounded cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-600 dark:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+        <div className="absolute -top-3.5 right-2 opacity-0 group-hover/row:opacity-100 transition-opacity z-30 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-1.5 py-0.5 shadow-sm text-[10px] text-slate-500 backdrop-blur-sm">
+          {/* Row Drag Handle */}
+          <div
             {...attributes}
             {...listeners}
-            title="Drag to reorder row"
+            className="cursor-grab active:cursor-grabbing p-0.5 hover:text-slate-800 dark:hover:text-white"
+            title="Drag row order"
           >
-            <Move className="w-3.5 h-3.5" />
+            <GripVertical className="w-3 h-3" />
+          </div>
+          <span className="font-mono text-[9px] text-slate-400">Row</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemoveRow(row.id);
+            }}
+            className="p-0.5 hover:text-rose-500 rounded cursor-pointer"
+            title="Delete this row"
+          >
+            <Trash2 className="w-3 h-3" />
           </button>
-          {row.cells.length === 0 && (
-            <button
-              type="button"
-              onClick={() => onRemoveRow(row.id)}
-              className="p-1 rounded text-slate-300 hover:text-rose-400 transition-colors cursor-pointer"
-              title="Remove empty row"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
         </div>
       )}
 
-      {/* Row Cell Grid (4-column base) */}
+      {/* Grid container with 4 tracks */}
       <SortableContext
         items={row.cells.map((c) => c.id)}
         strategy={horizontalListSortingStrategy}
         disabled={isPreview}
       >
-        <div
-          className={`
-            grid grid-cols-4 gap-3.5 min-h-[60px] rounded-2xl transition-all
-            ${row.cells.length === 0 && !isPreview
-              ? "border-2 border-dashed border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-900/20 flex items-center justify-center p-6"
-              : ""
-            }
-          `}
-        >
-          {row.cells.length === 0 && !isPreview ? (
-            <div className="col-span-4 text-center text-xs text-slate-400 dark:text-zinc-600 italic">
-              Empty row — select a block in the sidebar to add here, or drag one across
+        <div className="grid grid-cols-4 gap-4 items-stretch min-h-[60px]">
+          {row.cells.length === 0 ? (
+            <div className="col-span-4 py-6 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-xs text-slate-400">
+              <span>Empty Row &middot; Drag blocks here</span>
             </div>
           ) : (
             row.cells.map((cell) => (
@@ -376,9 +496,13 @@ function SortableRow({
                 sectionId={sectionId}
                 rowId={row.id}
                 cell={cell}
-                isSelected={selectedCellId === cell.id && selectedRowId === row.id}
+                isSelected={selectedCellId === cell.id}
                 isPreview={isPreview}
-                onSelect={onSelectCell}
+                onSelect={(cellId, rId) => {
+                  if (typeof onSelectCell === "function") {
+                    onSelectCell(cellId, rId);
+                  }
+                }}
                 onEdit={onEditCell}
                 onDuplicate={onDuplicateCell}
                 onDelete={onDeleteCell}
@@ -419,6 +543,9 @@ export interface CanvasStudioProps {
   setZoom?: (z: number) => void;
   isPreview?: boolean;
   onTogglePreview?: () => void;
+  // Watermark Support
+  activeWatermark?: UploadedSvgWatermark | null;
+  watermarkConfig?: WatermarkStampConfig;
 }
 
 export function CanvasStudio({
@@ -439,6 +566,8 @@ export function CanvasStudio({
   setZoom,
   isPreview = false,
   onTogglePreview,
+  activeWatermark = null,
+  watermarkConfig,
 }: CanvasStudioProps) {
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
@@ -494,33 +623,41 @@ export function CanvasStudio({
     }
   }, [onTogglePreview]);
 
-  const handleSetZoom = useCallback(
-    (z: number) => {
-      if (typeof setZoom === "function") {
-        setZoom(z);
-      } else {
-        setInternalZoom(z);
-      }
-    },
-    [setZoom]
+  // Zoom controls
+  const zoomIn = () => {
+    const next = Math.min(1.25, activeZoom + 0.1);
+    if (setZoom) setZoom(next);
+    else setInternalZoom(next);
+  };
+  const zoomOut = () => {
+    const next = Math.max(0.5, activeZoom - 0.1);
+    if (setZoom) setZoom(next);
+    else setInternalZoom(next);
+  };
+  const resetZoom = () => {
+    if (setZoom) setZoom(1);
+    else setInternalZoom(1);
+  };
+
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
   );
 
-  const [activeDragId, setActiveDragId] = useState<UniqueIdentifier | null>(null);
   const [activeDragCell, setActiveDragCell] = useState<CanvasCell | null>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleCanvasClick = useCallback(() => {
-    handleSelectCell(null, null);
-  }, [handleSelectCell]);
-
+  // Cell actions with defensive dispatch
   const handleDuplicateCell = useCallback(
     (cellId: string, rowId: string) => {
       dispatch(duplicateCanvasCell({ sectionId: section.id, rowId, cellId }));
-      dispatch(showGlobalToast({ message: "Block duplicated!", type: "success" }));
+      dispatch(showGlobalToast({ message: "Block duplicated", type: "success" }));
     },
     [dispatch, section.id]
   );
@@ -528,121 +665,112 @@ export function CanvasStudio({
   const handleDeleteCell = useCallback(
     (cellId: string, rowId: string) => {
       dispatch(deleteCanvasCell({ sectionId: section.id, rowId, cellId }));
-      if (activeSelectedCellId === cellId) {
-        handleSelectCell(null, null);
-      }
-      dispatch(showGlobalToast({ message: "Block removed.", type: "info" }));
+      handleSelectCell(null, null);
+      dispatch(showGlobalToast({ message: "Block removed", type: "info" }));
     },
-    [dispatch, section.id, activeSelectedCellId, handleSelectCell]
+    [dispatch, section.id, handleSelectCell]
   );
 
   const handleColSpanChange = useCallback(
-    (cellId: string, rowId: string, colSpan: 1 | 2 | 3 | 4) => {
-      dispatch(updateCellColSpan({ sectionId: section.id, rowId, cellId, colSpan }));
+    (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => {
+      dispatch(updateCellColSpan({ sectionId: section.id, rowId, cellId, colSpan: span }));
     },
     [dispatch, section.id]
   );
 
   const handleAddRow = useCallback(() => {
     dispatch(addCanvasRow(section.id));
+    dispatch(showGlobalToast({ message: "New row added to canvas", type: "success" }));
   }, [dispatch, section.id]);
 
   const handleRemoveRow = useCallback(
     (rowId: string) => {
       dispatch(removeCanvasRow({ sectionId: section.id, rowId }));
+      handleSelectCell(null, null);
+      dispatch(showGlobalToast({ message: "Row removed", type: "info" }));
     },
-    [dispatch, section.id]
+    [dispatch, section.id, handleSelectCell]
   );
 
-  // ── DnD Handlers ────────────────────────────────────────────────────────────
-  const handleDragStart = useCallback(
-    (event: DragStartEvent) => {
-      setActiveDragId(event.active.id);
-      const data = event.active.data.current;
-      if (data?.cell) setActiveDragCell(data.cell as CanvasCell);
-    },
-    []
-  );
+  // Drag Handlers
+  const handleDragStart = (e: DragStartEvent) => {
+    const data = e.active.data.current;
+    if (data?.cell) setActiveDragCell(data.cell as CanvasCell);
+  };
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      setActiveDragId(null);
-      setActiveDragCell(null);
+  const handleDragEnd = (e: DragEndEvent) => {
+    setActiveDragCell(null);
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
 
-      if (!over || active.id === over.id) return;
+    const activeData = active.data.current;
+    const overData = over.data.current;
 
-      const activeData = active.data.current;
-      const overData = over.data.current;
+    // Row reordering
+    if (activeData?.isRow && overData?.isRow) {
+      const oldIndex = rows.findIndex((r) => r.id === active.id);
+      const newIndex = rows.findIndex((r) => r.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        const newRows = arrayMove(rows, oldIndex, newIndex);
+        dispatch(reorderCanvasRows({ sectionId: section.id, rows: newRows }));
+      }
+      return;
+    }
 
-      // Row reordering
-      if (activeData?.type === "row") {
-        const oldIdx = rows.findIndex((r) => r.id === active.id);
-        const newIdx = rows.findIndex((r) => r.id === over.id);
-        if (oldIdx !== -1 && newIdx !== -1) {
+    // Cell reordering inside same row or cross-row
+    if (activeData?.cell && activeData?.rowId) {
+      const fromRowId = activeData.rowId;
+      const cellId = String(active.id);
+
+      if (overData?.rowId) {
+        const toRowId = overData.rowId;
+        if (fromRowId === toRowId) {
+          const row = rows.find((r) => r.id === fromRowId);
+          if (row) {
+            const oldIndex = row.cells.findIndex((c) => c.id === cellId);
+            const newIndex = row.cells.findIndex((c) => c.id === over.id);
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+              const newCells = arrayMove(row.cells, oldIndex, newIndex);
+              dispatch(reorderCellsInRow({ sectionId: section.id, rowId: fromRowId, cells: newCells }));
+            }
+          }
+        } else {
+          // Cross-row movement
+          const toRow = rows.find((r) => r.id === toRowId);
+          const targetIndex = toRow ? toRow.cells.findIndex((c) => c.id === over.id) : 0;
           dispatch(
-            reorderCanvasRows({
+            moveCellBetweenRows({
               sectionId: section.id,
-              rows: arrayMove(rows, oldIdx, newIdx),
+              fromRowId,
+              toRowId,
+              cellId,
+              toIndex: targetIndex === -1 ? (toRow?.cells.length || 0) : targetIndex,
             })
           );
         }
-        return;
       }
+    }
+  };
 
-      // Cell drag
-      const fromRowId = activeData?.rowId as string;
-      const toRowId = (overData?.rowId as string) || (over.id as string);
+  // Background desk click clears selection
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleSelectCell(null, null);
+    }
+  };
 
-      if (!fromRowId) return;
-
-      if (fromRowId === toRowId) {
-        // Same row reorder
-        const row = rows.find((r) => r.id === fromRowId);
-        if (!row) return;
-        const oldIdx = row.cells.findIndex((c) => c.id === active.id);
-        const newIdx = row.cells.findIndex((c) => c.id === over.id);
-        if (oldIdx !== -1 && newIdx !== -1) {
-          dispatch(
-            reorderCellsInRow({
-              sectionId: section.id,
-              rowId: fromRowId,
-              cells: arrayMove(row.cells, oldIdx, newIdx),
-            })
-          );
-        }
-      } else {
-        // Cross-row move
-        const toRow = rows.find((r) => r.id === toRowId);
-        const toIndex = toRow
-          ? toRow.cells.findIndex((c) => c.id === over.id)
-          : 0;
-        dispatch(
-          moveCellBetweenRows({
-            sectionId: section.id,
-            fromRowId,
-            toRowId,
-            cellId: active.id as string,
-            toIndex: toIndex === -1 ? (toRow?.cells.length || 0) : toIndex,
-          })
-        );
-      }
-    },
-    [dispatch, section.id, rows]
-  );
-
-  // Zoom Steppers
-  const zoomIn = () => handleSetZoom(Math.min(1.25, Math.round((activeZoom + 0.25) * 100) / 100));
-  const zoomOut = () => handleSetZoom(Math.max(0.5, Math.round((activeZoom - 0.25) * 100) / 100));
-  const resetZoom = () => handleSetZoom(1);
-
-  // Paper Tone Background
   const paperBgClass =
-    paperTone === "paper"
-      ? "bg-[#faf8f5] dark:bg-[#12100d]"
-      : paperTone === "slate"
-      ? "bg-slate-50 dark:bg-[#0c1017]"
+    paperTone === "slate"
+      ? "bg-slate-50 dark:bg-zinc-900"
+      : paperTone === "paper"
+      ? "bg-[#faf8f5] dark:bg-[#15130f]"
       : "bg-white dark:bg-[#0c1017]";
+
+  // Watermark parameters
+  const wmOpacity = (watermarkConfig?.opacity ?? 18) / 100;
+  const wmScale = (watermarkConfig?.scale ?? 100) / 100;
+  const wmRotation = watermarkConfig?.rotation ?? -18;
+  const wmPlacement = watermarkConfig?.placement ?? "center";
 
   return (
     <DndContext
@@ -651,9 +779,9 @@ export function CanvasStudio({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      {/* ── Desk Workspace with Dot-Grid Pattern ── */}
+      {/* ── Infinite Studio Blueprint Desk ── */}
       <div
-        className="relative flex-1 min-h-0 overflow-y-auto px-4 sm:px-12 py-8 flex justify-center bg-slate-100/90 dark:bg-[#06080c] select-none"
+        className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6 sm:p-10 flex flex-col items-center select-none bg-[#f1f4f9] dark:bg-[#06080d]"
         style={
           activeShowGrid
             ? {
@@ -664,7 +792,7 @@ export function CanvasStudio({
         }
         onClick={handleCanvasClick}
       >
-        {/* Scalable Container */}
+        {/* Scalable Artboard Container */}
         <div
           className="w-full max-w-5xl transition-transform duration-200"
           style={{
@@ -672,24 +800,76 @@ export function CanvasStudio({
             transformOrigin: "top center",
           }}
         >
-          {/* ── Floating A4 Artboard Sheet ── */}
+          {/* ── Floating A4 Artboard Sheet with Multilayer Depth ── */}
           <div
-            className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 rounded-3xl overflow-hidden transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)]`}
+            className={`relative min-h-[842px] ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 rounded-3xl overflow-hidden transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)]`}
           >
             {/* Margin Guides (if enabled) */}
             {activeShowGuides && !activeIsPreview && (
-              <div className="absolute inset-4 rounded-2xl border border-dashed border-sky-400/40 pointer-events-none z-10" />
+              <div className="absolute inset-4 rounded-2xl border border-dashed border-sky-400/40 pointer-events-none z-20" />
+            )}
+
+            {/* ── Realistic Corporate Document Watermark Stamp Layer ── */}
+            {activeWatermark?.svgContent && (
+              <div
+                className={`absolute inset-0 pointer-events-none select-none z-10 overflow-hidden flex p-10 transition-all duration-300 ${
+                  wmPlacement === "top-right"
+                    ? "items-start justify-end"
+                    : wmPlacement === "bottom-right"
+                    ? "items-end justify-end"
+                    : wmPlacement === "tiled"
+                    ? "items-center justify-around flex-wrap opacity-60"
+                    : "items-center justify-center"
+                }`}
+              >
+                {wmPlacement === "tiled" ? (
+                  <div className="grid grid-cols-2 gap-24 w-full h-full p-8 place-items-center">
+                    {[1, 2, 3, 4].map((idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          opacity: wmOpacity * 0.7,
+                          transform: `rotate(${wmRotation}deg) scale(${wmScale * 0.75})`,
+                          transformOrigin: "center center",
+                          mixBlendMode: "multiply",
+                        }}
+                        className="w-full max-w-[280px] filter drop-shadow-sm select-none"
+                        dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      opacity: wmOpacity,
+                      transform: `rotate(${wmRotation}deg) scale(${wmScale})`,
+                      transformOrigin: "center center",
+                      mixBlendMode: "multiply",
+                    }}
+                    className="w-full max-w-[500px] flex items-center justify-center transition-all duration-300 filter drop-shadow-sm select-none"
+                    dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
+                  />
+                )}
+              </div>
             )}
 
             {/* Document Header Bar */}
-            <div className="px-8 sm:px-10 pt-8 pb-5 border-b border-slate-100 dark:border-zinc-800/60">
+            <div className="relative z-10 px-8 sm:px-10 pt-8 pb-5 border-b border-slate-100 dark:border-zinc-800/60 bg-white/40 dark:bg-black/20 backdrop-blur-[2px]">
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 font-mono">
                   {section.eyebrow}
                 </span>
-                <span className="text-[10px] font-mono tracking-widest uppercase text-slate-300 dark:text-zinc-600">
-                  CANVA STUDIO · INDUSTRIAL SAFETY REPORT
-                </span>
+                <div className="flex items-center gap-2">
+                  {activeWatermark && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 font-bold">
+                      <Stamp className="w-2.5 h-2.5" />
+                      <span>{activeWatermark.name}</span>
+                    </span>
+                  )}
+                  <span className="text-[10px] font-mono tracking-widest uppercase text-slate-300 dark:text-zinc-600">
+                    CANVA STUDIO · INDUSTRIAL REPORT
+                  </span>
+                </div>
               </div>
               <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                 {section.name}
@@ -702,7 +882,7 @@ export function CanvasStudio({
             </div>
 
             {/* Canvas Rows Container */}
-            <div className="px-8 sm:px-10 py-6 space-y-4">
+            <div className="relative z-10 px-8 sm:px-10 py-6 space-y-4">
               {rows.length === 0 ? (
                 <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl text-slate-400 dark:text-zinc-600 space-y-3">
                   <p className="text-sm font-medium">Canvas is empty</p>
