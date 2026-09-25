@@ -1,6 +1,6 @@
 "use client";
 
-import { PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction, SliceCaseReducers } from "@reduxjs/toolkit";
 import {
   ReportModuleState,
   RoleType,
@@ -13,10 +13,11 @@ import {
   UpdateSiteSettingPayload,
   SystemSettings,
   AdminAccount,
+  SectionFeedback,
 } from "../../types/reportModuleTypes";
 import { ADMINS_STORAGE_KEY, initialAdmins } from "../../mockData/mockGovernance";
 
-export const governanceReducers = {
+export const governanceReducers: SliceCaseReducers<ReportModuleState> = {
     setActiveRole: (state, action: PayloadAction<RoleType>) => {
       state.activeRole = action.payload;
     },

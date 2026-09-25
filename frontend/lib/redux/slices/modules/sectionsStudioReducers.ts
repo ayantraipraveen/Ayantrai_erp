@@ -1,6 +1,6 @@
 "use client";
 
-import { PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction, SliceCaseReducers } from "@reduxjs/toolkit";
 import {
   ReportModuleState,
   LibrarySection,
@@ -15,7 +15,7 @@ import {
   GraphType,
 } from "../../types/reportModuleTypes";
 
-export const sectionsStudioReducers = {
+export const sectionsStudioReducers: SliceCaseReducers<ReportModuleState> = {
     setSelectedLibrarySectionId: (state, action: PayloadAction<string | null>) => {
       state.selectedLibrarySectionId = action.payload;
     },

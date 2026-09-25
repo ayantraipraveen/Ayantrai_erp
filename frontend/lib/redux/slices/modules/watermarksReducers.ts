@@ -1,13 +1,13 @@
 "use client";
 
-import { PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction, SliceCaseReducers } from "@reduxjs/toolkit";
 import {
   ReportModuleState,
   WatermarkConfig,
   WatermarkItem,
 } from "../../types/reportModuleTypes";
 
-export const watermarksReducers = {
+export const watermarksReducers: SliceCaseReducers<ReportModuleState> = {
     setWatermarkConfig: (state, action: PayloadAction<Partial<WatermarkConfig>>) => {
       state.watermarkConfig = {
         ...state.watermarkConfig,
@@ -196,5 +196,4 @@ export const watermarksReducers = {
         }
       }
     },
-  },
 };

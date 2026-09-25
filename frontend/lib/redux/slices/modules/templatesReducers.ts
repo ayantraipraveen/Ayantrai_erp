@@ -1,6 +1,6 @@
 "use client";
 
-import { PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction, SliceCaseReducers } from "@reduxjs/toolkit";
 import { DEFAULT_DATE_RANGE, DateRangeValue } from "@/app/Component/DateRangeFilter";
 import {
   ReportModuleState,
@@ -9,9 +9,11 @@ import {
   ApproveTemplatePayload,
   RejectTemplatePayload,
   TemplateGraphConfig,
+  GeneratedReport,
 } from "../../types/reportModuleTypes";
+import { sampleContent } from "../../mockData/mockGovernance";
 
-export const templatesReducers = {
+export const templatesReducers: SliceCaseReducers<ReportModuleState> = {
     addTemplate: (state, action: PayloadAction<Omit<ReportTemplate, "id" | "created_at" | "version">>) => {
       // Find the highest numerical ID suffix among all existing templates to ensure unique keys
       const maxIdNum = state.templates.reduce((max, t) => {
