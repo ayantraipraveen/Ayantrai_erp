@@ -38,7 +38,7 @@ export default function ChartRenderer({
     switch (chart.chartType) {
     case "line":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             <defs>
               <linearGradient id={`grad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -379,7 +379,7 @@ export default function ChartRenderer({
 
     case "stacked-bar":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
+        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
           {/* Nomenclature / Legend placed safely above chart bars */}
           <div className="flex items-center justify-center gap-5 pt-1 text-[11px] font-mono font-medium flex-wrap">
             {[{ c: c0, l: "Civil" }, { c: c1, l: "PPE" }, { c: c2, l: "Safety" }, { c: c3, l: "Risk" }].map((lg, i) => (
@@ -427,7 +427,7 @@ export default function ChartRenderer({
 
     case "grouped-bar":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
+        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
           {/* Nomenclature / Legend */}
           <div className="flex items-center justify-center gap-5 pt-1 text-[11px] font-mono font-medium flex-wrap">
             <div className="flex items-center gap-1.5">
@@ -472,7 +472,7 @@ export default function ChartRenderer({
 
     case "multi-line":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -529,7 +529,7 @@ export default function ChartRenderer({
 
     case "area":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             <defs>
               <linearGradient id={`areagrad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -589,7 +589,7 @@ export default function ChartRenderer({
     case "scatter":
     case "bubble":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -662,7 +662,7 @@ export default function ChartRenderer({
 
     case "combo":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -697,7 +697,7 @@ export default function ChartRenderer({
 
     case "waterfall":
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
@@ -733,7 +733,7 @@ export default function ChartRenderer({
 
     case "treemap":
       return (
-        <div className="w-full h-44 grid grid-cols-3 gap-1 p-2 text-white font-bold text-[10px]">
+        <div className="w-full h-auto min-h-[176px] max-h-[352px] grid grid-cols-3 gap-1 p-2 text-white font-bold text-[10px]">
           <div className="col-span-2 row-span-2 rounded p-2 flex items-end shadow-2xs" style={{ backgroundColor: c0 }}>Item A</div>
           <div className="rounded p-2 flex items-end shadow-2xs" style={{ backgroundColor: c1 }}>Item B</div>
           <div className="rounded p-2 flex items-end shadow-2xs" style={{ backgroundColor: c2 }}>Item C</div>
@@ -814,7 +814,7 @@ export default function ChartRenderer({
     case "bar":
     default:
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />

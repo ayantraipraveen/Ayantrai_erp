@@ -369,14 +369,20 @@ export const sectionsStudioReducers = {
     /** Add a new empty row to the section canvas */
     addCanvasRow: (
       state: ReportModuleState,
-      action: PayloadAction<string | { sectionId: string; pageBreakBefore?: boolean }>
+      action: PayloadAction<string | { sectionId: string; pageBreakBefore?: boolean; insertAtIndex?: number }>
     ) => {
       const targetId = typeof action.payload === "string" ? action.payload : action.payload?.sectionId;
       const pageBreakBefore = typeof action.payload === "object" ? Boolean(action.payload?.pageBreakBefore) : false;
+      const insertAtIndex = typeof action.payload === "object" ? action.payload?.insertAtIndex : undefined;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === targetId);
       if (sec) {
         if (!sec.canvasRows) sec.canvasRows = [];
-        sec.canvasRows.push({ id: `row-${Date.now()}`, cells: [], pageBreakBefore });
+        const newRow: CanvasRow = { id: `row-${Date.now()}`, cells: [], pageBreakBefore };
+        if (typeof insertAtIndex === "number" && insertAtIndex >= 0 && insertAtIndex <= sec.canvasRows.length) {
+          sec.canvasRows.splice(insertAtIndex, 0, newRow);
+        } else {
+          sec.canvasRows.push(newRow);
+        }
         sec.updatedAt = "Just now";
       }
     },

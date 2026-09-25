@@ -281,10 +281,12 @@ export function partitionCanvasPages(
 // ─── Drop Insertion Zone (Between Rows) ───────────────────────────────────────
 function DropInsertZone({
   insertIndex,
+  onAddRow,
   onDropBlock,
   label = "Insert Row Here",
 }: {
   insertIndex: number;
+  onAddRow?: (index: number) => void;
   onDropBlock?: (e: SidebarAddBlockEvent) => void;
   label?: string;
 }) {
@@ -292,6 +294,12 @@ function DropInsertZone({
 
   return (
     <div
+      onClick={(e) => {
+        e.stopPropagation();
+        if (typeof onAddRow === "function") {
+          onAddRow(insertIndex);
+        }
+      }}
       onDragOver={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -318,16 +326,37 @@ function DropInsertZone({
           console.error("DropInsertZone error:", err);
         }
       }}
-      className={`relative w-full rounded-xl transition-all duration-200 flex items-center justify-center cursor-copy select-none ${
+      className={`group/dropzone relative w-full rounded-xl transition-all duration-200 flex items-center justify-center cursor-pointer select-none ${
         isOver
-          ? "h-11 my-2 bg-gradient-to-r from-purple-500/15 via-[#9D61FF]/25 to-purple-500/15 border-2 border-dashed border-[#9D61FF] shadow-[0_0_20px_rgba(157,97,255,0.4)] scale-[1.01]"
-          : "h-2.5 my-0.5 border border-transparent hover:border-purple-300/40 hover:bg-purple-500/5 hover:h-6"
+          ? "h-12 my-2.5 bg-gradient-to-r from-purple-500/15 via-[#9D61FF]/25 to-purple-500/15 border-2 border-dashed border-[#9D61FF] shadow-[0_0_20px_rgba(157,97,255,0.4)] scale-[1.01]"
+          : "h-3 my-0.5 hover:h-8 hover:my-1.5"
       }`}
+      title="Click to insert new row here, or drag a block from sidebar"
     >
-      {isOver && (
+      {/* Active Drag Over Indicator */}
+      {isOver ? (
         <div className="flex items-center gap-2 font-mono text-xs font-bold text-[#8B3DFF] dark:text-[#c49aff] animate-pulse">
           <Plus className="w-4 h-4" />
           <span>{label}</span>
+        </div>
+      ) : (
+        /* Sleek Canva / Notion Style Hover Line with Centered "+ New Row" Button */
+        <div className="w-full flex items-center justify-center opacity-0 group-hover/dropzone:opacity-100 transition-opacity pointer-events-auto">
+          <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#8B3DFF]/40 to-[#8B3DFF]/70" />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (typeof onAddRow === "function") {
+                onAddRow(insertIndex);
+              }
+            }}
+            className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#8B3DFF] hover:bg-[#7828ea] text-white text-[10.5px] font-bold shadow-md hover:shadow-lg transition-all scale-95 hover:scale-105 cursor-pointer"
+          >
+            <Plus className="w-3 h-3 stroke-[2.5]" />
+            <span>New Row</span>
+          </button>
+          <div className="flex-1 h-px bg-gradient-to-r from-[#8B3DFF]/70 via-[#8B3DFF]/40 to-transparent" />
         </div>
       )}
     </div>
@@ -1684,6 +1713,14 @@ export function CanvasStudio({
     dispatch(showGlobalToast({ message: "New row added to section", type: "success" }));
   }, [dispatch, section.id]);
 
+  const handleInsertRowAtIndex = useCallback(
+    (insertIndex: number) => {
+      dispatch(addCanvasRow({ sectionId: section.id }));
+      dispatch(showGlobalToast({ message: "New row added to section", type: "success" }));
+    },
+    [dispatch, section.id]
+  );
+
   const handleAddPage = useCallback(() => {
     dispatch(addCanvasRow({ sectionId: section.id, pageBreakBefore: true }));
     dispatch(showGlobalToast({ message: "New A4 page created", type: "success" }));
@@ -2449,6 +2486,7 @@ export function CanvasStudio({
                             {page.isFirstPage && !activeIsPreview && (
                               <DropInsertZone
                                 insertIndex={0}
+                                onAddRow={handleInsertRowAtIndex}
                                 onDropBlock={onDropBlock}
                                 label="Drop to insert at top of report"
                               />
@@ -2489,6 +2527,7 @@ export function CanvasStudio({
                                   {!activeIsPreview && (
                                     <DropInsertZone
                                       insertIndex={globalRowIndex + 1}
+                                      onAddRow={handleInsertRowAtIndex}
                                       onDropBlock={onDropBlock}
                                       label={`Drop to insert new row below row ${globalRowIndex + 1}`}
                                     />
@@ -2511,7 +2550,7 @@ export function CanvasStudio({
                                 <PageAddRowDropZone
                                   pageNumber={page.pageNumber}
                                   insertIndex={pageEndInsertIndex}
-                                  onAddRow={handleAddRow}
+                                  onAddRow={() => handleInsertRowAtIndex(pageEndInsertIndex)}
                                   onDropBlock={onDropBlock}
                                 />
                               );
