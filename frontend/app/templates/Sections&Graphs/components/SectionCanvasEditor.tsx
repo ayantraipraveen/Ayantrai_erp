@@ -1,46 +1,41 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   ArrowLeft,
-  Plus,
-  Trash2,
-  Edit2,
-  ChevronLeft,
-  ChevronRight,
-  ArrowUp,
-  ArrowDown,
-  BarChart2,
   Save,
-  Lightbulb,
   AlertCircle,
-  Activity,
+  Edit2,
+  Eye,
+  Sliders,
+  Sparkles,
+  Download,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
+  CanvasCell,
   LibraryMetricCard,
   LibraryChartCard,
   LibraryKeyInsightItem,
   PaletteRamp,
-  updateLibrarySection,
-  addCardToSection,
-  updateCardInSection,
-  deleteCardFromSection,
-  reorderCardsInSection,
-  addChartToSection,
-  updateChartInSection,
-  deleteChartFromSection,
-  reorderChartsInSection,
-  addInsightToSection,
-  updateInsightInSection,
-  deleteInsightFromSection,
-  reorderInsightsInSection,
-  showGlobalToast,
   GraphType,
+  migrateToCanvasRows,
+  addRowWithCell,
+  updateLibrarySection,
+  updateMetricCardInCell,
+  updateChartInCell,
+  updateInsightInCell,
+  updateTextBlockInCell,
+  updateCellColSpan,
+  duplicateCanvasCell,
+  deleteCanvasCell,
+  showGlobalToast,
   setChartEditorFullscreen,
 } from "@/lib/redux/slices/reportModuleSlice";
-import { PALETTE_RAMPS } from "./constants/chartTypes";
-import ChartRenderer from "./ChartRenderer";
+import { CanvasSidebar, SidebarAddBlockEvent } from "./CanvasSidebar";
+import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
+import { CanvasStudio } from "./CanvasStudio";
+import { CanvasContextRibbon } from "./CanvasContextRibbon";
 import ChartEditorPanel from "./ChartEditorPanel";
 import {
   EditSectionHeaderModal,
@@ -48,7 +43,6 @@ import {
   KeyInsightModal,
 } from "./SectionCanvasModals";
 
-// Re-export PALETTE_RAMPS for backward compatibility
 export { PALETTE_RAMPS } from "./constants/chartTypes";
 
 interface SectionCanvasEditorProps {
@@ -56,33 +50,138 @@ interface SectionCanvasEditorProps {
   onBack: () => void;
 }
 
-/**
- * Dedicated Visual Canva-Style Report Studio for Section & Graph Management.
- * Simulates real A4 report rendering matching Dummy_report.pdf.
- */
-export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvasEditorProps) {
+export default function SectionCanvasEditor({
+  sectionId,
+  onBack,
+}: SectionCanvasEditorProps) {
   const dispatch = useAppDispatch();
-  const librarySections = useAppSelector((state) => state.reportModule.librarySections || []);
+  const librarySections = useAppSelector((s) => s.reportModule.librarySections || []);
   const section = librarySections.find((s) => s.id === sectionId);
+  const chartEditorFullscreen = useAppSelector((s) => s.reportModule.chartEditorFullscreen);
 
-  // Edit Section Header Modal State
+  // Auto-migrate legacy sections to canvas rows
+  useEffect(() => {
+    if (section && !section.canvasRows) {
+      dispatch(migrateToCanvasRows(section.id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section?.id]);
+
+  // ── Studio Viewport & Artboard State ─────────────────────────────────────────
+  const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  const [paperTone, setPaperTone] = useState<"white" | "slate" | "paper">("white");
+  const [showGrid, setShowGrid] = useState(true);
+  const [showGuides, setShowGuides] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [isPreview, setIsPreview] = useState(false);
+
+  // Derive active selected cell
+  
+  // Extract charts added to this section
+  const sectionCharts = useMemo(() => {
+    if (!section?.canvasRows) return [];
+    const list: LibraryChartCard[] = [];
+    const seenIds = new Set<string>();
+    for (const r of section.canvasRows) {
+      for (const c of r.cells) {
+        if (c.blockType === "chart" && c.chart && !seenIds.has(c.chart.id)) {
+          seenIds.add(c.chart.id);
+          list.push(c.chart);
+        }
+      }
+    }
+    return list;
+  }, [section?.canvasRows]);
+
+  // Extract charts across all library sections
+  const allLibraryCharts = useMemo(() => {
+    const list: LibraryChartCard[] = [];
+    const seenIds = new Set<string>();
+    librarySections.forEach((s) => {
+      s.canvasRows?.forEach((r) => {
+        r.cells.forEach((c) => {
+          if (c.blockType === "chart" && c.chart && !seenIds.has(c.chart.id)) {
+            seenIds.add(c.chart.id);
+            list.push(c.chart);
+          }
+        });
+      });
+      s.charts?.forEach((c) => {
+        if (!seenIds.has(c.id)) {
+          seenIds.add(c.id);
+          list.push(c);
+        }
+      });
+    });
+    return list;
+  }, [librarySections]);
+
+  const activeCell = useMemo(() => {
+    if (!selectedCellId || !section?.canvasRows) return null;
+    for (const r of section.canvasRows) {
+      const c = r.cells.find((cell) => cell.id === selectedCellId);
+      if (c) return c;
+    }
+    return null;
+  }, [selectedCellId, section?.canvasRows]);
+
+  // ── Modals State ────────────────────────────────────────────────────────────
   const [editHeaderOpen, setEditHeaderOpen] = useState(false);
   const [editName, setEditName] = useState(section?.name || "");
   const [editEyebrow, setEditEyebrow] = useState(section?.eyebrow || "");
   const [editDesc, setEditDesc] = useState(section?.description || "");
 
-  // Metric Card Modal State
+  const handleSaveHeader = () => {
+    if (!editName.trim()) return;
+    dispatch(
+      updateLibrarySection({
+        id: sectionId,
+        name: editName.trim(),
+        eyebrow: editEyebrow.trim(),
+        description: editDesc.trim(),
+      })
+    );
+    setEditHeaderOpen(false);
+    dispatch(showGlobalToast({ message: "Section header updated.", type: "success" }));
+  };
+
+  // Metric Card Modal
   const [cardModalOpen, setCardModalOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<LibraryMetricCard | null>(null);
+  const [editingCellMeta, setEditingCellMeta] = useState<{ cell: CanvasCell; rowId: string } | null>(null);
   const [cardLabel, setCardLabel] = useState("");
   const [cardValue, setCardValue] = useState("");
   const [cardTint, setCardTint] = useState<PaletteRamp>("blue");
   const [cardTrendDir, setCardTrendDir] = useState<"up" | "down" | "no-change">("up");
   const [cardTrendVal, setCardTrendVal] = useState("+2.4% vs last cycle");
 
-  // Chart Modal / Editor State
+  const handleSaveCard = () => {
+    if (!cardLabel.trim() || !cardValue.trim() || !editingCellMeta || !editingCard) return;
+    dispatch(
+      updateMetricCardInCell({
+        sectionId,
+        rowId: editingCellMeta.rowId,
+        cellId: editingCellMeta.cell.id,
+        card: {
+          ...editingCard,
+          label: cardLabel.trim(),
+          value: cardValue.trim(),
+          tintColor: cardTint,
+          trendDirection: cardTrendDir,
+          trendValue: cardTrendVal.trim(),
+        },
+      })
+    );
+    dispatch(showGlobalToast({ message: "Metric card updated!", type: "success" }));
+    setCardModalOpen(false);
+    setEditingCellMeta(null);
+  };
+
+  // Chart Modal
   const [chartModalOpen, setChartModalOpen] = useState(false);
   const [editingChart, setEditingChart] = useState<LibraryChartCard | null>(null);
+  const [editingChartCellMeta, setEditingChartCellMeta] = useState<{ cell: CanvasCell; rowId: string } | null>(null);
   const [chartTitle, setChartTitle] = useState("");
   const [chartType, setChartType] = useState<GraphType>("bar");
   const [chartDataSource, setChartDataSource] = useState("ppe_sensor_compliance");
@@ -92,290 +191,315 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
   const [gridRows, setGridRows] = useState(4);
   const [gridCols, setGridCols] = useState(7);
 
-  // Key Insight Modal State
-  const [insightModalOpen, setInsightModalOpen] = useState(false);
-  const [editingInsight, setEditingInsight] = useState<LibraryKeyInsightItem | null>(null);
-  const [insightText, setInsightText] = useState("");
-
-  if (!section) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
-        <AlertCircle className="w-10 h-10 text-rose-500" />
-        <h3 className="text-base font-bold text-slate-800 dark:text-zinc-200">Section Not Found</h3>
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-semibold cursor-pointer"
-        >
-          Return to Sections
-        </button>
-      </div>
-    );
-  }
-
-  // --- Handlers: Section Header ---
-  const handleSaveHeader = () => {
-    if (!editName.trim()) return;
-    dispatch(
-      updateLibrarySection({
-        id: section.id,
-        name: editName.trim(),
-        eyebrow: editEyebrow.trim(),
-        description: editDesc.trim(),
-      })
-    );
-    setEditHeaderOpen(false);
-    dispatch(showGlobalToast({ message: "Section title updated.", type: "success" }));
-  };
-
-  // --- Handlers: Metric Cards ---
-  const handleOpenAddCard = () => {
-    setEditingCard(null);
-    setCardLabel("");
-    setCardValue("");
-    setCardTint("blue");
-    setCardTrendDir("up");
-    setCardTrendVal("+2.4% vs last cycle");
-    setCardModalOpen(true);
-  };
-
-  const handleOpenEditCard = (card: LibraryMetricCard) => {
-    setEditingCard(card);
-    setCardLabel(card.label);
-    setCardValue(card.value);
-    setCardTint(card.tintColor);
-    setCardTrendDir(card.trendDirection);
-    setCardTrendVal(card.trendValue);
-    setCardModalOpen(true);
-  };
-
-  const handleSaveCard = () => {
-    if (!cardLabel.trim() || !cardValue.trim()) return;
-
-    if (editingCard) {
-      dispatch(
-        updateCardInSection({
-          sectionId: section.id,
-          card: {
-            ...editingCard,
-            label: cardLabel.trim(),
-            value: cardValue.trim(),
-            tintColor: cardTint,
-            trendDirection: cardTrendDir,
-            trendValue: cardTrendVal.trim(),
-          },
-        })
-      );
-      dispatch(showGlobalToast({ message: "Metric card updated!", type: "success" }));
-    } else {
-      dispatch(
-        addCardToSection({
-          sectionId: section.id,
-          card: {
-            label: cardLabel.trim(),
-            value: cardValue.trim(),
-            tintColor: cardTint,
-            trendDirection: cardTrendDir,
-            trendValue: cardTrendVal.trim(),
-          },
-        })
-      );
-      dispatch(showGlobalToast({ message: "Metric card added!", type: "success" }));
-    }
-
-    setCardModalOpen(false);
-  };
-
-  const handleMoveCard = (index: number, direction: "left" | "right") => {
-    const cards = [...(section.metricCards || [])];
-    const targetIdx = direction === "left" ? index - 1 : index + 1;
-    if (targetIdx < 0 || targetIdx >= cards.length) return;
-
-    const temp = cards[index];
-    cards[index] = cards[targetIdx];
-    cards[targetIdx] = temp;
-
-    dispatch(reorderCardsInSection({ sectionId: section.id, cards }));
-  };
-
-  const handleDeleteCard = (cardId: string) => {
-    dispatch(deleteCardFromSection({ sectionId: section.id, cardId }));
-    dispatch(showGlobalToast({ message: "Metric card removed.", type: "info" }));
-  };
-
-  // --- Handlers: Charts ---
-  const handleOpenAddChart = () => {
-    setEditingChart(null);
-    setChartTitle("");
-    setChartType("bar");
-    setChartDataSource("ppe_sensor_compliance");
-    setChartDesc("");
-    setChartColor("#9D61FF");
-    setChartColors([]);
-    setGridRows(4);
-    setGridCols(7);
-    setChartModalOpen(true);
-    dispatch(setChartEditorFullscreen(true));
-  };
-
-  const handleOpenEditChart = (chart: LibraryChartCard) => {
-    setEditingChart(chart);
-    setChartTitle(chart.title);
-    setChartType(chart.chartType);
-    setChartDataSource(chart.dataSourceField);
-    setChartDesc(chart.description || "");
-    const baseColor = chart.color || chart.colors?.[0] || "#9D61FF";
-    setChartColor(baseColor);
-    setChartColors(chart.colors && chart.colors.length > 0 ? chart.colors : [baseColor]);
-    setGridRows(chart.gridRows || (chart.chartType === "table" ? 4 : 4));
-    setGridCols(chart.gridCols || (chart.chartType === "table" ? 4 : 7));
-    setChartModalOpen(true);
-    dispatch(setChartEditorFullscreen(true));
-  };
-
   const handleCloseChartEditor = () => {
     setChartModalOpen(false);
+    setEditingChartCellMeta(null);
     dispatch(setChartEditorFullscreen(false));
   };
 
   const handleSaveChart = () => {
-    if (!chartTitle.trim()) return;
-
+    if (!chartTitle.trim() || !editingChartCellMeta || !editingChart) return;
     const finalColors = chartColors && chartColors.length > 0 ? chartColors : [chartColor];
-
-    if (editingChart) {
-      dispatch(
-        updateChartInSection({
-          sectionId: section.id,
-          chart: {
-            ...editingChart,
-            title: chartTitle.trim(),
-            chartType,
-            dataSourceField: chartDataSource,
-            description: chartDesc.trim(),
-            color: chartColor,
-            colors: finalColors,
-            gridRows: (chartType === "heatmap" || chartType === "table") ? gridRows : undefined,
-            gridCols: (chartType === "heatmap" || chartType === "table") ? gridCols : undefined,
-          },
-        })
-      );
-      dispatch(showGlobalToast({ message: "Chart updated!", type: "success" }));
-    } else {
-      dispatch(
-        addChartToSection({
-          sectionId: section.id,
-          chart: {
-            title: chartTitle.trim(),
-            chartType,
-            dataSourceField: chartDataSource,
-            description: chartDesc.trim(),
-            color: chartColor,
-            colors: finalColors,
-            gridRows: (chartType === "heatmap" || chartType === "table") ? gridRows : undefined,
-            gridCols: (chartType === "heatmap" || chartType === "table") ? gridCols : undefined,
-          },
-        })
-      );
-      dispatch(showGlobalToast({ message: "Chart added to section!", type: "success" }));
-    }
-
-    setChartModalOpen(false);
-    dispatch(setChartEditorFullscreen(false));
-  };
-
-  const handleMoveChart = (index: number, direction: "left" | "right") => {
-    const charts = [...(section.charts || [])];
-    const targetIdx = direction === "left" ? index - 1 : index + 1;
-    if (targetIdx < 0 || targetIdx >= charts.length) return;
-
-    const temp = charts[index];
-    charts[index] = charts[targetIdx];
-    charts[targetIdx] = temp;
-
-    dispatch(reorderChartsInSection({ sectionId: section.id, charts }));
-  };
-
-  const handleCycleChartType = (chart: LibraryChartCard) => {
-    const cycle: GraphType[] = [
-      "line", "multi-line", "bar", "grouped-bar", "horizontal-bar",
-      "stacked-horizontal", "donut", "pie", "heatmap", "two-segment",
-      "table", "area", "stacked-bar", "radar", "gauge", "scatter",
-      "bubble", "funnel", "sparkline", "combo", "waterfall",
-      "treemap", "kpi-card", "timeline", "geo-map",
-    ];
-    const currentIdx = cycle.indexOf(chart.chartType);
-    const nextType = cycle[(currentIdx + 1) % cycle.length];
-
     dispatch(
-      updateChartInSection({
-        sectionId: section.id,
-        chart: { ...chart, chartType: nextType },
+      updateChartInCell({
+        sectionId,
+        rowId: editingChartCellMeta.rowId,
+        cellId: editingChartCellMeta.cell.id,
+        chart: {
+          ...editingChart,
+          title: chartTitle.trim(),
+          chartType,
+          dataSourceField: chartDataSource,
+          description: chartDesc.trim(),
+          color: chartColor,
+          colors: finalColors,
+          gridRows: chartType === "heatmap" || chartType === "table" ? gridRows : undefined,
+          gridCols: chartType === "heatmap" || chartType === "table" ? gridCols : undefined,
+        },
       })
     );
+    dispatch(showGlobalToast({ message: "Chart updated!", type: "success" }));
+    handleCloseChartEditor();
   };
 
-  const handleDeleteChart = (chartId: string) => {
-    dispatch(deleteChartFromSection({ sectionId: section.id, chartId }));
-    dispatch(showGlobalToast({ message: "Chart removed.", type: "info" }));
-  };
-
-  // --- Handlers: Key Insights ---
-  const handleOpenAddInsight = () => {
-    setEditingInsight(null);
-    setInsightText("");
-    setInsightModalOpen(true);
-  };
-
-  const handleOpenEditInsight = (insight: LibraryKeyInsightItem) => {
-    setEditingInsight(insight);
-    setInsightText(insight.text);
-    setInsightModalOpen(true);
-  };
+  // Insight Modal
+  const [insightModalOpen, setInsightModalOpen] = useState(false);
+  const [editingInsight, setEditingInsight] = useState<LibraryKeyInsightItem | null>(null);
+  const [editingInsightCellMeta, setEditingInsightCellMeta] = useState<{ cell: CanvasCell; rowId: string } | null>(null);
+  const [insightText, setInsightText] = useState("");
 
   const handleSaveInsight = () => {
-    if (!insightText.trim()) return;
-
-    if (editingInsight) {
+    if (!insightText.trim() || !editingInsightCellMeta) return;
+    const { cell, rowId } = editingInsightCellMeta;
+    if (cell.blockType === "insight" && editingInsight) {
       dispatch(
-        updateInsightInSection({
-          sectionId: section.id,
+        updateInsightInCell({
+          sectionId,
+          rowId,
+          cellId: cell.id,
           insight: { ...editingInsight, text: insightText.trim() },
         })
       );
-      dispatch(showGlobalToast({ message: "Insight updated.", type: "success" }));
-    } else {
-      dispatch(
-        addInsightToSection({
-          sectionId: section.id,
-          text: insightText.trim(),
-        })
-      );
-      dispatch(showGlobalToast({ message: "Insight item added.", type: "success" }));
+      dispatch(showGlobalToast({ message: "Insight updated!", type: "success" }));
     }
-
     setInsightModalOpen(false);
+    setEditingInsightCellMeta(null);
   };
 
-  const handleMoveInsight = (index: number, direction: "up" | "down") => {
-    const insights = [...(section.keyInsights || [])];
-    const targetIdx = direction === "up" ? index - 1 : index + 1;
-    if (targetIdx < 0 || targetIdx >= insights.length) return;
+  // ── Block Creation (Sidebar Click/Drop) ──────────────────────────────────────
+  const handleSidebarAddBlock = useCallback(
+    (e: SidebarAddBlockEvent) => {
+      if (!section) return;
+      const ts = Date.now();
+      let cell: CanvasCell | null = null;
+      switch (e.blockType) {
+        case "metric-card":
+          cell = {
+            id: `cell-mc-${ts}`,
+            colSpan: 1,
+            blockType: "metric-card",
+            metricCard: {
+              id: `mc-${ts}`,
+              label: "New KPI Indicator",
+              value: "96.5%",
+              tintColor: "blue",
+              trendDirection: "up",
+              trendValue: "+1.8% vs last shift",
+            },
+          };
+          break;
+        case "chart":
+          if (e.customChart) {
+            cell = {
+              id: `cell-ch-${ts}`,
+              colSpan: 4,
+              blockType: "chart",
+              chart: {
+                ...e.customChart,
+                id: `ch-${ts}`,
+                title: `${e.customChart.title} (Copy)`,
+              },
+            };
+          } else {
+            const selectedChartType = e.chartType || "bar";
+            const chartOption = CHART_TYPE_OPTIONS.find((c) => c.id === selectedChartType);
+            cell = {
+              id: `cell-ch-${ts}`,
+              colSpan: 4,
+              blockType: "chart",
+              chart: {
+                id: `ch-${ts}`,
+                title: `Telemetry ${chartOption?.label || "Chart"}`,
+                chartType: selectedChartType,
+                dataSourceField: "ppe_sensor_compliance",
+                description: "",
+                color: "#9D61FF",
+                gridRows: (selectedChartType === "heatmap" || selectedChartType === "table") ? 4 : undefined,
+                gridCols: (selectedChartType === "heatmap" || selectedChartType === "table") ? 7 : undefined,
+              },
+            };
+          }
+          break;
+        case "insight":
+          cell = {
+            id: `cell-ki-${ts}`,
+            colSpan: 4,
+            blockType: "insight",
+            insight: {
+              id: `ki-${ts}`,
+              text: "Key operational observation recorded during routine industrial monitoring.",
+            },
+          };
+          break;
+        case "text":
+          cell = {
+            id: `cell-tb-${ts}`,
+            colSpan: 4,
+            blockType: "text",
+            textBlock: { id: `tb-${ts}`, content: "" },
+          };
+          break;
+        case "badge-strip":
+          cell = {
+            id: `cell-bs-${ts}`,
+            colSpan: 4,
+            blockType: "badge-strip",
+            badgeStrip: {
+              id: `bs-${ts}`,
+              badges: [
+                { id: `b1-${ts}`, label: "Attendance", value: "98.7%", color: "blue", icon: "Users" },
+                { id: `b2-${ts}`, label: "PPE Compliance", value: "96.2%", color: "green", icon: "Shield" },
+                { id: `b3-${ts}`, label: "Response", value: "< 4 min", color: "purple", icon: "Clock" },
+                { id: `b4-${ts}`, label: "Risk-Free", value: "14,280", color: "amber", icon: "Zap" },
+              ],
+            },
+          };
+          break;
+        case "divider":
+          cell = { id: `cell-div-${ts}`, colSpan: 4, blockType: "divider" };
+          break;
+      }
 
-    const temp = insights[index];
-    insights[index] = insights[targetIdx];
-    insights[targetIdx] = temp;
+      if (cell !== null) {
+        dispatch(addRowWithCell({ sectionId: section.id, cell }));
+        dispatch(showGlobalToast({ message: `${e.blockType.replace("-", " ")} added to canvas!`, type: "success" }));
+      }
+    },
+    [dispatch, section]
+  );
 
-    dispatch(reorderInsightsInSection({ sectionId: section.id, keyInsights: insights }));
-  };
+  // ── Cell Edit Trigger ───────────────────────────────────────────────────────
+  const handleEditCell = useCallback(
+    (cell: CanvasCell, rowId: string) => {
+      switch (cell.blockType) {
+        case "metric-card":
+          if (cell.metricCard) {
+            setEditingCard(cell.metricCard);
+            setEditingCellMeta({ cell, rowId });
+            setCardLabel(cell.metricCard.label);
+            setCardValue(cell.metricCard.value);
+            setCardTint(cell.metricCard.tintColor);
+            setCardTrendDir(cell.metricCard.trendDirection);
+            setCardTrendVal(cell.metricCard.trendValue);
+            setCardModalOpen(true);
+          }
+          break;
+        case "chart":
+          if (cell.chart) {
+            setEditingChart(cell.chart);
+            setEditingChartCellMeta({ cell, rowId });
+            setChartTitle(cell.chart.title);
+            setChartType(cell.chart.chartType);
+            setChartDataSource(cell.chart.dataSourceField);
+            setChartDesc(cell.chart.description || "");
+            setChartColor(cell.chart.color || "#9D61FF");
+            setChartColors(cell.chart.colors || []);
+            setGridRows(cell.chart.gridRows || 4);
+            setGridCols(cell.chart.gridCols || 7);
+            setChartModalOpen(true);
+            dispatch(setChartEditorFullscreen(true));
+          }
+          break;
+        case "insight":
+          if (cell.insight) {
+            setEditingInsight(cell.insight);
+            setEditingInsightCellMeta({ cell, rowId });
+            setInsightText(cell.insight.text);
+            setInsightModalOpen(true);
+          }
+          break;
+        case "text":
+          if (cell.textBlock) {
+            setEditingInsight(null);
+            setEditingInsightCellMeta({ cell, rowId });
+            setInsightText(cell.textBlock.content);
+            setInsightModalOpen(true);
+          }
+          break;
+        default:
+          break;
+      }
+    },
+    [dispatch]
+  );
 
-  const handleDeleteInsight = (insightId: string) => {
-    dispatch(deleteInsightFromSection({ sectionId: section.id, insightId }));
-    dispatch(showGlobalToast({ message: "Insight removed.", type: "info" }));
-  };
+  // ── Inline Cell Updates (Live on Canvas & from Ribbon) ──────────────────────
+  const handleUpdateMetricCardInCell = useCallback(
+    (rowId: string, cellId: string, card: LibraryMetricCard) => {
+      dispatch(updateMetricCardInCell({ sectionId, rowId, cellId, card }));
+    },
+    [dispatch, sectionId]
+  );
 
-  // Render Fullscreen/Inline Chart Editor
-  if (chartModalOpen) {
+  const handleUpdateInsightInCell = useCallback(
+    (rowId: string, cellId: string, text: string) => {
+      if (!section?.canvasRows) return;
+      const row = section.canvasRows.find((r) => r.id === rowId);
+      const cell = row?.cells.find((c) => c.id === cellId);
+      if (cell && cell.insight) {
+        dispatch(updateInsightInCell({ sectionId, rowId, cellId, insight: { ...cell.insight, text } }));
+      }
+    },
+    [dispatch, sectionId, section?.canvasRows]
+  );
+
+  const handleUpdateTextBlockInCell = useCallback(
+    (rowId: string, cellId: string, content: string) => {
+      dispatch(updateTextBlockInCell({ sectionId, rowId, cellId, content }));
+    },
+    [dispatch, sectionId]
+  );
+
+  const handleUpdateChartInCell = useCallback(
+    (chart: LibraryChartCard) => {
+      if (!selectedRowId || !selectedCellId) return;
+      dispatch(updateChartInCell({ sectionId, rowId: selectedRowId, cellId: selectedCellId, chart }));
+    },
+    [dispatch, sectionId, selectedRowId, selectedCellId]
+  );
+
+  const handleUpdateColSpan = useCallback(
+    (colSpan: 1 | 2 | 3 | 4) => {
+      if (!selectedRowId || !selectedCellId) return;
+      dispatch(updateCellColSpan({ sectionId, rowId: selectedRowId, cellId: selectedCellId, colSpan }));
+    },
+    [dispatch, sectionId, selectedRowId, selectedCellId]
+  );
+
+  const handleDuplicateActive = useCallback(() => {
+    if (!selectedRowId || !selectedCellId) return;
+    dispatch(duplicateCanvasCell({ sectionId, rowId: selectedRowId, cellId: selectedCellId }));
+    dispatch(showGlobalToast({ message: "Block duplicated!", type: "success" }));
+  }, [dispatch, sectionId, selectedRowId, selectedCellId]);
+
+  const handleDeleteActive = useCallback(() => {
+    if (!selectedRowId || !selectedCellId) return;
+    dispatch(deleteCanvasCell({ sectionId, rowId: selectedRowId, cellId: selectedCellId }));
+    setSelectedCellId(null);
+    setSelectedRowId(null);
+    dispatch(showGlobalToast({ message: "Block removed.", type: "info" }));
+  }, [dispatch, sectionId, selectedRowId, selectedCellId]);
+
+  // ── Keyboard Shortcuts (Canva Feel) ─────────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      const isInput = activeTag === "input" || activeTag === "textarea" || activeTag === "select";
+
+      // Escape key exits preview or clears selection
+      if (e.key === "Escape") {
+        if (isPreview) {
+          setIsPreview(false);
+        } else {
+          setSelectedCellId(null);
+          setSelectedRowId(null);
+        }
+        return;
+      }
+
+      if (isInput) return; // don't intercept typing
+
+      // Delete or Backspace removes active cell
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedCellId && selectedRowId) {
+        e.preventDefault();
+        handleDeleteActive();
+        return;
+      }
+
+      // Ctrl+D duplicates active cell
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "d" && selectedCellId && selectedRowId) {
+        e.preventDefault();
+        handleDuplicateActive();
+        return;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPreview, selectedCellId, selectedRowId, handleDeleteActive, handleDuplicateActive]);
+
+  // Fullscreen Telemetry Studio Guard
+  if (chartModalOpen && chartEditorFullscreen && editingChart && editingChartCellMeta) {
     return (
       <ChartEditorPanel
         editingChart={editingChart}
@@ -393,38 +517,50 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
         setGridRows={setGridRows}
         gridCols={gridCols}
         setGridCols={setGridCols}
-        onSave={() => {
-          setChartDataSource("custom_telemetry_feed");
-          handleSaveChart();
-        }}
+        onSave={handleSaveChart}
         onClose={handleCloseChartEditor}
       />
     );
   }
 
-  // Render Main Canvas Studio
+  if (!section) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
+        <AlertCircle className="w-10 h-10 text-rose-500" />
+        <h3 className="text-base font-bold text-slate-800 dark:text-zinc-200">Section Not Found</h3>
+        <button
+          type="button"
+          onClick={onBack}
+          className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-semibold cursor-pointer"
+        >
+          Return to Sections
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn space-y-2">
-      {/* 1. TOP EDITOR CONTROL BAR */}
-      <div className="flex-shrink-0 flex items-center justify-between gap-3 flex-wrap px-4 sm:px-6 lg:px-7 py-1.5 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017]">
-        {/* Left: Back + Section Title & Eyebrow */}
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn bg-white dark:bg-[#07090d]">
+      {/* ── Global Canva Studio Header ── */}
+      <div className="flex-shrink-0 flex items-center justify-between gap-3 flex-wrap px-4 sm:px-6 py-2 border-b border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-md z-30">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="h-8.5 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            className="h-8 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Sections List</span>
+            <span>Sections</span>
           </button>
 
           <div className="h-4 w-[1px] bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
 
+          {/* Section Eyebrow & Title */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-mono uppercase font-bold text-[#9D61FF] bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
               {section.eyebrow}
             </span>
-            <h1 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
               <span>{section.name}</span>
               <button
                 type="button"
@@ -435,7 +571,7 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
                   setEditHeaderOpen(true);
                 }}
                 className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title="Edit Section Title & Header"
+                title="Edit Section Title"
               >
                 <Edit2 className="w-3.5 h-3.5" />
               </button>
@@ -443,42 +579,36 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
           </div>
         </div>
 
-        {/* Right: Quick Element Insertion Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Global Actions */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-slate-400 dark:text-zinc-500 hidden md:block">
+            {section.canvasRows?.length || 0} rows &middot;{" "}
+            {section.canvasRows?.reduce((acc, r) => acc + r.cells.length, 0) || 0} blocks
+          </span>
+
+          {/* Clean Preview Toggle */}
           <button
             type="button"
-            onClick={handleOpenAddCard}
-            className="h-8.5 px-3 rounded-xl border border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+            onClick={() => setIsPreview(!isPreview)}
+            className={`h-8 px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+              isPreview
+                ? "bg-[#9D61FF] text-white border-transparent shadow-sm"
+                : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+            }`}
+            title="Toggle Clean Preview Mode"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>+ Metric Card</span>
+            <Eye className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{isPreview ? "Exit Preview" : "Preview"}</span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleOpenAddChart}
-            className="h-8.5 px-3 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <BarChart2 className="w-3.5 h-3.5" />
-            <span>+ Chart</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleOpenAddInsight}
-            className="h-8.5 px-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <Lightbulb className="w-3.5 h-3.5" />
-            <span>+ Key Insight</span>
-          </button>
-
+          {/* Save to Library */}
           <button
             type="button"
             onClick={() => {
-              dispatch(showGlobalToast({ message: "Section blueprint saved to Library!", type: "success" }));
+              dispatch(showGlobalToast({ message: "Section saved to Library!", type: "success" }));
               onBack();
             }}
-            className="h-8.5 px-4 rounded-xl glow-btn-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm ml-1"
+            className="h-8 px-4 rounded-xl glow-btn-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm text-white"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Save to Library</span>
@@ -486,340 +616,73 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
         </div>
       </div>
 
-      {/* 2. CANVA-STYLE VISUAL REPORT SIMULATION CANVAS */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-center bg-slate-100/60 dark:bg-[#07090d]">
-        {/* Report Page Container (simulating Dummy_report.pdf A4 Report Module) */}
-        <div className="w-full max-w-5xl bg-white dark:bg-[#0b0e14] border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-          {/* A. REPORT SECTION HEADER BAR */}
-          <div className="border-b border-slate-100 dark:border-zinc-800/80 pb-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 font-mono">
-                {section.eyebrow}
-              </span>
-              <span className="text-[10px] font-mono text-slate-400">
-                MODULE PREVIEW • SITESAFE EXECUTIVE SUITE
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
-              {section.name}
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-zinc-400 mt-1 max-w-3xl leading-relaxed">
-              {section.description}
-            </p>
-          </div>
+      {/* ── Canva Adaptive Contextual Properties Ribbon ── */}
+      <CanvasContextRibbon
+        selectedCell={activeCell}
+        selectedRowId={selectedRowId}
+        sectionName={section.name}
+        sectionEyebrow={section.eyebrow}
+        onUpdateColSpan={handleUpdateColSpan}
+        onUpdateMetricCard={(card) => {
+          if (selectedRowId && selectedCellId) {
+            handleUpdateMetricCardInCell(selectedRowId, selectedCellId, card);
+          }
+        }}
+        onUpdateChart={handleUpdateChartInCell}
+        onOpenChartEditor={() => {
+          if (activeCell?.chart && selectedRowId) {
+            handleEditCell(activeCell, selectedRowId);
+          }
+        }}
+        onDuplicate={handleDuplicateActive}
+        onDelete={handleDeleteActive}
+        paperTone={paperTone}
+        onSetPaperTone={setPaperTone}
+        showGrid={showGrid}
+        onToggleGrid={() => setShowGrid(!showGrid)}
+        showGuides={showGuides}
+        onToggleGuides={() => setShowGuides(!showGuides)}
+        isPreview={isPreview}
+        onTogglePreview={() => setIsPreview(!isPreview)}
+      />
 
-          {/* B. PASTEL METRIC CARDS ROW / GRID */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-blue-500" />
-                <span>Executive Metric Indicators ({section.metricCards?.length || 0})</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleOpenAddCard}
-                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Add Metric Card</span>
-              </button>
-            </div>
+      {/* ── Main Studio Workspace ── */}
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        {/* Left Sidebar Asset Dock (Hidden in Preview) */}
+        {!isPreview && (
+          <CanvasSidebar
+            onAddBlock={handleSidebarAddBlock}
+            sectionCharts={sectionCharts}
+            allLibraryCharts={allLibraryCharts}
+          />
+        )}
 
-            {(!section.metricCards || section.metricCards.length === 0) ? (
-              <div className="py-8 text-center border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl p-4 text-xs text-slate-400 space-y-2 bg-slate-50/50 dark:bg-zinc-900/30">
-                <p>No metric cards added yet.</p>
-                <button
-                  type="button"
-                  onClick={handleOpenAddCard}
-                  className="text-blue-600 dark:text-blue-400 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Add First Metric Card</span>
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {section.metricCards.map((card, idx) => {
-                  const ramp = PALETTE_RAMPS.find((r) => r.id === card.tintColor) || PALETTE_RAMPS[0];
-
-                  return (
-                    <div
-                      key={card.id}
-                      className={`relative group rounded-2xl border p-4 shadow-sm transition-all ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark}`}
-                    >
-                      {/* Hover action overlay controls */}
-                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-lg p-1 shadow border border-slate-200 dark:border-zinc-700 z-10">
-                        {idx > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => handleMoveCard(idx, "left")}
-                            className="p-1 hover:text-blue-600 cursor-pointer"
-                            title="Move Left"
-                          >
-                            <ChevronLeft className="w-3 h-3" />
-                          </button>
-                        )}
-                        {idx < (section.metricCards?.length || 0) - 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleMoveCard(idx, "right")}
-                            className="p-1 hover:text-blue-600 cursor-pointer"
-                            title="Move Right"
-                          >
-                            <ChevronRight className="w-3 h-3" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditCard(card)}
-                          className="p-1 hover:text-blue-600 cursor-pointer"
-                          title="Edit Card"
-                        >
-                          <Edit2 className="w-3 h-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCard(card.id)}
-                          className="p-1 hover:text-rose-500 cursor-pointer"
-                          title="Delete Card"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-
-                      {/* Card Content */}
-                      <div className="space-y-1.5">
-                        <div className="text-[11px] font-medium text-slate-600 dark:text-zinc-400 line-clamp-1">
-                          {card.label}
-                        </div>
-                        <div className={`text-xl sm:text-2xl font-black font-mono tracking-tight ${ramp.textLight} ${ramp.textDark}`}>
-                          {card.value}
-                        </div>
-                        <div className="pt-1 flex items-center gap-1">
-                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold font-mono ${ramp.badgeBg} ${ramp.badgeText}`}>
-                            {card.trendDirection === "up" && <ArrowUp className="w-2.5 h-2.5" />}
-                            {card.trendDirection === "down" && <ArrowDown className="w-2.5 h-2.5" />}
-                            {card.trendDirection === "no-change" && <span>—</span>}
-                            <span>{card.trendValue}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* C. TELEMETRY CHARTS GRID */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
-                <BarChart2 className="w-3.5 h-3.5 text-purple-500" />
-                <span>Telemetry Visualizations & Graphs ({section.charts?.length || 0})</span>
-              </span>
-              <button
-                type="button"
-                onClick={handleOpenAddChart}
-                className="text-xs font-semibold text-[#9D61FF] hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Add Telemetry Chart</span>
-              </button>
-            </div>
-
-            {(!section.charts || section.charts.length === 0) ? (
-              <div className="py-8 text-center border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl p-4 text-xs text-slate-400 space-y-2 bg-slate-50/50 dark:bg-zinc-900/30">
-                <p>No telemetry charts attached to this section.</p>
-                <button
-                  type="button"
-                  onClick={handleOpenAddChart}
-                  className="text-[#9D61FF] font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Add First Chart</span>
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {section.charts.map((chart, idx) => (
-                  <div
-                    key={chart.id}
-                    className="relative group rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm space-y-3 hover:border-[#9D61FF]/40 transition-all"
-                  >
-                    {/* Hover action overlay controls */}
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md rounded-lg p-1 shadow border border-slate-200 dark:border-zinc-700 z-10">
-                      {idx > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleMoveChart(idx, "left")}
-                          className="p-1 hover:text-[#9D61FF] cursor-pointer"
-                          title="Move Left"
-                        >
-                          <ChevronLeft className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {idx < (section.charts?.length || 0) - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleMoveChart(idx, "right")}
-                          className="p-1 hover:text-[#9D61FF] cursor-pointer"
-                          title="Move Right"
-                        >
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleCycleChartType(chart)}
-                        className="p-1 hover:text-[#9D61FF] text-[10px] font-mono font-bold cursor-pointer"
-                        title="Switch Chart Type"
-                      >
-                        Type: {chart.chartType.toUpperCase()}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditChart(chart)}
-                        className="p-1 hover:text-[#9D61FF] cursor-pointer"
-                        title="Edit Chart"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteChart(chart.id)}
-                        className="p-1 hover:text-rose-500 cursor-pointer"
-                        title="Delete Chart"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Chart Header */}
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                          {chart.title}
-                        </h3>
-                        <div className="text-[10px] font-mono text-slate-500 dark:text-zinc-400 mt-0.5">
-                          Source: {chart.dataSourceField}
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 font-bold">
-                        {chart.chartType.toUpperCase()}
-                      </span>
-                    </div>
-
-                    {/* Live SVG Rendering */}
-                    <ChartRenderer
-                      chart={chart}
-                      color={chart.color || chart.colors?.[0]}
-                      colors={chart.colors}
-                      gridRows={chart.gridRows}
-                      gridCols={chart.gridCols}
-                    />
-
-                    {chart.description && (
-                      <p className="text-[11px] text-slate-500 dark:text-zinc-400 pt-1 border-t border-slate-100 dark:border-zinc-800/80">
-                        {chart.description}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* D. KEY INSIGHTS BLOCK (Matching Dummy_report.pdf) */}
-          <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/50 p-5 space-y-3.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-amber-500/15 text-amber-500">
-                  <Lightbulb className="w-4 h-4" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Key Operational Insights
-                </h3>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleOpenAddInsight}
-                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Add Insight Bullet</span>
-              </button>
-            </div>
-
-            {(!section.keyInsights || section.keyInsights.length === 0) ? (
-              <div className="text-center py-4 text-xs text-slate-400">
-                No key insights added to this section. Click "+ Add Insight Bullet" to create one.
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {section.keyInsights.map((insight, idx) => (
-                  <div
-                    key={insight.id}
-                    className="relative group p-3 rounded-xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-sm flex items-start gap-3"
-                  >
-                    {/* Number Badge */}
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#9D61FF] to-blue-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
-                      {idx + 1}
-                    </div>
-
-                    <p className="text-xs text-slate-700 dark:text-zinc-300 flex-1 leading-relaxed">
-                      {insight.text}
-                    </p>
-
-                    {/* Action buttons */}
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 flex-shrink-0">
-                      {idx > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => handleMoveInsight(idx, "up")}
-                          className="p-1 hover:text-blue-600 cursor-pointer"
-                          title="Move Up"
-                        >
-                          <ArrowUp className="w-3 h-3" />
-                        </button>
-                      )}
-                      {idx < (section.keyInsights?.length || 0) - 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleMoveInsight(idx, "down")}
-                          className="p-1 hover:text-blue-600 cursor-pointer"
-                          title="Move Down"
-                        >
-                          <ArrowDown className="w-3 h-3" />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditInsight(insight)}
-                        className="p-1 hover:text-blue-600 cursor-pointer"
-                        title="Edit Insight"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteInsight(insight.id)}
-                        className="p-1 hover:text-rose-500 cursor-pointer"
-                        title="Delete Insight"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Canva Central Desk with Floating Artboard */}
+        <CanvasStudio
+          section={section}
+          selectedCellId={selectedCellId}
+          selectedRowId={selectedRowId}
+          onSelectCell={(cellId, rowId) => {
+            setSelectedCellId(cellId);
+            setSelectedRowId(rowId);
+          }}
+          onEditCell={handleEditCell}
+          onUpdateMetricCardInCell={handleUpdateMetricCardInCell}
+          onUpdateInsightInCell={handleUpdateInsightInCell}
+          onUpdateTextBlockInCell={handleUpdateTextBlockInCell}
+          paperTone={paperTone}
+          showGrid={showGrid}
+          onToggleGrid={() => setShowGrid(!showGrid)}
+          showGuides={showGuides}
+          onToggleGuides={() => setShowGuides(!showGuides)}
+          zoom={zoom}
+          setZoom={setZoom}
+          isPreview={isPreview}
+          onTogglePreview={() => setIsPreview(!isPreview)}
+        />
       </div>
 
-      {/* Modal: Edit Section Header */}
+      {/* ── Dialog Modals (Secondary Deep Configuration) ── */}
       <EditSectionHeaderModal
         isOpen={editHeaderOpen}
         onClose={() => setEditHeaderOpen(false)}
@@ -832,10 +695,12 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
         onSave={handleSaveHeader}
       />
 
-      {/* Modal: Add / Edit Metric Card */}
       <MetricCardModal
         isOpen={cardModalOpen}
-        onClose={() => setCardModalOpen(false)}
+        onClose={() => {
+          setCardModalOpen(false);
+          setEditingCellMeta(null);
+        }}
         editingCard={editingCard}
         label={cardLabel}
         setLabel={setCardLabel}
@@ -850,10 +715,12 @@ export default function SectionCanvasEditor({ sectionId, onBack }: SectionCanvas
         onSave={handleSaveCard}
       />
 
-      {/* Modal: Add / Edit Key Insight */}
       <KeyInsightModal
         isOpen={insightModalOpen}
-        onClose={() => setInsightModalOpen(false)}
+        onClose={() => {
+          setInsightModalOpen(false);
+          setEditingInsightCellMeta(null);
+        }}
         editingInsight={editingInsight}
         text={insightText}
         setText={setInsightText}

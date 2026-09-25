@@ -2291,6 +2291,26 @@ export const reportModuleSlice = createSlice({
       }
     },
 
+    /** Atomically add a new row with a first cell (for sidebar block drops) */
+    addRowWithCell: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        cell: import("./reportModuleSlice").CanvasCell;
+      }>
+    ) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload.sectionId);
+      if (sec) {
+        if (!sec.canvasRows) sec.canvasRows = [];
+        sec.canvasRows.push({
+          id: `row-${Date.now()}`,
+          cells: [action.payload.cell],
+        });
+        sec.updatedAt = "Just now";
+      }
+    },
+
+
     /** Remove a row from the canvas */
     removeCanvasRow: (
       state,
@@ -3043,6 +3063,7 @@ export const {
   // Canvas Row/Cell Actions (Canva-like Editor)
   migrateToCanvasRows,
   addCanvasRow,
+  addRowWithCell,
   removeCanvasRow,
   addCellToRow,
   moveCellBetweenRows,
