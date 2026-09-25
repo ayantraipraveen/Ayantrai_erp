@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import { useAppSelector } from "@/lib/redux/hooks";
 import {
   TemplateToast,
   TemplateMetricsBar,
   TemplateFilterToolbar,
-  TemplatesList,
+  TemplatesTable,
+  TemplatesGrid,
   TemplateReviewModal,
   TemplateBuilderDrawer,
   DeleteTemplateModal,
@@ -16,6 +17,10 @@ import {
  * Modular, 100% PURE REDUX architecture with ZERO props drilling.
  */
 export default function TemplatesPage() {
+  const viewMode = useAppSelector(
+    (state) => state.reportModule.templateViewMode
+  );
+
   return (
     <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden">
 
@@ -28,7 +33,7 @@ export default function TemplatesPage() {
 
       {/* Main Content Area: Flex-1 and fills remaining viewport height */}
       <div className="flex-1 min-h-0 flex flex-col w-full overflow-hidden">
-        <TemplatesList />
+        {viewMode === "table" ? <TemplatesTable /> : <TemplatesGrid />}
       </div>
 
       <TemplateReviewModal />
