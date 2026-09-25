@@ -594,7 +594,7 @@ export interface CanvasStudioProps {
   onUpdateMetricCardInCell?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateInsightInCell?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlockInCell?: (rowId: string, cellId: string, content: string) => void;
-  paperTone?: "white" | "slate" | "paper";
+  paperTone?: string;
   showGrid?: boolean;
   onToggleGrid?: () => void;
   showGuides?: boolean;
@@ -606,6 +606,21 @@ export interface CanvasStudioProps {
   // Watermark Support
   activeWatermark?: UploadedSvgWatermark | null;
   watermarkConfig?: WatermarkStampConfig;
+}
+
+function isColorDark(colorStr?: string): boolean {
+  if (!colorStr) return false;
+  const lower = colorStr.toLowerCase();
+  if (lower === "dark" || lower === "#0f172a" || lower === "#0b0e14" || lower === "#1e293b" || lower === "#07090d") return true;
+  if (!lower.startsWith("#")) return false;
+  const c = lower.substring(1);
+  const rgb = parseInt(c.length === 3 ? c.split("").map((x) => x + x).join("") : c, 16);
+  if (isNaN(rgb)) return false;
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >> 8) & 0xff;
+  const b = (rgb >> 0) & 0xff;
+  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luma < 135;
 }
 
 export function CanvasStudio({
@@ -839,12 +854,38 @@ export function CanvasStudio({
     }
   };
 
+  const isCustomColor =
+    Boolean(paperTone) &&
+    (paperTone.startsWith("#") ||
+      paperTone.startsWith("rgb") ||
+      paperTone.startsWith("hsl"));
+
   const paperBgClass =
     paperTone === "slate"
       ? "bg-slate-50 dark:bg-zinc-900"
-      : paperTone === "paper"
+      : paperTone === "paper" || paperTone === "cream"
       ? "bg-[#faf8f5] dark:bg-[#15130f]"
-      : "bg-white dark:bg-[#0c1017]";
+      : paperTone === "linen"
+      ? "bg-[#f4f1ea] dark:bg-[#181613]"
+      : paperTone === "ice"
+      ? "bg-[#f0f7ff] dark:bg-[#0c1322]"
+      : paperTone === "mint"
+      ? "bg-[#f2f9f5] dark:bg-[#0b1812]"
+      : paperTone === "rose"
+      ? "bg-[#fff5f7] dark:bg-[#1a0c10]"
+      : paperTone === "amber"
+      ? "bg-[#fffbeb] dark:bg-[#1a1608]"
+      : paperTone === "dark"
+      ? "bg-[#0b0e14] dark:bg-[#07090d]"
+      : !isCustomColor
+      ? "bg-white dark:bg-[#0c1017]"
+      : "";
+
+  const customPaperStyle: React.CSSProperties = isCustomColor
+    ? { backgroundColor: paperTone }
+    : {};
+
+  const isDarkPaper = isColorDark(paperTone);
 
   // Watermark parameters
   const wmOpacity = (watermarkConfig?.opacity ?? 18) / 100;
@@ -882,6 +923,7 @@ export function CanvasStudio({
         >
           {/* ── Floating A4 Artboard Sheet with Multilayer Depth ── */}
           <div
+            style={customPaperStyle}
             className={`relative min-h-[842px] ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 rounded-3xl overflow-hidden transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)]`}
           >
             {/* Margin Guides (if enabled) */}
@@ -911,7 +953,7 @@ export function CanvasStudio({
                           opacity: wmOpacity * 0.7,
                           transform: `rotate(${wmRotation}deg) scale(${wmScale * 0.75})`,
                           transformOrigin: "center center",
-                          mixBlendMode: "multiply",
+                          mixBlendMode: isDarkPaper ? "screen" : "multiply",
                         }}
                         className="w-full max-w-[280px] filter drop-shadow-sm select-none"
                         dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
@@ -924,7 +966,7 @@ export function CanvasStudio({
                       opacity: wmOpacity,
                       transform: `rotate(${wmRotation}deg) scale(${wmScale})`,
                       transformOrigin: "center center",
-                      mixBlendMode: "multiply",
+                      mixBlendMode: isDarkPaper ? "screen" : "multiply",
                     }}
                     className="w-full max-w-[500px] flex items-center justify-center transition-all duration-300 filter drop-shadow-sm select-none"
                     dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
@@ -934,7 +976,7 @@ export function CanvasStudio({
             )}
 
             {/* Document Header Bar */}
-            <div className="relative z-10 px-8 sm:px-10 pt-8 pb-5 border-b border-slate-100 dark:border-zinc-800/60 bg-white/40 dark:bg-black/20 backdrop-blur-[2px]">
+            <div className={`relative z-10 px-8 sm:px-10 pt-8 pb-5 border-b border-slate-100 dark:border-zinc-800/60 ${isDarkPaper ? "bg-black/30 backdrop-blur-md" : "bg-white/40 dark:bg-black/20 backdrop-blur-[2px]"}`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400 font-mono">
                   {section.eyebrow}
@@ -946,16 +988,16 @@ export function CanvasStudio({
                       <span>{activeWatermark.name}</span>
                     </span>
                   )}
-                  <span className="text-[10px] font-mono tracking-widest uppercase text-slate-300 dark:text-zinc-600">
+                  <span className={`text-[10px] font-mono tracking-widest uppercase ${isDarkPaper ? "text-slate-400" : "text-slate-300 dark:text-zinc-600"}`}>
                     CANVA STUDIO · INDUSTRIAL REPORT
                   </span>
                 </div>
               </div>
-              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+              <h1 className={`text-2xl font-black tracking-tight ${isDarkPaper ? "text-white" : "text-slate-900 dark:text-white"}`}>
                 {section.name}
               </h1>
               {section.description && (
-                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 max-w-3xl leading-relaxed">
+                <p className={`text-xs mt-1 max-w-3xl leading-relaxed ${isDarkPaper ? "text-zinc-300" : "text-slate-500 dark:text-zinc-400"}`}>
                   {section.description}
                 </p>
               )}

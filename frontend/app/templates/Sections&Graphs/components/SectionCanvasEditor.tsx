@@ -93,7 +93,7 @@ export default function SectionCanvasEditor({
   // ── Studio Viewport & Artboard State ─────────────────────────────────────────
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
-  const [paperTone, setPaperTone] = useState<"white" | "slate" | "paper">("white");
+  const [paperTone, setPaperTone] = useState<string>("white");
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
   const [zoom, setZoom] = useState(1);
