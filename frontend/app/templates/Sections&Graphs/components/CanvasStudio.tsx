@@ -453,16 +453,19 @@ function SortableCell({
     isDragging,
   } = useSortable({ id: cell.id, data: { rowId, cell }, disabled: isPreview });
 
-  const initialPercent = cell.customWidth ?? (cell.colSpan * 25);
+  const defaultWidthForCount = totalCellsInRow && totalCellsInRow > 0
+    ? totalCellsInRow === 1 ? 100 : totalCellsInRow === 2 ? 50 : totalCellsInRow === 3 ? 33.3 : 25
+    : 100;
+  const initialPercent = cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : defaultWidthForCount);
   const [isResizing, setIsResizing] = useState(false);
   const [resizePercent, setResizePercent] = useState<number>(initialPercent);
   const cellDomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setResizePercent(cell.customWidth ?? (cell.colSpan * 25));
-  }, [cell.customWidth, cell.colSpan]);
+    setResizePercent(cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : defaultWidthForCount));
+  }, [cell.customWidth, cell.colSpan, defaultWidthForCount]);
 
-  const currentPercent = isResizing ? resizePercent : (cell.customWidth ?? (cell.colSpan * 25));
+  const currentPercent = isResizing ? resizePercent : (cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : defaultWidthForCount));
   const widthStyle = getCellWidthStyle(currentPercent);
 
   const handleResizeStart = (e: React.MouseEvent) => {
@@ -515,8 +518,10 @@ function SortableCell({
     transition: isResizing ? "none" : transition,
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
+    maxWidth: widthStyle,
     flexShrink: 0,
     flexGrow: 0,
+    boxSizing: "border-box",
   };
 
   return (
@@ -571,14 +576,29 @@ function SortableCell({
           </div>
 
           <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-zinc-800 pl-1">
-            {[25, 50, 75, 100].map((preset) => (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const autoW = defaultWidthForCount;
+                setResizePercent(autoW);
+                const span = autoW >= 85 ? 4 : autoW >= 60 ? 3 : autoW >= 38 ? 2 : 1;
+                if (typeof onColSpanChange === "function") onColSpanChange(cell.id, rowId, span);
+                if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, autoW);
+              }}
+              className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-[#8B3DFF] hover:bg-[#8B3DFF]/10 transition-colors cursor-pointer"
+              title={`Auto-balance width to fit standard A4 row (${defaultWidthForCount}%)`}
+            >
+              Auto
+            </button>
+            {[25, 33, 50, 75, 100].map((preset) => (
               <button
                 key={preset}
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setResizePercent(preset);
-                  const span = preset === 100 ? 4 : preset === 75 ? 3 : preset === 50 ? 2 : 1;
+                  const span = preset >= 85 ? 4 : preset >= 60 ? 3 : preset >= 38 ? 2 : 1;
                   if (typeof onColSpanChange === "function") onColSpanChange(cell.id, rowId, span);
                   if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, preset);
                 }}
@@ -1648,9 +1668,12 @@ export function CanvasStudio({
                       ...customPaperStyle,
                       borderRadius: `${marginConfig.radius}px`,
                       width: `${A4_WIDTH_PX}px`,
+                      minWidth: `${A4_WIDTH_PX}px`,
+                      maxWidth: `${A4_WIDTH_PX}px`,
                       height: `${A4_HEIGHT_PX}px`,
                       minHeight: `${A4_HEIGHT_PX}px`,
                       maxHeight: `${A4_HEIGHT_PX}px`,
+                      boxSizing: "border-box",
                     }}
                     className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 overflow-hidden transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-between`}
                   >
@@ -1690,12 +1713,13 @@ export function CanvasStudio({
 
                     {/* Inner Page Content with Margins */}
                     <div
-                      className="relative z-10 flex-1 min-h-0 flex flex-col justify-between"
+                      className="relative z-10 flex-1 min-h-0 flex flex-col justify-between w-full max-w-full box-border"
                       style={{
                         paddingTop: marginConfig.top,
                         paddingRight: marginConfig.right,
                         paddingBottom: marginConfig.bottom,
                         paddingLeft: marginConfig.left,
+                        boxSizing: "border-box",
                       }}
                     >
                       {/* Top Header */}

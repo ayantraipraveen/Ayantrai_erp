@@ -16,6 +16,30 @@ import {
   GraphType,
 } from "../../types/reportModuleTypes";
 
+/**
+ * Auto-balances cell widths in a row so that:
+ * 1 cell  -> 100% (colSpan 4)
+ * 2 cells -> 50% / 50% (colSpan 2 each)
+ * 3 cells -> 33.3% / 33.3% / 33.3% (colSpan 1 each)
+ * 4 cells -> 25% / 25% / 25% / 25% (colSpan 1 each)
+ * strictly respecting the standard A4 printable width without horizontal overflow.
+ */
+export function autoBalanceRowCells(row: CanvasRow): void {
+  if (!row.cells || row.cells.length === 0) return;
+  const count = row.cells.length;
+  if (count === 1) {
+    row.cells[0].customWidth = 100;
+    row.cells[0].colSpan = 4;
+    return;
+  }
+  const w = count === 2 ? 50 : count === 3 ? 33.3 : count === 4 ? 25 : Math.max(15, Math.floor(100 / count));
+  const colSpan: 1 | 2 | 3 | 4 = count === 2 ? 2 : 1;
+  row.cells.forEach((c) => {
+    c.customWidth = w;
+    c.colSpan = colSpan;
+  });
+}
+
 export const sectionsStudioReducers = {
     setSelectedLibrarySectionId: (state: ReportModuleState, action: PayloadAction<string | null>) => {
       state.selectedLibrarySectionId = action.payload;
@@ -281,13 +305,17 @@ export const sectionsStudioReducers = {
 
       const rows: CanvasRow[] = [];
 
-      // Row 1: Metric Cards (one cell per card)
+      // Row 1: Metric Cards (auto-balanced width across standard A4 row)
       if (sec.metricCards && sec.metricCards.length > 0) {
+        const count = sec.metricCards.length;
+        const w = count === 1 ? 100 : count === 2 ? 50 : count === 3 ? 33.3 : count === 4 ? 25 : Math.floor(100 / count);
+        const colSpan = (count === 1 ? 4 : count === 2 ? 2 : 1) as 1 | 2 | 3 | 4;
         rows.push({
           id: `row-mc-${Date.now()}`,
           cells: sec.metricCards.map((card) => ({
             id: `cell-mc-${card.id}`,
-            colSpan: 1 as const,
+            colSpan,
+            customWidth: w,
             blockType: "metric-card" as const,
             metricCard: card,
           })),
@@ -370,7 +398,7 @@ export const sectionsStudioReducers = {
         if (!sec.canvasRows) sec.canvasRows = [];
         const newRow: CanvasRow = {
           id: `row-${Date.now()}`,
-          cells: [action.payload.cell],
+          cells: [{ ...action.payload.cell, colSpan: 4, customWidth: 100 }],
         };
         if (
           typeof action.payload.insertAtIndex === "number" &&
@@ -425,6 +453,7 @@ export const sectionsStudioReducers = {
         } else {
           row.cells.push(action.payload.cell);
         }
+        autoBalanceRowCells(row);
         if (sec) sec.updatedAt = "Just now";
       }
     },
@@ -453,6 +482,8 @@ export const sectionsStudioReducers = {
 
       const [cell] = fromRow.cells.splice(cellIdx, 1);
       toRow.cells.splice(toIndex, 0, cell);
+      autoBalanceRowCells(fromRow);
+      autoBalanceRowCells(toRow);
       sec.updatedAt = "Just now";
     },
 
@@ -538,6 +569,7 @@ export const sectionsStudioReducers = {
           : undefined,
       };
       row.cells.splice(cellIdx + 1, 0, cloned);
+      autoBalanceRowCells(row);
       if (sec) sec.updatedAt = "Just now";
     },
 
@@ -555,6 +587,7 @@ export const sectionsStudioReducers = {
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
       if (row) {
         row.cells = row.cells.filter((c: CanvasCell) => c.id !== cellId);
+        autoBalanceRowCells(row);
         if (sec) sec.updatedAt = "Just now";
       }
     },
