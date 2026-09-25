@@ -24,9 +24,9 @@ export interface CreateSectionStudioProps {
  */
 export default function CreateSectionStudio({
   onBack,
-  defaultName = "New Custom Section",
-  defaultEyebrow = "CUSTOM MODULE",
-  defaultDescription = "Custom reusable report section with attached telemetry and charts.",
+  defaultName = "Department-wise Trends",
+  defaultEyebrow = "ATTENDANCE ANALYSIS",
+  defaultDescription = "A detailed view of attendance, late comings and early exits across departments.",
 }: CreateSectionStudioProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();

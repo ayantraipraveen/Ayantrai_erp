@@ -93,6 +93,7 @@ export const sectionsStudioReducers = {
         description: string;
         icon?: string;
         watermarkId?: string;
+        headerSpacing?: "compact" | "normal" | "spacious";
       }>
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.id);
@@ -102,6 +103,7 @@ export const sectionsStudioReducers = {
         sec.description = action.payload.description;
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
         if (action.payload.watermarkId !== undefined) sec.watermarkId = action.payload.watermarkId;
+        if (action.payload.headerSpacing !== undefined) sec.headerSpacing = action.payload.headerSpacing;
         sec.updatedAt = "Just now";
       }
     },
@@ -634,6 +636,30 @@ export const sectionsStudioReducers = {
         const clamped = Math.max(15, Math.min(100, Math.round(customWidth)));
         cell.customWidth = clamped;
         cell.colSpan = (clamped <= 30 ? 1 : clamped <= 55 ? 2 : clamped <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update a cell's height to any arbitrary pixel value (90px to 800px) or undefined for Auto */
+    updateCellHeight: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        customHeight?: number;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, customHeight } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
+      if (cell) {
+        if (typeof customHeight === "number") {
+          cell.customHeight = Math.max(80, Math.min(800, Math.round(customHeight)));
+        } else {
+          cell.customHeight = undefined;
+        }
         if (sec) sec.updatedAt = "Just now";
       }
     },

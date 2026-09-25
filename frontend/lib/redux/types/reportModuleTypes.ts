@@ -334,6 +334,7 @@ export interface CanvasCell {
   id: string;
   colSpan: 1 | 2 | 3 | 4; // column span within the row (out of 4)
   customWidth?: number; // fluid/adjustable width percentage (15% to 100%) - not locked to fixed ratio!
+  customHeight?: number; // fluid/adjustable height in pixels (e.g. 90px to 800px)
   blockType: CanvasBlockType;
   style?: CanvasCellStyle;
   // Only one of these is set, matching blockType:
@@ -359,6 +360,7 @@ export interface LibrarySection {
   type: "core" | "custom";
   icon?: string;
   updatedAt: string;
+  headerSpacing?: "compact" | "normal" | "spacious";
   // Legacy flat arrays (kept for backward compat – migrated on first canvas open)
   metricCards: LibraryMetricCard[];
   charts: LibraryChartCard[];

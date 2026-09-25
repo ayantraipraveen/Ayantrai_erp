@@ -9,6 +9,7 @@ interface ChartRendererProps {
   colors?: string[];
   gridRows?: number;
   gridCols?: number;
+  height?: number;
 }
 
 /**
@@ -21,6 +22,7 @@ export default function ChartRenderer({
   colors,
   gridRows,
   gridCols,
+  height,
 }: ChartRendererProps) {
   const chartColors = colors && colors.length > 0 ? colors : chart.colors || [];
   const c0 = chartColors[0] || chart.color || color;
@@ -32,7 +34,8 @@ export default function ChartRenderer({
   const effectiveRows = gridRows ?? chart.gridRows;
   const effectiveCols = gridCols ?? chart.gridCols;
 
-  switch (chart.chartType) {
+  const renderChart = () => {
+    switch (chart.chartType) {
     case "line":
       return (
         <div className="w-full h-full min-h-[260px] max-h-[520px] flex flex-col justify-center">
@@ -842,5 +845,19 @@ export default function ChartRenderer({
           </svg>
         </div>
       );
+    }
+  };
+
+  if (typeof height === "number") {
+    return (
+      <div
+        style={{ height: `${height}px`, minHeight: `${height}px` }}
+        className="w-full flex items-center justify-center overflow-hidden [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full"
+      >
+        {renderChart()}
+      </div>
+    );
   }
+
+  return renderChart();
 }

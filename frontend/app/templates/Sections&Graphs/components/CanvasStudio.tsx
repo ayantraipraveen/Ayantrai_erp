@@ -60,6 +60,7 @@ import {
   CanvasBlockType,
   LibrarySection,
   LibraryMetricCard,
+  updateLibrarySection,
   addCanvasRow,
   addRowWithCell,
   toggleRowPageBreak,
@@ -72,6 +73,7 @@ import {
   deleteCanvasCell,
   updateCellColSpan,
   updateCellWidth,
+  updateCellHeight,
   showGlobalToast,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
@@ -105,35 +107,37 @@ export function estimateRowHeight(row: CanvasRow): number {
   let totalCalculatedHeight = 0;
 
   for (const cell of row.cells) {
-    let h = 90;
-    switch (cell.blockType) {
-      case "chart":
-        // Chart card: 40px padding + 32px header + 260px chart area + description + margins
-        h = cell.chart?.description ? 395 : 370;
-        break;
-      case "metric-card":
-        // Metric card: 32px padding + label + 2xl value + trend badge
-        h = 135;
-        break;
-      case "badge-strip":
-        // 4-badge strip: 28px padding + 88px badges
-        h = 140;
-        break;
-      case "insight":
-        // Key insight card: 32px padding + icon badge + text
-        h = 110;
-        break;
-      case "text": {
-        // Rich text block with multiline awareness
-        const lines = (cell.textBlock?.content || "").split("\n").length;
-        h = Math.max(90, 60 + lines * 20);
-        break;
+    let h = cell.customHeight || 90;
+    if (!cell.customHeight) {
+      switch (cell.blockType) {
+        case "chart":
+          // Chart card: 40px padding + 32px header + 260px chart area + description + margins
+          h = cell.chart?.description ? 395 : 370;
+          break;
+        case "metric-card":
+          // Metric card: 32px padding + label + 2xl value + trend badge
+          h = 135;
+          break;
+        case "badge-strip":
+          // 4-badge strip: 28px padding + 88px badges
+          h = 140;
+          break;
+        case "insight":
+          // Key insight card: 32px padding + icon badge + text
+          h = 110;
+          break;
+        case "text": {
+          // Rich text block with multiline awareness
+          const lines = (cell.textBlock?.content || "").split("\n").length;
+          h = Math.max(90, 60 + lines * 20);
+          break;
+        }
+        case "divider":
+          h = 32;
+          break;
+        default:
+          h = 100;
       }
-      case "divider":
-        h = 32;
-        break;
-      default:
-        h = 100;
     }
 
     const cellWidth = cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : 100);
@@ -399,6 +403,7 @@ interface SortableCellProps {
   onDelete: (cellId: string, rowId: string) => void;
   onColSpanChange?: (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => void;
   onWidthChange?: (cellId: string, rowId: string, customWidth: number) => void;
+  onHeightChange?: (cellId: string, rowId: string, customHeight?: number) => void;
   onUpdateMetricCard?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateInsight?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
@@ -1162,6 +1167,48 @@ export interface CanvasStudioProps {
   onUpdateWatermarkConfig?: (config: Partial<WatermarkStampConfig>) => void;
   onSelectWatermark?: ((w: UploadedSvgWatermark | null) => void) | ((watermarkId: string | null) => void);
   onDropBlock?: (e: SidebarAddBlockEvent) => void;
+  onEditHeader?: () => void;
+}
+
+// ─── Dual-Tone Typography Helpers (Matching Design Target) ────────────────────
+export function renderDualToneEyebrow(eyebrow: string, sectionTextColor?: string, isDarkPaper?: boolean) {
+  if (sectionTextColor) {
+    return <span style={{ color: sectionTextColor }}>{eyebrow}</span>;
+  }
+  const trimmed = (eyebrow || "").trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(/\s+/);
+  if (parts.length <= 1) {
+    return <span className={isDarkPaper ? "text-sky-400" : "text-[#0d2562] dark:text-sky-400"}>{trimmed}</span>;
+  }
+  const firstPart = parts.slice(0, -1).join(" ");
+  const lastWord = parts[parts.length - 1];
+  return (
+    <>
+      <span className={isDarkPaper ? "text-blue-300" : "text-[#0d2562] dark:text-blue-300"}>{firstPart}</span>{" "}
+      <span className={isDarkPaper ? "text-sky-400" : "text-[#2563eb] dark:text-sky-400"}>{lastWord}</span>
+    </>
+  );
+}
+
+export function renderDualToneTitle(name: string, sectionTextColor?: string, isDarkPaper?: boolean) {
+  if (sectionTextColor) {
+    return <span style={{ color: sectionTextColor }}>{name}</span>;
+  }
+  const trimmed = (name || "").trim();
+  if (!trimmed) return null;
+  const parts = trimmed.split(/\s+/);
+  if (parts.length <= 1) {
+    return <span className={isDarkPaper ? "text-white" : "text-[#050a1a] dark:text-white"}>{trimmed}</span>;
+  }
+  const mainPart = parts.slice(0, -1).join(" ");
+  const accentWord = parts[parts.length - 1];
+  return (
+    <>
+      <span className={isDarkPaper ? "text-white" : "text-[#050a1a] dark:text-white"}>{mainPart}</span>{" "}
+      <span className={isDarkPaper ? "text-sky-400" : "text-[#2563eb] dark:text-sky-400"}>{accentWord}</span>
+    </>
+  );
 }
 
 function isColorDark(hexOrColor?: string): boolean {
@@ -1205,6 +1252,7 @@ export function CanvasStudio({
   onUpdateWatermarkConfig,
   onSelectWatermark,
   onDropBlock,
+  onEditHeader,
 }: CanvasStudioProps) {
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
@@ -1271,6 +1319,31 @@ export function CanvasStudio({
   };
 
   const commitFooterValue = () => setEditingFooterValue(null);
+
+  // Section Header Live / Inline Editing State
+  const [editingSectionField, setEditingSectionField] = useState<"eyebrow" | "name" | "description" | null>(null);
+  const [localSectionEyebrow, setLocalSectionEyebrow] = useState(section.eyebrow);
+  const [localSectionName, setLocalSectionName] = useState(section.name);
+  const [localSectionDesc, setLocalSectionDesc] = useState(section.description);
+
+  useEffect(() => {
+    setLocalSectionEyebrow(section.eyebrow);
+    setLocalSectionName(section.name);
+    setLocalSectionDesc(section.description);
+  }, [section.eyebrow, section.name, section.description]);
+
+  const commitSectionHeaderUpdate = useCallback(() => {
+    dispatch(
+      updateLibrarySection({
+        id: section.id,
+        name: (localSectionName || "").trim() || section.name,
+        eyebrow: (localSectionEyebrow || "").trim(),
+        description: (localSectionDesc || "").trim(),
+      })
+    );
+    setEditingSectionField(null);
+    dispatch(showGlobalToast({ message: "Section header updated", type: "success" }));
+  }, [dispatch, section.id, section.name, localSectionName, localSectionEyebrow, localSectionDesc]);
 
   const activeSelectedCellId = selectedCellId !== undefined ? selectedCellId : internalSelectedCellId;
   const activeSelectedRowId = selectedRowId !== undefined ? selectedRowId : internalSelectedRowId;
@@ -1845,52 +1918,206 @@ export function CanvasStudio({
                             </div>
                           </div>
 
-                          {/* Section-specific Header Bar */}
+                          {/* Section-specific Header Bar (Pixel-Perfect Matching Design Target) */}
                           <div
-                            className="relative z-10 border-b border-slate-100 dark:border-zinc-800/60 px-0 pt-4 pb-3"
+                            className="relative z-10 px-0 pt-4 pb-3.5 group/section-header transition-all select-text"
                             style={{ backgroundColor: getPaperToneColor(paperTone) }}
                           >
-                            <div className="flex items-center justify-between gap-3 mb-1">
-                              <span
-                                className="text-xs font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400"
-                                style={sectionTextColor ? { color: sectionTextColor } : undefined}
-                              >
-                                {section.eyebrow}
-                              </span>
-                              {activeWatermark && (
+                            <div className="flex items-center justify-between gap-3 mb-1.5">
+                              {editingSectionField === "eyebrow" ? (
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={localSectionEyebrow}
+                                    onChange={(e) => setLocalSectionEyebrow(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") commitSectionHeaderUpdate();
+                                      if (e.key === "Escape") setEditingSectionField(null);
+                                    }}
+                                    autoFocus
+                                    className="text-[12.5px] font-bold uppercase tracking-[0.15em] font-sans px-2 py-0.5 rounded border border-[#2563eb] bg-white dark:bg-zinc-900 text-[#0d2562] dark:text-sky-400 outline-none shadow-xs"
+                                    aria-label="Section eyebrow"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={commitSectionHeaderUpdate}
+                                    className="p-1 rounded bg-[#2563eb] text-white hover:bg-blue-700 cursor-pointer"
+                                    title="Save Eyebrow"
+                                  >
+                                    <Check className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingSectionField(null)}
+                                    className="p-1 rounded bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-300 cursor-pointer"
+                                    title="Cancel"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <span
+                                  onDoubleClick={() => {
+                                    if (!activeIsPreview) {
+                                      setLocalSectionEyebrow(section.eyebrow);
+                                      setEditingSectionField("eyebrow");
+                                    }
+                                  }}
+                                  className="text-[12.5px] font-bold uppercase tracking-[0.15em] font-sans leading-none cursor-pointer transition-colors"
+                                  title="Double-click to edit eyebrow"
+                                >
+                                  {renderDualToneEyebrow(section.eyebrow, sectionTextColor, isDarkPaper)}
+                                </span>
+                              )}
+
+                              {/* Right Header Controls: Watermark + Edit Header Button */}
+                              <div className="flex items-center gap-2">
+                                {activeWatermark && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setIsWatermarkSelected(!isWatermarkSelected);
+                                    }}
+                                    className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
+                                      isWatermarkSelected
+                                        ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
+                                        : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
+                                    }`}
+                                    title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
+                                  >
+                                    <Stamp className="w-2.5 h-2.5" />
+                                    <span>{activeWatermark.name}</span>
+                                    <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
+                                  </button>
+                                )}
+
+                                {!activeIsPreview && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (onEditHeader) {
+                                        onEditHeader();
+                                      } else {
+                                        setLocalSectionName(section.name);
+                                        setLocalSectionEyebrow(section.eyebrow);
+                                        setLocalSectionDesc(section.description);
+                                        setEditingSectionField("name");
+                                      }
+                                    }}
+                                    className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-[#2563eb] px-2 py-0.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
+                                    title="Edit Section Header"
+                                  >
+                                    <Edit2 className="w-3 h-3" />
+                                    <span className="hidden sm:inline">Edit Header</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Main Section Title: Huge 40px Font-Black Dual-Tone */}
+                            {editingSectionField === "name" ? (
+                              <div className="flex items-center gap-2 my-1">
+                                <input
+                                  type="text"
+                                  value={localSectionName}
+                                  onChange={(e) => setLocalSectionName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") commitSectionHeaderUpdate();
+                                    if (e.key === "Escape") setEditingSectionField(null);
+                                  }}
+                                  autoFocus
+                                  className="w-full text-2xl sm:text-[34px] font-black tracking-[-0.03em] leading-tight px-2 py-1 rounded border-2 border-[#2563eb] bg-white dark:bg-zinc-900 text-[#050a1a] dark:text-white outline-none shadow-sm"
+                                  aria-label="Section title"
+                                />
                                 <button
                                   type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsWatermarkSelected(!isWatermarkSelected);
-                                  }}
-                                  className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
-                                    isWatermarkSelected
-                                      ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
-                                      : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
-                                  }`}
-                                  title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
+                                  onClick={commitSectionHeaderUpdate}
+                                  className="p-1.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 cursor-pointer"
+                                  title="Save Title"
                                 >
-                                  <Stamp className="w-2.5 h-2.5" />
-                                  <span>{activeWatermark.name}</span>
-                                  <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
+                                  <Check className="w-4 h-4" />
                                 </button>
-                              )}
-                            </div>
-                            <h1
-                              className={`text-2xl font-black tracking-tight ${isDarkPaper && !sectionTextColor ? "text-white" : !sectionTextColor ? "text-slate-900 dark:text-white" : ""}`}
-                              style={sectionTextColor ? { color: sectionTextColor } : undefined}
-                            >
-                              {section.name}
-                            </h1>
-                            {section.description && (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingSectionField(null)}
+                                  className="p-1.5 rounded-lg bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-300 cursor-pointer"
+                                  title="Cancel"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <h1
+                                onDoubleClick={() => {
+                                  if (!activeIsPreview) {
+                                    setLocalSectionName(section.name);
+                                    setEditingSectionField("name");
+                                  }
+                                }}
+                                className="text-3xl sm:text-[38px] lg:text-[40px] font-black tracking-[-0.035em] leading-[1.08] cursor-pointer mt-1"
+                                title="Double-click to edit title"
+                              >
+                                {renderDualToneTitle(section.name, sectionTextColor, isDarkPaper)}
+                              </h1>
+                            )}
+
+                            {/* Subtitle / Description */}
+                            {editingSectionField === "description" ? (
+                              <div className="flex items-start gap-2 mt-2">
+                                <textarea
+                                  value={localSectionDesc}
+                                  onChange={(e) => setLocalSectionDesc(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                      e.preventDefault();
+                                      commitSectionHeaderUpdate();
+                                    }
+                                    if (e.key === "Escape") setEditingSectionField(null);
+                                  }}
+                                  autoFocus
+                                  rows={2}
+                                  className="w-full text-[14px] leading-relaxed px-2 py-1 rounded border border-[#2563eb] bg-white dark:bg-zinc-900 text-[#4b556b] dark:text-zinc-200 outline-none shadow-xs resize-none"
+                                  aria-label="Section description"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={commitSectionHeaderUpdate}
+                                  className="p-1.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 cursor-pointer mt-0.5"
+                                  title="Save Description"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingSectionField(null)}
+                                  className="p-1.5 rounded-lg bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-300 cursor-pointer mt-0.5"
+                                  title="Cancel"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : section.description ? (
                               <p
-                                className={`text-xs mt-0.5 max-w-3xl leading-relaxed ${isDarkPaper && !sectionTextColor ? "text-zinc-300" : !sectionTextColor ? "text-slate-500 dark:text-zinc-400" : ""}`}
-                                style={sectionTextColor ? { color: sectionTextColor, opacity: 0.85 } : undefined}
+                                onDoubleClick={() => {
+                                  if (!activeIsPreview) {
+                                    setLocalSectionDesc(section.description);
+                                    setEditingSectionField("description");
+                                  }
+                                }}
+                                className={`text-[14px] sm:text-[14.5px] mt-2 max-w-4xl leading-relaxed cursor-pointer font-normal ${
+                                  isDarkPaper && !sectionTextColor
+                                    ? "text-zinc-300"
+                                    : !sectionTextColor
+                                    ? "text-[#4b556b] dark:text-zinc-300"
+                                    : ""
+                                }`}
+                                style={sectionTextColor ? { color: sectionTextColor, opacity: 0.9 } : undefined}
+                                title="Double-click to edit description"
                               >
                                 {section.description}
                               </p>
-                            )}
+                            ) : null}
                           </div>
                         </div>
                       ) : (
@@ -1911,15 +2138,15 @@ export function CanvasStudio({
                             <div className="h-6 w-px bg-[#2454d8]/40" />
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400">
-                                  {section.eyebrow} &bull; CONTINUATION
+                                <span className="text-[10px] font-bold uppercase tracking-[0.14em] font-sans">
+                                  {renderDualToneEyebrow(section.eyebrow, sectionTextColor, isDarkPaper)} &bull; CONTINUATION
                                 </span>
                                 <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20">
                                   A4 Split (1123px)
                                 </span>
                               </div>
-                              <div className="text-xs font-black tracking-tight text-[#1836a0] dark:text-white truncate max-w-[300px]">
-                                {section.name}
+                              <div className="text-xs font-black tracking-tight truncate max-w-[300px]">
+                                {renderDualToneTitle(section.name, sectionTextColor, isDarkPaper)}
                               </div>
                             </div>
                           </div>

@@ -273,26 +273,37 @@ function MetricCardBlock({
 function ChartBlock({ cell }: { cell: CanvasCell }) {
   const chart = cell.chart;
   if (!chart) return null;
+  const customHeight = cell.customHeight;
+  const chartAreaHeight = customHeight ? Math.max(90, customHeight - (chart.description ? 130 : 95)) : undefined;
+
   return (
-    <div className="w-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 space-y-3 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">{chart.title}</h3>
-          <div className="text-[10px] font-mono text-slate-400 mt-0.5">{chart.dataSourceField}</div>
+    <div
+      style={customHeight ? { height: `${customHeight}px` } : undefined}
+      className={`w-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden ${
+        customHeight ? "space-y-1.5" : "space-y-3"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3 flex-shrink-0">
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate">{chart.title}</h3>
+          <div className="text-[10px] font-mono text-slate-400 mt-0.5 truncate">{chart.dataSourceField}</div>
         </div>
         <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-md bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 font-bold flex-shrink-0">
           {chart.chartType.toUpperCase()}
         </span>
       </div>
-      <ChartRenderer
-        chart={chart}
-        color={chart.color || chart.colors?.[0]}
-        colors={chart.colors}
-        gridRows={chart.gridRows}
-        gridCols={chart.gridCols}
-      />
+      <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden py-1">
+        <ChartRenderer
+          chart={chart}
+          color={chart.color || chart.colors?.[0]}
+          colors={chart.colors}
+          gridRows={chart.gridRows}
+          gridCols={chart.gridCols}
+          height={chartAreaHeight}
+        />
+      </div>
       {chart.description && (
-        <p className="text-[11px] text-slate-500 dark:text-zinc-400 pt-2 border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed">
+        <p className="text-[11px] text-slate-500 dark:text-zinc-400 pt-1.5 border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 line-clamp-2">
           {chart.description}
         </p>
       )}

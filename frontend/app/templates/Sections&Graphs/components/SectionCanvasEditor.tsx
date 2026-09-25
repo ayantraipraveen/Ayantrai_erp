@@ -880,6 +880,12 @@ export default function SectionCanvasEditor({
           onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
           onSelectWatermark={handleSelectWatermark}
           onDropBlock={handleSidebarAddBlock}
+          onEditHeader={() => {
+            setEditName(section.name);
+            setEditEyebrow(section.eyebrow);
+            setEditDesc(section.description);
+            setEditHeaderOpen(true);
+          }}
         />
       </div>
 

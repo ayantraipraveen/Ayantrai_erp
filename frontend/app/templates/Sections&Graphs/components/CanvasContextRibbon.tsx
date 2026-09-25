@@ -48,6 +48,7 @@ export interface CanvasContextRibbonProps {
   sectionEyebrow: string;
   onUpdateColSpan: (span: 1 | 2 | 3 | 4) => void;
   onUpdateWidth?: (customWidth: number) => void;
+  onUpdateHeight?: (customHeight?: number) => void;
   onUpdateMetricCard?: (card: LibraryMetricCard) => void;
   onUpdateChart?: (chart: LibraryChartCard) => void;
   onOpenChartEditor?: () => void;
@@ -168,6 +169,7 @@ export function CanvasContextRibbon({
   sectionEyebrow,
   onUpdateColSpan,
   onUpdateWidth,
+  onUpdateHeight,
   onUpdateMetricCard,
   onUpdateChart,
   onOpenChartEditor,
@@ -546,6 +548,66 @@ export function CanvasContextRibbon({
                 }}
                 className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
                 title="Increase width by 5%"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Fluid Height Controls (Adjustable px and Presets) */}
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+            <span className="text-[10px] font-mono font-bold text-slate-400 px-1">Height:</span>
+            {([
+              { label: "Auto", val: undefined },
+              { label: "S", val: 200 },
+              { label: "M", val: 300 },
+              { label: "L", val: 400 },
+            ] as const).map((h) => {
+              const isSelected = h.val === undefined
+                ? selectedCell.customHeight === undefined
+                : selectedCell.customHeight === h.val;
+              return (
+                <button
+                  key={h.label}
+                  type="button"
+                  onClick={() => onUpdateHeight && onUpdateHeight(h.val)}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-[#9D61FF] text-white shadow-xs"
+                      : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
+                  }`}
+                  title={h.val ? `Set block height to ${h.val}px` : "Reset block height to Auto"}
+                >
+                  {h.label}
+                </button>
+              );
+            })}
+            {/* Steppers for fluid adjustable height */}
+            <div className="flex items-center border-l border-slate-200 dark:border-zinc-700 pl-1 ml-0.5 gap-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const curr = selectedCell.customHeight ?? 300;
+                  const next = Math.max(90, curr - 20);
+                  if (onUpdateHeight) onUpdateHeight(next);
+                }}
+                className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
+                title="Decrease height by 20px"
+              >
+                -
+              </button>
+              <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[38px] text-center">
+                {selectedCell.customHeight ? `${selectedCell.customHeight}px` : "Auto"}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const curr = selectedCell.customHeight ?? 300;
+                  const next = Math.min(800, curr + 20);
+                  if (onUpdateHeight) onUpdateHeight(next);
+                }}
+                className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
+                title="Increase height by 20px"
               >
                 +
               </button>

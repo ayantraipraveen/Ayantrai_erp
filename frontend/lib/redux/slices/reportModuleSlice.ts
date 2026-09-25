@@ -152,6 +152,7 @@ export const {
   deleteCanvasCell,
   updateCellColSpan,
   updateCellWidth,
+  updateCellHeight,
   updateCellStyleInCell,
   updateTextBlockInCell,
   updateBadgeStripInCell,

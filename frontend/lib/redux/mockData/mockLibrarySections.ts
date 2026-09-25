@@ -80,9 +80,9 @@ export const initialLibrarySections: LibrarySection[] = [
   },
   {
     id: "sec-core-2",
-    name: "Attendance Trends",
+    name: "Department-wise Trends",
     eyebrow: "ATTENDANCE ANALYSIS",
-    description: "Shift-wise muster adherence, peak biometric check-in curve, and subcontractor headcount breakdown.",
+    description: "A detailed view of attendance, late comings and early exits across departments.",
     type: "core",
     icon: "TrendingUp",
     updatedAt: "2026-09-22 15:10",
