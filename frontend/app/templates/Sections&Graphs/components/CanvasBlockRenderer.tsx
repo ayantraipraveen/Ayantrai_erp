@@ -432,7 +432,7 @@ export function getCellStyleClasses(style?: CanvasCell["style"]) {
       : style.textAlign === "right"
       ? "text-right"
       : "";
-
+const styleProps: React.CSSProperties = {};
   let bgClass = "";
   if (style.cardBg === "white") {
     bgClass = "[&>div]:!bg-white dark:[&>div]:!bg-[#0c1017] [&>div]:!border-slate-200 dark:[&>div]:!border-zinc-800";
@@ -452,9 +452,12 @@ export function getCellStyleClasses(style?: CanvasCell["style"]) {
     bgClass = "[&>div]:!bg-rose-50/80 dark:[&>div]:!bg-rose-950/30 [&>div]:!border-rose-200 dark:[&>div]:!border-rose-800/40";
   } else if (style.cardBg === "dark") {
     bgClass = "[&>div]:!bg-[#0f172a] [&>div]:!text-white [&>div]:!border-slate-700";
+  } else if (style.cardBg?.startsWith("#") || style.cardBg?.startsWith("rgb")) {
+    bgClass = "[&>div]:![background-color:inherit] [&>div]:!border-slate-300/80 dark:[&>div]:!border-zinc-700/80";
+    styleProps.backgroundColor = style.cardBg;
   }
 
-  const styleProps: React.CSSProperties = {};
+  
   let textColorClass = "";
   if (style.textColor) {
     styleProps.color = style.textColor;
