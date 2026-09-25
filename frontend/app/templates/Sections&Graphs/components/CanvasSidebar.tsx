@@ -22,6 +22,9 @@ import {
   Clock,
   Filter,
   Zap,
+  Eye,
+  X,
+  Sliders,
 } from "lucide-react";
 import {
   CanvasBlockType,
@@ -32,6 +35,7 @@ import {
   CHART_TYPE_OPTIONS,
   ChartTypeOption,
 } from "./constants/chartTypes";
+import ChartRenderer from "./ChartRenderer";
 
 export interface SidebarAddBlockEvent {
   blockType: CanvasBlockType;
@@ -349,6 +353,9 @@ export function CanvasSidebar({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<"all" | "metrics" | "charts" | "text">("charts");
 
+  // State for Chart Quick Preview Dialog
+  const [previewingChart, setPreviewingChart] = useState<LibraryChartCard | null>(null);
+
   if (isCollapsed) return null;
 
   // Filter 25 chart types
@@ -380,243 +387,417 @@ export function CanvasSidebar({
     return matchesSearch && matchesCat;
   });
 
+  // Helper to trigger preview of any chart type
+  const handleOpenChartTypePreview = (opt: ChartTypeOption) => {
+    const syntheticChart: LibraryChartCard = {
+      id: `preview-${opt.id}`,
+      title: `Sample ${opt.label} Telemetry`,
+      chartType: opt.id,
+      dataSourceField: "ppe_sensor_compliance",
+      description: `Live interactive visualization of ${opt.label} formatted for Sitesafe executive reporting.`,
+      color: "#9D61FF",
+      colors: ["#9D61FF", "#10B981", "#3B82F6", "#F59E0B"],
+      gridRows: 4,
+      gridCols: 7,
+    };
+    setPreviewingChart(syntheticChart);
+  };
+
   return (
-    <aside className="flex-shrink-0 w-72 flex flex-col border-r border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#090d14]/95 backdrop-blur-md overflow-hidden select-none z-10 transition-all duration-200">
-      {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-slate-100 dark:border-zinc-800/80 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-[#9D61FF]/15 text-[#9D61FF] flex items-center justify-center">
-              <Layers className="w-3.5 h-3.5" />
+    <>
+      <aside className="flex-shrink-0 w-72 flex flex-col border-r border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#090d14]/95 backdrop-blur-md overflow-hidden select-none z-10 transition-all duration-200">
+        {/* Header */}
+        <div className="flex-shrink-0 p-4 border-b border-slate-100 dark:border-zinc-800/80 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md bg-[#9D61FF]/15 text-[#9D61FF] flex items-center justify-center">
+                <Layers className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                Block Studio
+              </span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-              Block Studio
+            <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded font-bold">
+              25 Charts
             </span>
           </div>
-          <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded font-bold">
-            25 Charts
-          </span>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search charts & visual widgets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 outline-none focus:border-[#9D61FF] transition-colors"
+            />
+          </div>
+
+          {/* Categories */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+            {(["all", "charts", "metrics", "text"] as const).map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`h-6.5 px-3 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer ${
+                  selectedCategory === cat
+                    ? "bg-[#9D61FF] text-white shadow-sm"
+                    : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                }`}
+              >
+                {cat === "charts" ? "Charts (25)" : cat}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search chart types & saved blocks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-800 dark:text-zinc-200 placeholder-slate-400 outline-none focus:border-[#9D61FF] transition-colors"
-          />
-        </div>
-
-        {/* Categories */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-          {(["all", "charts", "metrics", "text"] as const).map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setSelectedCategory(cat)}
-              className={`h-6.5 px-3 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer ${
-                selectedCategory === cat
-                  ? "bg-[#9D61FF] text-white shadow-sm"
-                  : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 hover:text-slate-800 dark:hover:text-white"
-              }`}
-            >
-              {cat === "charts" ? "Charts (25)" : cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-4">
-        {/* ── SECTION CHARTS (Already Added to Current Section) ── */}
-        {(selectedCategory === "charts" || selectedCategory === "all") && filteredSectionCharts.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] font-mono uppercase font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Added in Section ({filteredSectionCharts.length})
-              </span>
-              <span className="text-[9px] text-slate-400">Click to add copy</span>
-            </div>
-
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+          {/* ── SECTION CHARTS (Already Added to Current Section) ── */}
+          {(selectedCategory === "charts" || selectedCategory === "all") && filteredSectionCharts.length > 0 && (
             <div className="space-y-2">
-              {filteredSectionCharts.map((chart) => (
-                <div
-                  key={chart.id}
-                  onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
-                  className="group relative rounded-xl border border-sky-400/30 bg-sky-500/5 hover:bg-sky-500/10 hover:border-sky-400/60 p-2.5 transition-all duration-200 cursor-pointer space-y-1.5"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate group-hover:text-[#9D61FF] transition-colors">
-                      {chart.title}
-                    </span>
-                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-600 dark:text-sky-400 font-bold flex-shrink-0">
-                      {chart.chartType}
-                    </span>
-                  </div>
-
-                  <div className="rounded-lg overflow-hidden pointer-events-none">
-                    <MiniChartPreview type={chart.chartType} />
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1 border-t border-sky-400/10 text-[10px] text-slate-400">
-                    <span className="truncate font-mono">{chart.dataSourceField}</span>
-                    <div className="flex items-center gap-1 text-[#9D61FF] font-bold text-[10px]">
-                      <Plus className="w-3 h-3 group-hover:scale-125 transition-transform" />
-                      <span>Add</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── OTHER LIBRARY CHARTS (Saved across other sections) ── */}
-        {selectedCategory === "charts" && otherLibraryCharts.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] font-mono uppercase font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                <Bookmark className="w-3.5 h-3.5" />
-                From Library Sections ({otherLibraryCharts.length})
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {otherLibraryCharts.map((chart) => (
-                <div
-                  key={chart.id}
-                  onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
-                  className="group relative rounded-xl border border-amber-400/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-400/60 p-2.5 transition-all duration-200 cursor-pointer space-y-1.5"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate group-hover:text-[#9D61FF]">
-                      {chart.title}
-                    </span>
-                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 font-bold flex-shrink-0">
-                      {chart.chartType}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400">
-                    <span className="truncate font-mono">{chart.dataSourceField}</span>
-                    <Plus className="w-3.5 h-3.5 text-[#9D61FF] group-hover:scale-125 transition-transform" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── ALL 25 CHART VISUALIZATION TYPES ── */}
-        {(selectedCategory === "charts" || selectedCategory === "all") && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-1 pt-1">
-              <span className="text-[10px] font-mono uppercase font-bold text-[#9D61FF] flex items-center gap-1.5">
-                <BarChart2 className="w-3.5 h-3.5" />
-                {selectedCategory === "charts" ? "All 25 Chart Types" : "Popular Chart Types"}
-              </span>
-              <span className="text-[9px] font-mono text-slate-400">
-                {filteredChartTypes.length} types
-              </span>
-            </div>
-
-            <div className="space-y-2.5">
-              {filteredChartTypes.map((opt: ChartTypeOption) => {
-                const Icon = opt.icon;
-                return (
-                  <div
-                    key={opt.id}
-                    onClick={() => onAddBlock({ blockType: "chart", chartType: opt.id })}
-                    className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden p-2.5 space-y-2"
-                  >
-                    {/* Header */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-6 h-6 rounded-lg bg-purple-500/10 text-[#9D61FF] flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors truncate">
-                          {opt.label}
-                        </span>
-                      </div>
-                      <span className="text-[9px] font-mono text-purple-600 dark:text-purple-400 uppercase bg-purple-500/10 px-1.5 py-0.5 rounded font-bold flex-shrink-0">
-                        {opt.id}
-                      </span>
-                    </div>
-
-                    {/* Graphic Preview */}
-                    <div className="rounded-xl overflow-hidden pointer-events-none group-hover:scale-[1.02] transition-transform duration-200">
-                      <MiniChartPreview type={opt.id} />
-                    </div>
-
-                    <div className="flex items-center justify-between pt-0.5">
-                      <span className="text-[10px] text-slate-400 leading-tight">
-                        Click to insert into canvas
-                      </span>
-                      <div className="w-5 h-5 rounded-full bg-[#9D61FF]/10 group-hover:bg-[#9D61FF] text-[#9D61FF] group-hover:text-white flex items-center justify-center transition-colors">
-                        <Plus className="w-3 h-3" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── METRICS & TEXT BLOCKS ── */}
-        {(selectedCategory === "all" || selectedCategory === "metrics" || selectedCategory === "text") && (
-          <div className="space-y-2 pt-1">
-            {selectedCategory === "all" && (
-              <div className="px-1 text-[10px] font-mono uppercase font-bold text-slate-400">
-                Standard Elements
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-mono uppercase font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Added in Section ({filteredSectionCharts.length})
+                </span>
+                <span className="text-[9px] text-slate-400">Preview & Copy</span>
               </div>
-            )}
-            <div className="space-y-2.5">
-              {filteredBaseBlocks.map((def) => {
-                const Icon = def.icon;
-                return (
+
+              <div className="space-y-2">
+                {filteredSectionCharts.map((chart) => (
                   <div
-                    key={def.type}
-                    onClick={() => onAddBlock({ blockType: def.type })}
-                    className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden p-3 space-y-2"
+                    key={chart.id}
+                    className="group relative rounded-xl border border-sky-400/30 bg-sky-500/5 hover:bg-sky-500/10 hover:border-sky-400/60 p-2.5 transition-all duration-200 space-y-2"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-700 dark:text-zinc-300 group-hover:text-[#9D61FF] group-hover:bg-[#9D61FF]/10 transition-colors">
-                          <Icon className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors">
-                          {def.label}
-                        </span>
-                      </div>
-                      <span className="text-[9px] font-mono text-slate-400 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
-                        {def.badge}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate group-hover:text-[#9D61FF] transition-colors">
+                        {chart.title}
+                      </span>
+                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-600 dark:text-sky-400 font-bold flex-shrink-0">
+                        {chart.chartType}
                       </span>
                     </div>
 
-                    <div className="rounded-xl overflow-hidden pointer-events-none group-hover:scale-[1.02] transition-transform duration-200">
-                      {def.preview}
+                    {/* Visual Chart Preview Section */}
+                    <div
+                      onClick={() => setPreviewingChart(chart)}
+                      className="rounded-lg overflow-hidden cursor-pointer hover:opacity-90 hover:scale-[1.01] transition-transform"
+                      title="Click to expand full live preview"
+                    >
+                      <MiniChartPreview type={chart.chartType} />
                     </div>
 
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[10px] text-slate-400 leading-tight truncate">
-                        {def.description}
-                      </span>
-                      <div className="w-5 h-5 rounded-full bg-[#9D61FF]/10 group-hover:bg-[#9D61FF] text-[#9D61FF] group-hover:text-white flex items-center justify-center transition-colors">
+                    {/* Actions: Preview & Add */}
+                    <div className="flex items-center justify-between pt-1 border-t border-sky-400/15 text-[10px] text-slate-400">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewingChart(chart);
+                        }}
+                        className="flex items-center gap-1 hover:text-sky-600 dark:hover:text-sky-300 font-medium cursor-pointer"
+                        title="Open full interactive preview"
+                      >
+                        <Eye className="w-3 h-3 text-sky-500" />
+                        <span>Preview</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
+                        className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md"
+                      >
                         <Plus className="w-3 h-3" />
-                      </div>
+                        <span>Add</span>
+                      </button>
                     </div>
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── FROM LIBRARY SECTIONS (With Visual Chart Preview on each) ── */}
+          {selectedCategory === "charts" && otherLibraryCharts.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-mono uppercase font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  <Bookmark className="w-3.5 h-3.5" />
+                  From Library Sections ({otherLibraryCharts.length})
+                </span>
+                <span className="text-[9px] text-slate-400">Preview & Insert</span>
+              </div>
+
+              <div className="space-y-2">
+                {otherLibraryCharts.map((chart) => (
+                  <div
+                    key={chart.id}
+                    className="group relative rounded-xl border border-amber-400/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-400/60 p-2.5 transition-all duration-200 space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate group-hover:text-[#9D61FF] transition-colors">
+                        {chart.title}
+                      </span>
+                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold flex-shrink-0">
+                        {chart.chartType}
+                      </span>
+                    </div>
+
+                    {/* Visual Chart Preview Section */}
+                    <div
+                      onClick={() => setPreviewingChart(chart)}
+                      className="rounded-lg overflow-hidden cursor-pointer hover:opacity-90 hover:scale-[1.01] transition-transform"
+                      title="Click to expand full live preview"
+                    >
+                      <MiniChartPreview type={chart.chartType} />
+                    </div>
+
+                    {/* Actions: Preview & Add */}
+                    <div className="flex items-center justify-between pt-1 border-t border-amber-400/15 text-[10px] text-slate-400">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewingChart(chart);
+                        }}
+                        className="flex items-center gap-1 hover:text-amber-600 dark:hover:text-amber-300 font-medium cursor-pointer"
+                        title="Open full interactive preview"
+                      >
+                        <Eye className="w-3 h-3 text-amber-500" />
+                        <span>Preview</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
+                        className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Add</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── ALL 25 CHART VISUALIZATION TYPES ── */}
+          {(selectedCategory === "charts" || selectedCategory === "all") && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1 pt-1">
+                <span className="text-[10px] font-mono uppercase font-bold text-[#9D61FF] flex items-center gap-1.5">
+                  <BarChart2 className="w-3.5 h-3.5" />
+                  {selectedCategory === "charts" ? "All 25 Chart Types" : "Popular Chart Types"}
+                </span>
+                <span className="text-[9px] font-mono text-slate-400">
+                  {filteredChartTypes.length} types
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                {filteredChartTypes.map((opt: ChartTypeOption) => {
+                  const Icon = opt.icon;
+                  return (
+                    <div
+                      key={opt.id}
+                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 overflow-hidden p-2.5 space-y-2"
+                    >
+                      {/* Header */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 rounded-lg bg-purple-500/10 text-[#9D61FF] flex items-center justify-center flex-shrink-0">
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors truncate">
+                            {opt.label}
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono text-purple-600 dark:text-purple-400 uppercase bg-purple-500/10 px-1.5 py-0.5 rounded font-bold flex-shrink-0">
+                          {opt.id}
+                        </span>
+                      </div>
+
+                      {/* Graphic Preview */}
+                      <div
+                        onClick={() => handleOpenChartTypePreview(opt)}
+                        className="rounded-xl overflow-hidden cursor-pointer hover:opacity-90 hover:scale-[1.01] transition-transform"
+                        title="Click to preview full chart"
+                      >
+                        <MiniChartPreview type={opt.id} />
+                      </div>
+
+                      {/* Actions: Preview & Add */}
+                      <div className="flex items-center justify-between pt-0.5 border-t border-slate-100 dark:border-zinc-800/60 text-[10px]">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenChartTypePreview(opt)}
+                          className="flex items-center gap-1 text-slate-500 hover:text-[#9D61FF] font-medium cursor-pointer"
+                          title="Open full interactive preview"
+                        >
+                          <Eye className="w-3 h-3 text-purple-500" />
+                          <span>Preview</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => onAddBlock({ blockType: "chart", chartType: opt.id })}
+                          className="flex items-center gap-1 bg-[#9D61FF]/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white px-2 py-0.5 rounded-md font-bold transition-colors cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add to Canvas</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── METRICS & TEXT BLOCKS ── */}
+          {(selectedCategory === "all" || selectedCategory === "metrics" || selectedCategory === "text") && (
+            <div className="space-y-2 pt-1">
+              {selectedCategory === "all" && (
+                <div className="px-1 text-[10px] font-mono uppercase font-bold text-slate-400">
+                  Standard Elements
+                </div>
+              )}
+              <div className="space-y-2.5">
+                {filteredBaseBlocks.map((def) => {
+                  const Icon = def.icon;
+                  return (
+                    <div
+                      key={def.type}
+                      onClick={() => onAddBlock({ blockType: def.type })}
+                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden p-3 space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-slate-700 dark:text-zinc-300 group-hover:text-[#9D61FF] group-hover:bg-[#9D61FF]/10 transition-colors">
+                            <Icon className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-[#9D61FF] transition-colors">
+                            {def.label}
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono text-slate-400 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                          {def.badge}
+                        </span>
+                      </div>
+
+                      <div className="rounded-xl overflow-hidden pointer-events-none group-hover:scale-[1.02] transition-transform duration-200">
+                        {def.preview}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[10px] text-slate-400 leading-tight truncate">
+                          {def.description}
+                        </span>
+                        <div className="w-5 h-5 rounded-full bg-[#9D61FF]/10 group-hover:bg-[#9D61FF] text-[#9D61FF] group-hover:text-white flex items-center justify-center transition-colors">
+                          <Plus className="w-3 h-3" />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* ── High-Definition Full Chart Preview Modal ── */}
+      {previewingChart && (
+        <div
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fadeIn select-none"
+          onClick={() => setPreviewingChart(null)}
+        >
+          <div
+            className="bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-zinc-800/80">
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded-md bg-[#9D61FF]/10 text-[#9D61FF] border border-[#9D61FF]/30">
+                  {previewingChart.chartType}
+                </span>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                    {previewingChart.title}
+                  </h2>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    Source: {previewingChart.dataSourceField}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPreviewingChart(null)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Live Visual Rendering */}
+            <div className="p-6 space-y-4">
+              <div className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-6 min-h-[300px] flex items-center justify-center shadow-inner">
+                <ChartRenderer
+                  chart={previewingChart}
+                  color={previewingChart.color || "#9D61FF"}
+                  colors={previewingChart.colors}
+                  gridRows={previewingChart.gridRows}
+                  gridCols={previewingChart.gridCols}
+                />
+              </div>
+
+              {previewingChart.description && (
+                <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed px-1">
+                  {previewingChart.description}
+                </p>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/30">
+              <span className="text-xs text-slate-400">
+                Ready to insert into section canvas
+              </span>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPreviewingChart(null)}
+                  className="h-9 px-4 rounded-xl border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold cursor-pointer transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onAddBlock({
+                      blockType: "chart",
+                      chartType: previewingChart.chartType,
+                      customChart: previewingChart,
+                    });
+                    setPreviewingChart(null);
+                  }}
+                  className="h-9 px-5 rounded-xl glow-btn-primary text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Insert This Chart into Canvas</span>
+                </button>
+              </div>
             </div>
           </div>
-        )}
-      </div>
-    </aside>
+        </div>
+      )}
+    </>
   );
 }
