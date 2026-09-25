@@ -395,7 +395,7 @@ export default function TemplatesTable() {
       </div>
 
       {/* Pinned Pagination */}
-      <div className="flex-shrink-0 border-t border-slate-200 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-[#0e1219]/90 px-4 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs select-none">
+      <div className="flex-shrink-0 border-t border-slate-200 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-[#0e1219]/90 px-4 sm:px-6 lg:px-7 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs select-none">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-slate-500 dark:text-zinc-400 text-[11px]">
             Showing{" "}

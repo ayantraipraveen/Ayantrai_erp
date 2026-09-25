@@ -59,33 +59,35 @@ export default function TemplatesGrid() {
   const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
 
   return (
-    <div className="space-y-4">
-      {paginatedTemplates.length === 0 ? (
-        <div className="py-20 text-center rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95">
-          <div className="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto">
-            <div className="h-12 w-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-[#9D61FF] flex items-center justify-center">
-              <Layers className="w-6 h-6" />
+    <div className="w-full flex-1 min-h-0 flex flex-col overflow-hidden">
+      {/* Scrollable Grid of cards */}
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-4 sm:px-6 lg:px-7 py-2">
+        {paginatedTemplates.length === 0 ? (
+          <div className="py-20 text-center rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95">
+            <div className="flex flex-col items-center justify-center space-y-3 max-w-sm mx-auto">
+              <div className="h-12 w-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-[#9D61FF] flex items-center justify-center">
+                <Layers className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  No Templates Available
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                  No safety report blueprints match your current filter or search criteria.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-xs font-semibold text-slate-800 dark:text-white transition-colors cursor-pointer"
+              >
+                Reset All Filters
+              </button>
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                No Templates Available
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
-                No safety report blueprints match your current filter or search criteria.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-xs font-semibold text-slate-800 dark:text-white transition-colors cursor-pointer"
-            >
-              Reset All Filters
-            </button>
           </div>
-        </div>
-      ) : (
-        /* Grid of cards - 3 columns, fitting 6 cards nicely in view */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        ) : (
+          /* Grid of cards - 3 columns, fitting 6 cards nicely in view */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pb-3">
           {paginatedTemplates.map((template, idx) => {
             const isPending  = template.status === "pending";
             const isActive   = template.status === "active";
@@ -368,9 +370,10 @@ export default function TemplatesGrid() {
           })}
         </div>
       )}
+      </div>
 
       {/* Pinned Bottom Pagination */}
-      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-sm select-none">
+      <div className="flex-shrink-0 border-t border-slate-200/90 dark:border-zinc-800/90 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-xl px-4 sm:px-6 lg:px-7 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-sm select-none">
         <div className="flex items-center gap-4 flex-wrap">
           <span className="text-slate-500 dark:text-zinc-400">
             Showing <strong className="text-slate-900 dark:text-white">{totalFilteredCount > 0 ? startIndex + 1 : 0}</strong> to{" "}
