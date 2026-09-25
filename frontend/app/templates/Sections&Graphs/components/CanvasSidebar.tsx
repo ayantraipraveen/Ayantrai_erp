@@ -28,6 +28,7 @@ import {
   Eye,
   X,
   Sliders,
+  GripVertical,
 } from "lucide-react";
 import {
   CanvasBlockType,
@@ -46,6 +47,17 @@ export interface SidebarAddBlockEvent {
   chartType?: GraphType;
   customChart?: LibraryChartCard;
   targetRowId?: string;
+  targetCellIndex?: number;
+  insertRowAtIndex?: number;
+}
+
+export function handleBlockDragStart(
+  e: React.DragEvent,
+  payload: SidebarAddBlockEvent
+) {
+  e.dataTransfer.setData("application/json", JSON.stringify(payload));
+  e.dataTransfer.setData("text/plain", payload.blockType);
+  e.dataTransfer.effectAllowed = "copy";
 }
 
 export interface CanvasSidebarProps {
@@ -491,7 +503,10 @@ export function CanvasSidebar({
                 {filteredSectionCharts.map((chart) => (
                   <div
                     key={chart.id}
-                    className="group relative rounded-xl border border-sky-400/30 bg-sky-500/5 hover:bg-sky-500/10 hover:border-sky-400/60 p-2.5 transition-all duration-200 space-y-2"
+                    draggable={true}
+                    onDragStart={(e) => handleBlockDragStart(e, { blockType: "chart", customChart: chart })}
+                    className="group relative rounded-xl border border-sky-400/30 bg-sky-500/5 hover:bg-sky-500/10 hover:border-sky-400/60 p-2.5 transition-all duration-200 space-y-2 cursor-grab active:cursor-grabbing hover:shadow-md"
+                    title="Drag anywhere on report to place, or click Add"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate group-hover:text-[#9D61FF] transition-colors">
@@ -556,7 +571,10 @@ export function CanvasSidebar({
                 {otherLibraryCharts.map((chart) => (
                   <div
                     key={chart.id}
-                    className="group relative rounded-xl border border-amber-400/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-400/60 p-2.5 transition-all duration-200 space-y-2"
+                    draggable={true}
+                    onDragStart={(e) => handleBlockDragStart(e, { blockType: "chart", customChart: chart })}
+                    className="group relative rounded-xl border border-amber-400/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-400/60 p-2.5 transition-all duration-200 space-y-2 cursor-grab active:cursor-grabbing hover:shadow-md"
+                    title="Drag anywhere on report to place, or click Add"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate group-hover:text-[#9D61FF] transition-colors">
@@ -625,7 +643,10 @@ export function CanvasSidebar({
                   return (
                     <div
                       key={opt.id}
-                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 overflow-hidden p-2.5 space-y-2"
+                      draggable={true}
+                      onDragStart={(e) => handleBlockDragStart(e, { blockType: "chart", chartType: opt.id })}
+                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 overflow-hidden p-2.5 space-y-2 cursor-grab active:cursor-grabbing"
+                      title="Drag anywhere on report to place, or click Add to Canvas"
                     >
                       {/* Header */}
                       <div className="flex items-center justify-between">
@@ -842,8 +863,11 @@ export function CanvasSidebar({
                   return (
                     <div
                       key={def.type}
+                      draggable={true}
+                      onDragStart={(e) => handleBlockDragStart(e, { blockType: def.type })}
                       onClick={() => onAddBlock({ blockType: def.type })}
-                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden p-3 space-y-2"
+                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden p-3 space-y-2"
+                      title="Drag anywhere on report to place, or click to add"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">

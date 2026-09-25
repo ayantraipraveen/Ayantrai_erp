@@ -1515,7 +1515,7 @@ export function CanvasStudio({
                                 )}
                               </div>
 
-                              <div className="relative self-stretch flex items-center justify-between gap-4 pl-6 border-l-2 border-[#2454d8]">
+                              <div className="relative min-w-0 self-stretch flex items-center justify-between gap-4 border-l-2 border-[#2454d8] pl-6 pr-20">
                                 <div className="min-w-0">
                                   {editingHeaderValue === "title" ? (
                                     <input

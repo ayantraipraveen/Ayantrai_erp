@@ -21,6 +21,7 @@ import {
   GraphType,
   migrateToCanvasRows,
   addRowWithCell,
+  addCellToRow,
   updateLibrarySection,
   updateMetricCardInCell,
   updateChartInCell,
@@ -370,8 +371,44 @@ export default function SectionCanvasEditor({
       }
 
       if (cell !== null) {
-        dispatch(addRowWithCell({ sectionId: section.id, cell }));
-        dispatch(showGlobalToast({ message: `${e.blockType.replace("-", " ")} added to canvas!`, type: "success" }));
+        if (e.targetRowId) {
+          dispatch(
+            addCellToRow({
+              sectionId: section.id,
+              rowId: e.targetRowId,
+              cell,
+              insertAtIndex: e.targetCellIndex,
+            })
+          );
+          dispatch(
+            showGlobalToast({
+              message: `${e.blockType.replace("-", " ")} added to row!`,
+              type: "success",
+            })
+          );
+        } else if (typeof e.insertRowAtIndex === "number") {
+          dispatch(
+            addRowWithCell({
+              sectionId: section.id,
+              cell,
+              insertAtIndex: e.insertRowAtIndex,
+            })
+          );
+          dispatch(
+            showGlobalToast({
+              message: `${e.blockType.replace("-", " ")} inserted at position ${e.insertRowAtIndex + 1}!`,
+              type: "success",
+            })
+          );
+        } else {
+          dispatch(addRowWithCell({ sectionId: section.id, cell }));
+          dispatch(
+            showGlobalToast({
+              message: `${e.blockType.replace("-", " ")} added to canvas!`,
+              type: "success",
+            })
+          );
+        }
       }
     },
     [dispatch, section]

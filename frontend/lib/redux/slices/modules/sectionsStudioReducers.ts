@@ -356,25 +356,34 @@ export const sectionsStudioReducers = {
       }
     },
 
-    /** Atomically add a new row with a first cell (for sidebar block drops) */
+    /** Atomically add a new row with a first cell (for sidebar block drops / insertion) */
     addRowWithCell: (
       state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
         cell: CanvasCell;
+        insertAtIndex?: number;
       }>
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
         if (!sec.canvasRows) sec.canvasRows = [];
-        sec.canvasRows.push({
+        const newRow: CanvasRow = {
           id: `row-${Date.now()}`,
           cells: [action.payload.cell],
-        });
+        };
+        if (
+          typeof action.payload.insertAtIndex === "number" &&
+          action.payload.insertAtIndex >= 0 &&
+          action.payload.insertAtIndex <= sec.canvasRows.length
+        ) {
+          sec.canvasRows.splice(action.payload.insertAtIndex, 0, newRow);
+        } else {
+          sec.canvasRows.push(newRow);
+        }
         sec.updatedAt = "Just now";
       }
     },
-
 
     /** Remove a row from the canvas */
     removeCanvasRow: (
@@ -399,6 +408,7 @@ export const sectionsStudioReducers = {
         sectionId: string;
         rowId: string;
         cell: CanvasCell;
+        insertAtIndex?: number;
       }>
     ) => {
       const sec = state.librarySections.find(
@@ -406,7 +416,15 @@ export const sectionsStudioReducers = {
       );
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === action.payload.rowId);
       if (row) {
-        row.cells.push(action.payload.cell);
+        if (
+          typeof action.payload.insertAtIndex === "number" &&
+          action.payload.insertAtIndex >= 0 &&
+          action.payload.insertAtIndex <= row.cells.length
+        ) {
+          row.cells.splice(action.payload.insertAtIndex, 0, action.payload.cell);
+        } else {
+          row.cells.push(action.payload.cell);
+        }
         if (sec) sec.updatedAt = "Just now";
       }
     },
