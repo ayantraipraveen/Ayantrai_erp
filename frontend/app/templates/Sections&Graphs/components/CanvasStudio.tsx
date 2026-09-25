@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState, useRef, useEffect } from "react";
+import React, { useCallback, useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
   DndContext,
@@ -49,6 +49,7 @@ import {
   Layers,
   Stamp,
   Sliders,
+  FileText,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
@@ -58,6 +59,8 @@ import {
   LibrarySection,
   LibraryMetricCard,
   addCanvasRow,
+  addRowWithCell,
+  toggleRowPageBreak,
   removeCanvasRow,
   addCellToRow,
   moveCellBetweenRows,
@@ -77,6 +80,10 @@ import {
   getPaperToneColor,
 } from "./CanvasContextRibbon";
 
+// ─── Standard Physical A4 Dimensions at 96 DPI ────────────────────────────────
+export const A4_WIDTH_PX = 794;
+export const A4_HEIGHT_PX = 1123;
+
 // ─── Mathematical fluid width formula for flex-wrap row with gap: 16px ────────
 export function getCellWidthStyle(percent: number): string {
   const p = Math.max(15, Math.min(100, Math.round(percent)));
@@ -85,7 +92,151 @@ export function getCellWidthStyle(percent: number): string {
   return `calc(${p}% - ${gapSub.toFixed(1)}px)`;
 }
 
-// ─── Sortable Cell (All can drag horizontally + fully adjustable width) ────────
+// ─── Predictive Row Height Estimation ─────────────────────────────────────────
+export function estimateRowHeight(row: CanvasRow): number {
+  if (!row.cells || row.cells.length === 0) return 80;
+  let maxCellHeight = 60;
+  for (const cell of row.cells) {
+    let h = 80;
+    switch (cell.blockType) {
+      case "chart":
+        h = 340;
+        break;
+      case "metric-card":
+        h = 135;
+        break;
+      case "insight":
+        h = 105;
+        break;
+      case "text":
+        h = 85;
+        break;
+      case "badge-strip":
+        h = 90;
+        break;
+      case "divider":
+        h = 32;
+        break;
+      default:
+        h = 90;
+    }
+    if (h > maxCellHeight) maxCellHeight = h;
+  }
+  return maxCellHeight + 16; // 16px is space-y-4 row gap
+}
+
+// ─── Multi-Page Partitioning Algorithm ────────────────────────────────────────
+export interface PagePartition {
+  pageIndex: number;
+  pageNumber: number;
+  rows: CanvasRow[];
+  isFirstPage: boolean;
+  isLastPage: boolean;
+  usedHeight: number;
+  maxCapacity: number;
+}
+
+export function partitionCanvasPages(
+  rows: CanvasRow[],
+  marginConfig: CanvasMarginConfig = DEFAULT_CANVAS_MARGIN,
+  startPageNumber: number = 1
+): PagePartition[] {
+  const page1MarginY = (marginConfig?.top ?? 24) + (marginConfig?.bottom ?? 24);
+  // Capacity calculation based on physical 1123px A4 sheet
+  const capPage1Single = Math.max(500, A4_HEIGHT_PX - page1MarginY - 127 - 78 - 20 - 68);
+  const capPage1Multi = Math.max(550, A4_HEIGHT_PX - page1MarginY - 127 - 78 - 20);
+  const capMiddlePage = Math.max(650, A4_HEIGHT_PX - 40 - 56 - 20);
+  const capLastPage = Math.max(600, A4_HEIGHT_PX - 40 - 56 - 20 - 68);
+
+  if (rows.length === 0) {
+    return [
+      {
+        pageIndex: 0,
+        pageNumber: startPageNumber,
+        rows: [],
+        isFirstPage: true,
+        isLastPage: true,
+        usedHeight: 0,
+        maxCapacity: capPage1Single,
+      },
+    ];
+  }
+
+  const rowHeights = rows.map((r) => estimateRowHeight(r));
+  const totalRowHeight = rowHeights.reduce((a, b) => a + b, 0);
+
+  // Check if everything fits on a single page with footer and without forced page break
+  const hasForcedPageBreak = rows.some((r, i) => i > 0 && r.pageBreakBefore);
+  if (!hasForcedPageBreak && totalRowHeight <= capPage1Single) {
+    return [
+      {
+        pageIndex: 0,
+        pageNumber: startPageNumber,
+        rows: [...rows],
+        isFirstPage: true,
+        isLastPage: true,
+        usedHeight: totalRowHeight,
+        maxCapacity: capPage1Single,
+      },
+    ];
+  }
+
+  // Multi-page distribution
+  const pages: PagePartition[] = [];
+  let currentPageRows: CanvasRow[] = [];
+  let currentUsedHeight = 0;
+  let currentPageIndex = 0;
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rHeight = rowHeights[i];
+    const isFirstPage = currentPageIndex === 0;
+    const currentLimit = isFirstPage ? capPage1Multi : capMiddlePage;
+    const isForcedBreak = i > 0 && Boolean(row.pageBreakBefore);
+
+    if (
+      currentPageRows.length > 0 &&
+      (isForcedBreak || currentUsedHeight + rHeight > currentLimit)
+    ) {
+      pages.push({
+        pageIndex: currentPageIndex,
+        pageNumber: startPageNumber + currentPageIndex,
+        rows: currentPageRows,
+        isFirstPage: currentPageIndex === 0,
+        isLastPage: false,
+        usedHeight: currentUsedHeight,
+        maxCapacity: currentLimit,
+      });
+
+      currentPageIndex++;
+      currentPageRows = [row];
+      currentUsedHeight = rHeight;
+    } else {
+      currentPageRows.push(row);
+      currentUsedHeight += rHeight;
+    }
+  }
+
+  if (currentPageRows.length > 0 || pages.length === 0) {
+    pages.push({
+      pageIndex: currentPageIndex,
+      pageNumber: startPageNumber + currentPageIndex,
+      rows: currentPageRows,
+      isFirstPage: currentPageIndex === 0,
+      isLastPage: true,
+      usedHeight: currentUsedHeight,
+      maxCapacity: currentPageIndex === 0 ? capPage1Single : capLastPage,
+    });
+  }
+
+  if (pages.length > 0) {
+    pages[pages.length - 1].isLastPage = true;
+  }
+
+  return pages;
+}
+
+// ─── Sortable Cell ────────────────────────────────────────────────────────────
 interface SortableCellProps {
   sectionId: string;
   rowId: string;
@@ -144,13 +295,11 @@ function SortableCell({
     isDragging,
   } = useSortable({ id: cell.id, data: { rowId, cell }, disabled: isPreview });
 
-  // ── Drag Resizing State (Adjustable fluid width - not locked in ratio) ──
   const initialPercent = cell.customWidth ?? (cell.colSpan * 25);
   const [isResizing, setIsResizing] = useState(false);
   const [resizePercent, setResizePercent] = useState<number>(initialPercent);
   const cellDomRef = useRef<HTMLDivElement | null>(null);
 
-  // Keep internal resizePercent in sync if external props change
   useEffect(() => {
     setResizePercent(cell.customWidth ?? (cell.colSpan * 25));
   }, [cell.customWidth, cell.colSpan]);
@@ -162,34 +311,40 @@ function SortableCell({
     e.stopPropagation();
     e.preventDefault();
     setIsResizing(true);
-    setResizePercent(currentPercent);
 
     const startX = e.clientX;
-    const startWidthPercent = currentPercent;
+    const parentRow = cellDomRef.current?.closest(".canvas-row-cells");
+    const parentWidth = parentRow ? parentRow.getBoundingClientRect().width : 740;
+    const startPercent = currentPercent;
 
-    const rowEl = cellDomRef.current?.closest(".canvas-row-cells") as HTMLElement | null;
-    const rowWidth = rowEl ? rowEl.getBoundingClientRect().width : 800;
-
-    let computedPercent = startWidthPercent;
-
-    const handleMouseMove = (ev: MouseEvent) => {
-      const deltaX = ev.clientX - startX;
-      const deltaPercent = (deltaX / rowWidth) * 100;
-      // Fluid adjustable percentage in 1% steps from 15% to 100%
-      const nextPercent = Math.max(15, Math.min(100, Math.round(startWidthPercent + deltaPercent)));
-      computedPercent = nextPercent;
-      setResizePercent(nextPercent);
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaPercent = (deltaX / parentWidth) * 100;
+      const newPercent = Math.min(100, Math.max(15, Math.round(startPercent + deltaPercent)));
+      setResizePercent(newPercent);
     };
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (upEvent: MouseEvent) => {
+      setIsResizing(false);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
-      setIsResizing(false);
+
+      const deltaX = upEvent.clientX - startX;
+      const deltaPercent = (deltaX / parentWidth) * 100;
+      const finalPercent = Math.min(100, Math.max(15, Math.round(startPercent + deltaPercent)));
+      setResizePercent(finalPercent);
+
+      let colSpan: 1 | 2 | 3 | 4 = 1;
+      if (finalPercent >= 85) colSpan = 4;
+      else if (finalPercent >= 60) colSpan = 3;
+      else if (finalPercent >= 38) colSpan = 2;
+      else colSpan = 1;
+
+      if (typeof onColSpanChange === "function") {
+        onColSpanChange(cell.id, rowId, colSpan);
+      }
       if (typeof onWidthChange === "function") {
-        onWidthChange(cell.id, rowId, computedPercent);
-      } else if (typeof onColSpanChange === "function") {
-        const span = (computedPercent <= 30 ? 1 : computedPercent <= 55 ? 2 : computedPercent <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
-        onColSpanChange(cell.id, rowId, span);
+        onWidthChange(cell.id, rowId, finalPercent);
       }
     };
 
@@ -202,203 +357,91 @@ function SortableCell({
     transition: isResizing ? "none" : transition,
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
-    flex: `0 0 ${widthStyle}`,
-    maxWidth: "100%",
+    flexShrink: 0,
+    flexGrow: 0,
   };
-
-  // Ghost placeholder when dragged
-  if (isDragging) {
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="min-h-[110px] rounded-2xl border-2 border-dashed border-[#8B3DFF]/50 bg-[#8B3DFF]/5 flex items-center justify-center"
-      >
-        <span className="text-[11px] font-mono text-[#8B3DFF] font-semibold animate-pulse">
-          Drop block here
-        </span>
-      </div>
-    );
-  }
 
   return (
     <div
-      ref={(node) => {
-        setNodeRef(node);
-        cellDomRef.current = node;
+      ref={(el) => {
+        setNodeRef(el);
+        cellDomRef.current = el;
       }}
       style={style}
-      className={`relative group min-w-0 transition-all duration-150 flex flex-col rounded-2xl ${
-        isResizing ? "z-40 ring-2 ring-[#8B3DFF] ring-offset-2 shadow-2xl" : ""
+      className={`relative group/cell transition-shadow duration-150 flex flex-col ${
+        isSelected && !isPreview ? "ring-2 ring-[#8B3DFF] shadow-lg rounded-2xl" : ""
       }`}
       onClick={(e) => {
-        if (isPreview || isResizing) return;
         e.stopPropagation();
-        if (typeof onSelect === "function") {
+        if (!isPreview && typeof onSelect === "function") {
           onSelect(cell.id, rowId);
         }
       }}
     >
-      {/* ── Top Horizontal Drag Grab Bar (All cards can drag horizontally & vertically) ── */}
+      {/* Draggable cell badge tag */}
       {!isPreview && (
         <div
           {...attributes}
           {...listeners}
-          className={`
-            w-full flex items-center justify-between px-3 py-1.5 rounded-t-2xl border-b
-            cursor-grab active:cursor-grabbing transition-all select-none group/dragbar z-10
-            ${isSelected
-              ? "bg-[#8B3DFF]/15 border-[#8B3DFF]/30 text-[#8B3DFF]"
-              : "bg-slate-100/90 dark:bg-zinc-800/90 hover:bg-[#8B3DFF]/10 border-slate-200/80 dark:border-zinc-700/80 text-slate-600 dark:text-zinc-300 hover:text-[#8B3DFF]"}
-          `}
-          title="Drag horizontally to reorder"
+          className="absolute top-2 left-2 z-20 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-black/70 hover:bg-black/90 text-white rounded-md px-1.5 py-0.5 text-[9px] font-mono font-bold flex items-center gap-1 cursor-grab active:cursor-grabbing backdrop-blur-xs shadow-xs"
+          title="Drag horizontally to reorder within row"
         >
-          <div className="flex items-center gap-1.5 min-w-0">
-            <GripVertical className="w-3.5 h-3.5 text-[#8B3DFF] opacity-70 group-hover/dragbar:opacity-100 group-hover/dragbar:scale-110 transition-all flex-shrink-0" />
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider truncate">
-              {cell.blockType.replace("-", " ")}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 shadow-2xs">
-              {currentPercent}%
-            </span>
-            <span className="text-[9px] font-mono text-slate-400 opacity-60 group-hover/dragbar:opacity-100 hidden sm:inline">
-              Drag ⇄
-            </span>
-          </div>
+          <GripVertical className="w-2.5 h-2.5" />
+          <span className="capitalize">{cell.blockType.replace("-", " ")}</span>
+          <span className="text-purple-300 font-mono">({Math.round(currentPercent)}%)</span>
         </div>
       )}
 
-      {/* ── Canva Selection Bounding Box with Draggable Handles ── */}
-      {isSelected && !isPreview && !isDraggingOverlay && (
-        <div className="absolute inset-0 rounded-2xl border-2 border-[#8B3DFF] pointer-events-none z-20 shadow-[0_0_0_1px_rgba(139,61,255,0.2)]">
-          {/* Top-Left Corner Handle */}
-          <div className="absolute -top-1.5 -left-1.5 w-3 h-3 rounded-full bg-white border-2 border-[#8B3DFF] shadow-md z-30" />
-
-          {/* Top-Right Corner Resizer Handle */}
-          <div
-            onMouseDown={handleResizeStart}
-            className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white border-2 border-[#8B3DFF] shadow-md z-30 cursor-ne-resize pointer-events-auto hover:scale-125 active:scale-110 active:bg-[#8B3DFF] transition-all"
-            title="Drag corner to adjust width"
-          />
-
-          {/* Bottom-Left Corner Handle */}
-          <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 rounded-full bg-white border-2 border-[#8B3DFF] shadow-md z-30" />
-
-          {/* Bottom-Right Corner Master Resizer Handle (Primary Tactile Handle) */}
-          <div
-            onMouseDown={handleResizeStart}
-            className="absolute -bottom-2 -right-2 w-4.5 h-4.5 rounded-full bg-white border-2 border-[#8B3DFF] shadow-xl z-30 cursor-se-resize pointer-events-auto hover:scale-125 active:scale-110 active:bg-[#8B3DFF] transition-all flex items-center justify-center group/resize"
-            title="Drag corner to smoothly adjust block width (15% - 100%)"
-          >
-            <div className="w-1.5 h-1.5 rounded-full bg-[#8B3DFF] group-hover/resize:bg-[#7c3aed]" />
-          </div>
-
-          {/* Left Middle Pill Handle */}
-          <div className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-1.5 h-4 rounded-full bg-[#8B3DFF] shadow-md z-30" />
-
-          {/* Right Middle Pill Resizer Handle */}
-          <div
-            onMouseDown={handleResizeStart}
-            className="absolute top-1/2 -right-2 -translate-y-1/2 w-2.5 h-7 rounded-full bg-[#8B3DFF] shadow-md z-30 cursor-ew-resize pointer-events-auto hover:scale-125 active:scale-110 transition-all flex items-center justify-center"
-            title="Drag edge to smoothly adjust block width"
-          >
-            <div className="w-0.5 h-3 bg-white/80 rounded-full" />
-          </div>
-
-          {/* Block Type Tag (Top-Left Pill) - DRAGGABLE */}
-          <div
-            {...attributes}
-            {...listeners}
-            className="absolute -top-6 left-0 px-2 py-0.5 rounded-t-md bg-[#8B3DFF] text-white text-[10px] font-mono font-bold tracking-wider uppercase z-30 shadow-sm flex items-center gap-1 cursor-grab active:cursor-grabbing pointer-events-auto select-none"
-            title="Drag block to reorder"
-          >
-            <GripVertical className="w-2.5 h-2.5 opacity-80" />
-            <span>{cell.blockType.replace("-", " ")}</span>
-            <span className="opacity-80">· {currentPercent}%</span>
-          </div>
-
-          {/* Live Drag-Resize Canva HUD Tooltip */}
-          {isResizing && (
-            <div className={`absolute -bottom-9 z-50 px-2.5 py-1 rounded-lg bg-[#0F172A] text-white text-[10px] font-mono font-bold shadow-2xl flex items-center gap-1.5 border border-[#8B3DFF] whitespace-nowrap animate-pulse ${isFirstInRow ? "left-0" : "right-0"}`}>
-              <Maximize2 className="w-3 h-3 text-[#8B3DFF]" />
-              <span>
-                Width: {resizePercent}%{" "}
-                {resizePercent === 25 ? "(1/4)" : resizePercent === 33 ? "(1/3)" : resizePercent === 50 ? "(Half)" : resizePercent === 66 ? "(2/3)" : resizePercent === 75 ? "(3/4)" : resizePercent === 100 ? "(Full)" : "(Adjustable)"}
-              </span>
-            </div>
-          )}
+      {/* Resize handle (right edge) */}
+      {!isPreview && (
+        <div
+          onMouseDown={handleResizeStart}
+          className={`absolute right-0 top-0 bottom-0 w-3 cursor-col-resize z-30 flex items-center justify-center transition-all group/handle ${
+            isResizing ? "opacity-100" : "opacity-0 group-hover/cell:opacity-100"
+          }`}
+          title="Drag horizontally to adjust width freely"
+        >
+          <div className="w-1 h-8 rounded-full bg-slate-400 dark:bg-zinc-600 group-hover/handle:bg-[#8B3DFF] group-hover/handle:w-1.5 group-hover/handle:h-12 transition-all shadow-xs" />
         </div>
       )}
 
-      {/* Subtle hover ring when not selected */}
-      {!isSelected && !isPreview && (
-        <div className="absolute inset-0 rounded-2xl pointer-events-none z-10 group-hover:ring-1 group-hover:ring-[#8B3DFF]/40 transition-all" />
-      )}
+      {/* Floating cell action bar */}
+      {!isPreview && (isSelected || isResizing) && (
+        <div className={`absolute -top-11 ${toolbarPlacementClass} z-40 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 shadow-xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap`}>
+          <div className="flex items-center gap-1 font-mono text-[11px] text-purple-600 dark:text-purple-400 font-bold px-1">
+            <span>{Math.round(currentPercent)}%</span>
+          </div>
 
-      {/* Canva Micro Quick-Toolbar (Top-Right or Top-Left above card) */}
-      {isSelected && !isPreview && !isDraggingOverlay && (
-        <div className={`absolute -top-11 z-30 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-700/90 rounded-xl px-2 py-1 shadow-xl backdrop-blur-sm animate-fadeIn whitespace-nowrap ${toolbarPlacementClass}`}>
-          {/* Width Presets */}
-          <span className="text-[10px] font-mono font-bold text-slate-400 mr-0.5">W:</span>
-          {([25, 33, 50, 75, 100] as const).map((w) => (
-            <button
-              key={w}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (typeof onWidthChange === "function") {
-                  onWidthChange(cell.id, rowId, w);
-                }
-              }}
-              className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold transition-all cursor-pointer ${
-                currentPercent === w
-                  ? "bg-[#8B3DFF] text-white shadow-xs"
-                  : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              }`}
-              title={`Set width to ${w}%`}
-            >
-              {w}%
-            </button>
-          ))}
+          <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-zinc-800 pl-1">
+            {[25, 50, 75, 100].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setResizePercent(preset);
+                  const span = preset === 100 ? 4 : preset === 75 ? 3 : preset === 50 ? 2 : 1;
+                  if (typeof onColSpanChange === "function") onColSpanChange(cell.id, rowId, span);
+                  if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, preset);
+                }}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                  Math.abs(currentPercent - preset) <= 3
+                    ? "bg-[#8B3DFF] text-white font-bold"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
+                }`}
+              >
+                {preset}%
+              </button>
+            ))}
+          </div>
 
-          {/* Stepper [- 5%] [+ 5%] */}
+          <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
+
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              const next = Math.max(15, currentPercent - 5);
-              if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, next);
-            }}
-            className="w-4.5 h-4.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-xs cursor-pointer"
-            title="Decrease width by 5%"
-          >
-            -
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              const next = Math.min(100, currentPercent + 5);
-              if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, next);
-            }}
-            className="w-4.5 h-4.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-xs cursor-pointer"
-            title="Increase width by 5%"
-          >
-            +
-          </button>
-
-          <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-700 mx-1" />
-
-          {/* Quick Edit */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (typeof onEdit === "function") {
-                onEdit(cell, rowId);
-              }
+              if (typeof onEdit === "function") onEdit(cell, rowId);
             }}
             className="p-1 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer rounded"
             title="Edit block properties"
@@ -406,14 +449,11 @@ function SortableCell({
             <Edit2 className="w-3.5 h-3.5" />
           </button>
 
-          {/* Duplicate */}
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              if (typeof onDuplicate === "function") {
-                onDuplicate(cell.id, rowId);
-              }
+              if (typeof onDuplicate === "function") onDuplicate(cell.id, rowId);
             }}
             className="p-1 text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer rounded"
             title="Duplicate block (Ctrl+D)"
@@ -421,14 +461,11 @@ function SortableCell({
             <Copy className="w-3.5 h-3.5" />
           </button>
 
-          {/* Delete */}
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              if (typeof onDelete === "function") {
-                onDelete(cell.id, rowId);
-              }
+              if (typeof onDelete === "function") onDelete(cell.id, rowId);
             }}
             className="p-1 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer rounded"
             title="Delete block (Del)"
@@ -445,19 +482,13 @@ function SortableCell({
           isSelected={isSelected}
           isPreview={isPreview}
           onUpdateMetricCard={(card) => {
-            if (typeof onUpdateMetricCard === "function") {
-              onUpdateMetricCard(rowId, cell.id, card);
-            }
+            if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, cell.id, card);
           }}
           onUpdateInsight={(text) => {
-            if (typeof onUpdateInsight === "function") {
-              onUpdateInsight(rowId, cell.id, text);
-            }
+            if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, cell.id, text);
           }}
           onUpdateTextBlock={(content) => {
-            if (typeof onUpdateTextBlock === "function") {
-              onUpdateTextBlock(rowId, cell.id, content);
-            }
+            if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, cell.id, content);
           }}
         />
       </div>
@@ -482,6 +513,7 @@ interface SortableRowProps {
   onUpdateInsight?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
   onRemoveRow: (rowId: string) => void;
+  onTogglePageBreak?: (rowId: string) => void;
 }
 
 function SortableRow({
@@ -500,6 +532,7 @@ function SortableRow({
   onUpdateInsight,
   onUpdateTextBlock,
   onRemoveRow,
+  onTogglePageBreak,
 }: SortableRowProps) {
   const {
     attributes,
@@ -531,10 +564,18 @@ function SortableRow({
         }
       }}
     >
-      {/* Row Control Strip (Top-right corner, visible on hover) */}
+      {/* Forced Page Break visual marker */}
+      {row.pageBreakBefore && !isPreview && (
+        <div className="flex items-center gap-2 -mt-1 mb-2 text-[10px] font-mono text-[#8B3DFF]">
+          <Layers className="w-3 h-3" />
+          <span className="font-bold uppercase tracking-wider">Page Break (Starts on New Page)</span>
+          <div className="flex-1 border-t border-dashed border-[#8B3DFF]/40" />
+        </div>
+      )}
+
+      {/* Row Control Strip */}
       {!isPreview && (
         <div className="absolute -top-3.5 right-2 opacity-0 group-hover/row:opacity-100 transition-opacity z-30 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-1.5 py-0.5 shadow-sm text-[10px] text-slate-500 backdrop-blur-sm">
-          {/* Row Drag Handle */}
           <div
             {...attributes}
             {...listeners}
@@ -544,6 +585,29 @@ function SortableRow({
             <GripVertical className="w-3 h-3" />
           </div>
           <span className="font-mono text-[9px] text-slate-400">Row</span>
+
+          {onTogglePageBreak && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePageBreak(row.id);
+              }}
+              className={`p-0.5 rounded cursor-pointer transition-colors ${
+                row.pageBreakBefore
+                  ? "text-[#8B3DFF] bg-purple-500/15 font-bold"
+                  : "hover:text-[#8B3DFF]"
+              }`}
+              title={
+                row.pageBreakBefore
+                  ? "Remove forced page break before this row"
+                  : "Force this row onto a new page (Page Break)"
+              }
+            >
+              <Layers className="w-3 h-3" />
+            </button>
+          )}
+
           <button
             type="button"
             onClick={(e) => {
@@ -558,7 +622,7 @@ function SortableRow({
         </div>
       )}
 
-      {/* Row Container with flexible items & 2D rect sortable strategy */}
+      {/* Row Container */}
       <SortableContext
         items={row.cells.map((c) => c.id)}
         strategy={rectSortingStrategy}
@@ -599,9 +663,209 @@ function SortableRow({
         </div>
       </SortableContext>
 
-      {/* Row subtle separator */}
       {!isPreview && (
         <div className="mt-3 h-px bg-slate-100 dark:bg-zinc-800/40 group-hover/row:bg-[#8B3DFF]/20 transition-colors" />
+      )}
+    </div>
+  );
+}
+
+// ─── Reusable Watermark Layer ─────────────────────────────────────────────────
+function WatermarkStampLayer({
+  activeWatermark,
+  wmPlacement,
+  wmOpacity,
+  wmScale,
+  wmRotation,
+  wmXOffset,
+  wmYOffset,
+  isDarkPaper,
+  isWatermarkSelected,
+  activeIsPreview,
+  handleWatermarkDragStart,
+  handleWatermarkResizeStart,
+  onUpdateWatermarkConfig,
+  onSelectWatermark,
+  setIsWatermarkSelected,
+  getPlacementClass,
+}: {
+  activeWatermark: UploadedSvgWatermark | null;
+  wmPlacement: string;
+  wmOpacity: number;
+  wmScale: number;
+  wmRotation: number;
+  wmXOffset: number;
+  wmYOffset: number;
+  isDarkPaper: boolean;
+  isWatermarkSelected: boolean;
+  activeIsPreview: boolean;
+  handleWatermarkDragStart: (e: React.MouseEvent) => void;
+  handleWatermarkResizeStart: (e: React.MouseEvent) => void;
+  onUpdateWatermarkConfig?: (config: Partial<WatermarkStampConfig>) => void;
+  onSelectWatermark?: ((w: UploadedSvgWatermark | null) => void) | ((watermarkId: string | null) => void);
+  setIsWatermarkSelected: (selected: boolean) => void;
+  getPlacementClass: (pos: string) => string;
+}) {
+  if (!activeWatermark?.svgContent) return null;
+
+  return (
+    <div
+      className={`absolute inset-0 select-none z-10 overflow-hidden flex p-8 sm:p-12 transition-all duration-300 ${
+        getPlacementClass(wmPlacement)
+      } ${isWatermarkSelected ? "pointer-events-auto" : "pointer-events-none"}`}
+    >
+      {wmPlacement === "tiled" ? (
+        <div className="grid grid-cols-2 gap-24 w-full h-full p-8 place-items-center">
+          {[1, 2, 3, 4].map((idx) => (
+            <div
+              key={idx}
+              style={{
+                opacity: wmOpacity * 0.7,
+                transform: `translate(${wmXOffset}%, ${wmYOffset}%) rotate(${wmRotation}deg) scale(${wmScale * 0.75})`,
+                transformOrigin: "center center",
+                mixBlendMode: isDarkPaper ? "screen" : "multiply",
+              }}
+              className="w-full max-w-[280px] filter drop-shadow-sm select-none"
+              dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
+            />
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            transform: `translate(${wmXOffset}%, ${wmYOffset}%)`,
+            transformOrigin: "center center",
+          }}
+          className="relative flex items-center justify-center transition-transform duration-75 max-w-full"
+        >
+          <div
+            style={{
+              opacity: wmOpacity,
+              transform: `rotate(${wmRotation}deg) scale(${wmScale})`,
+              transformOrigin: "center center",
+              mixBlendMode: isDarkPaper ? "screen" : "multiply",
+            }}
+            className="w-full max-w-[500px] flex items-center justify-center filter drop-shadow-sm select-none cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!activeIsPreview) setIsWatermarkSelected(true);
+            }}
+            dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
+          />
+
+          {isWatermarkSelected && !activeIsPreview && (
+            <div
+              className="absolute inset-0 -m-3 border-2 border-[#8B3DFF] rounded-2xl ring-4 ring-[#8B3DFF]/20 pointer-events-auto cursor-move flex items-center justify-center select-none"
+              onMouseDown={handleWatermarkDragStart}
+              title="Drag to reposition watermark anywhere on page"
+            >
+              <div
+                onMouseDown={handleWatermarkResizeStart}
+                className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
+                title="Drag corner to resize scale"
+              />
+              <div
+                onMouseDown={handleWatermarkResizeStart}
+                className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
+                title="Drag corner to resize scale"
+              />
+              <div
+                onMouseDown={handleWatermarkResizeStart}
+                className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
+                title="Drag corner to resize scale"
+              />
+              <div
+                onMouseDown={handleWatermarkResizeStart}
+                className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
+                title="Drag corner to resize scale"
+              />
+
+              <div
+                className="absolute -top-11 left-1/2 -translate-x-1/2 h-8 px-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-zinc-200 z-50 whitespace-nowrap cursor-default"
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <span title="Drag watermark" className="flex items-center">
+                  <Move className="w-3.5 h-3.5 text-[#8B3DFF] cursor-move" />
+                </span>
+                <span className="font-semibold text-slate-600 dark:text-zinc-300 max-w-[120px] truncate">
+                  {activeWatermark.name.split(" ")[0]}
+                </span>
+
+                <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
+
+                <div className="flex items-center gap-1 font-mono">
+                  <button
+                    type="button"
+                    onClick={() => onUpdateWatermarkConfig && onUpdateWatermarkConfig({ scale: Math.max(20, Math.round(wmScale * 100) - 10) })}
+                    className="w-5 h-5 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300 cursor-pointer"
+                    title="Smaller"
+                  >
+                    -
+                  </button>
+                  <span className="text-[#8B3DFF] font-bold px-1 text-[11px]">
+                    {Math.round(wmScale * 100)}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onUpdateWatermarkConfig && onUpdateWatermarkConfig({ scale: Math.min(300, Math.round(wmScale * 100) + 10) })}
+                    className="w-5 h-5 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300 cursor-pointer"
+                    title="Larger"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!onUpdateWatermarkConfig) return;
+                    const placements = [
+                      "center",
+                      "top-left",
+                      "top-right",
+                      "bottom-left",
+                      "bottom-right",
+                      "tiled",
+                    ] as const;
+                    const nextIdx = (placements.indexOf(wmPlacement as any) + 1) % placements.length;
+                    onUpdateWatermarkConfig({ placement: placements[nextIdx] });
+                  }}
+                  className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 hover:bg-purple-100 text-[10px] font-mono uppercase text-slate-700 dark:text-zinc-300 cursor-pointer"
+                  title="Cycle Placement Location"
+                >
+                  Pos: {wmPlacement}
+                </button>
+
+                <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
+
+                <button
+                  type="button"
+                  onClick={() => setIsWatermarkSelected(false)}
+                  className="w-5 h-5 rounded hover:bg-purple-100 text-purple-600 flex items-center justify-center cursor-pointer"
+                  title="Done"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+
+                {onSelectWatermark && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      (onSelectWatermark as any)(null);
+                      setIsWatermarkSelected(false);
+                    }}
+                    className="w-5 h-5 rounded hover:bg-rose-100 text-rose-500 flex items-center justify-center cursor-pointer"
+                    title="Remove Watermark"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -626,27 +890,22 @@ export interface CanvasStudioProps {
   showGuides?: boolean;
   onToggleGuides?: () => void;
   zoom?: number;
-  setZoom?: (z: number) => void;
+  setZoom?: (zoom: number | ((prev: number) => number)) => void;
   isPreview?: boolean;
   onTogglePreview?: () => void;
-  // Watermark Support
   activeWatermark?: UploadedSvgWatermark | null;
   watermarkConfig?: WatermarkStampConfig;
-  onUpdateWatermarkConfig?: (cfg: Partial<WatermarkStampConfig>) => void;
-  onSelectWatermark?: (id: string | null) => void;
+  onUpdateWatermarkConfig?: (config: Partial<WatermarkStampConfig>) => void;
+  onSelectWatermark?: ((w: UploadedSvgWatermark | null) => void) | ((watermarkId: string | null) => void);
 }
 
-function isColorDark(colorStr?: string): boolean {
-  if (!colorStr) return false;
-  const lower = colorStr.toLowerCase();
-  if (lower === "dark" || lower === "#0f172a" || lower === "#0b0e14" || lower === "#1e293b" || lower === "#07090d") return true;
-  if (!lower.startsWith("#")) return false;
-  const c = lower.substring(1);
-  const rgb = parseInt(c.length === 3 ? c.split("").map((x) => x + x).join("") : c, 16);
-  if (isNaN(rgb)) return false;
-  const r = (rgb >> 16) & 0xff;
-  const g = (rgb >> 8) & 0xff;
-  const b = (rgb >> 0) & 0xff;
+function isColorDark(hexOrColor?: string): boolean {
+  if (!hexOrColor) return false;
+  if (hexOrColor === "dark") return true;
+  if (!hexOrColor.startsWith("#") || hexOrColor.length < 7) return false;
+  const r = parseInt(hexOrColor.slice(1, 3), 16);
+  const g = parseInt(hexOrColor.slice(3, 5), 16);
+  const b = parseInt(hexOrColor.slice(5, 7), 16);
   const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
   return luma < 135;
 }
@@ -679,6 +938,26 @@ export function CanvasStudio({
 }: CanvasStudioProps) {
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
+
+  // Multi-page layout engine: partitions rows across authentic A4 sheets
+  const pages = useMemo(() => {
+    return partitionCanvasPages(rows, marginConfig, pageNumber);
+  }, [rows, marginConfig, pageNumber]);
+
+  const [activeViewPageIndex, setActiveViewPageIndex] = useState<number>(0);
+  const prevPagesLengthRef = useRef(pages.length);
+
+  // Auto-scroll to newly created page if page count increases
+  useEffect(() => {
+    if (pages.length > prevPagesLengthRef.current) {
+      const newPageIdx = pages.length - 1;
+      setActiveViewPageIndex(newPageIdx);
+      setTimeout(() => {
+        document.getElementById(`canvas-page-${newPageIdx}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+    }
+    prevPagesLengthRef.current = pages.length;
+  }, [pages.length]);
 
   // Internal fallbacks if not controlled by parent
   const [internalSelectedCellId, setInternalSelectedCellId] = useState<string | null>(null);
@@ -766,35 +1045,33 @@ export function CanvasStudio({
     }
   }, [onTogglePreview]);
 
-  // Zoom controls
   const zoomIn = () => {
     const next = Math.min(1.25, activeZoom + 0.1);
-    if (setZoom) setZoom(next);
+    if (typeof setZoom === "function") setZoom(next);
     else setInternalZoom(next);
   };
+
   const zoomOut = () => {
     const next = Math.max(0.5, activeZoom - 0.1);
-    if (setZoom) setZoom(next);
+    if (typeof setZoom === "function") setZoom(next);
     else setInternalZoom(next);
   };
+
   const resetZoom = () => {
-    if (setZoom) setZoom(1);
+    if (typeof setZoom === "function") setZoom(1);
     else setInternalZoom(1);
   };
 
-  // DnD Sensors (Responsive 4px activation for crisp horizontal & vertical dragging)
+  // DnD Kit sensors
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 4,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Custom collision detection: pointer-first, then bounding-rect, then center
+  // Active dragged block overlay
+  const [activeDragCell, setActiveDragCell] = useState<CanvasCell | null>(null);
+
+  // Custom collision detection
   const customCollisionDetection = useCallback((args: any) => {
     const pointerCollisions = pointerWithin(args);
     if (pointerCollisions.length > 0) return pointerCollisions;
@@ -803,9 +1080,7 @@ export function CanvasStudio({
     return closestCenter(args);
   }, []);
 
-  const [activeDragCell, setActiveDragCell] = useState<CanvasCell | null>(null);
-
-  // Cell actions with defensive dispatch
+  // Cell Action Handlers
   const handleDuplicateCell = useCallback(
     (cellId: string, rowId: string) => {
       dispatch(duplicateCanvasCell({ sectionId: section.id, rowId, cellId }));
@@ -824,8 +1099,8 @@ export function CanvasStudio({
   );
 
   const handleColSpanChange = useCallback(
-    (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => {
-      dispatch(updateCellColSpan({ sectionId: section.id, rowId, cellId, colSpan: span }));
+    (cellId: string, rowId: string, colSpan: 1 | 2 | 3 | 4) => {
+      dispatch(updateCellColSpan({ sectionId: section.id, rowId, cellId, colSpan }));
     },
     [dispatch, section.id]
   );
@@ -839,8 +1114,21 @@ export function CanvasStudio({
 
   const handleAddRow = useCallback(() => {
     dispatch(addCanvasRow(section.id));
-    dispatch(showGlobalToast({ message: "New row added to canvas", type: "success" }));
+    dispatch(showGlobalToast({ message: "New row added to section", type: "success" }));
   }, [dispatch, section.id]);
+
+  const handleAddPage = useCallback(() => {
+    dispatch(addCanvasRow({ sectionId: section.id, pageBreakBefore: true }));
+    dispatch(showGlobalToast({ message: "New A4 page created", type: "success" }));
+  }, [dispatch, section.id]);
+
+  const handleTogglePageBreak = useCallback(
+    (rowId: string) => {
+      dispatch(toggleRowPageBreak({ sectionId: section.id, rowId }));
+      dispatch(showGlobalToast({ message: "Page break toggled", type: "info" }));
+    },
+    [dispatch, section.id]
+  );
 
   const handleRemoveRow = useCallback(
     (rowId: string) => {
@@ -866,7 +1154,7 @@ export function CanvasStudio({
     const overData = over.data.current;
 
     // Row reordering
-    if (activeData?.isRow && overData?.isRow) {
+    if (activeData?.isRow) {
       const oldIndex = rows.findIndex((r) => r.id === active.id);
       const newIndex = rows.findIndex((r) => r.id === over.id);
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
@@ -1070,519 +1358,507 @@ export function CanvasStudio({
         }
         onClick={handleCanvasClick}
       >
-        {/* Scalable Artboard Container */}
+        {/* Scalable Multi-Page Desk Container */}
         <div
-          className="w-full max-w-5xl transition-transform duration-200"
+          className="flex flex-col items-center gap-10 pb-28 transition-transform duration-200 select-none"
           style={{
             transform: `scale(${activeZoom})`,
             transformOrigin: "top center",
+            width: `${A4_WIDTH_PX}px`,
           }}
         >
-          {/* ── Floating A4 Artboard Sheet with Multilayer Depth ── */}
-          <div
-            style={{ ...customPaperStyle, borderRadius: `${marginConfig.radius}px` }}
-            className={`relative min-h-[842px] ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 overflow-hidden transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)]`}
+          <SortableContext
+            items={rows.map((r) => r.id)}
+            strategy={verticalListSortingStrategy}
+            disabled={activeIsPreview}
           >
-            {/* Margin Guides (if enabled) */}
-            {activeShowGuides && !activeIsPreview && (
-              <div
-                className="absolute border border-dashed border-sky-400/40 pointer-events-none z-20"
-                style={{
-                  top: marginConfig.top,
-                  right: marginConfig.right,
-                  bottom: marginConfig.bottom,
-                  left: marginConfig.left,
-                  borderRadius: Math.max(0, marginConfig.radius - 2),
-                }}
-              />
-            )}
+            {pages.map((page, pageIdx) => {
+              return (
+                <React.Fragment key={`page-${page.pageIndex}`}>
+                  {/* Visual Page Break Between Pages on Desk */}
+                  {pageIdx > 0 && (
+                    <div className="flex items-center gap-4 w-[794px] my-1 text-xs select-none">
+                      <div className="flex-1 border-t-2 border-dashed border-slate-300 dark:border-zinc-700" />
+                      <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 font-mono font-bold text-[11px] shadow-sm">
+                        <Layers className="w-3.5 h-3.5 text-[#9D61FF]" />
+                        <span className="text-[#9D61FF]">PAGE BREAK</span>
+                        <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
+                        <span>Page {page.pageNumber} of {pages.length}</span>
+                        <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
+                        <span className="text-slate-400 font-normal">A4 (794 &times; 1123 px)</span>
+                      </div>
+                      <div className="flex-1 border-t-2 border-dashed border-slate-300 dark:border-zinc-700" />
+                    </div>
+                  )}
 
-            {/* ── Realistic Corporate Document Watermark Stamp Layer ── */}
-            {activeWatermark?.svgContent && (
-              <div
-                className={`absolute inset-0 select-none z-10 overflow-hidden flex p-8 sm:p-12 transition-all duration-300 ${
-                  getPlacementClass(wmPlacement)
-                } ${isWatermarkSelected ? "pointer-events-auto" : "pointer-events-none"}`}
-              >
-                {wmPlacement === "tiled" ? (
-                  <div className="grid grid-cols-2 gap-24 w-full h-full p-8 place-items-center">
-                    {[1, 2, 3, 4].map((idx) => (
-                      <div
-                        key={idx}
-                        style={{
-                          opacity: wmOpacity * 0.7,
-                          transform: `translate(${wmXOffset}%, ${wmYOffset}%) rotate(${wmRotation}deg) scale(${wmScale * 0.75})`,
-                          transformOrigin: "center center",
-                          mixBlendMode: isDarkPaper ? "screen" : "multiply",
-                        }}
-                        className="w-full max-w-[280px] filter drop-shadow-sm select-none"
-                        dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
-                      />
-                    ))}
-                  </div>
-                ) : (
+                  {/* ── Fixed A4 Artboard Sheet ── */}
                   <div
+                    id={`canvas-page-${page.pageIndex}`}
                     style={{
-                      transform: `translate(${wmXOffset}%, ${wmYOffset}%)`,
-                      transformOrigin: "center center",
+                      ...customPaperStyle,
+                      borderRadius: `${marginConfig.radius}px`,
+                      width: `${A4_WIDTH_PX}px`,
+                      height: `${A4_HEIGHT_PX}px`,
+                      minHeight: `${A4_HEIGHT_PX}px`,
+                      maxHeight: `${A4_HEIGHT_PX}px`,
                     }}
-                    className="relative flex items-center justify-center transition-transform duration-75 max-w-full"
+                    className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 overflow-hidden transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-between`}
                   >
-                    {/* SVG Graphic Stamp */}
-                    <div
-                      style={{
-                        opacity: wmOpacity,
-                        transform: `rotate(${wmRotation}deg) scale(${wmScale})`,
-                        transformOrigin: "center center",
-                        mixBlendMode: isDarkPaper ? "screen" : "multiply",
-                      }}
-                      className="w-full max-w-[500px] flex items-center justify-center filter drop-shadow-sm select-none cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!activeIsPreview) setIsWatermarkSelected(true);
-                      }}
-                      dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
+                    {/* Margin Guides (if enabled) */}
+                    {activeShowGuides && !activeIsPreview && (
+                      <div
+                        className="absolute border border-dashed border-sky-400/40 pointer-events-none z-20"
+                        style={{
+                          top: marginConfig.top,
+                          right: marginConfig.right,
+                          bottom: marginConfig.bottom,
+                          left: marginConfig.left,
+                          borderRadius: Math.max(0, marginConfig.radius - 2),
+                        }}
+                      />
+                    )}
+
+                    {/* Realistic Corporate Document Watermark Stamp Layer */}
+                    <WatermarkStampLayer
+                      activeWatermark={activeWatermark}
+                      wmPlacement={wmPlacement}
+                      wmOpacity={wmOpacity}
+                      wmScale={wmScale}
+                      wmRotation={wmRotation}
+                      wmXOffset={wmXOffset}
+                      wmYOffset={wmYOffset}
+                      isDarkPaper={isDarkPaper}
+                      isWatermarkSelected={isWatermarkSelected}
+                      activeIsPreview={activeIsPreview}
+                      handleWatermarkDragStart={handleWatermarkDragStart}
+                      handleWatermarkResizeStart={handleWatermarkResizeStart}
+                      onUpdateWatermarkConfig={onUpdateWatermarkConfig}
+                      onSelectWatermark={onSelectWatermark}
+                      setIsWatermarkSelected={setIsWatermarkSelected}
+                      getPlacementClass={getPlacementClass}
                     />
 
-                    {/* Interactive Selection Bounding Box & HUD (Visible when selected in non-preview mode) */}
-                    {isWatermarkSelected && !activeIsPreview && (
-                      <div
-                        className="absolute inset-0 -m-3 border-2 border-[#8B3DFF] rounded-2xl ring-4 ring-[#8B3DFF]/20 pointer-events-auto cursor-move flex items-center justify-center select-none"
-                        onMouseDown={handleWatermarkDragStart}
-                        title="Drag to reposition watermark anywhere on page"
-                      >
-                        {/* 4 Corner Resize Handles */}
-                        <div
-                          onMouseDown={handleWatermarkResizeStart}
-                          className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
-                          title="Drag corner to resize scale"
-                        />
-                        <div
-                          onMouseDown={handleWatermarkResizeStart}
-                          className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
-                          title="Drag corner to resize scale"
-                        />
-                        <div
-                          onMouseDown={handleWatermarkResizeStart}
-                          className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
-                          title="Drag corner to resize scale"
-                        />
-                        <div
-                          onMouseDown={handleWatermarkResizeStart}
-                          className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
-                          title="Drag corner to resize scale"
-                        />
+                    {/* Inner Page Content with Margins */}
+                    <div
+                      className="relative z-10 flex-1 min-h-0 flex flex-col justify-between"
+                      style={{
+                        paddingTop: marginConfig.top,
+                        paddingRight: marginConfig.right,
+                        paddingBottom: marginConfig.bottom,
+                        paddingLeft: marginConfig.left,
+                      }}
+                    >
+                      {/* Top Header */}
+                      {page.isFirstPage ? (
+                        <div>
+                          {/* Fixed Sitesafe Report Header */}
+                          <div
+                            className="relative z-10 min-h-[126px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden"
+                            style={{ backgroundColor: getPaperToneColor(paperTone) }}
+                          >
+                            <div className="relative h-full grid grid-cols-[1.05fr_1.25fr_1fr] items-center gap-5 px-6 py-5">
+                              <div className="flex min-w-0 flex-col justify-center">
+                                <Image
+                                  src="/sitesafe-header-logo.svg"
+                                  alt="Sitesafe by AyantrAI"
+                                  width={280}
+                                  height={75}
+                                  className="h-[70px] w-[230px] object-contain object-left"
+                                  priority
+                                />
+                              </div>
 
-                        {/* Floating Quick Action HUD Bar above watermark */}
-                        <div
-                          className="absolute -top-11 left-1/2 -translate-x-1/2 h-8 px-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-zinc-200 z-50 whitespace-nowrap cursor-default"
-                          onMouseDown={(e) => e.stopPropagation()}
-                        >
-                          <span title="Drag watermark" className="flex items-center">
-                            <Move className="w-3.5 h-3.5 text-[#8B3DFF] cursor-move" />
-                          </span>
-                          <span className="font-semibold text-slate-600 dark:text-zinc-300 max-w-[120px] truncate">
-                            {activeWatermark.name.split(" ")[0]}
-                          </span>
+                              <div className="min-w-0 border-l-2 border-[#2454d8] pl-6">
+                                {editingHeaderValue === "taglinePrimary" ? (
+                                  <input
+                                    autoFocus
+                                    value={headerValues.taglinePrimary}
+                                    onChange={(event) => updateHeaderValue("taglinePrimary", event.target.value)}
+                                    onBlur={commitHeaderValue}
+                                    onKeyDown={(event) => {
+                                      if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
+                                    }}
+                                    className="w-full bg-transparent text-[17px] font-semibold italic leading-tight text-[#2454d8] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                                    aria-label="Primary report tagline"
+                                  />
+                                ) : (
+                                  <p
+                                    className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                    onClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
+                                    onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
+                                    title="Click to edit primary report tagline"
+                                  >
+                                    {headerValues.taglinePrimary}
+                                  </p>
+                                )}
+                                {editingHeaderValue === "taglineSecondary" ? (
+                                  <input
+                                    autoFocus
+                                    value={headerValues.taglineSecondary}
+                                    onChange={(event) => updateHeaderValue("taglineSecondary", event.target.value)}
+                                    onBlur={commitHeaderValue}
+                                    onKeyDown={(event) => {
+                                      if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
+                                    }}
+                                    className="w-full bg-transparent text-[17px] font-semibold italic leading-tight text-[#2454d8] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                                    aria-label="Secondary report tagline"
+                                  />
+                                ) : (
+                                  <p
+                                    className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                    onClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
+                                    onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
+                                    title="Click to edit secondary report tagline"
+                                  >
+                                    {headerValues.taglineSecondary}
+                                  </p>
+                                )}
+                              </div>
 
-                          <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
-
-                          {/* Quick Sizing Steppers */}
-                          <div className="flex items-center gap-1 font-mono">
-                            <button
-                              type="button"
-                              onClick={() => onUpdateWatermarkConfig && onUpdateWatermarkConfig({ scale: Math.max(20, Math.round(wmScale * 100) - 10) })}
-                              className="w-5 h-5 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300 cursor-pointer"
-                              title="Smaller"
-                            >
-                              -
-                            </button>
-                            <span className="text-[#8B3DFF] font-bold px-1 text-[11px]">
-                              {Math.round(wmScale * 100)}%
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => onUpdateWatermarkConfig && onUpdateWatermarkConfig({ scale: Math.min(300, Math.round(wmScale * 100) + 10) })}
-                              className="w-5 h-5 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-slate-700 dark:text-zinc-300 cursor-pointer"
-                              title="Larger"
-                            >
-                              +
-                            </button>
+                              <div className="relative self-stretch flex items-center justify-between gap-4 pl-6 border-l-2 border-[#2454d8]">
+                                <div className="min-w-0">
+                                  {editingHeaderValue === "title" ? (
+                                    <input
+                                      autoFocus
+                                      value={headerValues.title}
+                                      onChange={(event) => updateHeaderValue("title", event.target.value)}
+                                      onBlur={commitHeaderValue}
+                                      onKeyDown={(event) => {
+                                        if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
+                                      }}
+                                      className="w-full bg-transparent text-[19px] font-black leading-tight text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                                      aria-label="Report title"
+                                    />
+                                  ) : (
+                                    <p
+                                      className="cursor-text text-[19px] font-black leading-tight text-[#1836a0]"
+                                      onClick={() => !activeIsPreview && setEditingHeaderValue("title")}
+                                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("title")}
+                                      title="Double-click to edit report title"
+                                    >
+                                      {headerValues.title}
+                                    </p>
+                                  )}
+                                  {editingHeaderValue === "period" ? (
+                                    <input
+                                      autoFocus
+                                      value={headerValues.period}
+                                      onChange={(event) => updateHeaderValue("period", event.target.value)}
+                                      onBlur={commitHeaderValue}
+                                      onKeyDown={(event) => {
+                                        if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
+                                      }}
+                                      className="mt-1 w-full bg-transparent text-[12px] font-semibold leading-tight text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                                      aria-label="Report period"
+                                    />
+                                  ) : (
+                                    <p
+                                      className="mt-1 cursor-text text-[12px] font-semibold leading-tight text-[#1836a0]"
+                                      onClick={() => !activeIsPreview && setEditingHeaderValue("period")}
+                                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("period")}
+                                      title="Double-click to edit report period"
+                                    >
+                                      {headerValues.period}
+                                    </p>
+                                  )}
+                                  <div className="mt-2 h-1 w-14 rounded-full bg-[#2454d8]" />
+                                </div>
+                                <div className="absolute -right-6 -top-5 -bottom-5 flex w-[72px] flex-col items-center justify-center bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
+                                  <span className="text-[10px] font-semibold">Page</span>
+                                  <span className="text-[25px] font-black leading-none">{String(page.pageNumber).padStart(2, "0")}</span>
+                                </div>
+                              </div>
+                            </div>
                           </div>
 
-                          <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
-
-                          {/* Quick Placement Dropdown / Cycle */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!onUpdateWatermarkConfig) return;
-                              const placements = [
-                                "center",
-                                "top-left",
-                                "top-right",
-                                "bottom-left",
-                                "bottom-right",
-                                "tiled",
-                              ] as const;
-                              const nextIdx = (placements.indexOf(wmPlacement as any) + 1) % placements.length;
-                              onUpdateWatermarkConfig({ placement: placements[nextIdx] });
-                            }}
-                            className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 hover:bg-purple-100 text-[10px] font-mono uppercase text-slate-700 dark:text-zinc-300 cursor-pointer"
-                            title="Cycle Placement Location"
+                          {/* Section-specific Header Bar */}
+                          <div
+                            className="relative z-10 border-b border-slate-100 dark:border-zinc-800/60 px-0 pt-4 pb-3"
+                            style={{ backgroundColor: getPaperToneColor(paperTone) }}
                           >
-                            Pos: {wmPlacement}
-                          </button>
+                            <div className="flex items-center justify-between gap-3 mb-1">
+                              <span
+                                className="text-xs font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400"
+                                style={sectionTextColor ? { color: sectionTextColor } : undefined}
+                              >
+                                {section.eyebrow}
+                              </span>
+                              {activeWatermark && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsWatermarkSelected(!isWatermarkSelected);
+                                  }}
+                                  className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
+                                    isWatermarkSelected
+                                      ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
+                                      : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
+                                  }`}
+                                  title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
+                                >
+                                  <Stamp className="w-2.5 h-2.5" />
+                                  <span>{activeWatermark.name}</span>
+                                  <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
+                                </button>
+                              )}
+                            </div>
+                            <h1
+                              className={`text-2xl font-black tracking-tight ${isDarkPaper && !sectionTextColor ? "text-white" : !sectionTextColor ? "text-slate-900 dark:text-white" : ""}`}
+                              style={sectionTextColor ? { color: sectionTextColor } : undefined}
+                            >
+                              {section.name}
+                            </h1>
+                            {section.description && (
+                              <p
+                                className={`text-xs mt-0.5 max-w-3xl leading-relaxed ${isDarkPaper && !sectionTextColor ? "text-zinc-300" : !sectionTextColor ? "text-slate-500 dark:text-zinc-400" : ""}`}
+                                style={sectionTextColor ? { color: sectionTextColor, opacity: 0.85 } : undefined}
+                              >
+                                {section.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        /* Continuation Page Header */
+                        <div
+                          className="relative z-10 min-h-[56px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden flex items-center justify-between px-6 py-2.5 mb-2"
+                          style={{ backgroundColor: getPaperToneColor(paperTone) }}
+                        >
+                          <div className="flex items-center gap-4">
+                            <Image
+                              src="/sitesafe-header-logo.svg"
+                              alt="Sitesafe by AyantrAI"
+                              width={140}
+                              height={38}
+                              className="h-[34px] w-[110px] object-contain object-left"
+                              priority
+                            />
+                            <div className="h-6 w-px bg-[#2454d8]/40" />
+                            <div className="min-w-0">
+                              <div className="text-[10px] font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400">
+                                {section.eyebrow} &bull; CONTINUATION
+                              </div>
+                              <div className="text-xs font-black tracking-tight text-[#1836a0] dark:text-white truncate max-w-[300px]">
+                                {section.name}
+                              </div>
+                            </div>
+                          </div>
 
-                          <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
+                          <div className="relative flex items-center gap-4">
+                            <span className="text-[11px] font-semibold text-slate-500 italic hidden sm:inline">
+                              {headerValues.title}
+                            </span>
+                            <div className="-my-2.5 -mr-6 h-[56px] w-[68px] flex flex-col items-center justify-center bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
+                              <span className="text-[9px] font-semibold">Page</span>
+                              <span className="text-[20px] font-black leading-none">{String(page.pageNumber).padStart(2, "0")}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                          {/* Done / Deselect */}
-                          <button
-                            type="button"
-                            onClick={() => setIsWatermarkSelected(false)}
-                            className="w-5 h-5 rounded hover:bg-purple-100 text-purple-600 flex items-center justify-center cursor-pointer"
-                            title="Done"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
+                      {/* Canvas Rows Container for this Page */}
+                      <div className="relative z-10 px-0 pt-3 pb-2 space-y-4 flex-1 min-h-0 overflow-visible">
+                        {page.rows.length === 0 ? (
+                          <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl text-slate-400 dark:text-zinc-600 space-y-3">
+                            <p className="text-sm font-medium">Canvas is empty</p>
+                            <p className="text-xs">Click any block in the left sidebar to start building</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {page.rows.map((row) => (
+                              <SortableRow
+                                key={row.id}
+                                sectionId={section.id}
+                                row={row}
+                                selectedCellId={activeSelectedCellId}
+                                selectedRowId={activeSelectedRowId}
+                                isPreview={activeIsPreview}
+                                onSelectCell={handleSelectCell}
+                                onEditCell={onEditCell}
+                                onDuplicateCell={handleDuplicateCell}
+                                onDeleteCell={handleDeleteCell}
+                                onColSpanChange={handleColSpanChange}
+                                onWidthChange={handleWidthChange}
+                                onUpdateMetricCard={onUpdateMetricCardInCell}
+                                onUpdateInsight={onUpdateInsightInCell}
+                                onUpdateTextBlock={onUpdateTextBlockInCell}
+                                onRemoveRow={handleRemoveRow}
+                                onTogglePageBreak={handleTogglePageBreak}
+                              />
+                            ))}
+                          </div>
+                        )}
 
-                          {/* Remove */}
-                          {onSelectWatermark && (
+                        {/* Add Row Button on this page (Hidden in preview) */}
+                        {!activeIsPreview && (
+                          <div className="flex items-center gap-2 pt-2">
                             <button
                               type="button"
-                              onClick={() => {
-                                onSelectWatermark(null);
-                                setIsWatermarkSelected(false);
-                              }}
-                              className="w-5 h-5 rounded hover:bg-rose-100 text-rose-500 flex items-center justify-center cursor-pointer"
-                              title="Remove Watermark"
+                              onClick={handleAddRow}
+                              className="
+                                flex-1 py-2.5 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800
+                                text-xs font-bold text-slate-400 dark:text-zinc-500
+                                hover:border-[#8B3DFF]/50 hover:text-[#8B3DFF] hover:bg-[#8B3DFF]/5
+                                transition-all flex items-center justify-center gap-1.5 cursor-pointer
+                              "
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Add Row to Page {page.pageNumber}</span>
                             </button>
-                          )}
-                        </div>
+                            {page.isLastPage && (
+                              <button
+                                type="button"
+                                onClick={handleAddPage}
+                                className="
+                                  px-3.5 py-2.5 rounded-xl border border-dashed border-[#8B3DFF]/40
+                                  text-xs font-bold text-[#8B3DFF] bg-[#8B3DFF]/5
+                                  hover:bg-[#8B3DFF]/10 hover:border-[#8B3DFF]
+                                  transition-all flex items-center gap-1.5 cursor-pointer
+                                "
+                                title="Create a new blank A4 page"
+                              >
+                                <Layers className="w-3.5 h-3.5" />
+                                <span>+ New Page</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
+
+                      {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages */}
+                      {page.isLastPage ? (
+                        <footer
+                          className="relative z-10 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
+                          style={{ backgroundColor: getPaperToneColor(paperTone) }}
+                        >
+                          <div className="min-w-0">
+                            {editingFooterValue === "company" ? (
+                              <input
+                                autoFocus
+                                value={footerValues.company}
+                                onChange={(event) => updateFooterValue("company", event.target.value)}
+                                onBlur={commitFooterValue}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
+                                }}
+                                className="w-full bg-transparent text-sm font-bold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                                aria-label="Footer company name"
+                              />
+                            ) : (
+                              <p
+                                className="cursor-text text-sm font-bold text-[#1836a0]"
+                                onDoubleClick={() => !activeIsPreview && setEditingFooterValue("company")}
+                                title="Double-click to edit company name"
+                              >
+                                {footerValues.company}
+                              </p>
+                            )}
+                            {editingFooterValue === "websites" ? (
+                              <input
+                                autoFocus
+                                value={footerValues.websites}
+                                onChange={(event) => updateFooterValue("websites", event.target.value)}
+                                onBlur={commitFooterValue}
+                                onKeyDown={(event) => {
+                                  if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
+                                }}
+                                className="mt-1 w-full bg-transparent text-xs font-semibold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                                aria-label="Footer website links"
+                              />
+                            ) : (
+                              <p
+                                className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
+                                onDoubleClick={() => !activeIsPreview && setEditingFooterValue("websites")}
+                                title="Double-click to edit website links"
+                              >
+                                {footerValues.websites}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="h-[2px] w-full bg-[#1836a0]/60" />
+
+                          {editingFooterValue === "quote" ? (
+                            <input
+                              autoFocus
+                              value={footerValues.quote}
+                              onChange={(event) => updateFooterValue("quote", event.target.value)}
+                              onBlur={commitFooterValue}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
+                              }}
+                              className="w-full bg-transparent text-right text-sm font-semibold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                              aria-label="Footer safety quote"
+                            />
+                          ) : (
+                            <p
+                              className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
+                              onDoubleClick={() => !activeIsPreview && setEditingFooterValue("quote")}
+                              title="Double-click to edit safety quote"
+                            >
+                              &ldquo;{footerValues.quote}&rdquo;
+                            </p>
+                          )}
+                        </footer>
+                      ) : (
+                        <footer
+                          className="relative z-10 mt-auto flex items-center justify-between border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-2 pb-1 text-[11px] text-slate-400 font-mono"
+                          style={{ backgroundColor: getPaperToneColor(paperTone) }}
+                        >
+                          <span className="font-semibold text-[#1836a0] dark:text-sky-400">Sitesafe&trade; by AyantrAI Private Limited</span>
+                          <span>Page {page.pageNumber} of {pages.length}</span>
+                        </footer>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
-
-            <div
-              className="relative z-10"
-              style={{
-                paddingTop: marginConfig.top,
-                paddingRight: marginConfig.right,
-                paddingBottom: marginConfig.bottom,
-                paddingLeft: marginConfig.left,
-              }}
-            >
-            {/* Fixed report header: only the report values change per section. */}
-            <div
-              className="relative z-10 min-h-[126px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden"
-              style={{ backgroundColor: getPaperToneColor(paperTone) }}
-            >
-              <div className="relative h-full grid grid-cols-[1.05fr_1.25fr_1fr] items-center gap-5 px-6 py-5">
-                <div className="flex min-w-0 flex-col justify-center">
-                  <Image
-                    src="/sitesafe-header-logo.svg"
-                    alt="Sitesafe by AyantrAI"
-                    width={280}
-                    height={75}
-                    className="h-[70px] w-[230px] object-contain object-left"
-                    priority
-                  />
-                </div>
-
-                <div className="min-w-0 border-l-2 border-[#2454d8] pl-6">
-                  {editingHeaderValue === "taglinePrimary" ? (
-                    <input
-                      autoFocus
-                      value={headerValues.taglinePrimary}
-                      onChange={(event) => updateHeaderValue("taglinePrimary", event.target.value)}
-                      onBlur={commitHeaderValue}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
-                      }}
-                      className="w-full bg-transparent text-[17px] font-semibold italic leading-tight text-[#2454d8] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                      aria-label="Primary report tagline"
-                    />
-                  ) : (
-                    <p
-                      className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
-                      onClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
-                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
-                      title="Click to edit primary report tagline"
-                    >
-                      {headerValues.taglinePrimary}
-                    </p>
-                  )}
-                  {editingHeaderValue === "taglineSecondary" ? (
-                    <input
-                      autoFocus
-                      value={headerValues.taglineSecondary}
-                      onChange={(event) => updateHeaderValue("taglineSecondary", event.target.value)}
-                      onBlur={commitHeaderValue}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
-                      }}
-                      className="w-full bg-transparent text-[17px] font-semibold italic leading-tight text-[#2454d8] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                      aria-label="Secondary report tagline"
-                    />
-                  ) : (
-                    <p
-                      className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
-                      onClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
-                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
-                      title="Click to edit secondary report tagline"
-                    >
-                      {headerValues.taglineSecondary}
-                    </p>
-                  )}
-                </div>
-
-                <div className="relative self-stretch flex items-center justify-between gap-4 pl-6 border-l-2 border-[#2454d8]">
-                  <div className="min-w-0">
-                    {editingHeaderValue === "title" ? (
-                      <input
-                        autoFocus
-                        value={headerValues.title}
-                        onChange={(event) => updateHeaderValue("title", event.target.value)}
-                        onBlur={commitHeaderValue}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
-                        }}
-                        className="w-full bg-transparent text-[19px] font-black leading-tight text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                        aria-label="Report title"
-                      />
-                    ) : (
-                      <p
-                        className="cursor-text text-[19px] font-black leading-tight text-[#1836a0]"
-                        onClick={() => !activeIsPreview && setEditingHeaderValue("title")}
-                        onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("title")}
-                        title="Double-click to edit report title"
-                      >
-                        {headerValues.title}
-                      </p>
-                    )}
-                    {editingHeaderValue === "period" ? (
-                      <input
-                        autoFocus
-                        value={headerValues.period}
-                        onChange={(event) => updateHeaderValue("period", event.target.value)}
-                        onBlur={commitHeaderValue}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
-                        }}
-                        className="mt-1 w-full bg-transparent text-[12px] font-semibold leading-tight text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                        aria-label="Report period"
-                      />
-                    ) : (
-                      <p
-                        className="mt-1 cursor-text text-[12px] font-semibold leading-tight text-[#1836a0]"
-                        onClick={() => !activeIsPreview && setEditingHeaderValue("period")}
-                        onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("period")}
-                        title="Double-click to edit report period"
-                      >
-                        {headerValues.period}
-                      </p>
-                    )}
-                    <div className="mt-2 h-1 w-14 rounded-full bg-[#2454d8]" />
-                  </div>
-                  <div className="absolute -right-6 -top-5 -bottom-5 flex w-[72px] flex-col items-center justify-center bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
-                    <span className="text-[10px] font-semibold">Page</span>
-                    <span className="text-[25px] font-black leading-none">{String(pageNumber).padStart(2, "0")}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Section-specific values remain in a stable body header. */}
-            <div
-              className="relative z-10 border-b border-slate-100 dark:border-zinc-800/60 px-0 pt-5 pb-4"
-              style={{ backgroundColor: getPaperToneColor(paperTone) }}
-            >
-              <div className="flex items-center justify-between gap-3 mb-1.5">
-                <span
-                  className="text-xs font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400"
-                  style={sectionTextColor ? { color: sectionTextColor } : undefined}
-                >
-                  {section.eyebrow}
-                </span>
-                {activeWatermark && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsWatermarkSelected(!isWatermarkSelected);
-                    }}
-                    className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
-                      isWatermarkSelected
-                        ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
-                        : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
-                    }`}
-                    title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
-                  >
-                    <Stamp className="w-2.5 h-2.5" />
-                    <span>{activeWatermark.name}</span>
-                    <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
-                  </button>
-                )}
-              </div>
-              <h1
-                className={`text-2xl font-black tracking-tight ${isDarkPaper && !sectionTextColor ? "text-white" : !sectionTextColor ? "text-slate-900 dark:text-white" : ""}`}
-                style={sectionTextColor ? { color: sectionTextColor } : undefined}
-              >
-                {section.name}
-              </h1>
-              {section.description && (
-                <p
-                  className={`text-xs mt-1 max-w-3xl leading-relaxed ${isDarkPaper && !sectionTextColor ? "text-zinc-300" : !sectionTextColor ? "text-slate-500 dark:text-zinc-400" : ""}`}
-                  style={sectionTextColor ? { color: sectionTextColor, opacity: 0.85 } : undefined}
-                >
-                  {section.description}
-                </p>
-              )}
-            </div>
-
-            {/* Canvas Rows Container */}
-            <div className="relative z-10 px-0 pt-6 pb-0 space-y-4">
-              {rows.length === 0 ? (
-                <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl text-slate-400 dark:text-zinc-600 space-y-3">
-                  <p className="text-sm font-medium">Canvas is empty</p>
-                  <p className="text-xs">Click any block in the left sidebar to start building</p>
-                </div>
-              ) : (
-                <SortableContext
-                  items={rows.map((r) => r.id)}
-                  strategy={verticalListSortingStrategy}
-                  disabled={activeIsPreview}
-                >
-                  <div className="space-y-4">
-                    {rows.map((row) => (
-                      <SortableRow
-                        key={row.id}
-                        sectionId={section.id}
-                        row={row}
-                        selectedCellId={activeSelectedCellId}
-                        selectedRowId={activeSelectedRowId}
-                        isPreview={activeIsPreview}
-                        onSelectCell={handleSelectCell}
-                        onEditCell={onEditCell}
-                        onDuplicateCell={handleDuplicateCell}
-                        onDeleteCell={handleDeleteCell}
-                        onColSpanChange={handleColSpanChange}
-                        onWidthChange={handleWidthChange}
-                        onUpdateMetricCard={onUpdateMetricCardInCell}
-                        onUpdateInsight={onUpdateInsightInCell}
-                        onUpdateTextBlock={onUpdateTextBlockInCell}
-                        onRemoveRow={handleRemoveRow}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              )}
-
-              {/* Add Row Button (Hidden in preview) */}
-              {!activeIsPreview && (
-                <button
-                  type="button"
-                  onClick={handleAddRow}
-                  className="
-                    w-full py-3.5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-800
-                    text-xs font-bold text-slate-400 dark:text-zinc-500
-                    hover:border-[#8B3DFF]/50 hover:text-[#8B3DFF] hover:bg-[#8B3DFF]/5
-                    transition-all flex items-center justify-center gap-2 cursor-pointer
-                    mt-4
-                  "
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Row to Section</span>
-                </button>
-              )}
-            </div>
-
-            {/* Fixed report footer: only the text values are editable per section. */}
-            <footer
-              className="relative z-10 grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-6 pb-2"
-              style={{ backgroundColor: getPaperToneColor(paperTone) }}
-            >
-              <div className="min-w-0">
-                {editingFooterValue === "company" ? (
-                  <input
-                    autoFocus
-                    value={footerValues.company}
-                    onChange={(event) => updateFooterValue("company", event.target.value)}
-                    onBlur={commitFooterValue}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
-                    }}
-                    className="w-full bg-transparent text-sm font-bold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                    aria-label="Footer company name"
-                  />
-                ) : (
-                  <p
-                    className="cursor-text text-sm font-bold text-[#1836a0]"
-                    onDoubleClick={() => !activeIsPreview && setEditingFooterValue("company")}
-                    title="Double-click to edit company name"
-                  >
-                    {footerValues.company}
-                  </p>
-                )}
-                {editingFooterValue === "websites" ? (
-                  <input
-                    autoFocus
-                    value={footerValues.websites}
-                    onChange={(event) => updateFooterValue("websites", event.target.value)}
-                    onBlur={commitFooterValue}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
-                    }}
-                    className="mt-1 w-full bg-transparent text-xs font-semibold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                    aria-label="Footer website links"
-                  />
-                ) : (
-                  <p
-                    className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
-                    onDoubleClick={() => !activeIsPreview && setEditingFooterValue("websites")}
-                    title="Double-click to edit website links"
-                  >
-                    {footerValues.websites}
-                  </p>
-                )}
-              </div>
-
-              <div className="h-[2px] w-full bg-[#1836a0]/60" />
-
-              {editingFooterValue === "quote" ? (
-                <input
-                  autoFocus
-                  value={footerValues.quote}
-                  onChange={(event) => updateFooterValue("quote", event.target.value)}
-                  onBlur={commitFooterValue}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
-                  }}
-                  className="w-full bg-transparent text-right text-sm font-semibold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                  aria-label="Footer safety quote"
-                />
-              ) : (
-                <p
-                  className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
-                  onDoubleClick={() => !activeIsPreview && setEditingFooterValue("quote")}
-                  title="Double-click to edit safety quote"
-                >
-                  “{footerValues.quote}”
-                </p>
-              )}
-            </footer>
-            </div>
-          </div>
+                </React.Fragment>
+              );
+            })}
+          </SortableContext>
         </div>
       </div>
 
       {/* ── Floating Viewport Dock (Bottom Center/Right) ── */}
       <div className="fixed bottom-4 right-8 z-40 flex items-center gap-1.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-2xl px-3 py-1.5 shadow-2xl backdrop-blur-md select-none text-xs">
+        {/* Page Navigator when multi-page */}
+        {pages.length > 1 && (
+          <>
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-xl px-2 py-0.5 font-mono text-[11px] font-bold text-slate-700 dark:text-zinc-200">
+              <button
+                type="button"
+                onClick={() => {
+                  const prev = Math.max(0, activeViewPageIndex - 1);
+                  setActiveViewPageIndex(prev);
+                  document.getElementById(`canvas-page-${prev}`)?.scrollIntoView({ behavior: "smooth" });
+                }}
+                disabled={activeViewPageIndex === 0}
+                className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+              </button>
+              <span className="px-1 text-[#8B3DFF]">
+                Page {activeViewPageIndex + 1} / {pages.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = Math.min(pages.length - 1, activeViewPageIndex + 1);
+                  setActiveViewPageIndex(next);
+                  document.getElementById(`canvas-page-${next}`)?.scrollIntoView({ behavior: "smooth" });
+                }}
+                disabled={activeViewPageIndex === pages.length - 1}
+                className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
+                title="Next Page"
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-1" />
+          </>
+        )}
+
         {/* Zoom Out */}
         <button
           type="button"

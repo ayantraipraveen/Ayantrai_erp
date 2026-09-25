@@ -55,7 +55,7 @@ export default function CreateSectionPage() {
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center bg-white dark:bg-[#07090d]">
         <div className="flex items-center gap-3 text-slate-500 dark:text-zinc-400">
           <Loader2 className="w-5 h-5 animate-spin text-[#9D61FF]" />
-          <span className="text-sm font-semibold">Initializing Blank Canvas Studio...</span>
+          <span className="text-sm font-semibold">Initializing Blank Studio...</span>
         </div>
       </div>
     );
