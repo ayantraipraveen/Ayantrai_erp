@@ -462,13 +462,13 @@ export function CanvasSidebar({
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`h-6.5 px-3 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer ${
+                className={`h-6.5 px-2 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer ${
                   selectedCategory === cat
                     ? "bg-[#9D61FF] text-white shadow-sm"
                     : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 hover:text-slate-800 dark:hover:text-white"
                 }`}
               >
-                {cat === "charts" ? "Charts (25)" : cat === "watermarks" ? "Stamps" : cat}
+                {cat === "charts" ? "Charts" : cat === "watermarks" ? "Stamps" : cat}
               </button>
             ))}
           </div>

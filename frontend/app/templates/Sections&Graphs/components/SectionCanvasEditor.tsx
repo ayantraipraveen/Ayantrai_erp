@@ -46,7 +46,11 @@ import {
 } from "./watermarkStorage";
 import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
 import { CanvasStudio } from "./CanvasStudio";
-import { CanvasContextRibbon } from "./CanvasContextRibbon";
+import {
+  CanvasContextRibbon,
+  CanvasMarginConfig,
+  DEFAULT_CANVAS_MARGIN,
+} from "./CanvasContextRibbon";
 import ChartEditorPanel from "./ChartEditorPanel";
 import {
   EditSectionHeaderModal,
@@ -99,6 +103,7 @@ export default function SectionCanvasEditor({
   const [showGuides, setShowGuides] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [isPreview, setIsPreview] = useState(false);
+  const [marginConfig, setMarginConfig] = useState<CanvasMarginConfig>(DEFAULT_CANVAS_MARGIN);
 
   // Derive active selected cell
   
@@ -512,6 +517,10 @@ export default function SectionCanvasEditor({
     [dispatch, sectionId, selectedRowId, selectedCellId]
   );
 
+  const handleUpdateMarginConfig = useCallback((patch: Partial<CanvasMarginConfig>) => {
+    setMarginConfig((current) => ({ ...current, ...patch }));
+  }, []);
+
   const handleDuplicateActive = useCallback(() => {
     if (!selectedRowId || !selectedCellId) return;
     dispatch(duplicateCanvasCell({ sectionId, rowId: selectedRowId, cellId: selectedCellId }));
@@ -705,6 +714,8 @@ export default function SectionCanvasEditor({
         onDelete={handleDeleteActive}
         paperTone={paperTone}
         onSetPaperTone={setPaperTone}
+        marginConfig={marginConfig}
+        onUpdateMarginConfig={handleUpdateMarginConfig}
         sectionTextColor={sectionTextColor}
         onSetSectionTextColor={setSectionTextColor}
         showGrid={showGrid}
@@ -751,6 +762,8 @@ export default function SectionCanvasEditor({
           onUpdateInsightInCell={handleUpdateInsightInCell}
           onUpdateTextBlockInCell={handleUpdateTextBlockInCell}
           paperTone={paperTone}
+          marginConfig={marginConfig}
+          pageNumber={Math.max(1, librarySections.findIndex((item) => item.id === sectionId) + 1)}
           sectionTextColor={sectionTextColor}
           showGrid={showGrid}
           onToggleGrid={() => setShowGrid(!showGrid)}

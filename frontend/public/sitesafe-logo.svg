@@ -1,0 +1,18 @@
+<svg width="768" height="768" viewBox="0 0 768 768" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Sitesafe</title>
+  <desc id="desc">Sitesafe people safer, sites smarter logo</desc>
+  <rect width="768" height="768" fill="#ffffff"/>
+  <g transform="translate(128 48)">
+    <path d="M256 0 512 126v184c0 157-96 267-256 354C96 577 0 467 0 310V126L256 0Z" fill="#27116f"/>
+    <path d="M256 38 48 140v169c0 124 72 218 208 296 136-78 208-172 208-296V140L256 38Z" fill="#ffffff"/>
+    <path d="M256 93c-54 0-96 42-96 96v22h192v-22c0-54-42-96-96-96Z" fill="#27116f"/>
+    <path d="M145 211h222c0 15-12 27-27 27H172c-15 0-27-12-27-27Z" fill="#27116f"/>
+    <rect x="235" y="62" width="42" height="122" rx="18" fill="#27116f"/>
+    <path d="M161 273h190l-24 94-71 45-71-45-24-94Z" fill="#27116f"/>
+    <path d="m142 321 74 55v91l-64-40-36-87 26-19Z" fill="#ff8610"/>
+    <path d="m370 321-74 55v91l64-40 36-87-26-19Z" fill="#ff8610"/>
+    <path d="M256 368v116" stroke="#ffffff" stroke-width="12"/>
+  </g>
+  <text x="384" y="594" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="108" font-weight="900" letter-spacing="-7" fill="#27116f">Site<tspan fill="#ff8610">safe</tspan></text>
+  <text x="384" y="655" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" letter-spacing="7" fill="#27116f">PEOPLE SAFER. SITES SMARTER.</text>
+</svg>

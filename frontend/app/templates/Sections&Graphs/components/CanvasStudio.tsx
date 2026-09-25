@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import {
   DndContext,
   DragEndEvent,
@@ -70,6 +71,7 @@ import {
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
+import { DEFAULT_CANVAS_MARGIN, CanvasMarginConfig } from "./CanvasContextRibbon";
 
 // ─── Mathematical fluid width formula for flex-wrap row with gap: 16px ────────
 export function getCellWidthStyle(percent: number): string {
@@ -596,6 +598,8 @@ export interface CanvasStudioProps {
   onUpdateInsightInCell?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlockInCell?: (rowId: string, cellId: string, content: string) => void;
   paperTone?: string;
+  marginConfig?: CanvasMarginConfig;
+  pageNumber?: number;
   sectionTextColor?: string;
   showGrid?: boolean;
   onToggleGrid?: () => void;
@@ -637,6 +641,8 @@ export function CanvasStudio({
   onUpdateInsightInCell,
   onUpdateTextBlockInCell,
   paperTone = "white",
+  marginConfig = DEFAULT_CANVAS_MARGIN,
+  pageNumber = 1,
   sectionTextColor,
   showGrid = true,
   onToggleGrid,
@@ -1019,12 +1025,21 @@ export function CanvasStudio({
         >
           {/* ── Floating A4 Artboard Sheet with Multilayer Depth ── */}
           <div
-            style={customPaperStyle}
-            className={`relative min-h-[842px] ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 rounded-3xl overflow-hidden transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)]`}
+            style={{ ...customPaperStyle, borderRadius: `${marginConfig.radius}px` }}
+            className={`relative min-h-[842px] ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 overflow-hidden transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)]`}
           >
             {/* Margin Guides (if enabled) */}
             {activeShowGuides && !activeIsPreview && (
-              <div className="absolute inset-4 rounded-2xl border border-dashed border-sky-400/40 pointer-events-none z-20" />
+              <div
+                className="absolute border border-dashed border-sky-400/40 pointer-events-none z-20"
+                style={{
+                  top: marginConfig.top,
+                  right: marginConfig.right,
+                  bottom: marginConfig.bottom,
+                  left: marginConfig.left,
+                  borderRadius: Math.max(0, marginConfig.radius - 2),
+                }}
+              />
             )}
 
             {/* ── Realistic Corporate Document Watermark Stamp Layer ── */}
@@ -1198,39 +1213,85 @@ export function CanvasStudio({
               </div>
             )}
 
-            {/* Document Header Bar */}
-            <div className={`relative z-10 px-8 sm:px-10 pt-8 pb-5 border-b border-slate-100 dark:border-zinc-800/60 ${isDarkPaper ? "bg-black/30 backdrop-blur-md" : "bg-white/40 dark:bg-black/20 backdrop-blur-[2px]"}`}>
-              <div className="flex items-center justify-between mb-1.5">
+            <div
+              className="relative z-10"
+              style={{
+                paddingTop: marginConfig.top,
+                paddingRight: marginConfig.right,
+                paddingBottom: marginConfig.bottom,
+                paddingLeft: marginConfig.left,
+              }}
+            >
+            {/* Fixed report header: only the report values change per section. */}
+            <div className={`relative z-10 min-h-[126px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden ${isDarkPaper ? "bg-black/30" : "bg-white/70 dark:bg-black/20"}`}>
+              <div className="absolute -left-8 -bottom-16 h-32 w-64 rotate-[24deg] bg-[#dceeff]/70" />
+              <div className="absolute -left-2 -bottom-10 h-24 w-48 rotate-[24deg] bg-[#eef7ff]/90" />
+              <div className="absolute -right-8 -top-8 h-36 w-44 rotate-[24deg] bg-[#dceeff]/70" />
+              <div className="absolute -right-1 -top-5 h-32 w-28 rotate-[24deg] bg-[#b9d5f3]/60" />
+
+              <div className="relative h-full grid grid-cols-[1.05fr_1.25fr_1fr] items-center gap-5 px-6 py-5">
+                <div className="flex min-w-0 flex-col justify-center">
+                  <Image
+                    src="/sitesafe-logo.svg"
+                    alt="Sitesafe - People Safer. Sites Smarter."
+                    width={210}
+                    height={150}
+                    className="h-[92px] w-[178px] object-contain object-left"
+                    priority
+                  />
+                </div>
+
+                <div className="min-w-0 border-l-2 border-[#2454d8] pl-6">
+                  <p className="text-[17px] font-semibold italic leading-tight text-[#2454d8]">
+                    Visibility for Every Worker;
+                  </p>
+                  <p className="text-[17px] font-semibold italic leading-tight text-[#2454d8]">
+                    Intelligence for Every Site.
+                  </p>
+                </div>
+
+                <div className="relative self-stretch flex items-center justify-between gap-4 pl-6 border-l-2 border-[#2454d8]">
+                  <div className="min-w-0">
+                    <p className="text-[19px] font-black leading-tight text-[#1836a0]">Monthly Report</p>
+                    <p className="mt-1 text-[12px] font-semibold leading-tight text-[#1836a0]">01 Sept 2025 - 30 Sept 2025</p>
+                    <div className="mt-2 h-1 w-14 rounded-full bg-[#2454d8]" />
+                  </div>
+                  <div className="absolute -right-6 -top-5 -bottom-5 flex w-[72px] flex-col items-center justify-center bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
+                    <span className="text-[10px] font-semibold">Page</span>
+                    <span className="text-[25px] font-black leading-none">{String(pageNumber).padStart(2, "0")}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section-specific values remain in a stable body header. */}
+            <div className={`relative z-10 border-b border-slate-100 dark:border-zinc-800/60 px-0 pt-5 pb-4 ${isDarkPaper ? "bg-black/20" : "bg-white/40 dark:bg-black/10"}`}>
+              <div className="flex items-center justify-between gap-3 mb-1.5">
                 <span
                   className="text-xs font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400"
                   style={sectionTextColor ? { color: sectionTextColor } : undefined}
                 >
                   {section.eyebrow}
                 </span>
-                <div className="flex items-center gap-2">
-                  {activeWatermark && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsWatermarkSelected(!isWatermarkSelected);
-                      }}
-                      className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
-                        isWatermarkSelected
-                          ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
-                          : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
-                      }`}
-                      title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
-                    >
-                      <Stamp className="w-2.5 h-2.5" />
-                      <span>{activeWatermark.name}</span>
-                      <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
-                    </button>
-                  )}
-                  <span className={`text-[10px] font-mono tracking-widest uppercase ${isDarkPaper ? "text-slate-400" : "text-slate-300 dark:text-zinc-600"}`}>
-                    CANVA STUDIO · INDUSTRIAL REPORT
-                  </span>
-                </div>
+                {activeWatermark && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsWatermarkSelected(!isWatermarkSelected);
+                    }}
+                    className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
+                      isWatermarkSelected
+                        ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
+                        : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
+                    }`}
+                    title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
+                  >
+                    <Stamp className="w-2.5 h-2.5" />
+                    <span>{activeWatermark.name}</span>
+                    <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
+                  </button>
+                )}
               </div>
               <h1
                 className={`text-2xl font-black tracking-tight ${isDarkPaper && !sectionTextColor ? "text-white" : !sectionTextColor ? "text-slate-900 dark:text-white" : ""}`}
@@ -1249,7 +1310,7 @@ export function CanvasStudio({
             </div>
 
             {/* Canvas Rows Container */}
-            <div className="relative z-10 px-8 sm:px-10 py-6 space-y-4">
+            <div className="relative z-10 px-0 pt-6 pb-0 space-y-4">
               {rows.length === 0 ? (
                 <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl text-slate-400 dark:text-zinc-600 space-y-3">
                   <p className="text-sm font-medium">Canvas is empty</p>
@@ -1303,6 +1364,7 @@ export function CanvasStudio({
                   <span>Add Row to Section</span>
                 </button>
               )}
+            </div>
             </div>
           </div>
         </div>
