@@ -121,23 +121,31 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
     const name = newSectionName.trim();
     const eyebrow = newSectionEyebrow.trim() || "CUSTOM MODULE";
     const description = newSectionDesc.trim() || "Custom reusable report section with attached telemetry.";
+    const newId = `sec-custom-${Date.now()}`;
 
     dispatch(
       createLibrarySection({
+        id: newId,
         name,
         eyebrow,
         description,
         metricCards: [],
         charts: [],
         keyInsights: [],
+        canvasRows: [],
       })
     );
 
-    dispatch(showGlobalToast({ message: `Section "${name}" created!`, type: "success" }));
+    dispatch(showGlobalToast({ message: `Section "${name}" created! Opening canvas...`, type: "success" }));
     setNewSectionName("");
     setNewSectionEyebrow("");
     setNewSectionDesc("");
     setCreateModalOpen(false);
+
+    // Directly open and render the Canva canvas editor for this new section!
+    if (typeof onSelectSection === "function") {
+      onSelectSection(newId);
+    }
   };
 
   const handleDuplicate = (id: string, name: string) => {

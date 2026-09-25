@@ -1995,6 +1995,7 @@ export const reportModuleSlice = createSlice({
     createLibrarySection: (
       state,
       action: PayloadAction<{
+        id?: string;
         name: string;
         eyebrow?: string;
         description: string;
@@ -2002,10 +2003,12 @@ export const reportModuleSlice = createSlice({
         metricCards?: LibraryMetricCard[];
         charts?: LibraryChartCard[];
         keyInsights?: LibraryKeyInsightItem[];
+        canvasRows?: import("./reportModuleSlice").CanvasRow[];
       }>
     ) => {
+      const newId = action.payload.id || `sec-custom-${Date.now()}`;
       const newSec: LibrarySection = {
-        id: `sec-custom-${Date.now()}`,
+        id: newId,
         name: action.payload.name,
         eyebrow: action.payload.eyebrow || "CUSTOM MODULE",
         description: action.payload.description,
@@ -2015,6 +2018,7 @@ export const reportModuleSlice = createSlice({
         metricCards: action.payload.metricCards || [],
         charts: action.payload.charts || [],
         keyInsights: action.payload.keyInsights || [],
+        canvasRows: action.payload.canvasRows || [],
       };
       state.librarySections.unshift(newSec);
       state.selectedLibrarySectionId = newSec.id;
