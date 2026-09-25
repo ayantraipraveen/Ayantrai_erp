@@ -95,40 +95,65 @@ export function getCellWidthStyle(percent: number): string {
   return `calc(${p}% - ${gapSub.toFixed(1)}px)`;
 }
 
-// ─── Predictive Row Height Estimation ─────────────────────────────────────────
+// ─── Predictive Row Height Estimation (Calibrated for Standard 1123px A4) ──────
 export function estimateRowHeight(row: CanvasRow): number {
   if (!row.cells || row.cells.length === 0) return 80;
-  let maxCellHeight = 60;
+
+  // Track flex-wrap line progression based on cumulative customWidth percentages
+  let currentLineWidth = 0;
+  let currentLineMaxHeight = 0;
+  let totalCalculatedHeight = 0;
+
   for (const cell of row.cells) {
-    let h = 80;
+    let h = 90;
     switch (cell.blockType) {
       case "chart":
-        h = 340;
+        // Chart card: 40px padding + 32px header + 260px chart area + description + margins
+        h = cell.chart?.description ? 395 : 370;
         break;
       case "metric-card":
+        // Metric card: 32px padding + label + 2xl value + trend badge
         h = 135;
         break;
-      case "insight":
-        h = 105;
-        break;
-      case "text":
-        h = 85;
-        break;
       case "badge-strip":
-        h = 90;
+        // 4-badge strip: 28px padding + 88px badges
+        h = 140;
         break;
+      case "insight":
+        // Key insight card: 32px padding + icon badge + text
+        h = 110;
+        break;
+      case "text": {
+        // Rich text block with multiline awareness
+        const lines = (cell.textBlock?.content || "").split("\n").length;
+        h = Math.max(90, 60 + lines * 20);
+        break;
+      }
       case "divider":
         h = 32;
         break;
       default:
-        h = 90;
+        h = 100;
     }
-    if (h > maxCellHeight) maxCellHeight = h;
+
+    const cellWidth = cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : 100);
+
+    // If flex-wrap wraps into a new line (exceeds 105% allowing for slight margin rounding)
+    if (currentLineWidth + cellWidth > 105 && currentLineWidth > 0) {
+      totalCalculatedHeight += currentLineMaxHeight + 12; // 12px flex line gap
+      currentLineWidth = cellWidth;
+      currentLineMaxHeight = h;
+    } else {
+      currentLineWidth += cellWidth;
+      if (h > currentLineMaxHeight) currentLineMaxHeight = h;
+    }
   }
-  return maxCellHeight + 16; // 16px is space-y-4 row gap
+
+  totalCalculatedHeight += currentLineMaxHeight;
+  return totalCalculatedHeight + 16; // 16px row margins & drop zone
 }
 
-// ─── Multi-Page Partitioning Algorithm ────────────────────────────────────────
+// ─── Multi-Page Partitioning Algorithm (Standard A4 1123px Limit) ─────────────
 export interface PagePartition {
   pageIndex: number;
   pageNumber: number;
@@ -145,11 +170,20 @@ export function partitionCanvasPages(
   startPageNumber: number = 1
 ): PagePartition[] {
   const page1MarginY = (marginConfig?.top ?? 24) + (marginConfig?.bottom ?? 24);
-  // Capacity calculation based on physical 1123px A4 sheet
-  const capPage1Single = Math.max(500, A4_HEIGHT_PX - page1MarginY - 127 - 78 - 20 - 68);
-  const capPage1Multi = Math.max(550, A4_HEIGHT_PX - page1MarginY - 127 - 78 - 20);
-  const capMiddlePage = Math.max(650, A4_HEIGHT_PX - 40 - 56 - 20);
-  const capLastPage = Math.max(600, A4_HEIGHT_PX - 40 - 56 - 20 - 68);
+
+  // Exact physical A4 sheet height: 1123px at standard 96 DPI
+  // Safe capacities strictly calibrated to standard A4 height to prevent clipping:
+  // Page 1 (Single-page report): Header (130px) + Section Title Bar (~90px) + Margins (~48px) + Full Footer (~92px) + Controls (~42px) + Buffer (~35px)
+  const capPage1Single = Math.max(500, Math.min(680, A4_HEIGHT_PX - page1MarginY - 130 - 90 - 92 - 42 - 35));
+  
+  // Page 1 (Multi-page report): Header (130px) + Section Title Bar (~90px) + Margins (~48px) + Running Footer (~32px) + Controls (~42px) + Buffer (~35px)
+  const capPage1Multi = Math.max(550, Math.min(700, A4_HEIGHT_PX - page1MarginY - 130 - 90 - 32 - 42 - 35));
+
+  // Continuation Pages (Middle): Compact Header (~64px) + Margins (~40px) + Running Footer (~32px) + Controls (~42px) + Buffer (~30px)
+  const capMiddlePage = Math.max(650, Math.min(860, A4_HEIGHT_PX - 40 - 64 - 32 - 42 - 30));
+
+  // Last Page (Multi-page report): Compact Header (~64px) + Margins (~40px) + Full Footer (~92px) + Controls (~42px) + Buffer (~30px)
+  const capLastPage = Math.max(600, Math.min(800, A4_HEIGHT_PX - 40 - 64 - 92 - 42 - 30));
 
   if (rows.length === 0) {
     return [
@@ -639,6 +673,8 @@ interface SortableRowProps {
   selectedCellId?: string | null;
   selectedRowId?: string | null;
   isPreview?: boolean;
+  isAutoBreakFirstRow?: boolean;
+  currentPageNumber?: number;
   onSelectCell?: (cellId: string | null, rowId: string | null) => void;
   onEditCell: (cell: CanvasCell, rowId: string) => void;
   onDuplicateCell: (cellId: string, rowId: string) => void;
@@ -663,6 +699,8 @@ function SortableRow({
   selectedCellId,
   selectedRowId,
   isPreview = false,
+  isAutoBreakFirstRow = false,
+  currentPageNumber = 1,
   onSelectCell,
   onEditCell,
   onDuplicateCell,
@@ -715,8 +753,19 @@ function SortableRow({
       {row.pageBreakBefore && !isPreview && (
         <div className="flex items-center gap-2 -mt-1 mb-2 text-[10px] font-mono text-[#8B3DFF]">
           <Layers className="w-3 h-3" />
-          <span className="font-bold uppercase tracking-wider">Page Break (Starts on New Page)</span>
+          <span className="font-bold uppercase tracking-wider">Manual Page Break (Starts on New Page)</span>
           <div className="flex-1 border-t border-dashed border-[#8B3DFF]/40" />
+        </div>
+      )}
+
+      {/* Auto Page Break visual marker (Triggered by standard A4 height 1123px) */}
+      {isAutoBreakFirstRow && !isPreview && (
+        <div className="flex items-center gap-2 -mt-1 mb-2.5 px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60 text-[10px] font-mono text-purple-700 dark:text-purple-300 shadow-xs">
+          <Layers className="w-3.5 h-3.5 text-[#8B3DFF] flex-shrink-0 animate-pulse" />
+          <span className="font-bold uppercase tracking-wider">AUTO PAGE BREAK APPLIED</span>
+          <span className="text-purple-300 dark:text-purple-700">&bull;</span>
+          <span className="text-slate-600 dark:text-zinc-300 font-sans font-medium">Standard A4 Height Limit (1123px) &bull; Moved to Page {currentPageNumber}</span>
+          <div className="flex-1 border-t border-dashed border-purple-300 dark:border-purple-700/60" />
         </div>
       )}
 
@@ -836,6 +885,10 @@ function SortableRow({
                 onUpdateMetricCard={onUpdateMetricCard}
                 onUpdateInsight={onUpdateInsight}
                 onUpdateTextBlock={onUpdateTextBlock}
+                onUpdateBadgeStrip={onUpdateBadgeStrip}
+                onUpdateSingleBadge={onUpdateSingleBadge}
+                onAddBadge={onAddBadge}
+                onDeleteBadge={onDeleteBadge}
               />
             ))
           )}
@@ -1574,17 +1627,17 @@ export function CanvasStudio({
                 <React.Fragment key={`page-${page.pageIndex}`}>
                   {/* Visual Page Break Between Pages on Desk */}
                   {pageIdx > 0 && (
-                    <div className="flex items-center gap-4 w-[794px] my-1 text-xs select-none">
-                      <div className="flex-1 border-t-2 border-dashed border-slate-300 dark:border-zinc-700" />
-                      <div className="flex items-center gap-2 px-3.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-300 font-mono font-bold text-[11px] shadow-sm">
-                        <Layers className="w-3.5 h-3.5 text-[#9D61FF]" />
-                        <span className="text-[#9D61FF]">PAGE BREAK</span>
+                    <div className="flex items-center gap-4 w-[794px] my-2 text-xs select-none">
+                      <div className="flex-1 border-t-2 border-dashed border-purple-300 dark:border-purple-900/60" />
+                      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-zinc-800 border-2 border-purple-300 dark:border-purple-700 text-slate-700 dark:text-zinc-200 font-mono font-bold text-[11px] shadow-md">
+                        <Layers className="w-4 h-4 text-[#8B3DFF] animate-pulse" />
+                        <span className="text-[#8B3DFF] font-black">AUTO PAGE BREAKER</span>
                         <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
                         <span>Page {page.pageNumber} of {pages.length}</span>
                         <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
-                        <span className="text-slate-400 font-normal">A4 (794 &times; 1123 px)</span>
+                        <span className="text-slate-500 dark:text-zinc-400 font-medium">Standard A4 (794 &times; 1123 px)</span>
                       </div>
-                      <div className="flex-1 border-t-2 border-dashed border-slate-300 dark:border-zinc-700" />
+                      <div className="flex-1 border-t-2 border-dashed border-purple-300 dark:border-purple-900/60" />
                     </div>
                   )}
 
@@ -1833,8 +1886,13 @@ export function CanvasStudio({
                             />
                             <div className="h-6 w-px bg-[#2454d8]/40" />
                             <div className="min-w-0">
-                              <div className="text-[10px] font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400">
-                                {section.eyebrow} &bull; CONTINUATION
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400">
+                                  {section.eyebrow} &bull; CONTINUATION
+                                </span>
+                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20">
+                                  A4 Split (1123px)
+                                </span>
                               </div>
                               <div className="text-xs font-black tracking-tight text-[#1836a0] dark:text-white truncate max-w-[300px]">
                                 {section.name}
@@ -1891,8 +1949,9 @@ export function CanvasStudio({
                               />
                             )}
 
-                            {page.rows.map((row) => {
+                            {page.rows.map((row, rowIdx) => {
                               const globalRowIndex = rows.findIndex((r) => r.id === row.id);
+                              const isAutoBreakFirstRow = pageIdx > 0 && rowIdx === 0 && !row.pageBreakBefore;
                               return (
                                 <React.Fragment key={row.id}>
                                   <SortableRow
@@ -1901,6 +1960,8 @@ export function CanvasStudio({
                                     selectedCellId={activeSelectedCellId}
                                     selectedRowId={activeSelectedRowId}
                                     isPreview={activeIsPreview}
+                                    isAutoBreakFirstRow={isAutoBreakFirstRow}
+                                    currentPageNumber={page.pageNumber}
                                     onSelectCell={handleSelectCell}
                                     onEditCell={onEditCell}
                                     onDuplicateCell={handleDuplicateCell}
@@ -2083,6 +2144,9 @@ export function CanvasStudio({
               </button>
               <span className="px-1 text-[#8B3DFF]">
                 Page {activeViewPageIndex + 1} / {pages.length}
+              </span>
+              <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500 pl-1 border-l border-slate-200 dark:border-zinc-700">
+                A4 (1123px)
               </span>
               <button
                 type="button"

@@ -7,9 +7,6 @@ import {
   AlertCircle,
   Edit2,
   Eye,
-  Sliders,
-  Sparkles,
-  Download,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
