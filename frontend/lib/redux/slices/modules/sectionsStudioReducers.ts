@@ -665,6 +665,80 @@ export const sectionsStudioReducers = {
       }
     },
 
+    /** Update a single badge inside a badge strip in a cell */
+    updateSingleBadgeInCell: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        badgeId: string;
+        badge: Partial<CanvasBadgeItem>;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, badgeId, badge } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
+      if (cell && cell.badgeStrip) {
+        const item = cell.badgeStrip.badges.find((b: CanvasBadgeItem) => b.id === badgeId);
+        if (item) {
+          Object.assign(item, badge);
+          if (sec) sec.updatedAt = "Just now";
+        }
+      }
+    },
+
+    /** Add a new badge to a badge strip in a cell */
+    addBadgeToStripInCell: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        badge?: CanvasBadgeItem;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, badge } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
+      if (cell && cell.badgeStrip) {
+        const ts = Date.now();
+        const colors: Array<"blue" | "green" | "purple" | "amber" | "rose" | "cyan"> = ["blue", "green", "purple", "amber", "rose", "cyan"];
+        const chosenColor = colors[cell.badgeStrip.badges.length % colors.length];
+        const newBadge: CanvasBadgeItem = badge || {
+          id: `badge-${ts}`,
+          label: "New Indicator",
+          value: "100%",
+          color: chosenColor,
+          icon: "Shield",
+        };
+        cell.badgeStrip.badges.push(newBadge);
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Delete a badge from a badge strip in a cell */
+    deleteBadgeFromStripInCell: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        badgeId: string;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, badgeId } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
+      if (cell && cell.badgeStrip) {
+        cell.badgeStrip.badges = cell.badgeStrip.badges.filter((b) => b.id !== badgeId);
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
     /** Update metric card data inside a canvas cell */
     updateMetricCardInCell: (
       state: ReportModuleState,

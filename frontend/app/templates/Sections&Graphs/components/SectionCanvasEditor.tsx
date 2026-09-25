@@ -14,6 +14,8 @@ import {
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   CanvasCell,
+  CanvasBadgeStrip,
+  CanvasBadgeItem,
   LibraryMetricCard,
   LibraryChartCard,
   LibraryKeyInsightItem,
@@ -27,6 +29,10 @@ import {
   updateChartInCell,
   updateInsightInCell,
   updateTextBlockInCell,
+  updateBadgeStripInCell,
+  updateSingleBadgeInCell,
+  addBadgeToStripInCell,
+  deleteBadgeFromStripInCell,
   updateCellColSpan,
   updateCellStyleInCell,
   setSectionWatermark,
@@ -57,6 +63,7 @@ import {
   EditSectionHeaderModal,
   MetricCardModal,
   KeyInsightModal,
+  BadgeStripModal,
 } from "./SectionCanvasModals";
 
 export { PALETTE_RAMPS } from "./constants/chartTypes";
@@ -250,6 +257,26 @@ export default function SectionCanvasEditor({
     );
     dispatch(showGlobalToast({ message: "Chart updated!", type: "success" }));
     handleCloseChartEditor();
+  };
+
+  // Badge Strip Modal
+  const [badgeStripModalOpen, setBadgeStripModalOpen] = useState(false);
+  const [editingBadgeStrip, setEditingBadgeStrip] = useState<CanvasBadgeStrip | null>(null);
+  const [editingBadgeStripCellMeta, setEditingBadgeStripCellMeta] = useState<{ cell: CanvasCell; rowId: string } | null>(null);
+
+  const handleSaveBadgeStrip = (updatedStrip: CanvasBadgeStrip) => {
+    if (!editingBadgeStripCellMeta) return;
+    dispatch(
+      updateBadgeStripInCell({
+        sectionId,
+        rowId: editingBadgeStripCellMeta.rowId,
+        cellId: editingBadgeStripCellMeta.cell.id,
+        badgeStrip: updatedStrip,
+      })
+    );
+    dispatch(showGlobalToast({ message: "Badge strip updated!", type: "success" }));
+    setBadgeStripModalOpen(false);
+    setEditingBadgeStripCellMeta(null);
   };
 
   // Insight Modal
@@ -462,6 +489,13 @@ export default function SectionCanvasEditor({
             setInsightModalOpen(true);
           }
           break;
+        case "badge-strip":
+          if (cell.badgeStrip) {
+            setEditingBadgeStrip(cell.badgeStrip);
+            setEditingBadgeStripCellMeta({ cell, rowId });
+            setBadgeStripModalOpen(true);
+          }
+          break;
         default:
           break;
       }
@@ -487,6 +521,36 @@ export default function SectionCanvasEditor({
       }
     },
     [dispatch, sectionId, section?.canvasRows]
+  );
+
+  const handleUpdateBadgeStripInCell = useCallback(
+    (rowId: string, cellId: string, strip: CanvasBadgeStrip) => {
+      dispatch(updateBadgeStripInCell({ sectionId, rowId, cellId, badgeStrip: strip }));
+    },
+    [dispatch, sectionId]
+  );
+
+  const handleUpdateSingleBadgeInCell = useCallback(
+    (rowId: string, cellId: string, badgeId: string, patch: Partial<CanvasBadgeItem>) => {
+      dispatch(updateSingleBadgeInCell({ sectionId, rowId, cellId, badgeId, badge: patch }));
+    },
+    [dispatch, sectionId]
+  );
+
+  const handleAddBadgeToStripInCell = useCallback(
+    (rowId: string, cellId: string) => {
+      dispatch(addBadgeToStripInCell({ sectionId, rowId, cellId }));
+      dispatch(showGlobalToast({ message: "New badge added to strip!", type: "success" }));
+    },
+    [dispatch, sectionId]
+  );
+
+  const handleDeleteBadgeFromStripInCell = useCallback(
+    (rowId: string, cellId: string, badgeId: string) => {
+      dispatch(deleteBadgeFromStripInCell({ sectionId, rowId, cellId, badgeId }));
+      dispatch(showGlobalToast({ message: "Badge removed from strip", type: "info" }));
+    },
+    [dispatch, sectionId]
   );
 
   const handleUpdateTextBlockInCell = useCallback(
@@ -798,6 +862,10 @@ export default function SectionCanvasEditor({
           onUpdateMetricCardInCell={handleUpdateMetricCardInCell}
           onUpdateInsightInCell={handleUpdateInsightInCell}
           onUpdateTextBlockInCell={handleUpdateTextBlockInCell}
+          onUpdateBadgeStripInCell={handleUpdateBadgeStripInCell}
+          onUpdateSingleBadgeInCell={handleUpdateSingleBadgeInCell}
+          onAddBadgeToStripInCell={handleAddBadgeToStripInCell}
+          onDeleteBadgeFromStripInCell={handleDeleteBadgeFromStripInCell}
           paperTone={paperTone}
           marginConfig={marginConfig}
           pageNumber={Math.max(1, librarySections.findIndex((item) => item.id === sectionId) + 1)}
@@ -861,6 +929,16 @@ export default function SectionCanvasEditor({
         text={insightText}
         setText={setInsightText}
         onSave={handleSaveInsight}
+      />
+
+      <BadgeStripModal
+        isOpen={badgeStripModalOpen}
+        onClose={() => {
+          setBadgeStripModalOpen(false);
+          setEditingBadgeStripCellMeta(null);
+        }}
+        badgeStrip={editingBadgeStrip}
+        onSave={handleSaveBadgeStrip}
       />
     </div>
   );

@@ -55,6 +55,8 @@ import { useDispatch } from "react-redux";
 import {
   CanvasRow,
   CanvasCell,
+  CanvasBadgeStrip,
+  CanvasBadgeItem,
   CanvasBlockType,
   LibrarySection,
   LibraryMetricCard,
@@ -366,6 +368,10 @@ interface SortableCellProps {
   onUpdateMetricCard?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateInsight?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
+  onUpdateBadgeStrip?: (rowId: string, cellId: string, strip: CanvasBadgeStrip) => void;
+  onUpdateSingleBadge?: (rowId: string, cellId: string, badgeId: string, patch: Partial<CanvasBadgeItem>) => void;
+  onAddBadge?: (rowId: string, cellId: string) => void;
+  onDeleteBadge?: (rowId: string, cellId: string, badgeId: string) => void;
   isDraggingOverlay?: boolean;
   cellIndex?: number;
   totalCellsInRow?: number;
@@ -386,6 +392,10 @@ function SortableCell({
   onUpdateMetricCard,
   onUpdateInsight,
   onUpdateTextBlock,
+  onUpdateBadgeStrip,
+  onUpdateSingleBadge,
+  onAddBadge,
+  onDeleteBadge,
   isDraggingOverlay = false,
   cellIndex,
   totalCellsInRow,
@@ -604,6 +614,18 @@ function SortableCell({
           onUpdateTextBlock={(content) => {
             if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, cell.id, content);
           }}
+          onUpdateBadgeStrip={(strip) => {
+            if (typeof onUpdateBadgeStrip === "function") onUpdateBadgeStrip(rowId, cell.id, strip);
+          }}
+          onUpdateSingleBadge={(badgeId, patch) => {
+            if (typeof onUpdateSingleBadge === "function") onUpdateSingleBadge(rowId, cell.id, badgeId, patch);
+          }}
+          onAddBadge={() => {
+            if (typeof onAddBadge === "function") onAddBadge(rowId, cell.id);
+          }}
+          onDeleteBadge={(badgeId) => {
+            if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, cell.id, badgeId);
+          }}
         />
       </div>
     </div>
@@ -626,6 +648,10 @@ interface SortableRowProps {
   onUpdateMetricCard?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateInsight?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
+  onUpdateBadgeStrip?: (rowId: string, cellId: string, strip: CanvasBadgeStrip) => void;
+  onUpdateSingleBadge?: (rowId: string, cellId: string, badgeId: string, patch: Partial<CanvasBadgeItem>) => void;
+  onAddBadge?: (rowId: string, cellId: string) => void;
+  onDeleteBadge?: (rowId: string, cellId: string, badgeId: string) => void;
   onRemoveRow: (rowId: string) => void;
   onTogglePageBreak?: (rowId: string) => void;
   onDropBlock?: (e: SidebarAddBlockEvent) => void;
@@ -646,6 +672,10 @@ function SortableRow({
   onUpdateMetricCard,
   onUpdateInsight,
   onUpdateTextBlock,
+  onUpdateBadgeStrip,
+  onUpdateSingleBadge,
+  onAddBadge,
+  onDeleteBadge,
   onRemoveRow,
   onTogglePageBreak,
   onDropBlock,
@@ -1038,6 +1068,10 @@ export interface CanvasStudioProps {
   onUpdateMetricCardInCell?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateInsightInCell?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlockInCell?: (rowId: string, cellId: string, content: string) => void;
+  onUpdateBadgeStripInCell?: (rowId: string, cellId: string, strip: CanvasBadgeStrip) => void;
+  onUpdateSingleBadgeInCell?: (rowId: string, cellId: string, badgeId: string, patch: Partial<CanvasBadgeItem>) => void;
+  onAddBadgeToStripInCell?: (rowId: string, cellId: string) => void;
+  onDeleteBadgeFromStripInCell?: (rowId: string, cellId: string, badgeId: string) => void;
   paperTone?: string;
   marginConfig?: CanvasMarginConfig;
   pageNumber?: number;
@@ -1077,6 +1111,10 @@ export function CanvasStudio({
   onUpdateMetricCardInCell,
   onUpdateInsightInCell,
   onUpdateTextBlockInCell,
+  onUpdateBadgeStripInCell,
+  onUpdateSingleBadgeInCell,
+  onAddBadgeToStripInCell,
+  onDeleteBadgeFromStripInCell,
   paperTone = "white",
   marginConfig = DEFAULT_CANVAS_MARGIN,
   pageNumber = 1,
@@ -1872,6 +1910,10 @@ export function CanvasStudio({
                                     onUpdateMetricCard={onUpdateMetricCardInCell}
                                     onUpdateInsight={onUpdateInsightInCell}
                                     onUpdateTextBlock={onUpdateTextBlockInCell}
+                                    onUpdateBadgeStrip={onUpdateBadgeStripInCell}
+                                    onUpdateSingleBadge={onUpdateSingleBadgeInCell}
+                                    onAddBadge={onAddBadgeToStripInCell}
+                                    onDeleteBadge={onDeleteBadgeFromStripInCell}
                                     onRemoveRow={handleRemoveRow}
                                     onTogglePageBreak={handleTogglePageBreak}
                                     onDropBlock={onDropBlock}
