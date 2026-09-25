@@ -102,6 +102,8 @@ interface SortableCellProps {
   onUpdateInsight?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
   isDraggingOverlay?: boolean;
+  cellIndex?: number;
+  totalCellsInRow?: number;
 }
 
 function SortableCell({
@@ -120,7 +122,19 @@ function SortableCell({
   onUpdateInsight,
   onUpdateTextBlock,
   isDraggingOverlay = false,
+  cellIndex,
+  totalCellsInRow,
 }: SortableCellProps) {
+  const isFirstInRow = cellIndex === 0;
+  const isLastInRow = typeof totalCellsInRow === "number" && totalCellsInRow > 1 && cellIndex === totalCellsInRow - 1;
+  const toolbarPlacementClass = isFirstInRow
+    ? "left-0"
+    : isLastInRow
+    ? "right-0"
+    : (cell.customWidth ?? (cell.colSpan * 25)) <= 35
+    ? "left-0"
+    : "right-0";
+
   const {
     attributes,
     listeners,
@@ -307,7 +321,7 @@ function SortableCell({
 
           {/* Live Drag-Resize Canva HUD Tooltip */}
           {isResizing && (
-            <div className="absolute -bottom-9 right-0 z-50 px-2.5 py-1 rounded-lg bg-[#0F172A] text-white text-[10px] font-mono font-bold shadow-2xl flex items-center gap-1.5 border border-[#8B3DFF] whitespace-nowrap animate-pulse">
+            <div className={`absolute -bottom-9 z-50 px-2.5 py-1 rounded-lg bg-[#0F172A] text-white text-[10px] font-mono font-bold shadow-2xl flex items-center gap-1.5 border border-[#8B3DFF] whitespace-nowrap animate-pulse ${isFirstInRow ? "left-0" : "right-0"}`}>
               <Maximize2 className="w-3 h-3 text-[#8B3DFF]" />
               <span>
                 Width: {resizePercent}%{" "}
@@ -323,9 +337,9 @@ function SortableCell({
         <div className="absolute inset-0 rounded-2xl pointer-events-none z-10 group-hover:ring-1 group-hover:ring-[#8B3DFF]/40 transition-all" />
       )}
 
-      {/* Canva Micro Quick-Toolbar (Top-Right above card) */}
+      {/* Canva Micro Quick-Toolbar (Top-Right or Top-Left above card) */}
       {isSelected && !isPreview && !isDraggingOverlay && (
-        <div className="absolute -top-9 right-0 z-30 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-700/90 rounded-xl px-2 py-1 shadow-xl backdrop-blur-sm animate-fadeIn">
+        <div className={`absolute -top-11 z-30 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-700/90 rounded-xl px-2 py-1 shadow-xl backdrop-blur-sm animate-fadeIn whitespace-nowrap ${toolbarPlacementClass}`}>
           {/* Width Presets */}
           <span className="text-[10px] font-mono font-bold text-slate-400 mr-0.5">W:</span>
           {([25, 33, 50, 75, 100] as const).map((w) => (
@@ -556,12 +570,14 @@ function SortableRow({
               <span>Empty Row &middot; Drag blocks here</span>
             </div>
           ) : (
-            row.cells.map((cell) => (
+            row.cells.map((cell, idx) => (
               <SortableCell
                 key={cell.id}
                 sectionId={sectionId}
                 rowId={row.id}
                 cell={cell}
+                cellIndex={idx}
+                totalCellsInRow={row.cells.length}
                 isSelected={selectedCellId === cell.id}
                 isPreview={isPreview}
                 onSelect={(cellId, rId) => {

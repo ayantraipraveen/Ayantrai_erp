@@ -34,7 +34,7 @@ export default function TemplatesLayout({
     pathname?.includes("/Sections%26Graphs");
 
   const isStudioPage =
-    pathname?.includes("/charts") || pathname?.includes("/watermark");
+    pathname?.includes("/charts") || pathname?.includes("/watermark") || pathname?.includes("/create");
 
   return (
     <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden bg-transparent">

@@ -283,15 +283,14 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
             <span>Watermark</span>
           </Link>
 
-          {/* Create Section Action */}
-          <button
-            type="button"
-            onClick={() => setCreateModalOpen(true)}
+          {/* Create Section Action navigating to /templates/Sections&Graphs/create */}
+          <Link
+            href="/templates/Sections&Graphs/create"
             className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#9D61FF] to-[#8B4CF0] hover:from-[#9254f8] hover:to-[#7e3beb] text-white font-bold text-xs cursor-pointer flex items-center gap-2 flex-shrink-0 shadow-[0_2px_10px_rgba(157,97,255,0.25)] hover:shadow-[0_4px_16px_rgba(157,97,255,0.4)] transition-all active:scale-[0.98] border border-purple-400/20"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Create Section</span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -304,14 +303,13 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
             <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
               No report sections matched your search criteria. Try modifying your filter or create a new section.
             </p>
-            <button
-              type="button"
-              onClick={() => setCreateModalOpen(true)}
-              className="mt-2 px-4 py-2 rounded-xl bg-[#9D61FF] text-white text-xs font-bold hover:bg-[#8845fc] inline-flex items-center gap-2 cursor-pointer"
+            <Link
+              href="/templates/Sections&Graphs/create"
+              className="mt-2 px-4 py-2 rounded-xl bg-[#9D61FF] text-white text-xs font-bold hover:bg-[#8845fc] inline-flex items-center gap-2 cursor-pointer shadow-sm"
             >
               <Plus className="w-4 h-4" />
               <span>Create New Section</span>
-            </button>
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 pb-6">
