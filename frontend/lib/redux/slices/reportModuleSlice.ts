@@ -320,10 +320,21 @@ export type CanvasBlockType =
   | "badge-strip"
   | "divider";
 
+export interface CanvasCellStyle {
+  fontFamily?: "sans" | "serif" | "mono" | "rounded";
+  fontSize?: "xs" | "sm" | "base" | "lg" | "xl";
+  fontWeight?: "normal" | "medium" | "semibold" | "bold";
+  textAlign?: "left" | "center" | "right";
+  textColor?: string;
+  cardBg?: string; // preset id or hex color (e.g. 'white', 'slate', 'glass', 'purple', 'indigo', 'emerald', 'amber', 'rose', 'dark')
+  borderColor?: string;
+}
+
 export interface CanvasCell {
   id: string;
   colSpan: 1 | 2 | 3 | 4; // column span within the row (out of 4)
   blockType: CanvasBlockType;
+  style?: CanvasCellStyle;
   // Only one of these is set, matching blockType:
   metricCard?: LibraryMetricCard;
   chart?: LibraryChartCard;
@@ -2498,6 +2509,26 @@ export const reportModuleSlice = createSlice({
       }
     },
 
+    /** Update a cell's style (font, color, bg, border, align) */
+    updateCellStyleInCell: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        style: Partial<CanvasCellStyle>;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, style } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const cell = row?.cells.find((c) => c.id === cellId);
+      if (cell) {
+        cell.style = { ...(cell.style || {}), ...style };
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
     /** Update text block content in a cell */
     updateTextBlockInCell: (
       state,
@@ -3076,6 +3107,7 @@ export const {
   duplicateCanvasCell,
   deleteCanvasCell,
   updateCellColSpan,
+  updateCellStyleInCell,
   updateTextBlockInCell,
   updateBadgeStripInCell,
   updateMetricCardInCell,

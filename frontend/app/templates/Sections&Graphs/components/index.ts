@@ -7,4 +7,5 @@ export { CanvasStudio } from "./CanvasStudio";
 export { CanvasSidebar } from "./CanvasSidebar";
 export { CanvasBlockRenderer } from "./CanvasBlockRenderer";
 export * from "./constants/chartTypes";
+export * from "./watermarkStorage";
 
