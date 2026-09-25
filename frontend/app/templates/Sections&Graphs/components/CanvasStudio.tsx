@@ -428,6 +428,7 @@ function SortableCell({
   onDelete,
   onColSpanChange,
   onWidthChange,
+  onHeightChange,
   onUpdateMetricCard,
   onUpdateInsight,
   onUpdateTextBlock,
@@ -464,13 +465,22 @@ function SortableCell({
   const initialPercent = cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : defaultWidthForCount);
   const [isResizing, setIsResizing] = useState(false);
   const [resizePercent, setResizePercent] = useState<number>(initialPercent);
+
+  const initialHeight = cell.customHeight;
+  const [isHeightResizing, setIsHeightResizing] = useState(false);
+  const [resizeHeight, setResizeHeight] = useState<number | undefined>(initialHeight);
   const cellDomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setResizePercent(cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : defaultWidthForCount));
   }, [cell.customWidth, cell.colSpan, defaultWidthForCount]);
 
+  useEffect(() => {
+    setResizeHeight(cell.customHeight);
+  }, [cell.customHeight]);
+
   const currentPercent = isResizing ? resizePercent : (cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : defaultWidthForCount));
+  const currentHeight = isHeightResizing ? resizeHeight : cell.customHeight;
   const widthStyle = getCellWidthStyle(currentPercent);
 
   const handleResizeStart = (e: React.MouseEvent) => {
@@ -518,12 +528,105 @@ function SortableCell({
     window.addEventListener("mouseup", handleMouseUp);
   };
 
+  const handleHeightResizeStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsHeightResizing(true);
+
+    const startY = e.clientY;
+    const startH = cellDomRef.current?.getBoundingClientRect().height || currentHeight || 300;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaY = moveEvent.clientY - startY;
+      const newH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      setResizeHeight(newH);
+    };
+
+    const handleMouseUp = (upEvent: MouseEvent) => {
+      setIsHeightResizing(false);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+
+      const deltaY = upEvent.clientY - startY;
+      const finalH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      setResizeHeight(finalH);
+
+      if (typeof onHeightChange === "function") {
+        onHeightChange(cell.id, rowId, finalH);
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
+  const handleCornerResizeStart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsResizing(true);
+    setIsHeightResizing(true);
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const parentRow = cellDomRef.current?.closest(".canvas-row-cells");
+    const parentWidth = parentRow ? parentRow.getBoundingClientRect().width : 740;
+    const startPercent = currentPercent;
+    const startH = cellDomRef.current?.getBoundingClientRect().height || currentHeight || 300;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaPercent = (deltaX / parentWidth) * 100;
+      const newPercent = Math.min(100, Math.max(15, Math.round(startPercent + deltaPercent)));
+      setResizePercent(newPercent);
+
+      const deltaY = moveEvent.clientY - startY;
+      const newH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      setResizeHeight(newH);
+    };
+
+    const handleMouseUp = (upEvent: MouseEvent) => {
+      setIsResizing(false);
+      setIsHeightResizing(false);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+
+      const deltaX = upEvent.clientX - startX;
+      const deltaPercent = (deltaX / parentWidth) * 100;
+      const finalPercent = Math.min(100, Math.max(15, Math.round(startPercent + deltaPercent)));
+      setResizePercent(finalPercent);
+
+      const deltaY = upEvent.clientY - startY;
+      const finalH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      setResizeHeight(finalH);
+
+      let colSpan: 1 | 2 | 3 | 4 = 1;
+      if (finalPercent >= 85) colSpan = 4;
+      else if (finalPercent >= 60) colSpan = 3;
+      else if (finalPercent >= 38) colSpan = 2;
+      else colSpan = 1;
+
+      if (typeof onColSpanChange === "function") {
+        onColSpanChange(cell.id, rowId, colSpan);
+      }
+      if (typeof onWidthChange === "function") {
+        onWidthChange(cell.id, rowId, finalPercent);
+      }
+      if (typeof onHeightChange === "function") {
+        onHeightChange(cell.id, rowId, finalH);
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition: isResizing ? "none" : transition,
+    transition: isResizing || isHeightResizing ? "none" : transition,
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
     maxWidth: widthStyle,
+    height: currentHeight ? `${currentHeight}px` : undefined,
     flexShrink: 0,
     flexGrow: 0,
     boxSizing: "border-box",
@@ -560,7 +663,16 @@ function SortableCell({
         </div>
       )}
 
-      {/* Resize handle (right edge) */}
+      {/* Live resizing indicator HUD */}
+      {!isPreview && (isResizing || isHeightResizing) && (
+        <div className="absolute top-2 right-2 z-40 bg-[#8B3DFF] text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md shadow-lg pointer-events-none animate-in fade-in zoom-in-95 duration-100 flex items-center gap-1.5">
+          {isResizing && <span>W: {Math.round(currentPercent)}%</span>}
+          {isResizing && isHeightResizing && <span className="opacity-60">&bull;</span>}
+          {isHeightResizing && <span>H: {currentHeight ? `${Math.round(currentHeight)}px` : "Auto"}</span>}
+        </div>
+      )}
+
+      {/* Resize handle (right edge for width) */}
       {!isPreview && (
         <div
           onMouseDown={handleResizeStart}
@@ -573,8 +685,34 @@ function SortableCell({
         </div>
       )}
 
+      {/* Resize handle (bottom edge for height) */}
+      {!isPreview && (
+        <div
+          onMouseDown={handleHeightResizeStart}
+          className={`absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center transition-all group/bhandle ${
+            isHeightResizing ? "opacity-100" : "opacity-0 group-hover/cell:opacity-100"
+          }`}
+          title="Drag vertically to adjust height freely (80px - 800px)"
+        >
+          <div className="h-1 w-12 rounded-full bg-slate-400 dark:bg-zinc-600 group-hover/bhandle:bg-[#8B3DFF] group-hover/bhandle:h-1.5 group-hover/bhandle:w-20 transition-all shadow-xs" />
+        </div>
+      )}
+
+      {/* Resize handle (bottom-right corner for simultaneous width & height) */}
+      {!isPreview && (
+        <div
+          onMouseDown={handleCornerResizeStart}
+          className={`absolute -right-1.5 -bottom-1.5 w-4 h-4 cursor-se-resize z-30 flex items-center justify-center transition-all group/chandle ${
+            isResizing || isHeightResizing ? "opacity-100" : "opacity-0 group-hover/cell:opacity-100"
+          }`}
+          title="Drag corner to adjust width & height simultaneously"
+        >
+          <div className="w-2.5 h-2.5 rounded-full border-2 border-white dark:border-zinc-900 bg-slate-400 dark:bg-zinc-500 group-hover/chandle:bg-[#8B3DFF] group-hover/chandle:scale-125 transition-all shadow-xs" />
+        </div>
+      )}
+
       {/* Floating cell action bar */}
-      {!isPreview && (isSelected || isResizing) && (
+      {!isPreview && (isSelected || isResizing || isHeightResizing) && (
         <div className={`absolute -top-11 ${toolbarPlacementClass} z-40 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 shadow-xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap`}>
           <div className="flex items-center gap-1 font-mono text-[11px] text-purple-600 dark:text-purple-400 font-bold px-1">
             <span>{Math.round(currentPercent)}%</span>
@@ -618,6 +756,76 @@ function SortableCell({
             ))}
           </div>
 
+          {/* Height Presets & Steppers */}
+          <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-zinc-800 pl-1.5">
+            <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold font-mono pr-0.5">H:</span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setResizeHeight(undefined);
+                if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, undefined);
+              }}
+              className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                !currentHeight
+                  ? "bg-[#8B3DFF] text-white font-bold"
+                  : "text-[#8B3DFF] hover:bg-[#8B3DFF]/10 font-bold"
+              }`}
+              title="Auto height (fits content naturally)"
+            >
+              Auto
+            </button>
+            {[
+              { label: "S", h: 200 },
+              { label: "M", h: 300 },
+              { label: "L", h: 400 },
+            ].map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setResizeHeight(preset.h);
+                  if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, preset.h);
+                }}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                  currentHeight && Math.abs(currentHeight - preset.h) <= 15
+                    ? "bg-[#8B3DFF] text-white font-bold"
+                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
+                }`}
+                title={`Set height to ${preset.label} (${preset.h}px)`}
+              >
+                {preset.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const newH = Math.max(80, (currentHeight || 300) - 25);
+                setResizeHeight(newH);
+                if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
+              }}
+              className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              title="Decrease height by 25px"
+            >
+              -
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const newH = Math.min(800, (currentHeight || 300) + 25);
+                setResizeHeight(newH);
+                if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
+              }}
+              className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              title="Increase height by 25px"
+            >
+              +
+            </button>
+          </div>
+
           <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
 
           <button
@@ -659,7 +867,7 @@ function SortableCell({
       )}
 
       {/* Render the actual cell content block */}
-      <div className="w-full flex-1">
+      <div className="w-full flex-1 h-full min-h-0">
         <CanvasBlockRenderer
           cell={cell}
           isSelected={isSelected}
@@ -706,6 +914,7 @@ interface SortableRowProps {
   onDeleteCell: (cellId: string, rowId: string) => void;
   onColSpanChange?: (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => void;
   onWidthChange?: (cellId: string, rowId: string, customWidth: number) => void;
+  onHeightChange?: (cellId: string, rowId: string, customHeight?: number) => void;
   onUpdateMetricCard?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateInsight?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
@@ -732,6 +941,7 @@ function SortableRow({
   onDeleteCell,
   onColSpanChange,
   onWidthChange,
+  onHeightChange,
   onUpdateMetricCard,
   onUpdateInsight,
   onUpdateTextBlock,
@@ -907,6 +1117,7 @@ function SortableRow({
                 onDelete={onDeleteCell}
                 onColSpanChange={onColSpanChange}
                 onWidthChange={onWidthChange}
+                onHeightChange={onHeightChange}
                 onUpdateMetricCard={onUpdateMetricCard}
                 onUpdateInsight={onUpdateInsight}
                 onUpdateTextBlock={onUpdateTextBlock}
@@ -1150,6 +1361,7 @@ export interface CanvasStudioProps {
   onUpdateSingleBadgeInCell?: (rowId: string, cellId: string, badgeId: string, patch: Partial<CanvasBadgeItem>) => void;
   onAddBadgeToStripInCell?: (rowId: string, cellId: string) => void;
   onDeleteBadgeFromStripInCell?: (rowId: string, cellId: string, badgeId: string) => void;
+  onHeightChange?: (cellId: string, rowId: string, customHeight?: number) => void;
   paperTone?: string;
   marginConfig?: CanvasMarginConfig;
   pageNumber?: number;
@@ -1235,6 +1447,7 @@ export function CanvasStudio({
   onUpdateSingleBadgeInCell,
   onAddBadgeToStripInCell,
   onDeleteBadgeFromStripInCell,
+  onHeightChange,
   paperTone = "white",
   marginConfig = DEFAULT_CANVAS_MARGIN,
   pageNumber = 1,
@@ -1453,6 +1666,17 @@ export function CanvasStudio({
       dispatch(updateCellWidth({ sectionId: section.id, rowId, cellId, customWidth }));
     },
     [dispatch, section.id]
+  );
+
+  const handleHeightChange = useCallback(
+    (cellId: string, rowId: string, customHeight?: number) => {
+      if (typeof onHeightChange === "function") {
+        onHeightChange(cellId, rowId, customHeight);
+      } else {
+        dispatch(updateCellHeight({ sectionId: section.id, rowId, cellId, customHeight }));
+      }
+    },
+    [dispatch, section.id, onHeightChange]
   );
 
   const handleAddRow = useCallback(() => {
@@ -1920,7 +2144,13 @@ export function CanvasStudio({
 
                           {/* Section-specific Header Bar (Pixel-Perfect Matching Design Target) */}
                           <div
-                            className="relative z-10 px-0 pt-4 pb-3.5 group/section-header transition-all select-text"
+                            className={`relative z-10 px-0 group/section-header transition-all select-text ${
+                              section.headerSpacing === "compact"
+                                ? "pt-2 pb-1.5"
+                                : section.headerSpacing === "spacious"
+                                ? "pt-7 pb-6"
+                                : "pt-4 pb-3.5"
+                            }`}
                             style={{ backgroundColor: getPaperToneColor(paperTone) }}
                           >
                             <div className="flex items-center justify-between gap-3 mb-1.5">
@@ -1970,8 +2200,32 @@ export function CanvasStudio({
                                 </span>
                               )}
 
-                              {/* Right Header Controls: Watermark + Edit Header Button */}
+                              {/* Right Header Controls: Spacing + Watermark + Edit Header Button */}
                               <div className="flex items-center gap-2">
+                                {/* Header Spacing / Height Preset Selector */}
+                                {!activeIsPreview && (
+                                  <div className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-0.5 bg-slate-100 dark:bg-zinc-800 rounded-lg p-0.5 text-[10px] font-medium text-slate-500">
+                                    <span className="px-1 text-[9px] text-slate-400 font-mono">Pad:</span>
+                                    {(["compact", "normal", "spacious"] as const).map((space) => (
+                                      <button
+                                        key={space}
+                                        type="button"
+                                        onClick={() => {
+                                          dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));
+                                        }}
+                                        className={`px-1.5 py-0.5 rounded capitalize transition-colors cursor-pointer ${
+                                          (section.headerSpacing || "normal") === space
+                                            ? "bg-white dark:bg-zinc-700 text-[#8B3DFF] font-bold shadow-xs"
+                                            : "hover:text-slate-900 dark:hover:text-white"
+                                        }`}
+                                        title={`Set header vertical padding to ${space}`}
+                                      >
+                                        {space}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+
                                 {activeWatermark && (
                                   <button
                                     type="button"
@@ -2219,6 +2473,7 @@ export function CanvasStudio({
                                     onDeleteCell={handleDeleteCell}
                                     onColSpanChange={handleColSpanChange}
                                     onWidthChange={handleWidthChange}
+                                    onHeightChange={handleHeightChange}
                                     onUpdateMetricCard={onUpdateMetricCardInCell}
                                     onUpdateInsight={onUpdateInsightInCell}
                                     onUpdateTextBlock={onUpdateTextBlockInCell}

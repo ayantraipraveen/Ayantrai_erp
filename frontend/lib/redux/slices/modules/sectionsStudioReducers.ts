@@ -88,19 +88,29 @@ export const sectionsStudioReducers = {
       state: ReportModuleState,
       action: PayloadAction<{
         id: string;
-        name: string;
+        name?: string;
         eyebrow?: string;
-        description: string;
+        description?: string;
         icon?: string;
         watermarkId?: string;
         headerSpacing?: "compact" | "normal" | "spacious";
+        changes?: Partial<LibrarySection>;
       }>
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.id);
       if (sec) {
-        sec.name = action.payload.name;
+        const c = action.payload.changes;
+        if (c) {
+          if (c.name !== undefined) sec.name = c.name;
+          if (c.eyebrow !== undefined) sec.eyebrow = c.eyebrow;
+          if (c.description !== undefined) sec.description = c.description;
+          if (c.icon !== undefined) sec.icon = c.icon;
+          if (c.watermarkId !== undefined) sec.watermarkId = c.watermarkId;
+          if (c.headerSpacing !== undefined) sec.headerSpacing = c.headerSpacing;
+        }
+        if (action.payload.name !== undefined) sec.name = action.payload.name;
         if (action.payload.eyebrow !== undefined) sec.eyebrow = action.payload.eyebrow;
-        sec.description = action.payload.description;
+        if (action.payload.description !== undefined) sec.description = action.payload.description;
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
         if (action.payload.watermarkId !== undefined) sec.watermarkId = action.payload.watermarkId;
         if (action.payload.headerSpacing !== undefined) sec.headerSpacing = action.payload.headerSpacing;

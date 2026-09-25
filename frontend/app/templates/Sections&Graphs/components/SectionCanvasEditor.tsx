@@ -31,6 +31,7 @@ import {
   addBadgeToStripInCell,
   deleteBadgeFromStripInCell,
   updateCellColSpan,
+  updateCellHeight,
   updateCellStyleInCell,
   setSectionWatermark,
   CanvasCellStyle,
@@ -615,6 +616,21 @@ export default function SectionCanvasEditor({
     [dispatch, sectionId, selectedRowId, selectedCellId]
   );
 
+  const handleUpdateHeight = useCallback(
+    (customHeight?: number) => {
+      if (!selectedRowId || !selectedCellId) return;
+      dispatch(updateCellHeight({ sectionId, rowId: selectedRowId, cellId: selectedCellId, customHeight }));
+    },
+    [dispatch, sectionId, selectedRowId, selectedCellId]
+  );
+
+  const handleCellHeightChange = useCallback(
+    (cellId: string, rowId: string, customHeight?: number) => {
+      dispatch(updateCellHeight({ sectionId, rowId, cellId, customHeight }));
+    },
+    [dispatch, sectionId]
+  );
+
   const handleUpdateMarginConfig = useCallback((patch: Partial<CanvasMarginConfig>) => {
     setMarginConfig((current) => ({ ...current, ...patch }));
   }, []);
@@ -808,6 +824,7 @@ export default function SectionCanvasEditor({
             handleEditCell(activeCell, selectedRowId);
           }
         }}
+        onUpdateHeight={handleUpdateHeight}
         onDuplicate={handleDuplicateActive}
         onDelete={handleDeleteActive}
         paperTone={paperTone}
@@ -863,6 +880,7 @@ export default function SectionCanvasEditor({
           onUpdateSingleBadgeInCell={handleUpdateSingleBadgeInCell}
           onAddBadgeToStripInCell={handleAddBadgeToStripInCell}
           onDeleteBadgeFromStripInCell={handleDeleteBadgeFromStripInCell}
+          onHeightChange={handleCellHeightChange}
           paperTone={paperTone}
           marginConfig={marginConfig}
           pageNumber={Math.max(1, librarySections.findIndex((item) => item.id === sectionId) + 1)}
