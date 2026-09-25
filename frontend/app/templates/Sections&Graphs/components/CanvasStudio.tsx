@@ -71,7 +71,11 @@ import {
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
-import { DEFAULT_CANVAS_MARGIN, CanvasMarginConfig } from "./CanvasContextRibbon";
+import {
+  DEFAULT_CANVAS_MARGIN,
+  CanvasMarginConfig,
+  getPaperToneColor,
+} from "./CanvasContextRibbon";
 
 // ─── Mathematical fluid width formula for flex-wrap row with gap: 16px ────────
 export function getCellWidthStyle(percent: number): string {
@@ -667,6 +671,22 @@ export function CanvasStudio({
   const [internalShowGrid, setInternalShowGrid] = useState(true);
   const [internalShowGuides, setInternalShowGuides] = useState(false);
   const [internalIsPreview, setInternalIsPreview] = useState(false);
+  const [headerValuesBySection, setHeaderValuesBySection] = useState<Record<string, { title: string; period: string }>>({});
+  const [editingHeaderValue, setEditingHeaderValue] = useState<"title" | "period" | null>(null);
+
+  const headerValues = headerValuesBySection[section.id] || {
+    title: "Monthly Report",
+    period: "01 Sept 2025 - 30 Sept 2025",
+  };
+
+  const updateHeaderValue = (field: "title" | "period", value: string) => {
+    setHeaderValuesBySection((current) => ({
+      ...current,
+      [section.id]: { ...headerValues, [field]: value },
+    }));
+  };
+
+  const commitHeaderValue = () => setEditingHeaderValue(null);
 
   const activeSelectedCellId = selectedCellId !== undefined ? selectedCellId : internalSelectedCellId;
   const activeSelectedRowId = selectedRowId !== undefined ? selectedRowId : internalSelectedRowId;
@@ -1223,20 +1243,18 @@ export function CanvasStudio({
               }}
             >
             {/* Fixed report header: only the report values change per section. */}
-            <div className={`relative z-10 min-h-[126px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden ${isDarkPaper ? "bg-black/30" : "bg-white/70 dark:bg-black/20"}`}>
-              <div className="absolute -left-8 -bottom-16 h-32 w-64 rotate-[24deg] bg-[#dceeff]/70" />
-              <div className="absolute -left-2 -bottom-10 h-24 w-48 rotate-[24deg] bg-[#eef7ff]/90" />
-              <div className="absolute -right-8 -top-8 h-36 w-44 rotate-[24deg] bg-[#dceeff]/70" />
-              <div className="absolute -right-1 -top-5 h-32 w-28 rotate-[24deg] bg-[#b9d5f3]/60" />
-
+            <div
+              className="relative z-10 min-h-[126px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden"
+              style={{ backgroundColor: getPaperToneColor(paperTone) }}
+            >
               <div className="relative h-full grid grid-cols-[1.05fr_1.25fr_1fr] items-center gap-5 px-6 py-5">
                 <div className="flex min-w-0 flex-col justify-center">
                   <Image
-                    src="/sitesafe-logo.svg"
-                    alt="Sitesafe - People Safer. Sites Smarter."
-                    width={210}
-                    height={150}
-                    className="h-[92px] w-[178px] object-contain object-left"
+                    src="/sitesafe-header-logo.svg"
+                    alt="Sitesafe by AyantrAI"
+                    width={280}
+                    height={75}
+                    className="h-[70px] w-[230px] object-contain object-left"
                     priority
                   />
                 </div>
@@ -1252,8 +1270,48 @@ export function CanvasStudio({
 
                 <div className="relative self-stretch flex items-center justify-between gap-4 pl-6 border-l-2 border-[#2454d8]">
                   <div className="min-w-0">
-                    <p className="text-[19px] font-black leading-tight text-[#1836a0]">Monthly Report</p>
-                    <p className="mt-1 text-[12px] font-semibold leading-tight text-[#1836a0]">01 Sept 2025 - 30 Sept 2025</p>
+                    {editingHeaderValue === "title" ? (
+                      <input
+                        autoFocus
+                        value={headerValues.title}
+                        onChange={(event) => updateHeaderValue("title", event.target.value)}
+                        onBlur={commitHeaderValue}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
+                        }}
+                        className="w-full bg-transparent text-[19px] font-black leading-tight text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                        aria-label="Report title"
+                      />
+                    ) : (
+                      <p
+                        className="cursor-text text-[19px] font-black leading-tight text-[#1836a0]"
+                        onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("title")}
+                        title="Double-click to edit report title"
+                      >
+                        {headerValues.title}
+                      </p>
+                    )}
+                    {editingHeaderValue === "period" ? (
+                      <input
+                        autoFocus
+                        value={headerValues.period}
+                        onChange={(event) => updateHeaderValue("period", event.target.value)}
+                        onBlur={commitHeaderValue}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
+                        }}
+                        className="mt-1 w-full bg-transparent text-[12px] font-semibold leading-tight text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                        aria-label="Report period"
+                      />
+                    ) : (
+                      <p
+                        className="mt-1 cursor-text text-[12px] font-semibold leading-tight text-[#1836a0]"
+                        onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("period")}
+                        title="Double-click to edit report period"
+                      >
+                        {headerValues.period}
+                      </p>
+                    )}
                     <div className="mt-2 h-1 w-14 rounded-full bg-[#2454d8]" />
                   </div>
                   <div className="absolute -right-6 -top-5 -bottom-5 flex w-[72px] flex-col items-center justify-center bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
@@ -1265,7 +1323,10 @@ export function CanvasStudio({
             </div>
 
             {/* Section-specific values remain in a stable body header. */}
-            <div className={`relative z-10 border-b border-slate-100 dark:border-zinc-800/60 px-0 pt-5 pb-4 ${isDarkPaper ? "bg-black/20" : "bg-white/40 dark:bg-black/10"}`}>
+            <div
+              className="relative z-10 border-b border-slate-100 dark:border-zinc-800/60 px-0 pt-5 pb-4"
+              style={{ backgroundColor: getPaperToneColor(paperTone) }}
+            >
               <div className="flex items-center justify-between gap-3 mb-1.5">
                 <span
                   className="text-xs font-bold uppercase tracking-wider font-mono text-sky-600 dark:text-sky-400"

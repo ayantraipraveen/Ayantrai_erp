@@ -328,6 +328,7 @@ export interface CanvasCellStyle {
   textColor?: string;
   cardBg?: string; // preset id or hex color (e.g. 'white', 'slate', 'glass', 'purple', 'indigo', 'emerald', 'amber', 'rose', 'dark')
   borderColor?: string;
+  backgroundOpacity?: number; // card background opacity from 0 to 100
 }
 
 export interface CanvasCell {

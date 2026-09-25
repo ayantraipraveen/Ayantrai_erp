@@ -21,6 +21,7 @@ import {
 } from "@/lib/redux/slices/reportModuleSlice";
 import { PALETTE_RAMPS } from "./constants/chartTypes";
 import ChartRenderer from "./ChartRenderer";
+import { CARD_BG_PRESETS } from "./CanvasContextRibbon";
 
 // ── Badge color map ───────────────────────────────────────────────────────────
 const BADGE_COLOR_MAP: Record<
@@ -435,25 +436,25 @@ export function getCellStyleClasses(style?: CanvasCell["style"]) {
 const styleProps: React.CSSProperties = {};
   let bgClass = "";
   if (style.cardBg === "white") {
-    bgClass = "[&>div]:!bg-white dark:[&>div]:!bg-[#0c1017] [&>div]:!border-slate-200 dark:[&>div]:!border-zinc-800";
+    bgClass = "[&>div]:bg-white dark:[&>div]:bg-[#0c1017] [&>div]:border-slate-200 dark:[&>div]:border-zinc-800";
   } else if (style.cardBg === "slate") {
-    bgClass = "[&>div]:!bg-slate-50 dark:[&>div]:!bg-zinc-900 [&>div]:!border-slate-300 dark:[&>div]:!border-zinc-700";
+    bgClass = "[&>div]:bg-slate-50 dark:[&>div]:bg-zinc-900 [&>div]:border-slate-300 dark:[&>div]:border-zinc-700";
   } else if (style.cardBg === "glass") {
-    bgClass = "[&>div]:!bg-white/75 dark:[&>div]:!bg-zinc-900/75 [&>div]:!backdrop-blur-md [&>div]:!border-white/60 dark:[&>div]:!border-zinc-700/60";
+    bgClass = "[&>div]:bg-white/75 dark:[&>div]:bg-zinc-900/75 [&>div]:backdrop-blur-md [&>div]:border-white/60 dark:[&>div]:border-zinc-700/60";
   } else if (style.cardBg === "purple") {
-    bgClass = "[&>div]:!bg-purple-50/80 dark:[&>div]:!bg-purple-950/30 [&>div]:!border-purple-200 dark:[&>div]:!border-purple-800/40";
+    bgClass = "[&>div]:bg-purple-50/80 dark:[&>div]:bg-purple-950/30 [&>div]:border-purple-200 dark:[&>div]:border-purple-800/40";
   } else if (style.cardBg === "indigo") {
-    bgClass = "[&>div]:!bg-indigo-50/80 dark:[&>div]:!bg-indigo-950/30 [&>div]:!border-indigo-200 dark:[&>div]:!border-indigo-800/40";
+    bgClass = "[&>div]:bg-indigo-50/80 dark:[&>div]:bg-indigo-950/30 [&>div]:border-indigo-200 dark:[&>div]:border-indigo-800/40";
   } else if (style.cardBg === "emerald") {
-    bgClass = "[&>div]:!bg-emerald-50/80 dark:[&>div]:!bg-emerald-950/30 [&>div]:!border-emerald-200 dark:[&>div]:!border-emerald-800/40";
+    bgClass = "[&>div]:bg-emerald-50/80 dark:[&>div]:bg-emerald-950/30 [&>div]:border-emerald-200 dark:[&>div]:border-emerald-800/40";
   } else if (style.cardBg === "amber") {
-    bgClass = "[&>div]:!bg-amber-50/80 dark:[&>div]:!bg-amber-950/30 [&>div]:!border-amber-200 dark:[&>div]:!border-amber-800/40";
+    bgClass = "[&>div]:bg-amber-50/80 dark:[&>div]:bg-amber-950/30 [&>div]:border-amber-200 dark:[&>div]:border-amber-800/40";
   } else if (style.cardBg === "rose") {
-    bgClass = "[&>div]:!bg-rose-50/80 dark:[&>div]:!bg-rose-950/30 [&>div]:!border-rose-200 dark:[&>div]:!border-rose-800/40";
+    bgClass = "[&>div]:bg-rose-50/80 dark:[&>div]:bg-rose-950/30 [&>div]:border-rose-200 dark:[&>div]:border-rose-800/40";
   } else if (style.cardBg === "dark") {
-    bgClass = "[&>div]:!bg-[#0f172a] [&>div]:!text-white [&>div]:!border-slate-700";
+    bgClass = "[&>div]:bg-[#0f172a] [&>div]:text-white [&>div]:border-slate-700";
   } else if (style.cardBg?.startsWith("#") || style.cardBg?.startsWith("rgb")) {
-    bgClass = "[&>div]:![background-color:inherit] [&>div]:!border-slate-300/80 dark:[&>div]:!border-zinc-700/80";
+    bgClass = "[&>div]:[background-color:inherit] [&>div]:border-slate-300/80 dark:[&>div]:border-zinc-700/80";
     styleProps.backgroundColor = style.cardBg;
   }
 
@@ -467,6 +468,32 @@ const styleProps: React.CSSProperties = {};
   return { fontClass, alignClass, bgClass, textColorClass, styleProps };
 }
 
+function withAlpha(color: string, opacity: number): string {
+  const alpha = Math.max(0, Math.min(100, opacity)) / 100;
+  const hex = color.trim();
+  if (/^#[0-9a-f]{6}$/i.test(hex)) {
+    const value = parseInt(hex.slice(1), 16);
+    return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`;
+  }
+  if (/^#[0-9a-f]{3}$/i.test(hex)) {
+    const expanded = hex.slice(1).split("").map((part) => part + part).join("");
+    return withAlpha(`#${expanded}`, opacity);
+  }
+  const rgbaMatch = hex.match(/^rgba?\(([^)]+)\)$/i);
+  if (rgbaMatch) {
+    const channels = rgbaMatch[1].split(",").slice(0, 3).map((part) => part.trim());
+    return `rgba(${channels.join(", ")}, ${alpha})`;
+  }
+  return color;
+}
+
+function getCardBackgroundColor(style?: CanvasCell["style"]): string | undefined {
+  if (!style?.cardBg || style.backgroundOpacity === undefined) return undefined;
+  const preset = CARD_BG_PRESETS.find((item) => item.id === style.cardBg);
+  const color = preset?.color || style.cardBg;
+  return withAlpha(color, style.backgroundOpacity);
+}
+
 
 // ── Main export ───────────────────────────────────────────────────────────────
 export function CanvasBlockRenderer({
@@ -478,6 +505,7 @@ export function CanvasBlockRenderer({
   onUpdateTextBlock,
 }: BlockRendererProps) {
   const { fontClass, alignClass, bgClass, textColorClass, styleProps } = getCellStyleClasses(cell.style);
+  const backgroundColor = getCardBackgroundColor(cell.style);
 
   const renderInner = () => {
     switch (cell.blockType) {
@@ -516,12 +544,22 @@ export function CanvasBlockRenderer({
     }
   };
 
+  const renderedInner = renderInner();
+  const innerWithBackground = backgroundColor && React.isValidElement(renderedInner)
+    ? React.cloneElement(renderedInner as React.ReactElement<{ style?: React.CSSProperties }>, {
+        style: {
+          ...(renderedInner as React.ReactElement<{ style?: React.CSSProperties }>).props.style,
+          backgroundColor,
+        },
+      })
+    : renderedInner;
+
   return (
     <div
       className={`w-full h-full transition-all ${fontClass} ${alignClass} ${bgClass} ${textColorClass}`}
       style={styleProps}
     >
-      {renderInner()}
+      {innerWithBackground}
     </div>
   );
 }

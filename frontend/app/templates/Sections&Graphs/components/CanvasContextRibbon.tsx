@@ -112,7 +112,7 @@ const FONT_OPTIONS: { id: "sans" | "serif" | "mono" | "rounded"; label: string; 
   { id: "rounded", label: "Outfit Modern",    previewClass: "font-sans tracking-wide" },
 ];
 
-const CARD_BG_PRESETS: { id: string; label: string; color: string; border: string; darkBg: string }[] = [
+export const CARD_BG_PRESETS: { id: string; label: string; color: string; border: string; darkBg: string }[] = [
   { id: "white",    label: "Pure White",  color: "#ffffff", border: "#e2e8f0", darkBg: "#0c1017" },
   { id: "slate",    label: "Crisp Slate", color: "#f8fafc", border: "#cbd5e1", darkBg: "#1e293b" },
   { id: "glass",    label: "Frosted Glass", color: "rgba(255,255,255,0.7)", border: "rgba(255,255,255,0.5)", darkBg: "rgba(20,25,35,0.7)" },
@@ -204,19 +204,32 @@ export function CanvasContextRibbon({
   // Close menus when clicking outside
   const ribbonRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const closeMenus = () => {
+      setFontMenuOpen(false);
+      setColorMenuOpen(false);
+      setBgMenuOpen(false);
+      setWatermarkMenuOpen(false);
+      setPaperColorMenuOpen(false);
+      setSectionTextColorMenuOpen(false);
+      setMarginMenuOpen(false);
+    };
+
+    const handlePointerDownOutside = (e: PointerEvent) => {
       if (ribbonRef.current && !ribbonRef.current.contains(e.target as Node)) {
-        setFontMenuOpen(false);
-        setColorMenuOpen(false);
-        setBgMenuOpen(false);
-        setWatermarkMenuOpen(false);
-        setPaperColorMenuOpen(false);
-        setSectionTextColorMenuOpen(false);
-        setMarginMenuOpen(false);
+        closeMenus();
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMenus();
+    };
+
+    document.addEventListener("pointerdown", handlePointerDownOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDownOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, []);
 
   if (isPreview) {
@@ -416,6 +429,24 @@ export function CanvasContextRibbon({
             )}
           </div>
 
+          {/* ── Selected Card Background Opacity ── */}
+          <div className="flex h-7 items-center gap-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2">
+            <span className="text-[10px] font-bold text-slate-400">Bg</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={currentStyle.backgroundOpacity ?? 100}
+              onChange={(event) => onUpdateCellStyle?.({ backgroundOpacity: Number(event.target.value) })}
+              className="w-16 accent-[#8B3DFF] cursor-pointer"
+              title="Adjust selected card background opacity"
+            />
+            <span className="min-w-[30px] text-right text-[10px] font-mono font-bold text-[#8B3DFF]">
+              {currentStyle.backgroundOpacity ?? 100}%
+            </span>
+          </div>
+
           <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
 
           {/* Metric Card Context Controls (if metric-card) */}
@@ -590,17 +621,17 @@ export function CanvasContextRibbon({
       ref={ribbonRef}
       className="relative h-11 flex-shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 bg-slate-50/95 dark:bg-[#090d14]/95 border-b border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md overflow-visible select-none z-40"
     >
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-visible">
         {/* Section info badge */}
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
-          <span className="text-[10px] font-mono uppercase font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md border border-sky-500/20">{sectionEyebrow}</span>
-          <span className="font-semibold text-slate-800 dark:text-zinc-200 truncate max-w-[200px]">{sectionName}</span>
+        <div className="flex min-w-0 shrink items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
+          <span className="max-w-[130px] shrink-0 truncate text-[10px] font-mono uppercase font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md border border-sky-500/20">{sectionEyebrow}</span>
+          <span className="min-w-0 truncate font-semibold text-slate-800 dark:text-zinc-200" title={sectionName}>{sectionName}</span>
         </div>
 
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
 
         {/* Paper tone selector */}
-        <div className="relative flex items-center gap-1">
+        <div className="relative flex shrink-0 items-center gap-1 whitespace-nowrap">
           <span className="text-[10px] uppercase font-bold text-slate-400 hidden sm:inline mr-1">Paper:</span>
           <button
             type="button"
@@ -679,7 +710,7 @@ export function CanvasContextRibbon({
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
 
         {/* Section Text Color */}
-        <div className="relative flex items-center gap-1">
+        <div className="relative flex shrink-0 items-center gap-1 whitespace-nowrap">
           <span className="text-[10px] uppercase font-bold text-slate-400 hidden sm:inline mr-1">Text:</span>
           <button
             type="button"
@@ -717,13 +748,13 @@ export function CanvasContextRibbon({
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
 
         {/* Watermark Selector & Stamp Button */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <button
             type="button"
             onClick={() => {
               setWatermarkMenuOpen(!watermarkMenuOpen);
             }}
-            className={`h-7 px-2.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`h-7 max-w-[190px] shrink-0 whitespace-nowrap rounded-lg border px-2.5 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               currentWm
                 ? "bg-purple-500/15 border-purple-400/50 text-[#8B3DFF] shadow-xs"
                 : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
@@ -731,7 +762,7 @@ export function CanvasContextRibbon({
             title="Configure Document Watermark Stamp"
           >
             <Stamp className="w-3.5 h-3.5 text-[#8B3DFF]" />
-            <span>Watermark: {currentWm ? currentWm.name.split(" ")[0] : "None"}</span>
+            <span className="truncate">Watermark: {currentWm ? currentWm.name.split(" ")[0] : "None"}</span>
             <ChevronDown className="w-3 h-3 opacity-60" />
           </button>
 
@@ -766,7 +797,7 @@ export function CanvasContextRibbon({
           </button>
 
           {/* Margins Adjust & Popover */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -775,7 +806,7 @@ export function CanvasContextRibbon({
                 setWatermarkMenuOpen(false);
                 setSectionTextColorMenuOpen(false);
               }}
-              className={`h-6 px-2 rounded text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer border ${
+              className={`h-6 shrink-0 whitespace-nowrap rounded border px-2 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
                 marginMenuOpen || showGuides
                   ? "bg-purple-500/15 text-[#9D61FF] border-purple-400/40 shadow-xs"
                   : "border-slate-200 dark:border-zinc-700/80 text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
@@ -801,11 +832,11 @@ export function CanvasContextRibbon({
       </div>
 
       {/* Right controls: Clean preview */}
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <button
           type="button"
           onClick={onTogglePreview}
-          className="h-7 px-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 hover:bg-[#9D61FF]/10 text-slate-700 dark:text-zinc-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+          className="h-7 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 dark:border-zinc-800 px-3 text-slate-700 dark:text-zinc-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
           title="Toggle Clean Executive Report Preview"
         >
           <Eye className="w-3.5 h-3.5 text-[#9D61FF]" />
@@ -1500,10 +1531,10 @@ function PaperColorPopover({
               onClick={() => colorPickerRef.current?.click()}
               className="w-9 h-9 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center shadow-xs hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
               style={{ backgroundColor: activeColor }}
-              title="Click to open system color picker"
+              title="Open color picker"
             >
-              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Pipette className="w-3.5 h-3.5 text-white drop-shadow" />
+              <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                <Pipette className="w-3.5 h-3.5 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" />
               </div>
             </button>
             <input
@@ -1511,7 +1542,8 @@ function PaperColorPopover({
               type="color"
               value={activeColor.startsWith("#") ? activeColor : "#ffffff"}
               onChange={handleNativeColorInput}
-              className="sr-only"
+              className="absolute inset-0 h-9 w-9 cursor-pointer opacity-0"
+              aria-label="Choose custom paper color"
             />
           </div>
 
@@ -1726,7 +1758,8 @@ function TextColorPopover({
               type="color"
               value={currentColor.startsWith("#") ? currentColor : "#0f172a"}
               onChange={handleNativeColorInput}
-              className="sr-only"
+              className="absolute inset-0 h-9 w-9 cursor-pointer opacity-0"
+              aria-label="Choose custom text color"
             />
           </div>
 
@@ -1898,14 +1931,10 @@ function CardBgPopover({
               onClick={() => colorPickerRef.current?.click()}
               className="w-8 h-8 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center shadow-xs hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
               style={{ backgroundColor: activeBgHex }}
-              title="Click to open system color picker"
+              title="Open card background color picker"
             >
-              <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Pipette
-                  className={`w-3.5 h-3.5 drop-shadow ${
-                    activeBgHex.toLowerCase() === "#ffffff" ? "text-slate-900" : "text-white"
-                  }`}
-                />
+              <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                <Pipette className="w-3.5 h-3.5 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" />
               </div>
             </button>
             <input
@@ -1913,7 +1942,8 @@ function CardBgPopover({
               type="color"
               value={activeBgHex.startsWith("#") ? activeBgHex : "#ffffff"}
               onChange={handleNativeColorInput}
-              className="sr-only"
+              className="absolute inset-0 h-8 w-8 cursor-pointer opacity-0"
+              aria-label="Choose custom card background color"
             />
           </div>
 
