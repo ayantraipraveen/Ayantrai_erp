@@ -2025,6 +2025,7 @@ export const reportModuleSlice = createSlice({
         eyebrow?: string;
         description: string;
         icon?: string;
+        watermarkId?: string;
       }>
     ) => {
       const sec = state.librarySections.find((s) => s.id === action.payload.id);
@@ -2033,6 +2034,7 @@ export const reportModuleSlice = createSlice({
         if (action.payload.eyebrow !== undefined) sec.eyebrow = action.payload.eyebrow;
         sec.description = action.payload.description;
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
+        if (action.payload.watermarkId !== undefined) sec.watermarkId = action.payload.watermarkId;
         sec.updatedAt = "Just now";
       }
     },
@@ -2985,13 +2987,14 @@ export const reportModuleSlice = createSlice({
     },
     setSectionWatermark: (
       state,
-      action: PayloadAction<{ sectionId: string; watermarkId: string | null }>
+      action: PayloadAction<{ sectionId: string; watermarkId?: string | null }>
     ) => {
       const { sectionId, watermarkId } = action.payload;
       const sec = state.librarySections.find((s) => s.id === sectionId);
       if (sec) {
         const oldWmId = sec.watermarkId;
         sec.watermarkId = watermarkId || undefined;
+        sec.updatedAt = "Just now";
         if (oldWmId && oldWmId !== watermarkId) {
           const oldWm = state.watermarks.find((w) => w.id === oldWmId);
           if (oldWm) {
@@ -3046,6 +3049,7 @@ export const {
   setSelectedLibrarySectionId,
   createLibrarySection,
   updateLibrarySection,
+  setSectionWatermark,
   duplicateLibrarySection,
   deleteLibrarySection,
   addCardToSection,
@@ -3099,7 +3103,6 @@ export const {
   setSelectedWatermarkId,
   setDefaultWatermark,
   assignWatermarkToSections,
-  setSectionWatermark,
 } = reportModuleSlice.actions;
 
 export default reportModuleSlice.reducer;
