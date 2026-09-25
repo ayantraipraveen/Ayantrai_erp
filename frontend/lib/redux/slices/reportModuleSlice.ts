@@ -293,6 +293,52 @@ export interface LibraryKeyInsightItem {
   text: string;
 }
 
+// ── Canvas Row / Cell Types (Canva-like Section Editor) ──────────────────────
+export interface CanvasTextBlock {
+  id: string;
+  content: string; // rich plain text paragraph
+}
+
+export interface CanvasBadgeItem {
+  id: string;
+  label: string;
+  value: string;
+  icon?: string; // lucide icon name
+  color: "blue" | "green" | "purple" | "amber" | "rose" | "cyan";
+}
+
+export interface CanvasBadgeStrip {
+  id: string;
+  badges: CanvasBadgeItem[];
+}
+
+export type CanvasBlockType =
+  | "metric-card"
+  | "chart"
+  | "insight"
+  | "text"
+  | "badge-strip"
+  | "divider";
+
+export interface CanvasCell {
+  id: string;
+  colSpan: 1 | 2 | 3 | 4; // column span within the row (out of 4)
+  blockType: CanvasBlockType;
+  // Only one of these is set, matching blockType:
+  metricCard?: LibraryMetricCard;
+  chart?: LibraryChartCard;
+  insight?: LibraryKeyInsightItem;
+  textBlock?: CanvasTextBlock;
+  badgeStrip?: CanvasBadgeStrip;
+  // divider has no data payload
+}
+
+export interface CanvasRow {
+  id: string;
+  cells: CanvasCell[];
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface LibrarySection {
   id: string;
   name: string;
@@ -301,9 +347,12 @@ export interface LibrarySection {
   type: "core" | "custom";
   icon?: string;
   updatedAt: string;
+  // Legacy flat arrays (kept for backward compat – migrated on first canvas open)
   metricCards: LibraryMetricCard[];
   charts: LibraryChartCard[];
   keyInsights: LibraryKeyInsightItem[];
+  // New canvas layout (row-based Canva-like editor)
+  canvasRows?: CanvasRow[];
   watermarkId?: string;
 }
 
@@ -2178,6 +2227,356 @@ export const reportModuleSlice = createSlice({
         sec.updatedAt = "Just now";
       }
     },
+
+    // ── Canvas Row/Cell Reducers (Canva-like Section Editor) ─────────────────
+    /** Auto-migrate a section's flat arrays → canvasRows (called on first canvas open) */
+    migrateToCanvasRows: (state, action: PayloadAction<string>) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload);
+      if (!sec || sec.canvasRows) return; // already migrated
+
+      const rows: import("./reportModuleSlice").CanvasRow[] = [];
+
+      // Row 1: Metric Cards (one cell per card)
+      if (sec.metricCards && sec.metricCards.length > 0) {
+        rows.push({
+          id: `row-mc-${Date.now()}`,
+          cells: sec.metricCards.map((card) => ({
+            id: `cell-mc-${card.id}`,
+            colSpan: 1 as const,
+            blockType: "metric-card" as const,
+            metricCard: card,
+          })),
+        });
+      }
+
+      // Row 2+: Charts (one chart per row, full-width)
+      sec.charts?.forEach((chart, i) => {
+        rows.push({
+          id: `row-ch-${Date.now()}-${i}`,
+          cells: [
+            {
+              id: `cell-ch-${chart.id}`,
+              colSpan: 4 as const,
+              blockType: "chart" as const,
+              chart,
+            },
+          ],
+        });
+      });
+
+      // Last Row: Key Insights (one cell per insight)
+      if (sec.keyInsights && sec.keyInsights.length > 0) {
+        rows.push({
+          id: `row-ki-${Date.now()}`,
+          cells: sec.keyInsights.map((ki) => ({
+            id: `cell-ki-${ki.id}`,
+            colSpan: 4 as const,
+            blockType: "insight" as const,
+            insight: ki,
+          })),
+        });
+      }
+
+      sec.canvasRows = rows;
+      sec.updatedAt = "Just now";
+    },
+
+    /** Add a new empty row to the section canvas */
+    addCanvasRow: (state, action: PayloadAction<string>) => {
+      const sec = state.librarySections.find((s) => s.id === action.payload);
+      if (sec) {
+        if (!sec.canvasRows) sec.canvasRows = [];
+        sec.canvasRows.push({ id: `row-${Date.now()}`, cells: [] });
+        sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Remove a row from the canvas */
+    removeCanvasRow: (
+      state,
+      action: PayloadAction<{ sectionId: string; rowId: string }>
+    ) => {
+      const sec = state.librarySections.find(
+        (s) => s.id === action.payload.sectionId
+      );
+      if (sec && sec.canvasRows) {
+        sec.canvasRows = sec.canvasRows.filter(
+          (r) => r.id !== action.payload.rowId
+        );
+        sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Add a new cell to a specific row */
+    addCellToRow: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cell: import("./reportModuleSlice").CanvasCell;
+      }>
+    ) => {
+      const sec = state.librarySections.find(
+        (s) => s.id === action.payload.sectionId
+      );
+      const row = sec?.canvasRows?.find((r) => r.id === action.payload.rowId);
+      if (row) {
+        row.cells.push(action.payload.cell);
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Move a cell between rows (cross-row drag) */
+    moveCellBetweenRows: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        fromRowId: string;
+        toRowId: string;
+        cellId: string;
+        toIndex: number; // insert position in destination row
+      }>
+    ) => {
+      const { sectionId, fromRowId, toRowId, cellId, toIndex } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      if (!sec?.canvasRows) return;
+
+      const fromRow = sec.canvasRows.find((r) => r.id === fromRowId);
+      const toRow = sec.canvasRows.find((r) => r.id === toRowId);
+      if (!fromRow || !toRow) return;
+
+      const cellIdx = fromRow.cells.findIndex((c) => c.id === cellId);
+      if (cellIdx === -1) return;
+
+      const [cell] = fromRow.cells.splice(cellIdx, 1);
+      toRow.cells.splice(toIndex, 0, cell);
+      sec.updatedAt = "Just now";
+    },
+
+    /** Reorder cells within the same row (same-row drag) */
+    reorderCellsInRow: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cells: import("./reportModuleSlice").CanvasCell[];
+      }>
+    ) => {
+      const sec = state.librarySections.find(
+        (s) => s.id === action.payload.sectionId
+      );
+      const row = sec?.canvasRows?.find((r) => r.id === action.payload.rowId);
+      if (row) {
+        row.cells = action.payload.cells;
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Reorder rows themselves */
+    reorderCanvasRows: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rows: import("./reportModuleSlice").CanvasRow[];
+      }>
+    ) => {
+      const sec = state.librarySections.find(
+        (s) => s.id === action.payload.sectionId
+      );
+      if (sec) {
+        sec.canvasRows = action.payload.rows;
+        sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Duplicate a cell within its row */
+    duplicateCanvasCell: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      if (!row) return;
+
+      const cellIdx = row.cells.findIndex((c) => c.id === cellId);
+      if (cellIdx === -1) return;
+
+      const original = row.cells[cellIdx];
+      const ts = Date.now();
+      const cloned: import("./reportModuleSlice").CanvasCell = {
+        ...original,
+        id: `cell-dup-${ts}`,
+        metricCard: original.metricCard
+          ? { ...original.metricCard, id: `mc-dup-${ts}` }
+          : undefined,
+        chart: original.chart
+          ? { ...original.chart, id: `ch-dup-${ts}` }
+          : undefined,
+        insight: original.insight
+          ? { ...original.insight, id: `ki-dup-${ts}` }
+          : undefined,
+        textBlock: original.textBlock
+          ? { ...original.textBlock, id: `tb-dup-${ts}` }
+          : undefined,
+        badgeStrip: original.badgeStrip
+          ? {
+              ...original.badgeStrip,
+              id: `bs-dup-${ts}`,
+              badges: original.badgeStrip.badges.map((b, i) => ({
+                ...b,
+                id: `badge-dup-${ts}-${i}`,
+              })),
+            }
+          : undefined,
+      };
+      row.cells.splice(cellIdx + 1, 0, cloned);
+      if (sec) sec.updatedAt = "Just now";
+    },
+
+    /** Delete a cell from a row */
+    deleteCanvasCell: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      if (row) {
+        row.cells = row.cells.filter((c) => c.id !== cellId);
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update a cell's colSpan */
+    updateCellColSpan: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        colSpan: 1 | 2 | 3 | 4;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, colSpan } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const cell = row?.cells.find((c) => c.id === cellId);
+      if (cell) {
+        cell.colSpan = colSpan;
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update text block content in a cell */
+    updateTextBlockInCell: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        content: string;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, content } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const cell = row?.cells.find((c) => c.id === cellId);
+      if (cell && cell.textBlock) {
+        cell.textBlock.content = content;
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update badge strip in a cell */
+    updateBadgeStripInCell: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        badgeStrip: import("./reportModuleSlice").CanvasBadgeStrip;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, badgeStrip } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const cell = row?.cells.find((c) => c.id === cellId);
+      if (cell) {
+        cell.badgeStrip = badgeStrip;
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update metric card data inside a canvas cell */
+    updateMetricCardInCell: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        card: LibraryMetricCard;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, card } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const cell = row?.cells.find((c) => c.id === cellId);
+      if (cell) {
+        cell.metricCard = card;
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update chart data inside a canvas cell */
+    updateChartInCell: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        chart: LibraryChartCard;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, chart } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const cell = row?.cells.find((c) => c.id === cellId);
+      if (cell) {
+        cell.chart = chart;
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update insight text inside a canvas cell */
+    updateInsightInCell: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        insight: LibraryKeyInsightItem;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, insight } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const cell = row?.cells.find((c) => c.id === cellId);
+      if (cell) {
+        cell.insight = insight;
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Global Universal Toast Reducers
     showGlobalToast: (state, action: PayloadAction<ShowGlobalToastPayload>) => {
       const payload = action.payload;
@@ -2641,6 +3040,22 @@ export const {
   updateInsightInSection,
   deleteInsightFromSection,
   reorderInsightsInSection,
+  // Canvas Row/Cell Actions (Canva-like Editor)
+  migrateToCanvasRows,
+  addCanvasRow,
+  removeCanvasRow,
+  addCellToRow,
+  moveCellBetweenRows,
+  reorderCellsInRow,
+  reorderCanvasRows,
+  duplicateCanvasCell,
+  deleteCanvasCell,
+  updateCellColSpan,
+  updateTextBlockInCell,
+  updateBadgeStripInCell,
+  updateMetricCardInCell,
+  updateChartInCell,
+  updateInsightInCell,
   showGlobalToast,
   clearGlobalToast,
   updateReportRemarks,
