@@ -74,6 +74,7 @@ import {
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
+import { SidebarAddBlockEvent } from "./CanvasSidebar";
 import {
   DEFAULT_CANVAS_MARGIN,
   CanvasMarginConfig,
@@ -234,6 +235,119 @@ export function partitionCanvasPages(
   }
 
   return pages;
+}
+
+
+// ─── Drop Insertion Zone (Between Rows) ───────────────────────────────────────
+function DropInsertZone({
+  insertIndex,
+  onDropBlock,
+  label = "Insert Row Here",
+}: {
+  insertIndex: number;
+  onDropBlock?: (e: SidebarAddBlockEvent) => void;
+  label?: string;
+}) {
+  const [isOver, setIsOver] = useState(false);
+
+  return (
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "copy";
+        if (!isOver) setIsOver(true);
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsOver(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsOver(false);
+        try {
+          const raw = e.dataTransfer.getData("application/json");
+          if (!raw) return;
+          const data: SidebarAddBlockEvent = JSON.parse(raw);
+          if (onDropBlock) {
+            onDropBlock({ ...data, insertRowAtIndex: insertIndex });
+          }
+        } catch (err) {
+          console.error("DropInsertZone error:", err);
+        }
+      }}
+      className={`relative w-full rounded-xl transition-all duration-200 flex items-center justify-center cursor-copy select-none ${
+        isOver
+          ? "h-11 my-2 bg-gradient-to-r from-purple-500/15 via-[#9D61FF]/25 to-purple-500/15 border-2 border-dashed border-[#9D61FF] shadow-[0_0_20px_rgba(157,97,255,0.4)] scale-[1.01]"
+          : "h-2.5 my-0.5 border border-transparent hover:border-purple-300/40 hover:bg-purple-500/5 hover:h-6"
+      }`}
+    >
+      {isOver && (
+        <div className="flex items-center gap-2 font-mono text-xs font-bold text-[#8B3DFF] dark:text-[#c49aff] animate-pulse">
+          <Plus className="w-4 h-4" />
+          <span>{label}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Page Add Row Drop Zone ───────────────────────────────────────────────────
+function PageAddRowDropZone({
+  pageNumber,
+  insertIndex,
+  onAddRow,
+  onDropBlock,
+}: {
+  pageNumber: number;
+  insertIndex: number;
+  onAddRow: () => void;
+  onDropBlock?: (e: SidebarAddBlockEvent) => void;
+}) {
+  const [isOver, setIsOver] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onAddRow}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "copy";
+        if (!isOver) setIsOver(true);
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsOver(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsOver(false);
+        try {
+          const raw = e.dataTransfer.getData("application/json");
+          if (!raw) return;
+          const data: SidebarAddBlockEvent = JSON.parse(raw);
+          if (onDropBlock) {
+            onDropBlock({ ...data, insertRowAtIndex: insertIndex });
+          }
+        } catch (err) {
+          console.error("PageAddRowDropZone error:", err);
+        }
+      }}
+      className={`flex-1 py-2.5 rounded-xl border border-dashed transition-all flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold ${
+        isOver
+          ? "border-2 border-[#9D61FF] bg-[#9D61FF]/15 text-[#8B3DFF] dark:text-[#c49aff] shadow-md scale-[1.01]"
+          : "border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-500 hover:border-[#8B3DFF]/50 hover:text-[#8B3DFF] hover:bg-[#8B3DFF]/5"
+      }`}
+    >
+      <Plus className={`w-3.5 h-3.5 ${isOver ? "animate-pulse" : ""}`} />
+      <span>{isOver ? `Drop to add row to Page ${pageNumber}` : `Add Row to Page ${pageNumber}`}</span>
+    </button>
+  );
 }
 
 // ─── Sortable Cell ────────────────────────────────────────────────────────────
@@ -514,6 +628,7 @@ interface SortableRowProps {
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
   onRemoveRow: (rowId: string) => void;
   onTogglePageBreak?: (rowId: string) => void;
+  onDropBlock?: (e: SidebarAddBlockEvent) => void;
 }
 
 function SortableRow({
@@ -533,7 +648,9 @@ function SortableRow({
   onUpdateTextBlock,
   onRemoveRow,
   onTogglePageBreak,
+  onDropBlock,
 }: SortableRowProps) {
+  const [isDragOverRow, setIsDragOverRow] = useState(false);
   const {
     attributes,
     listeners,
@@ -628,7 +745,39 @@ function SortableRow({
         strategy={rectSortingStrategy}
         disabled={isPreview}
       >
-        <div className="canvas-row-cells flex flex-wrap gap-4 items-stretch min-h-[60px]">
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = "copy";
+            if (!isDragOverRow) setIsDragOverRow(true);
+          }}
+          onDragLeave={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+              setIsDragOverRow(false);
+            }
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOverRow(false);
+            try {
+              const raw = e.dataTransfer.getData("application/json");
+              if (!raw) return;
+              const data = JSON.parse(raw);
+              if (onDropBlock) {
+                onDropBlock({ ...data, targetRowId: row.id });
+              }
+            } catch (err) {
+              console.error("Row drop error:", err);
+            }
+          }}
+          className={`canvas-row-cells flex flex-wrap gap-4 items-stretch min-h-[60px] transition-all rounded-2xl ${
+            isDragOverRow && !isPreview
+              ? "ring-2 ring-[#9D61FF] bg-[#9D61FF]/10 p-2 shadow-md"
+              : ""
+          }`}
+        >
           {row.cells.length === 0 ? (
             <div className="w-full py-6 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-xs text-slate-400">
               <span>Empty Row &middot; Drag blocks here</span>
@@ -659,6 +808,14 @@ function SortableRow({
                 onUpdateTextBlock={onUpdateTextBlock}
               />
             ))
+          )}
+
+          {/* Active Row Drop Target when dragging over row */}
+          {isDragOverRow && !isPreview && (
+            <div className="flex-1 min-w-[150px] min-h-[90px] rounded-2xl border-2 border-dashed border-[#9D61FF] bg-[#9D61FF]/15 flex flex-col items-center justify-center gap-1.5 text-[#8B3DFF] dark:text-[#c49aff] font-bold text-xs shadow-md animate-pulse">
+              <Plus className="w-5 h-5" />
+              <span>Drop inside this Row</span>
+            </div>
           )}
         </div>
       </SortableContext>
@@ -897,6 +1054,7 @@ export interface CanvasStudioProps {
   watermarkConfig?: WatermarkStampConfig;
   onUpdateWatermarkConfig?: (config: Partial<WatermarkStampConfig>) => void;
   onSelectWatermark?: ((w: UploadedSvgWatermark | null) => void) | ((watermarkId: string | null) => void);
+  onDropBlock?: (e: SidebarAddBlockEvent) => void;
 }
 
 function isColorDark(hexOrColor?: string): boolean {
@@ -935,6 +1093,7 @@ export function CanvasStudio({
   watermarkConfig,
   onUpdateWatermarkConfig,
   onSelectWatermark,
+  onDropBlock,
 }: CanvasStudioProps) {
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
@@ -1658,54 +1817,96 @@ export function CanvasStudio({
                       )}
 
                       {/* Canvas Rows Container for this Page */}
-                      <div className="relative z-10 px-0 pt-3 pb-2 space-y-4 flex-1 min-h-0 overflow-visible">
+                      <div className="relative z-10 px-0 pt-3 pb-2 space-y-2 flex-1 min-h-0 overflow-visible">
                         {page.rows.length === 0 ? (
-                          <div className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl text-slate-400 dark:text-zinc-600 space-y-3">
+                          <div
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.dataTransfer.dropEffect = "copy";
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              try {
+                                const raw = e.dataTransfer.getData("application/json");
+                                if (!raw) return;
+                                const data = JSON.parse(raw);
+                                if (onDropBlock) onDropBlock({ ...data, insertRowAtIndex: 0 });
+                              } catch (err) {
+                                console.error("Empty canvas drop error:", err);
+                              }
+                            }}
+                            className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF] hover:bg-[#9D61FF]/5 transition-all rounded-2xl text-slate-400 dark:text-zinc-600 space-y-3 cursor-copy"
+                          >
                             <p className="text-sm font-medium">Canvas is empty</p>
-                            <p className="text-xs">Click any block in the left sidebar to start building</p>
+                            <p className="text-xs">Drag any block from the left sidebar or click to add</p>
                           </div>
                         ) : (
-                          <div className="space-y-4">
-                            {page.rows.map((row) => (
-                              <SortableRow
-                                key={row.id}
-                                sectionId={section.id}
-                                row={row}
-                                selectedCellId={activeSelectedCellId}
-                                selectedRowId={activeSelectedRowId}
-                                isPreview={activeIsPreview}
-                                onSelectCell={handleSelectCell}
-                                onEditCell={onEditCell}
-                                onDuplicateCell={handleDuplicateCell}
-                                onDeleteCell={handleDeleteCell}
-                                onColSpanChange={handleColSpanChange}
-                                onWidthChange={handleWidthChange}
-                                onUpdateMetricCard={onUpdateMetricCardInCell}
-                                onUpdateInsight={onUpdateInsightInCell}
-                                onUpdateTextBlock={onUpdateTextBlockInCell}
-                                onRemoveRow={handleRemoveRow}
-                                onTogglePageBreak={handleTogglePageBreak}
+                          <div className="space-y-1">
+                            {/* Drop zone at the top of the report */}
+                            {page.isFirstPage && !activeIsPreview && (
+                              <DropInsertZone
+                                insertIndex={0}
+                                onDropBlock={onDropBlock}
+                                label="Drop to insert at top of report"
                               />
-                            ))}
+                            )}
+
+                            {page.rows.map((row) => {
+                              const globalRowIndex = rows.findIndex((r) => r.id === row.id);
+                              return (
+                                <React.Fragment key={row.id}>
+                                  <SortableRow
+                                    sectionId={section.id}
+                                    row={row}
+                                    selectedCellId={activeSelectedCellId}
+                                    selectedRowId={activeSelectedRowId}
+                                    isPreview={activeIsPreview}
+                                    onSelectCell={handleSelectCell}
+                                    onEditCell={onEditCell}
+                                    onDuplicateCell={handleDuplicateCell}
+                                    onDeleteCell={handleDeleteCell}
+                                    onColSpanChange={handleColSpanChange}
+                                    onWidthChange={handleWidthChange}
+                                    onUpdateMetricCard={onUpdateMetricCardInCell}
+                                    onUpdateInsight={onUpdateInsightInCell}
+                                    onUpdateTextBlock={onUpdateTextBlockInCell}
+                                    onRemoveRow={handleRemoveRow}
+                                    onTogglePageBreak={handleTogglePageBreak}
+                                    onDropBlock={onDropBlock}
+                                  />
+                                  {/* Drop zone below this row */}
+                                  {!activeIsPreview && (
+                                    <DropInsertZone
+                                      insertIndex={globalRowIndex + 1}
+                                      onDropBlock={onDropBlock}
+                                      label={`Drop to insert new row below row ${globalRowIndex + 1}`}
+                                    />
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
                           </div>
                         )}
 
                         {/* Add Row Button on this page (Hidden in preview) */}
                         {!activeIsPreview && (
                           <div className="flex items-center gap-2 pt-2">
-                            <button
-                              type="button"
-                              onClick={handleAddRow}
-                              className="
-                                flex-1 py-2.5 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800
-                                text-xs font-bold text-slate-400 dark:text-zinc-500
-                                hover:border-[#8B3DFF]/50 hover:text-[#8B3DFF] hover:bg-[#8B3DFF]/5
-                                transition-all flex items-center justify-center gap-1.5 cursor-pointer
-                              "
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>Add Row to Page {page.pageNumber}</span>
-                            </button>
+                            {(() => {
+                              const lastRowOfPage = page.rows[page.rows.length - 1];
+                              const pageEndInsertIndex = lastRowOfPage
+                                ? rows.findIndex((r) => r.id === lastRowOfPage.id) + 1
+                                : rows.length;
+                              return (
+                                <PageAddRowDropZone
+                                  pageNumber={page.pageNumber}
+                                  insertIndex={pageEndInsertIndex}
+                                  onAddRow={handleAddRow}
+                                  onDropBlock={onDropBlock}
+                                />
+                              );
+                            })()}
                             {page.isLastPage && (
                               <button
                                 type="button"

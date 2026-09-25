@@ -814,6 +814,7 @@ export default function SectionCanvasEditor({
           watermarkConfig={watermarkConfig}
           onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
           onSelectWatermark={handleSelectWatermark}
+          onDropBlock={handleSidebarAddBlock}
         />
       </div>
 
