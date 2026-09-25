@@ -2061,7 +2061,7 @@ export function CanvasStudio({
                         <div>
                           {/* Fixed Sitesafe Report Header */}
                           <div
-                            className="relative z-10 min-h-[126px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden"
+                            className="relative z-10 min-h-[150px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden"
                             style={{ backgroundColor: getPaperToneColor(paperTone) }}
                           >
                             <div className="relative h-full grid grid-cols-[1.05fr_1.25fr_1fr] items-center gap-5 px-6 py-5">
@@ -2069,9 +2069,9 @@ export function CanvasStudio({
                                 <Image
                                   src="/sitesafe-header-logo.svg"
                                   alt="Sitesafe by AyantrAI"
-                                  width={280}
-                                  height={75}
-                                  className="h-[70px] w-[230px] object-contain object-left"
+                                  width={340}
+                                  height={95}
+                                  className="h-[90px] w-[280px] object-contain object-left"
                                   priority
                                 />
                               </div>
