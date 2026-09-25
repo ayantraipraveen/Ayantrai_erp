@@ -356,19 +356,6 @@ export default function DateRangeFilter({
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">
-          {/* Clear button if range is active */}
-          {isFiltered && (
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={handleReset}
-              title="Reset date filter"
-              className="p-0.5 rounded-md hover:bg-slate-200/70 dark:hover:bg-zinc-800 text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200 transition-colors"
-            >
-              <X className="w-3 h-3" />
-            </span>
-          )}
-
           <ChevronDown
             className={`w-3.5 h-3.5 text-slate-400 dark:text-zinc-500 transition-transform duration-200 ${
               isOpen ? "rotate-180 text-slate-700 dark:text-white" : "group-hover:text-slate-700 dark:group-hover:text-zinc-300"

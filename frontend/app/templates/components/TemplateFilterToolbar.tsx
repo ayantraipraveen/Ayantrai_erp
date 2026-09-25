@@ -88,13 +88,13 @@ export default function TemplateFilterToolbar() {
           </div>
 
           {/* Universal Date Range Filter (Standardized h-9) */}
-          <div className="w-38 sm:w-42 h-9 flex-shrink-0">
+          <div className="min-w-36 max-w-[240px] w-auto h-9 flex-shrink-0">
             <DateRangeFilter
               value={dateRange}
               onChange={setDateRange}
               size="sm"
               placeholder="Filter by date..."
-              className="h-9"
+              className="h-9 w-full"
             />
           </div>
 
