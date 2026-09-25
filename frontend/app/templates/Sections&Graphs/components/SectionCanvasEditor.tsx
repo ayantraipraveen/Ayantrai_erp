@@ -716,6 +716,9 @@ export default function SectionCanvasEditor({
             onAddBlock={handleSidebarAddBlock}
             sectionCharts={sectionCharts}
             allLibraryCharts={allLibraryCharts}
+            uploadedWatermarks={uploadedWatermarks}
+            activeWatermarkId={watermarkConfig.watermarkId}
+            onSelectWatermark={handleSelectWatermark}
           />
         )}
 

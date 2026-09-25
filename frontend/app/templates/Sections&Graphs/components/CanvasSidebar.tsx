@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 import {
+  Stamp,
+  Check,
+  ExternalLink,
   Activity,
   BarChart2,
   Lightbulb,
@@ -36,6 +39,7 @@ import {
   ChartTypeOption,
 } from "./constants/chartTypes";
 import ChartRenderer from "./ChartRenderer";
+import { UploadedSvgWatermark } from "./watermarkStorage";
 
 export interface SidebarAddBlockEvent {
   blockType: CanvasBlockType;
@@ -48,6 +52,9 @@ export interface CanvasSidebarProps {
   onAddBlock: (e: SidebarAddBlockEvent) => void;
   sectionCharts?: LibraryChartCard[];
   allLibraryCharts?: LibraryChartCard[];
+  uploadedWatermarks?: UploadedSvgWatermark[];
+  activeWatermarkId?: string | null;
+  onSelectWatermark?: (watermarkId: string | null) => void;
   isCollapsed?: boolean;
 }
 
@@ -348,10 +355,13 @@ export function CanvasSidebar({
   onAddBlock,
   sectionCharts = [],
   allLibraryCharts = [],
+  uploadedWatermarks = [],
+  activeWatermarkId,
+  onSelectWatermark,
   isCollapsed,
 }: CanvasSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<"all" | "metrics" | "charts" | "text">("charts");
+  const [selectedCategory, setSelectedCategory] = useState<"all" | "charts" | "metrics" | "text" | "watermarks">("charts");
 
   // State for Chart Quick Preview Dialog
   const [previewingChart, setPreviewingChart] = useState<LibraryChartCard | null>(null);
@@ -375,6 +385,13 @@ export function CanvasSidebar({
     (c) => !sectionCharts.some((sc) => sc.id === c.id) &&
       (c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
        c.chartType.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  
+  // Filter watermark stamps
+  const filteredWatermarks = (uploadedWatermarks || []).filter((wm) =>
+    wm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    wm.fileName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Filter non-chart blocks
@@ -436,7 +453,7 @@ export function CanvasSidebar({
 
           {/* Categories */}
           <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-            {(["all", "charts", "metrics", "text"] as const).map((cat) => (
+            {(["all", "charts", "metrics", "text", "watermarks"] as const).map((cat) => (
               <button
                 key={cat}
                 type="button"
@@ -447,7 +464,7 @@ export function CanvasSidebar({
                     : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 hover:text-slate-800 dark:hover:text-white"
                 }`}
               >
-                {cat === "charts" ? "Charts (25)" : cat}
+                {cat === "charts" ? "Charts (25)" : cat === "watermarks" ? "Stamps" : cat}
               </button>
             ))}
           </div>
@@ -655,6 +672,110 @@ export function CanvasSidebar({
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          
+          {/* ── WATERMARK STAMPS ── */}
+          {(selectedCategory === "all" || selectedCategory === "watermarks") && (
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-mono uppercase font-bold text-[#8B3DFF] flex items-center gap-1.5">
+                  <Stamp className="w-3.5 h-3.5" />
+                  Document Watermarks ({filteredWatermarks.length})
+                </span>
+                <a
+                  href="/templates/Sections&Graphs/watermark"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[9px] text-[#8B3DFF] hover:underline flex items-center gap-0.5 font-semibold"
+                  title="Open Watermark Studio to upload more SVGs"
+                >
+                  <span>Upload</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              </div>
+
+              {filteredWatermarks.length === 0 ? (
+                <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 text-center text-xs text-slate-400">
+                  No watermarks found
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {filteredWatermarks.map((wm) => {
+                    const isApplied = activeWatermarkId === wm.id;
+                    return (
+                      <div
+                        key={wm.id}
+                        onClick={() => onSelectWatermark && onSelectWatermark(isApplied ? null : wm.id)}
+                        className={`group relative rounded-2xl border p-3 transition-all duration-200 cursor-pointer overflow-hidden space-y-2 ${
+                          isApplied
+                            ? "border-[#8B3DFF] bg-[#8B3DFF]/10 shadow-md ring-1 ring-[#8B3DFF]"
+                            : "border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#8B3DFF]/60 hover:shadow-lg"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                              isApplied ? "bg-[#8B3DFF] text-white" : "bg-purple-500/10 text-[#8B3DFF]"
+                            }`}>
+                              <Stamp className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {wm.name}
+                            </span>
+                          </div>
+                          <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold flex-shrink-0 ${
+                            isApplied
+                              ? "bg-[#8B3DFF] text-white"
+                              : "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+                          }`}>
+                            {isApplied ? "Active" : "Stamp"}
+                          </span>
+                        </div>
+
+                        {/* SVG Visual Stamp Preview */}
+                        <div
+                          className="h-16 w-full rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 p-2 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-[1.01]"
+                          dangerouslySetInnerHTML={{ __html: wm.svgContent }}
+                        />
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-[10px] font-mono text-slate-400 truncate">
+                            {wm.fileName}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onSelectWatermark) {
+                                onSelectWatermark(isApplied ? null : wm.id);
+                              }
+                            }}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              isApplied
+                                ? "bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-300"
+                                : "bg-[#8B3DFF] hover:bg-[#7c3aed] text-white shadow-sm"
+                            }`}
+                          >
+                            {isApplied ? (
+                              <>
+                                <X className="w-3 h-3" />
+                                <span>Remove</span>
+                              </>
+                            ) : (
+                              <>
+                                <Check className="w-3 h-3" />
+                                <span>Apply</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

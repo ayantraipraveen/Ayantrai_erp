@@ -10,14 +10,16 @@ import {
   KeyboardSensor,
   useSensor,
   useSensors,
-  closestCorners,
+  closestCenter,
+  pointerWithin,
+  rectIntersection,
   DragOverlay,
   UniqueIdentifier,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  horizontalListSortingStrategy,
+  rectSortingStrategy,
   verticalListSortingStrategy,
   useSortable,
   arrayMove,
@@ -62,20 +64,21 @@ import {
   duplicateCanvasCell,
   deleteCanvasCell,
   updateCellColSpan,
+  updateCellWidth,
   showGlobalToast,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
 
-// ─── ColSpan class map ────────────────────────────────────────────────────────
-const COL_SPAN_CLASS: Record<number, string> = {
-  1: "col-span-1",
-  2: "col-span-2",
-  3: "col-span-3",
-  4: "col-span-4",
-};
+// ─── Mathematical fluid width formula for flex-wrap row with gap: 16px ────────
+export function getCellWidthStyle(percent: number): string {
+  const p = Math.max(15, Math.min(100, Math.round(percent)));
+  if (p >= 100) return "100%";
+  const gapSub = (16 * (100 - p)) / 100;
+  return `calc(${p}% - ${gapSub.toFixed(1)}px)`;
+}
 
-// ─── Sortable Cell (Authentic Canva Bounding Box + Drag Resizer) ───────────────
+// ─── Sortable Cell (All can drag horizontally + fully adjustable width) ────────
 interface SortableCellProps {
   sectionId: string;
   rowId: string;
@@ -86,7 +89,8 @@ interface SortableCellProps {
   onEdit: (cell: CanvasCell, rowId: string) => void;
   onDuplicate: (cellId: string, rowId: string) => void;
   onDelete: (cellId: string, rowId: string) => void;
-  onColSpanChange: (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => void;
+  onColSpanChange?: (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => void;
+  onWidthChange?: (cellId: string, rowId: string, customWidth: number) => void;
   onUpdateMetricCard?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateInsight?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
@@ -104,6 +108,7 @@ function SortableCell({
   onDuplicate,
   onDelete,
   onColSpanChange,
+  onWidthChange,
   onUpdateMetricCard,
   onUpdateInsight,
   onUpdateTextBlock,
@@ -118,47 +123,52 @@ function SortableCell({
     isDragging,
   } = useSortable({ id: cell.id, data: { rowId, cell }, disabled: isPreview });
 
-  // ── Drag Resizing State (Canva corner and edge drag resize) ─────────────────
+  // ── Drag Resizing State (Adjustable fluid width - not locked in ratio) ──
+  const initialPercent = cell.customWidth ?? (cell.colSpan * 25);
   const [isResizing, setIsResizing] = useState(false);
-  const [resizeSpan, setResizeSpan] = useState<1 | 2 | 3 | 4>(cell.colSpan);
+  const [resizePercent, setResizePercent] = useState<number>(initialPercent);
   const cellDomRef = useRef<HTMLDivElement | null>(null);
 
-  // Keep internal resizeSpan in sync if external colSpan changes
+  // Keep internal resizePercent in sync if external props change
   useEffect(() => {
-    setResizeSpan(cell.colSpan);
-  }, [cell.colSpan]);
+    setResizePercent(cell.customWidth ?? (cell.colSpan * 25));
+  }, [cell.customWidth, cell.colSpan]);
+
+  const currentPercent = isResizing ? resizePercent : (cell.customWidth ?? (cell.colSpan * 25));
+  const widthStyle = getCellWidthStyle(currentPercent);
 
   const handleResizeStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setIsResizing(true);
-    setResizeSpan(cell.colSpan);
+    setResizePercent(currentPercent);
 
     const startX = e.clientX;
-    const startSpan = cell.colSpan;
+    const startWidthPercent = currentPercent;
 
-    // Find the enclosing grid container to compute exact column track width
-    const gridEl = cellDomRef.current?.closest(".grid") as HTMLElement | null;
-    const gridWidth = gridEl ? gridEl.getBoundingClientRect().width : 800;
-    // Standard 4-column layout
-    const colWidth = gridWidth / 4;
+    const rowEl = cellDomRef.current?.closest(".canvas-row-cells") as HTMLElement | null;
+    const rowWidth = rowEl ? rowEl.getBoundingClientRect().width : 800;
 
-    let computedSpan: 1 | 2 | 3 | 4 = startSpan;
+    let computedPercent = startWidthPercent;
 
     const handleMouseMove = (ev: MouseEvent) => {
       const deltaX = ev.clientX - startX;
-      const stepCols = Math.round(deltaX / colWidth);
-      const nextSpan = Math.max(1, Math.min(4, startSpan + stepCols)) as 1 | 2 | 3 | 4;
-      computedSpan = nextSpan;
-      setResizeSpan(nextSpan);
+      const deltaPercent = (deltaX / rowWidth) * 100;
+      // Fluid adjustable percentage in 1% steps from 15% to 100%
+      const nextPercent = Math.max(15, Math.min(100, Math.round(startWidthPercent + deltaPercent)));
+      computedPercent = nextPercent;
+      setResizePercent(nextPercent);
     };
 
     const handleMouseUp = () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
       setIsResizing(false);
-      if (computedSpan !== cell.colSpan && typeof onColSpanChange === "function") {
-        onColSpanChange(cell.id, rowId, computedSpan);
+      if (typeof onWidthChange === "function") {
+        onWidthChange(cell.id, rowId, computedPercent);
+      } else if (typeof onColSpanChange === "function") {
+        const span = (computedPercent <= 30 ? 1 : computedPercent <= 55 ? 2 : computedPercent <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
+        onColSpanChange(cell.id, rowId, span);
       }
     };
 
@@ -170,10 +180,10 @@ function SortableCell({
     transform: CSS.Transform.toString(transform),
     transition: isResizing ? "none" : transition,
     opacity: isDragging ? 0.25 : 1,
+    width: widthStyle,
+    flex: `0 0 ${widthStyle}`,
+    maxWidth: "100%",
   };
-
-  const activeColSpan = isResizing ? resizeSpan : cell.colSpan;
-  const colClass = COL_SPAN_CLASS[activeColSpan] || "col-span-1";
 
   // Ghost placeholder when dragged
   if (isDragging) {
@@ -181,7 +191,7 @@ function SortableCell({
       <div
         ref={setNodeRef}
         style={style}
-        className={`${colClass} min-h-[90px] rounded-2xl border-2 border-dashed border-[#8B3DFF]/50 bg-[#8B3DFF]/5 flex items-center justify-center`}
+        className="min-h-[110px] rounded-2xl border-2 border-dashed border-[#8B3DFF]/50 bg-[#8B3DFF]/5 flex items-center justify-center"
       >
         <span className="text-[11px] font-mono text-[#8B3DFF] font-semibold animate-pulse">
           Drop block here
@@ -197,8 +207,8 @@ function SortableCell({
         cellDomRef.current = node;
       }}
       style={style}
-      className={`relative group ${colClass} min-w-0 transition-all duration-150 ${
-        isResizing ? "z-40 ring-2 ring-[#8B3DFF] ring-offset-2 rounded-2xl shadow-xl" : ""
+      className={`relative group min-w-0 transition-all duration-150 flex flex-col rounded-2xl ${
+        isResizing ? "z-40 ring-2 ring-[#8B3DFF] ring-offset-2 shadow-2xl" : ""
       }`}
       onClick={(e) => {
         if (isPreview || isResizing) return;
@@ -208,6 +218,37 @@ function SortableCell({
         }
       }}
     >
+      {/* ── Top Horizontal Drag Grab Bar (All cards can drag horizontally & vertically) ── */}
+      {!isPreview && (
+        <div
+          {...attributes}
+          {...listeners}
+          className={`
+            w-full flex items-center justify-between px-3 py-1.5 rounded-t-2xl border-b
+            cursor-grab active:cursor-grabbing transition-all select-none group/dragbar z-10
+            ${isSelected
+              ? "bg-[#8B3DFF]/15 border-[#8B3DFF]/30 text-[#8B3DFF]"
+              : "bg-slate-100/90 dark:bg-zinc-800/90 hover:bg-[#8B3DFF]/10 border-slate-200/80 dark:border-zinc-700/80 text-slate-600 dark:text-zinc-300 hover:text-[#8B3DFF]"}
+          `}
+          title="Drag horizontally to reorder"
+        >
+          <div className="flex items-center gap-1.5 min-w-0">
+            <GripVertical className="w-3.5 h-3.5 text-[#8B3DFF] opacity-70 group-hover/dragbar:opacity-100 group-hover/dragbar:scale-110 transition-all flex-shrink-0" />
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider truncate">
+              {cell.blockType.replace("-", " ")}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 shadow-2xs">
+              {currentPercent}%
+            </span>
+            <span className="text-[9px] font-mono text-slate-400 opacity-60 group-hover/dragbar:opacity-100 hidden sm:inline">
+              Drag ⇄
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* ── Canva Selection Bounding Box with Draggable Handles ── */}
       {isSelected && !isPreview && !isDraggingOverlay && (
         <div className="absolute inset-0 rounded-2xl border-2 border-[#8B3DFF] pointer-events-none z-20 shadow-[0_0_0_1px_rgba(139,61,255,0.2)]">
@@ -218,7 +259,7 @@ function SortableCell({
           <div
             onMouseDown={handleResizeStart}
             className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white border-2 border-[#8B3DFF] shadow-md z-30 cursor-ne-resize pointer-events-auto hover:scale-125 active:scale-110 active:bg-[#8B3DFF] transition-all"
-            title="Drag corner to resize width"
+            title="Drag corner to adjust width"
           />
 
           {/* Bottom-Left Corner Handle */}
@@ -227,8 +268,8 @@ function SortableCell({
           {/* Bottom-Right Corner Master Resizer Handle (Primary Tactile Handle) */}
           <div
             onMouseDown={handleResizeStart}
-            className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full bg-white border-2 border-[#8B3DFF] shadow-xl z-30 cursor-se-resize pointer-events-auto hover:scale-125 active:scale-110 active:bg-[#8B3DFF] transition-all flex items-center justify-center group/resize"
-            title="Drag corner to resize block width (1-4 columns)"
+            className="absolute -bottom-2 -right-2 w-4.5 h-4.5 rounded-full bg-white border-2 border-[#8B3DFF] shadow-xl z-30 cursor-se-resize pointer-events-auto hover:scale-125 active:scale-110 active:bg-[#8B3DFF] transition-all flex items-center justify-center group/resize"
+            title="Drag corner to smoothly adjust block width (15% - 100%)"
           >
             <div className="w-1.5 h-1.5 rounded-full bg-[#8B3DFF] group-hover/resize:bg-[#7c3aed]" />
           </div>
@@ -239,23 +280,32 @@ function SortableCell({
           {/* Right Middle Pill Resizer Handle */}
           <div
             onMouseDown={handleResizeStart}
-            className="absolute top-1/2 -right-2 -translate-y-1/2 w-2 h-6 rounded-full bg-[#8B3DFF] shadow-md z-30 cursor-ew-resize pointer-events-auto hover:scale-125 active:scale-110 transition-all flex items-center justify-center"
-            title="Drag edge to resize block width"
+            className="absolute top-1/2 -right-2 -translate-y-1/2 w-2.5 h-7 rounded-full bg-[#8B3DFF] shadow-md z-30 cursor-ew-resize pointer-events-auto hover:scale-125 active:scale-110 transition-all flex items-center justify-center"
+            title="Drag edge to smoothly adjust block width"
           >
-            <div className="w-0.5 h-2.5 bg-white/70 rounded-full" />
+            <div className="w-0.5 h-3 bg-white/80 rounded-full" />
           </div>
 
-          {/* Block Type Tag (Top-Left Pill) */}
-          <div className="absolute -top-5.5 left-0 px-2 py-0.5 rounded-t-md bg-[#8B3DFF] text-white text-[10px] font-mono font-bold tracking-wider uppercase z-30 shadow-sm flex items-center gap-1">
+          {/* Block Type Tag (Top-Left Pill) - DRAGGABLE */}
+          <div
+            {...attributes}
+            {...listeners}
+            className="absolute -top-6 left-0 px-2 py-0.5 rounded-t-md bg-[#8B3DFF] text-white text-[10px] font-mono font-bold tracking-wider uppercase z-30 shadow-sm flex items-center gap-1 cursor-grab active:cursor-grabbing pointer-events-auto select-none"
+            title="Drag block to reorder"
+          >
+            <GripVertical className="w-2.5 h-2.5 opacity-80" />
             <span>{cell.blockType.replace("-", " ")}</span>
-            <span className="opacity-80">· {activeColSpan}/4</span>
+            <span className="opacity-80">· {currentPercent}%</span>
           </div>
 
           {/* Live Drag-Resize Canva HUD Tooltip */}
           {isResizing && (
             <div className="absolute -bottom-9 right-0 z-50 px-2.5 py-1 rounded-lg bg-[#0F172A] text-white text-[10px] font-mono font-bold shadow-2xl flex items-center gap-1.5 border border-[#8B3DFF] whitespace-nowrap animate-pulse">
               <Maximize2 className="w-3 h-3 text-[#8B3DFF]" />
-              <span>Width: {activeColSpan} / 4 cols ({activeColSpan * 25}%)</span>
+              <span>
+                Width: {resizePercent}%{" "}
+                {resizePercent === 25 ? "(1/4)" : resizePercent === 33 ? "(1/3)" : resizePercent === 50 ? "(Half)" : resizePercent === 66 ? "(2/3)" : resizePercent === 75 ? "(3/4)" : resizePercent === 100 ? "(Full)" : "(Adjustable)"}
+              </span>
             </div>
           )}
         </div>
@@ -266,50 +316,57 @@ function SortableCell({
         <div className="absolute inset-0 rounded-2xl pointer-events-none z-10 group-hover:ring-1 group-hover:ring-[#8B3DFF]/40 transition-all" />
       )}
 
-      {/* Drag handle button (Top-Left inside card) */}
-      {!isPreview && (
-        <button
-          type="button"
-          className={`
-            absolute top-2.5 left-2.5 z-30 p-1 rounded-lg
-            bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-700
-            shadow-md cursor-grab active:cursor-grabbing
-            opacity-0 group-hover:opacity-100 transition-opacity
-            ${isDraggingOverlay ? "opacity-100" : ""}
-          `}
-          {...attributes}
-          {...listeners}
-          title="Drag block"
-        >
-          <GripVertical className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
-        </button>
-      )}
-
       {/* Canva Micro Quick-Toolbar (Top-Right above card) */}
       {isSelected && !isPreview && !isDraggingOverlay && (
-        <div className="absolute -top-8 right-0 z-30 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-700/90 rounded-xl px-2 py-1 shadow-xl backdrop-blur-sm animate-fadeIn">
-          {/* Width Pills */}
+        <div className="absolute -top-9 right-0 z-30 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200/90 dark:border-zinc-700/90 rounded-xl px-2 py-1 shadow-xl backdrop-blur-sm animate-fadeIn">
+          {/* Width Presets */}
           <span className="text-[10px] font-mono font-bold text-slate-400 mr-0.5">W:</span>
-          {([1, 2, 3, 4] as const).map((s) => (
+          {([25, 33, 50, 75, 100] as const).map((w) => (
             <button
-              key={s}
+              key={w}
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                if (typeof onColSpanChange === "function") {
-                  onColSpanChange(cell.id, rowId, s);
+                if (typeof onWidthChange === "function") {
+                  onWidthChange(cell.id, rowId, w);
                 }
               }}
-              className={`w-5 h-5 rounded text-[10px] font-bold transition-all cursor-pointer ${
-                activeColSpan === s
-                  ? "bg-[#8B3DFF] text-white shadow-sm"
-                  : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"
+              className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold transition-all cursor-pointer ${
+                currentPercent === w
+                  ? "bg-[#8B3DFF] text-white shadow-xs"
+                  : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
               }`}
-              title={`Span ${s} of 4 columns`}
+              title={`Set width to ${w}%`}
             >
-              {s}
+              {w}%
             </button>
           ))}
+
+          {/* Stepper [- 5%] [+ 5%] */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const next = Math.max(15, currentPercent - 5);
+              if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, next);
+            }}
+            className="w-4.5 h-4.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-xs cursor-pointer"
+            title="Decrease width by 5%"
+          >
+            -
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const next = Math.min(100, currentPercent + 5);
+              if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, next);
+            }}
+            className="w-4.5 h-4.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-xs cursor-pointer"
+            title="Increase width by 5%"
+          >
+            +
+          </button>
 
           <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-700 mx-1" />
 
@@ -361,7 +418,7 @@ function SortableCell({
       )}
 
       {/* Render the actual cell content block */}
-      <div className="w-full h-full">
+      <div className="w-full flex-1">
         <CanvasBlockRenderer
           cell={cell}
           isSelected={isSelected}
@@ -399,6 +456,7 @@ interface SortableRowProps {
   onDuplicateCell: (cellId: string, rowId: string) => void;
   onDeleteCell: (cellId: string, rowId: string) => void;
   onColSpanChange: (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => void;
+  onWidthChange: (cellId: string, rowId: string, customWidth: number) => void;
   onUpdateMetricCard?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateInsight?: (rowId: string, cellId: string, text: string) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
@@ -416,6 +474,7 @@ function SortableRow({
   onDuplicateCell,
   onDeleteCell,
   onColSpanChange,
+  onWidthChange,
   onUpdateMetricCard,
   onUpdateInsight,
   onUpdateTextBlock,
@@ -428,7 +487,7 @@ function SortableRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: row.id, data: { isRow: true, row }, disabled: isPreview });
+  } = useSortable({ id: row.id, data: { isRow: true, row, rowId: row.id }, disabled: isPreview });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -478,15 +537,15 @@ function SortableRow({
         </div>
       )}
 
-      {/* Grid container with 4 tracks */}
+      {/* Row Container with flexible items & 2D rect sortable strategy */}
       <SortableContext
         items={row.cells.map((c) => c.id)}
-        strategy={horizontalListSortingStrategy}
+        strategy={rectSortingStrategy}
         disabled={isPreview}
       >
-        <div className="grid grid-cols-4 gap-4 items-stretch min-h-[60px]">
+        <div className="canvas-row-cells flex flex-wrap gap-4 items-stretch min-h-[60px]">
           {row.cells.length === 0 ? (
-            <div className="col-span-4 py-6 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-xs text-slate-400">
+            <div className="w-full py-6 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-xs text-slate-400">
               <span>Empty Row &middot; Drag blocks here</span>
             </div>
           ) : (
@@ -507,6 +566,7 @@ function SortableRow({
                 onDuplicate={onDuplicateCell}
                 onDelete={onDeleteCell}
                 onColSpanChange={onColSpanChange}
+                onWidthChange={onWidthChange}
                 onUpdateMetricCard={onUpdateMetricCard}
                 onUpdateInsight={onUpdateInsight}
                 onUpdateTextBlock={onUpdateTextBlock}
@@ -639,17 +699,26 @@ export function CanvasStudio({
     else setInternalZoom(1);
   };
 
-  // DnD Sensors
+  // DnD Sensors (Responsive 4px activation for crisp horizontal & vertical dragging)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 6,
+        distance: 4,
       },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Custom collision detection: pointer-first, then bounding-rect, then center
+  const customCollisionDetection = useCallback((args: any) => {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) return pointerCollisions;
+    const rectCollisions = rectIntersection(args);
+    if (rectCollisions.length > 0) return rectCollisions;
+    return closestCenter(args);
+  }, []);
 
   const [activeDragCell, setActiveDragCell] = useState<CanvasCell | null>(null);
 
@@ -674,6 +743,13 @@ export function CanvasStudio({
   const handleColSpanChange = useCallback(
     (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => {
       dispatch(updateCellColSpan({ sectionId: section.id, rowId, cellId, colSpan: span }));
+    },
+    [dispatch, section.id]
+  );
+
+  const handleWidthChange = useCallback(
+    (cellId: string, rowId: string, customWidth: number) => {
+      dispatch(updateCellWidth({ sectionId: section.id, rowId, cellId, customWidth }));
     },
     [dispatch, section.id]
   );
@@ -722,8 +798,8 @@ export function CanvasStudio({
       const fromRowId = activeData.rowId;
       const cellId = String(active.id);
 
-      if (overData?.rowId) {
-        const toRowId = overData.rowId;
+      const toRowId = (overData?.rowId as string) || (overData?.isRow ? String(over.id) : null);
+      if (toRowId) {
         if (fromRowId === toRowId) {
           const row = rows.find((r) => r.id === fromRowId);
           if (row) {
@@ -737,16 +813,20 @@ export function CanvasStudio({
         } else {
           // Cross-row movement
           const toRow = rows.find((r) => r.id === toRowId);
-          const targetIndex = toRow ? toRow.cells.findIndex((c) => c.id === over.id) : 0;
-          dispatch(
-            moveCellBetweenRows({
-              sectionId: section.id,
-              fromRowId,
-              toRowId,
-              cellId,
-              toIndex: targetIndex === -1 ? (toRow?.cells.length || 0) : targetIndex,
-            })
-          );
+          if (toRow) {
+            const targetIndex = overData?.isRow
+              ? toRow.cells.length
+              : toRow.cells.findIndex((c) => c.id === over.id);
+            dispatch(
+              moveCellBetweenRows({
+                sectionId: section.id,
+                fromRowId,
+                toRowId,
+                cellId,
+                toIndex: targetIndex === -1 ? toRow.cells.length : targetIndex,
+              })
+            );
+          }
         }
       }
     }
@@ -775,7 +855,7 @@ export function CanvasStudio({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCorners}
+      collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -908,6 +988,7 @@ export function CanvasStudio({
                         onDuplicateCell={handleDuplicateCell}
                         onDeleteCell={handleDeleteCell}
                         onColSpanChange={handleColSpanChange}
+                        onWidthChange={handleWidthChange}
                         onUpdateMetricCard={onUpdateMetricCardInCell}
                         onUpdateInsight={onUpdateInsightInCell}
                         onUpdateTextBlock={onUpdateTextBlockInCell}
@@ -1017,9 +1098,9 @@ export function CanvasStudio({
       </div>
 
       {/* ── 3D Elevated Drag Overlay ── */}
-      <DragOverlay>
+      <DragOverlay dropAnimation={{ duration: 150, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
         {activeDragCell && (
-          <div className="opacity-95 shadow-[0_20px_50px_rgba(0,0,0,0.35)] rounded-2xl rotate-1 scale-105 transition-transform ring-2 ring-[#8B3DFF]">
+          <div className="w-[300px] max-w-full opacity-95 shadow-[0_20px_50px_rgba(0,0,0,0.35)] rounded-2xl rotate-1 scale-105 transition-transform ring-2 ring-[#8B3DFF] pointer-events-none cursor-grabbing">
             <CanvasBlockRenderer cell={activeDragCell} isPreview />
           </div>
         )}

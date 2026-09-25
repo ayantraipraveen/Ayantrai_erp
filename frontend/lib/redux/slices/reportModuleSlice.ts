@@ -333,6 +333,7 @@ export interface CanvasCellStyle {
 export interface CanvasCell {
   id: string;
   colSpan: 1 | 2 | 3 | 4; // column span within the row (out of 4)
+  customWidth?: number; // fluid/adjustable width percentage (15% to 100%) - not locked to fixed ratio!
   blockType: CanvasBlockType;
   style?: CanvasCellStyle;
   // Only one of these is set, matching blockType:
@@ -2493,7 +2494,7 @@ export const reportModuleSlice = createSlice({
       }
     },
 
-    /** Update a cell's colSpan */
+    /** Update a cell's colSpan & optional adjustable width */
     updateCellColSpan: (
       state,
       action: PayloadAction<{
@@ -2501,14 +2502,40 @@ export const reportModuleSlice = createSlice({
         rowId: string;
         cellId: string;
         colSpan: 1 | 2 | 3 | 4;
+        customWidth?: number;
       }>
     ) => {
-      const { sectionId, rowId, cellId, colSpan } = action.payload;
+      const { sectionId, rowId, cellId, colSpan, customWidth } = action.payload;
       const sec = state.librarySections.find((s) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r) => r.id === rowId);
       const cell = row?.cells.find((c) => c.id === cellId);
       if (cell) {
         cell.colSpan = colSpan;
+        if (customWidth !== undefined) {
+          cell.customWidth = customWidth;
+        }
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update a cell's width to any arbitrary percentage (15% to 100%) */
+    updateCellWidth: (
+      state,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        customWidth: number;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, customWidth } = action.payload;
+      const sec = state.librarySections.find((s) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r) => r.id === rowId);
+      const cell = row?.cells.find((c) => c.id === cellId);
+      if (cell) {
+        const clamped = Math.max(15, Math.min(100, Math.round(customWidth)));
+        cell.customWidth = clamped;
+        cell.colSpan = (clamped <= 30 ? 1 : clamped <= 55 ? 2 : clamped <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
         if (sec) sec.updatedAt = "Just now";
       }
     },
@@ -3111,6 +3138,7 @@ export const {
   duplicateCanvasCell,
   deleteCanvasCell,
   updateCellColSpan,
+  updateCellWidth,
   updateCellStyleInCell,
   updateTextBlockInCell,
   updateBadgeStripInCell,
