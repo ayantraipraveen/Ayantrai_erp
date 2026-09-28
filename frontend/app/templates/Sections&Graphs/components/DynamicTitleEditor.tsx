@@ -140,6 +140,8 @@ export function DynamicTextEditor({
   isDarkPaper,
   defaultFontSize = 14,
   multiline = false,
+  toolbarPosition = "auto",
+  toolbarAlign = "auto",
   className = "",
   placeholder = "Type text...",
   onSave,
@@ -155,25 +157,30 @@ export function DynamicTextEditor({
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const [customHex, setCustomHex] = useState("#2563eb");
-  const [toolbarPlacement, setToolbarPlacement] = useState<"top" | "bottom">("top");
-  const [toolbarAlign, setToolbarAlign] = useState<"left" | "right">("left");
+  const [detectedPlacement, setDetectedPlacement] = useState<"top" | "bottom">("top");
+  const [detectedAlign, setDetectedAlign] = useState<"left" | "right">("left");
 
   // Dynamically position floating toolbar above or below to avoid clipping and eliminate layout push
   useEffect(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      if (rect.top < 85) {
-        setToolbarPlacement("bottom");
+      if (rect.top < 110) {
+        setDetectedPlacement("bottom");
       } else {
-        setToolbarPlacement("top");
+        setDetectedPlacement("top");
       }
-      if (window.innerWidth - rect.left < 580) {
-        setToolbarAlign("right");
+      if (window.innerWidth - rect.left < 540) {
+        setDetectedAlign("right");
       } else {
-        setToolbarAlign("left");
+        setDetectedAlign("left");
       }
     }
   }, []);
+
+  const effectivePlacement =
+    toolbarPosition && toolbarPosition !== "auto" ? toolbarPosition : detectedPlacement;
+  const effectiveAlign =
+    toolbarAlign && toolbarAlign !== "auto" ? toolbarAlign : detectedAlign;
 
   // Initialize HTML content on mount & focus
   useEffect(() => {
@@ -415,8 +422,14 @@ export function DynamicTextEditor({
       {/* ── Floating Word Formatting Toolbar (Absolute overlay: Zero Layout Shift) ── */}
       <div
         className={`absolute z-50 flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-2xl text-xs select-none w-max max-w-[92vw] transition-all duration-150 ${
-          toolbarPlacement === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
-        } ${toolbarAlign === "right" ? "right-0" : "left-0"}`}
+          effectivePlacement === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
+        } ${
+          effectiveAlign === "right"
+            ? "right-0"
+            : effectiveAlign === "center"
+            ? "left-1/2 -translate-x-1/2"
+            : "left-0"
+        }`}
         style={{
           boxShadow: "0 14px 34px -4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06)",
         }}
@@ -435,7 +448,7 @@ export function DynamicTextEditor({
               title="Font Family"
             >
               <Type className="w-3 h-3 text-[#2563eb]" />
-              <span className="max-w-[85px] truncate text-[11px]">{selectedFont}</span>
+              <span className="max-w-[70px] truncate text-[11px]">{selectedFont}</span>
               <ChevronDown className="w-2.5 h-2.5 opacity-60" />
             </button>
 
