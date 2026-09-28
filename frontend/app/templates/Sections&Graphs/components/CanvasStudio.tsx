@@ -2263,6 +2263,7 @@ export function CanvasStudio({
                                       defaultFontSize={headerTitleFormat.fontSize || 30}
                                       multiline={false}
                                       toolbarPosition="top"
+                                      toolbarAlign="right"
                                       className="text-2xl sm:text-3xl font-black leading-tight"
                                       onSave={(plain, html) => updateHeaderValueWithHtml("title", plain, html)}
                                       onCancel={() => setEditingHeaderValue(null)}
@@ -2286,6 +2287,7 @@ export function CanvasStudio({
                                     defaultFontSize={12}
                                     multiline={false}
                                     toolbarPosition="bottom"
+                                    toolbarAlign="right"
                                     className="mt-1 text-[12px] font-semibold leading-tight text-[#1836a0]"
                                     onSave={(plain, html) => updateHeaderValueWithHtml("period", plain, html)}
                                     onCancel={() => setEditingHeaderValue(null)}

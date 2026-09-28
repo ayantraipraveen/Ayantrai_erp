@@ -187,10 +187,10 @@ export function DynamicTextEditor({
       const targetToolbarWidth = 460;
 
       if (availableToRight < targetToolbarWidth) {
-        const neededShift = targetToolbarWidth - availableToRight;
-        const maxShiftPossible = Math.max(0, rect.left - boundaryLeft - 20);
-        setHorizontalShift(Math.min(neededShift, maxShiftPossible));
+        setDetectedAlign("right");
+        setHorizontalShift(0);
       } else {
+        setDetectedAlign("left");
         setHorizontalShift(0);
       }
     }
@@ -440,7 +440,7 @@ export function DynamicTextEditor({
     <div ref={containerRef} className="relative select-text w-full">
       {/* ── Floating Word Formatting Toolbar (Absolute overlay: Zero Layout Shift) ── */}
       <div
-        className={`absolute z-50 flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-2xl text-xs select-none w-max max-w-[92vw] transition-all duration-150 ${
+        className={`absolute z-50 flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 text-xs select-none w-max max-w-[92vw] transition-all duration-150 ${
           effectivePlacement === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
         } ${
           effectiveAlign === "right"
