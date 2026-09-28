@@ -899,14 +899,14 @@ export function renderDynamicEyebrow(
   }
   const parts = trimmed.split(/\s+/);
   if (parts.length <= 1) {
-    return <span className={isDarkPaper ? "text-sky-400" : "text-[#0d2562] dark:text-sky-400"}>{trimmed}</span>;
+    return <span className={isDarkPaper ? "text-sky-400" : "text-[#0d2562]"}>{trimmed}</span>;
   }
   const firstPart = parts.slice(0, -1).join(" ");
   const lastWord = parts[parts.length - 1];
   return (
     <>
-      <span className={isDarkPaper ? "text-blue-300" : "text-[#0d2562] dark:text-blue-300"}>{firstPart}</span>{" "}
-      <span className={isDarkPaper ? "text-sky-400" : "text-[#2563eb] dark:text-sky-400"}>{lastWord}</span>
+      <span className={isDarkPaper ? "text-blue-300" : "text-[#0d2562]"}>{firstPart}</span>{" "}
+      <span className={isDarkPaper ? "text-sky-400" : "text-[#2563eb]"}>{lastWord}</span>
     </>
   );
 }
@@ -939,7 +939,7 @@ export function renderDynamicTitle(
 
   const parts = trimmed.split(/\s+/);
   if (parts.length <= 1) {
-    return <span className={isDarkPaper ? "text-white" : "text-[#050a1a] dark:text-white"}>{trimmed}</span>;
+    return <span className={isDarkPaper ? "text-white" : "text-[#050a1a]"}>{trimmed}</span>;
   }
 
   const mainPart = parts.slice(0, -1).join(" ");
@@ -947,8 +947,8 @@ export function renderDynamicTitle(
 
   return (
     <>
-      <span className={isDarkPaper ? "text-white" : "text-[#050a1a] dark:text-white"}>{mainPart}</span>{" "}
-      <span className={isDarkPaper ? "text-sky-400" : "text-[#2563eb] dark:text-sky-400"}>{accentWord}</span>
+      <span className={isDarkPaper ? "text-white" : "text-[#050a1a]"}>{mainPart}</span>{" "}
+      <span className={isDarkPaper ? "text-sky-400" : "text-[#2563eb]"}>{accentWord}</span>
     </>
   );
 }

@@ -2536,7 +2536,7 @@ export function CanvasStudio({
                                   isDarkPaper && !sectionTextColor
                                     ? "text-zinc-300"
                                     : !sectionTextColor
-                                    ? "text-[#4b556b] dark:text-zinc-300"
+                                    ? "text-[#4b556b]"
                                     : ""
                                 }`}
                                 style={sectionTextColor ? { color: sectionTextColor, opacity: 0.9 } : undefined}
