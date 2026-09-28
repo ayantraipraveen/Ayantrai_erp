@@ -91,6 +91,7 @@ import {
   CanvasMarginConfig,
   getPaperToneColor,
 } from "./CanvasContextRibbon";
+import { DynamicTitleEditor, renderDynamicTitle } from "./DynamicTitleEditor";
 
 // ─── Standard Physical A4 Dimensions at 96 DPI ────────────────────────────────
 export const A4_WIDTH_PX = 794;
@@ -2475,50 +2476,42 @@ export function CanvasStudio({
                               </div>
                             </div>
 
-                            {/* Main Section Title: Huge 40px Font-Black Dual-Tone */}
+                            {/* Main Section Title: Dynamic Word-Style Typography & Color Studio */}
                             {editingSectionField === "name" ? (
-                              <div className="flex items-center gap-2 my-1">
-                                <input
-                                  type="text"
-                                  value={localSectionName}
-                                  onChange={(e) => setLocalSectionName(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") commitSectionHeaderUpdate();
-                                    if (e.key === "Escape") setEditingSectionField(null);
-                                  }}
-                                  autoFocus
-                                  className="w-full text-2xl sm:text-[34px] font-black tracking-[-0.03em] leading-tight px-2 py-1 rounded border-2 border-[#2563eb] bg-white dark:bg-zinc-900 text-[#050a1a] dark:text-white outline-none shadow-sm"
-                                  aria-label="Section title"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={commitSectionHeaderUpdate}
-                                  className="p-1.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 cursor-pointer"
-                                  title="Save Title"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingSectionField(null)}
-                                  className="p-1.5 rounded-lg bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-300 cursor-pointer"
-                                  title="Cancel"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
+                              <DynamicTitleEditor
+                                initialName={section.name}
+                                initialHtml={section.titleHtml}
+                                isDarkPaper={isDarkPaper}
+                                paperTone={paperTone}
+                                onSave={(newName, newHtml) => {
+                                  dispatch(
+                                    updateLibrarySection({
+                                      id: section.id,
+                                      name: newName,
+                                      titleHtml: newHtml,
+                                      changes: {
+                                        name: newName,
+                                        titleHtml: newHtml,
+                                      },
+                                    })
+                                  );
+                                  setLocalSectionName(newName);
+                                  setEditingSectionField(null);
+                                  dispatch(showGlobalToast({ message: "Title updated!", type: "success" }));
+                                }}
+                                onCancel={() => setEditingSectionField(null)}
+                              />
                             ) : (
                               <h1
                                 onDoubleClick={() => {
                                   if (!activeIsPreview) {
-                                    setLocalSectionName(section.name);
                                     setEditingSectionField("name");
                                   }
                                 }}
                                 className="text-3xl sm:text-[38px] lg:text-[40px] font-black tracking-[-0.035em] leading-[1.08] cursor-pointer mt-1"
-                                title="Double-click to edit title"
+                                title="Double-click to format title (Word style)"
                               >
-                                {renderDualToneTitle(section.name, sectionTextColor, isDarkPaper)}
+                                {renderDynamicTitle(section.titleHtml, section.name, sectionTextColor, isDarkPaper)}
                               </h1>
                             )}
 
@@ -2606,7 +2599,7 @@ export function CanvasStudio({
                                 </span>
                               </div>
                               <div className="text-xs font-black tracking-tight truncate max-w-[300px]">
-                                {renderDualToneTitle(section.name, sectionTextColor, isDarkPaper)}
+                                {renderDynamicTitle(section.titleHtml, section.name, sectionTextColor, isDarkPaper)}
                               </div>
                             </div>
                           </div>
