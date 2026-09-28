@@ -562,7 +562,13 @@ export function DynamicTextEditor({
                     <input
                       type="text"
                       value={customHex}
-                      onChange={(e) => setCustomHex(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomHex(val);
+                        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                          applyColor(val);
+                        }
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           applyColor(customHex);
@@ -601,7 +607,7 @@ export function DynamicTextEditor({
             )}
           </div>
 
-          {/* Quick Color Swatches Row */}
+          {/* Quick Color Swatches Row + Custom Color Picker */}
           <div className="flex items-center gap-1 pl-1">
             {TITLE_THEME_COLORS.map((col) => (
               <button
@@ -618,6 +624,25 @@ export function DynamicTextEditor({
                 title={`Apply ${col.name} to selected text`}
               />
             ))}
+
+            {/* Direct Custom Color Picker Tile (Rainbow gradient with Eyedropper) */}
+            <label
+              className="relative w-5 h-5 rounded-full cursor-pointer shadow-2xs hover:scale-125 transition-transform flex items-center justify-center overflow-hidden border border-slate-300 dark:border-zinc-600 ml-0.5"
+              style={{
+                background: "conic-gradient(from 180deg, #ff0000, #ff8000, #ffff00, #00ff00, #00ffff, #0066ff, #9900ff, #ff0088, #ff0000)",
+              }}
+              title="Custom Color Picker (Pick any color / Eyedropper)"
+            >
+              <input
+                type="color"
+                value={activeColor.startsWith("#") && activeColor.length === 7 ? activeColor : "#2563eb"}
+                onChange={(e) => {
+                  applyColor(e.target.value);
+                }}
+                className="sr-only cursor-pointer"
+              />
+              <Pipette className="w-2.5 h-2.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
+            </label>
           </div>
         </div>
 
