@@ -469,6 +469,8 @@ export function CanvasContextRibbon({
                 currentBorderColor={currentStyle.borderColor}
                 currentBorderStyle={currentStyle.borderStyle}
                 currentBorderWidth={currentStyle.borderWidth}
+                currentBorderRadius={currentStyle.borderRadius}
+                currentShadow={currentStyle.shadow}
                 onSelectBorder={(patch) => {
                   if (onUpdateCellStyle) onUpdateCellStyle(patch);
                 }}
@@ -478,6 +480,8 @@ export function CanvasContextRibbon({
                       borderColor: undefined,
                       borderStyle: undefined,
                       borderWidth: undefined,
+                      borderRadius: undefined,
+                      shadow: undefined,
                     });
                   }
                 }}
@@ -2114,6 +2118,8 @@ function CardBorderPopover({
   currentBorderColor,
   currentBorderStyle,
   currentBorderWidth,
+  currentBorderRadius,
+  currentShadow,
   onSelectBorder,
   onReset,
   onClose,
@@ -2121,10 +2127,14 @@ function CardBorderPopover({
   currentBorderColor?: string;
   currentBorderStyle?: "solid" | "dashed" | "dotted" | "none";
   currentBorderWidth?: number;
+  currentBorderRadius?: number | "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "full" | string;
+  currentShadow?: "none" | "sm" | "md" | "lg" | "xl" | "glow" | string;
   onSelectBorder: (patch: {
     borderColor?: string;
     borderStyle?: "solid" | "dashed" | "dotted" | "none";
     borderWidth?: number;
+    borderRadius?: number | "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "full" | string;
+    shadow?: "none" | "sm" | "md" | "lg" | "xl" | "glow" | string;
   }) => void;
   onReset: () => void;
   onClose: () => void;
@@ -2134,90 +2144,153 @@ function CardBorderPopover({
   );
   const colorPickerRef = useRef<HTMLInputElement>(null);
 
+  // Compute numeric radius for smooth slider / steppers
+  const numericRadius =
+    typeof currentBorderRadius === "number"
+      ? currentBorderRadius
+      : currentBorderRadius === "none"
+      ? 0
+      : currentBorderRadius === "sm"
+      ? 6
+      : currentBorderRadius === "md"
+      ? 10
+      : currentBorderRadius === "lg"
+      ? 16
+      : currentBorderRadius === "xl"
+      ? 20
+      : currentBorderRadius === "2xl"
+      ? 24
+      : currentBorderRadius === "full"
+      ? 99
+      : typeof currentBorderRadius === "string" && !isNaN(parseInt(currentBorderRadius))
+      ? parseInt(currentBorderRadius)
+      : 16;
+
+  const [activeRadius, setActiveRadius] = useState<number>(numericRadius);
+  const [activeWidth, setActiveWidth] = useState<number>(currentBorderWidth ?? 1);
+
   const handleNativeColorInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setActiveHex(val);
     onSelectBorder({
       borderColor: val,
-      borderWidth: currentBorderWidth && currentBorderWidth > 0 ? currentBorderWidth : 1,
+      borderWidth: activeWidth > 0 ? activeWidth : 1,
       borderStyle: currentBorderStyle === "none" ? "solid" : currentBorderStyle ?? "solid",
     });
   };
 
+  const handleRadiusChange = (val: number) => {
+    const clamped = Math.max(0, Math.min(99, val));
+    setActiveRadius(clamped);
+    onSelectBorder({ borderRadius: clamped });
+  };
+
+  const handleWidthChange = (val: number) => {
+    const clamped = Math.max(0, Math.min(12, val));
+    setActiveWidth(clamped);
+    onSelectBorder({
+      borderWidth: clamped,
+      borderStyle: clamped === 0 ? "none" : currentBorderStyle === "none" ? "solid" : currentBorderStyle ?? "solid",
+    });
+  };
+
   return (
-    <div className="absolute top-9 left-0 w-64 sm:w-72 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-3.5 z-50 space-y-3.5 animate-fadeIn">
+    <div className="absolute top-9 left-0 w-80 max-h-[min(540px,calc(100vh-140px))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-4 z-50 space-y-4 animate-fadeIn">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-purple-500/10 text-[#8B3DFF] flex items-center justify-center font-bold">
-            <Square className="w-3.5 h-3.5" />
+          <div className="w-7 h-7 rounded-xl bg-purple-500/10 text-[#8B3DFF] flex items-center justify-center font-bold">
+            <Square className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900 dark:text-white">Card Border</h4>
-            <p className="text-[10px] text-slate-400">Color, width & line style</p>
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white">Card Appearance</h4>
+            <p className="text-[10px] text-slate-400">Border, radius, depth & shadow</p>
           </div>
         </div>
         <button
           type="button"
           onClick={onReset}
-          className="text-[10px] text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+          className="text-[10px] font-semibold text-slate-400 hover:text-red-500 transition-colors cursor-pointer px-2 py-0.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30"
         >
-          Reset
+          Reset All
         </button>
       </div>
 
-      {/* Border Style & Width Row */}
-      <div className="space-y-1.5">
+      {/* ── 1. Border Style & Width ── */}
+      <div className="space-y-2">
         <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-          <span>Border Style</span>
-          <span>Width</span>
+          <span>Border Line Style</span>
+          <span>Width: {activeWidth}px</span>
         </div>
-        <div className="flex items-center justify-between gap-2">
-          {/* Style pills */}
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 p-0.5">
-            {(["solid", "dashed", "dotted", "none"] as const).map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() =>
-                  onSelectBorder({
-                    borderStyle: st,
-                    borderColor:
-                      st === "none"
-                        ? "transparent"
-                        : currentBorderColor && currentBorderColor !== "transparent"
-                        ? currentBorderColor
-                        : "#e2e8f0",
-                    borderWidth: st === "none" ? 0 : currentBorderWidth && currentBorderWidth > 0 ? currentBorderWidth : 1,
-                  })
-                }
-                className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize transition-colors cursor-pointer ${
-                  (currentBorderStyle || "solid") === st
-                    ? "bg-[#8B3DFF] text-white"
-                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900"
-                }`}
-              >
-                {st}
-              </button>
-            ))}
+
+        {/* Style pills */}
+        <div className="grid grid-cols-4 gap-1 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 p-1">
+          {(["solid", "dashed", "dotted", "none"] as const).map((st) => (
+            <button
+              key={st}
+              type="button"
+              onClick={() =>
+                onSelectBorder({
+                  borderStyle: st,
+                  borderColor:
+                    st === "none"
+                      ? "transparent"
+                      : currentBorderColor && currentBorderColor !== "transparent"
+                      ? currentBorderColor
+                      : "#e2e8f0",
+                  borderWidth: st === "none" ? 0 : activeWidth > 0 ? activeWidth : 1,
+                })
+              }
+              className={`py-1 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer flex items-center justify-center ${
+                (currentBorderStyle || (activeWidth === 0 ? "none" : "solid")) === st
+                  ? "bg-[#8B3DFF] text-white shadow-xs"
+                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              {st}
+            </button>
+          ))}
+        </div>
+
+        {/* Width Stepper & Quick Pills */}
+        <div className="flex items-center justify-between gap-2 pt-1">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handleWidthChange(activeWidth - 1)}
+              className="w-6 h-6 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600 dark:text-zinc-300 cursor-pointer"
+              title="Decrease width"
+            >
+              -
+            </button>
+            <input
+              type="number"
+              min={0}
+              max={12}
+              value={activeWidth}
+              onChange={(e) => handleWidthChange(parseInt(e.target.value) || 0)}
+              className="w-10 h-6 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-center font-mono font-bold text-xs text-slate-800 dark:text-zinc-200 outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => handleWidthChange(activeWidth + 1)}
+              className="w-6 h-6 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600 dark:text-zinc-300 cursor-pointer"
+              title="Increase width"
+            >
+              +
+            </button>
           </div>
 
-          {/* Width pills */}
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 p-0.5">
-            {[1, 2, 3, 4].map((w) => (
+          <div className="flex items-center gap-1">
+            {[0, 1, 2, 3, 4, 6].map((w) => (
               <button
                 key={w}
                 type="button"
-                onClick={() =>
-                  onSelectBorder({
-                    borderWidth: w,
-                    borderStyle: currentBorderStyle === "none" ? "solid" : currentBorderStyle ?? "solid",
-                  })
-                }
-                className={`w-5 h-5 rounded text-[10px] font-bold font-mono transition-colors cursor-pointer flex items-center justify-center ${
-                  (currentBorderWidth ?? 1) === w
-                    ? "bg-[#8B3DFF] text-white"
-                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900"
+                onClick={() => handleWidthChange(w)}
+                className={`w-6 h-6 rounded-lg text-[10px] font-bold font-mono transition-all cursor-pointer flex items-center justify-center ${
+                  activeWidth === w
+                    ? "bg-[#8B3DFF] text-white shadow-xs"
+                    : "border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400"
                 }`}
               >
                 {w}
@@ -2227,11 +2300,114 @@ function CardBorderPopover({
         </div>
       </div>
 
-      {/* Color Swatches Grid */}
-      <div className="space-y-1.5">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-          Border Colors
+      {/* ── 2. Border Radius (Corner Rounding) ── */}
+      <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
+        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          <span>Border Radius (Corners)</span>
+          <span className="text-[#8B3DFF] font-bold">{activeRadius >= 99 ? "Pill" : `${activeRadius}px`}</span>
         </div>
+
+        {/* Stepper + Slider */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleRadiusChange(activeRadius - 2)}
+            className="w-6 h-6 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600 dark:text-zinc-300 cursor-pointer shrink-0"
+            title="Decrease radius"
+          >
+            -
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={40}
+            step={2}
+            value={Math.min(40, activeRadius)}
+            onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
+            className="flex-1 accent-[#8B3DFF] cursor-pointer"
+          />
+          <button
+            type="button"
+            onClick={() => handleRadiusChange(activeRadius + 2)}
+            className="w-6 h-6 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600 dark:text-zinc-300 cursor-pointer shrink-0"
+            title="Increase radius"
+          >
+            +
+          </button>
+        </div>
+
+        {/* Quick Radius Preset Chips */}
+        <div className="grid grid-cols-6 gap-1">
+          {[
+            { label: "0", val: 0, title: "Sharp (0px)" },
+            { label: "6", val: 6, title: "Small (6px)" },
+            { label: "12", val: 12, title: "Medium (12px)" },
+            { label: "16", val: 16, title: "Default (16px)" },
+            { label: "24", val: 24, title: "Round (24px)" },
+            { label: "Pill", val: 99, title: "Pill / Full" },
+          ].map((r) => (
+            <button
+              key={r.label}
+              type="button"
+              onClick={() => handleRadiusChange(r.val)}
+              className={`py-1 rounded-lg text-[10px] font-bold font-mono transition-all cursor-pointer flex items-center justify-center border ${
+                activeRadius === r.val
+                  ? "bg-[#8B3DFF] border-[#8B3DFF] text-white shadow-xs"
+                  : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400"
+              }`}
+              title={r.title}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── 3. Card Shadow (Depth & Elevation) ── */}
+      <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
+        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          <span>Card Shadow & Depth</span>
+          <span className="capitalize text-[#8B3DFF] font-bold">{currentShadow || "None"}</span>
+        </div>
+
+        <div className="grid grid-cols-5 gap-1.5">
+          {[
+            { id: "none", label: "None", shadow: "none" },
+            { id: "sm", label: "Soft", shadow: "0 1px 2px rgba(0,0,0,0.06)" },
+            { id: "md", label: "Medium", shadow: "0 4px 6px -1px rgba(0,0,0,0.1)" },
+            { id: "lg", label: "Elevated", shadow: "0 10px 15px -3px rgba(0,0,0,0.12)" },
+            { id: "glow", label: "Glow", shadow: "0 0 16px rgba(139,61,255,0.4)" },
+          ].map((sh) => {
+            const isSelected = (currentShadow || "none") === sh.id;
+            return (
+              <button
+                key={sh.id}
+                type="button"
+                onClick={() => onSelectBorder({ shadow: sh.id })}
+                className={`py-1.5 px-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1 border ${
+                  isSelected
+                    ? "bg-[#8B3DFF] border-[#8B3DFF] text-white shadow-sm"
+                    : "border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/60 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300"
+                }`}
+              >
+                <div
+                  className="w-5 h-2.5 rounded-sm bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700"
+                  style={{ boxShadow: sh.shadow }}
+                />
+                <span className="text-[9px] leading-none">{sh.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── 4. Border Colors ── */}
+      <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          Border Color
+        </div>
+
+        {/* Color Swatches Grid */}
         <div className="grid grid-cols-5 gap-1.5">
           {CARD_BORDER_PRESETS.map((p) => {
             const isSelected =
@@ -2252,7 +2428,7 @@ function CardBorderPopover({
                     onSelectBorder({
                       borderColor: p.color,
                       borderStyle: currentBorderStyle === "none" ? "solid" : currentBorderStyle ?? "solid",
-                      borderWidth: currentBorderWidth && currentBorderWidth > 0 ? currentBorderWidth : 1,
+                      borderWidth: activeWidth > 0 ? activeWidth : 1,
                     });
                   }
                 }}
@@ -2275,21 +2451,16 @@ function CardBorderPopover({
             );
           })}
         </div>
-      </div>
 
-      {/* Custom Color Input & Color Picker */}
-      <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-          Custom Border Color
-        </div>
-        <div className="flex items-center gap-2">
+        {/* Custom Color Input & Eyedropper */}
+        <div className="flex items-center gap-2 pt-1">
           <div className="relative">
             <button
               type="button"
               onClick={() => colorPickerRef.current?.click()}
               className="w-8 h-8 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center shadow-xs hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
               style={{ backgroundColor: activeHex }}
-              title="Open border color picker"
+              title="Open border color eyedropper"
             >
               <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
                 <Pipette className="w-3.5 h-3.5 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" />
@@ -2298,7 +2469,7 @@ function CardBorderPopover({
             <input
               ref={colorPickerRef}
               type="color"
-              value={activeHex.startsWith("#") ? activeHex : "#e2e8f0"}
+              value={activeHex.startsWith("#") && activeHex.length === 7 ? activeHex : "#e2e8f0"}
               onChange={handleNativeColorInput}
               className="absolute inset-0 h-8 w-8 cursor-pointer opacity-0"
               aria-label="Choose custom border color"
@@ -2314,7 +2485,7 @@ function CardBorderPopover({
                 onSelectBorder({
                   borderColor: val,
                   borderStyle: currentBorderStyle === "none" ? "solid" : currentBorderStyle ?? "solid",
-                  borderWidth: currentBorderWidth ?? 1,
+                  borderWidth: activeWidth > 0 ? activeWidth : 1,
                 });
               }
             }}
@@ -2328,7 +2499,7 @@ function CardBorderPopover({
       <button
         type="button"
         onClick={onClose}
-        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+        className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
       >
         Apply & Close
       </button>

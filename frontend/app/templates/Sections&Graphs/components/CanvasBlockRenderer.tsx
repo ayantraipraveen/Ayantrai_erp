@@ -315,12 +315,14 @@ function InsightBlock({
   isForceEditing,
   onEditingChange,
   onUpdateInsight,
+  style,
 }: {
   cell: CanvasCell;
   isPreview?: boolean;
   isForceEditing?: boolean;
   onEditingChange?: (isEditing: boolean) => void;
   onUpdateInsight?: (text: string) => void;
+  style?: React.CSSProperties;
 }) {
   const insight = cell.insight;
   if (!insight) return null;
@@ -345,6 +347,44 @@ function InsightBlock({
     if (onEditingChange) onEditingChange(false);
   };
 
+  const dynamicBorderRadius =
+    cell.style?.borderRadius !== undefined
+      ? typeof cell.style.borderRadius === "number"
+        ? `${cell.style.borderRadius}px`
+        : cell.style.borderRadius === "none"
+        ? "0px"
+        : cell.style.borderRadius === "sm"
+        ? "6px"
+        : cell.style.borderRadius === "md"
+        ? "10px"
+        : cell.style.borderRadius === "lg"
+        ? "16px"
+        : cell.style.borderRadius === "xl"
+        ? "20px"
+        : cell.style.borderRadius === "2xl"
+        ? "24px"
+        : cell.style.borderRadius === "full"
+        ? "9999px"
+        : cell.style.borderRadius
+      : undefined;
+
+  const dynamicBoxShadow =
+    cell.style?.shadow !== undefined
+      ? cell.style.shadow === "none"
+        ? "none"
+        : cell.style.shadow === "sm"
+        ? "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)"
+        : cell.style.shadow === "md"
+        ? "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.08)"
+        : cell.style.shadow === "lg"
+        ? "0 10px 15px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08)"
+        : cell.style.shadow === "xl"
+        ? "0 20px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.08)"
+        : cell.style.shadow === "glow"
+        ? "0 0 24px -2px rgba(139,61,255,0.38)"
+        : cell.style.shadow
+      : undefined;
+
   return (
     <div
       onClick={(e) => {
@@ -354,6 +394,11 @@ function InsightBlock({
         }
       }}
       className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 flex items-start gap-3.5 shadow-sm"
+      style={{
+        borderRadius: dynamicBorderRadius,
+        boxShadow: dynamicBoxShadow,
+        ...style,
+      }}
     >
       <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#9D61FF] to-blue-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
         <Lightbulb className="w-3.5 h-3.5" />
@@ -455,6 +500,44 @@ function TextBlock({
 
   const dynamicBorderStyle = cell.style?.borderStyle || undefined;
 
+  const dynamicBorderRadius =
+    cell.style?.borderRadius !== undefined
+      ? typeof cell.style.borderRadius === "number"
+        ? `${cell.style.borderRadius}px`
+        : cell.style.borderRadius === "none"
+        ? "0px"
+        : cell.style.borderRadius === "sm"
+        ? "6px"
+        : cell.style.borderRadius === "md"
+        ? "10px"
+        : cell.style.borderRadius === "lg"
+        ? "16px"
+        : cell.style.borderRadius === "xl"
+        ? "20px"
+        : cell.style.borderRadius === "2xl"
+        ? "24px"
+        : cell.style.borderRadius === "full"
+        ? "9999px"
+        : cell.style.borderRadius
+      : undefined;
+
+  const dynamicBoxShadow =
+    cell.style?.shadow !== undefined
+      ? cell.style.shadow === "none"
+        ? "none"
+        : cell.style.shadow === "sm"
+        ? "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)"
+        : cell.style.shadow === "md"
+        ? "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.08)"
+        : cell.style.shadow === "lg"
+        ? "0 10px 15px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08)"
+        : cell.style.shadow === "xl"
+        ? "0 20px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.08)"
+        : cell.style.shadow === "glow"
+        ? "0 0 24px -2px rgba(139,61,255,0.38)"
+        : cell.style.shadow
+      : undefined;
+
   const isContentEmpty =
     !tb.content ||
     tb.content.trim() === "" ||
@@ -488,6 +571,8 @@ function TextBlock({
         borderColor: dynamicBorderColor,
         borderWidth: dynamicBorderWidth,
         borderStyle: dynamicBorderStyle,
+        borderRadius: dynamicBorderRadius,
+        boxShadow: dynamicBoxShadow,
         ...style,
       }}
     >
@@ -1064,6 +1149,35 @@ const styleProps: React.CSSProperties = {};
     }
   }
 
+  if (style.borderRadius !== undefined) {
+    if (typeof style.borderRadius === "number") {
+      styleProps.borderRadius = `${style.borderRadius}px`;
+    } else {
+      const RADIUS_MAP: Record<string, string> = {
+        none: "0px",
+        sm: "6px",
+        md: "10px",
+        lg: "16px",
+        xl: "20px",
+        "2xl": "24px",
+        full: "9999px",
+      };
+      styleProps.borderRadius = RADIUS_MAP[style.borderRadius] || style.borderRadius;
+    }
+  }
+
+  if (style.shadow) {
+    const SHADOW_MAP: Record<string, string> = {
+      none: "none",
+      sm: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
+      md: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.08)",
+      lg: "0 10px 15px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08)",
+      xl: "0 20px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.08)",
+      glow: "0 0 24px -2px rgba(139,61,255,0.38)",
+    };
+    styleProps.boxShadow = SHADOW_MAP[style.shadow] || style.shadow;
+  }
+
   let textColorClass = "";
   if (style.textColor) {
     styleProps.color = style.textColor;
@@ -1177,6 +1291,8 @@ export function CanvasBlockRenderer({
   if (styleProps.borderColor) cardStyles.borderColor = styleProps.borderColor;
   if (styleProps.borderWidth) cardStyles.borderWidth = styleProps.borderWidth;
   if (styleProps.borderStyle) cardStyles.borderStyle = styleProps.borderStyle;
+  if (styleProps.borderRadius) cardStyles.borderRadius = styleProps.borderRadius;
+  if (styleProps.boxShadow) cardStyles.boxShadow = styleProps.boxShadow;
 
   const innerWithBackground = Object.keys(cardStyles).length > 0 && React.isValidElement(renderedInner)
     ? React.cloneElement(renderedInner as React.ReactElement<{ style?: React.CSSProperties }>, {
@@ -1190,7 +1306,9 @@ export function CanvasBlockRenderer({
   return (
     <div
       className={`w-full h-full flex-1 min-h-0 flex flex-col transition-all ${fontClass} ${alignClass} ${bgClass} ${textColorClass}`}
-      style={styleProps}
+      style={{
+        color: styleProps.color,
+      }}
     >
       {innerWithBackground}
     </div>

@@ -329,6 +329,8 @@ export interface CanvasCellStyle {
   borderColor?: string; // preset id or hex color or 'transparent'
   borderWidth?: number; // 0, 1, 2, 3, 4
   borderStyle?: "solid" | "dashed" | "dotted" | "none";
+  borderRadius?: number | "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "full" | string; // custom px (0-60) or preset
+  shadow?: "none" | "sm" | "md" | "lg" | "xl" | "glow" | string; // custom box-shadow or preset
   backgroundOpacity?: number; // card background opacity from 0 to 100
 }
 
