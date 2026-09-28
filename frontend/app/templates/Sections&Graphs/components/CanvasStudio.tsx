@@ -2138,7 +2138,9 @@ export function CanvasStudio({
                       maxHeight: `${A4_HEIGHT_PX}px`,
                       boxSizing: "border-box",
                     }}
-                    className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 overflow-hidden transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-between`}
+                    className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${
+                      editingHeaderValue || editingSectionField || editingFooterValue ? "overflow-visible" : "overflow-hidden"
+                    } transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-between`}
                   >
                     {/* Margin Guides (if enabled) */}
                     {activeShowGuides && !activeIsPreview && (

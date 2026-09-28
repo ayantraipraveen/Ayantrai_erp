@@ -159,8 +159,9 @@ export function DynamicTextEditor({
   const [customHex, setCustomHex] = useState("#2563eb");
   const [detectedPlacement, setDetectedPlacement] = useState<"top" | "bottom">("top");
   const [detectedAlign, setDetectedAlign] = useState<"left" | "right">("left");
+  const [horizontalShift, setHorizontalShift] = useState<number>(0);
 
-  // Dynamically position floating toolbar above or below to avoid clipping and eliminate layout push
+  // Dynamically position floating toolbar above or below and clamp horizontally to avoid clipping
   useEffect(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -169,10 +170,28 @@ export function DynamicTextEditor({
       } else {
         setDetectedPlacement("top");
       }
-      if (window.innerWidth - rect.left < 540) {
-        setDetectedAlign("right");
+
+      // Check distance to artboard boundary or viewport edge
+      const artboard = (containerRef.current.closest("[id^='canvas-page']") ||
+        containerRef.current.closest(".overflow-hidden")) as HTMLElement | null;
+
+      const boundaryRight = artboard
+        ? artboard.getBoundingClientRect().right
+        : window.innerWidth;
+
+      const boundaryLeft = artboard
+        ? artboard.getBoundingClientRect().left
+        : 0;
+
+      const availableToRight = boundaryRight - rect.left - 24;
+      const targetToolbarWidth = 460;
+
+      if (availableToRight < targetToolbarWidth) {
+        const neededShift = targetToolbarWidth - availableToRight;
+        const maxShiftPossible = Math.max(0, rect.left - boundaryLeft - 20);
+        setHorizontalShift(Math.min(neededShift, maxShiftPossible));
       } else {
-        setDetectedAlign("left");
+        setHorizontalShift(0);
       }
     }
   }, []);
@@ -432,6 +451,7 @@ export function DynamicTextEditor({
         }`}
         style={{
           boxShadow: "0 14px 34px -4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06)",
+          transform: horizontalShift > 0 ? `translateX(-${horizontalShift}px)` : undefined,
         }}
       >
         <div className="flex items-center gap-1.5">
@@ -448,7 +468,7 @@ export function DynamicTextEditor({
               title="Font Family"
             >
               <Type className="w-3 h-3 text-[#2563eb]" />
-              <span className="max-w-[70px] truncate text-[11px]">{selectedFont}</span>
+              <span className="max-w-[55px] truncate text-[11px]">{selectedFont}</span>
               <ChevronDown className="w-2.5 h-2.5 opacity-60" />
             </button>
 
@@ -650,7 +670,7 @@ export function DynamicTextEditor({
 
           {/* Quick Color Swatches Row + Custom Color Picker */}
           <div className="flex items-center gap-1 pl-0.5 shrink-0">
-            {TITLE_THEME_COLORS.map((col) => (
+            {TITLE_THEME_COLORS.slice(0, 8).map((col) => (
               <button
                 key={col.hex}
                 type="button"
