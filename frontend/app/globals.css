@@ -614,15 +614,12 @@ textarea::-moz-selection {
 [contenteditable] *::selection,
 .dynamic-word-editor::selection,
 .dynamic-word-editor *::selection {
-  background-color: rgba(37, 99, 235, 0.16) !important;
-  color: currentColor !important;
-  -webkit-text-fill-color: currentColor !important;
+  background-color: rgba(37, 99, 235, 0.15) !important;
 }
 [contenteditable]::-moz-selection,
 [contenteditable] *::-moz-selection,
 .dynamic-word-editor::-moz-selection,
 .dynamic-word-editor *::-moz-selection {
-  background-color: rgba(37, 99, 235, 0.16) !important;
-  color: currentColor !important;
+  background-color: rgba(37, 99, 235, 0.15) !important;
 }
 
