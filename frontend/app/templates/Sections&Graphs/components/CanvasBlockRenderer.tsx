@@ -1008,9 +1008,13 @@ function BadgeStripBlock({
   const strip = cell.badgeStrip;
   if (!strip) return null;
 
+  const isCompact =
+    (cell.customWidth !== undefined && cell.customWidth <= 60) ||
+    (cell.colSpan !== undefined && cell.colSpan <= 2);
+
   return (
-    <div className="w-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-3.5 shadow-sm space-y-2.5">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-stretch">
+    <div className="w-full h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-3.5 shadow-sm space-y-2.5 flex flex-col justify-between">
+      <div className={`grid ${isCompact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"} gap-3 items-stretch`}>
         {strip.badges.length === 0 ? (
           <div className="col-span-4 text-center text-xs text-slate-400 py-4 italic">
             No badges in strip. Click &ldquo;+ Add Badge&rdquo; to create one.

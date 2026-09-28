@@ -137,19 +137,17 @@ export function estimateRowHeight(row: CanvasRow): number {
           h = cell.chart?.description ? 395 : 370;
           break;
         case "metric-card":
-          // Metric card: 32px padding + label + 2xl value + trend badge
           h = 135;
           break;
-        case "badge-strip":
-          // 4-badge strip: 28px padding + 88px badges
-          h = 140;
+        case "badge-strip": {
+          const w = cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : 100);
+          h = w <= 55 ? 220 : 140;
           break;
+        }
         case "insight":
-          // Key insight card: 32px padding + icon badge + text
           h = 110;
           break;
         case "text": {
-          // Rich text block with multiline awareness
           const lines = (cell.textBlock?.content || "").split("\n").length;
           h = Math.max(90, 60 + lines * 20);
           break;
@@ -159,6 +157,24 @@ export function estimateRowHeight(row: CanvasRow): number {
           break;
         default:
           h = 100;
+      }
+    }
+
+    // Account for stacked cells in this column
+    if (cell.stackedCells && cell.stackedCells.length > 0) {
+      for (const sc of cell.stackedCells) {
+        let scH = sc.customHeight || 90;
+        if (!sc.customHeight) {
+          switch (sc.blockType) {
+            case "chart": scH = 370; break;
+            case "metric-card": scH = 135; break;
+            case "badge-strip": scH = 140; break;
+            case "insight": scH = 110; break;
+            case "text": scH = 90; break;
+            default: scH = 90;
+          }
+        }
+        h += scH + 12; // 12px gap between stacked blocks
       }
     }
 
@@ -1480,8 +1496,19 @@ function SortableRow({
           }`}
         >
           {row.cells.length === 0 ? (
-            <div className="w-full py-6 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center text-xs text-slate-400">
-              <span>Empty Row &middot; Drag blocks here</span>
+            <div className="w-full py-5 border-2 border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl flex flex-col items-center justify-center gap-1.5 text-xs text-slate-400 bg-slate-50/50 dark:bg-zinc-900/30">
+              <span className="font-medium text-slate-500 dark:text-zinc-400">Empty Row &middot; Drag blocks from sidebar here</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveRow(row.id);
+                }}
+                className="text-[11px] text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 font-semibold flex items-center gap-1 hover:underline cursor-pointer"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>Remove empty row</span>
+              </button>
             </div>
           ) : (
             row.cells.map((cell, idx) => (
@@ -2983,7 +3010,7 @@ export function CanvasStudio({
                             <p className="text-xs">Drag any block from the left sidebar or click to add</p>
                           </div>
                         ) : (
-                          <div className="space-y-1">
+                          <div className="space-y-3.5">
                             {/* Drop zone at the top of the report */}
                             {page.isFirstPage && !activeIsPreview && (
                               <DropInsertZone

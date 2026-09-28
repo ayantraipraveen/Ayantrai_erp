@@ -159,8 +159,13 @@ export default function SectionCanvasEditor({
   const activeCell = useMemo(() => {
     if (!selectedCellId || !section?.canvasRows) return null;
     for (const r of section.canvasRows) {
-      const c = r.cells.find((cell) => cell.id === selectedCellId);
-      if (c) return c;
+      for (const cell of r.cells) {
+        if (cell.id === selectedCellId) return cell;
+        if (cell.stackedCells && cell.stackedCells.length > 0) {
+          const sc = cell.stackedCells.find((s) => s.id === selectedCellId);
+          if (sc) return sc;
+        }
+      }
     }
     return null;
   }, [selectedCellId, section?.canvasRows]);
@@ -869,7 +874,11 @@ export default function SectionCanvasEditor({
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-slate-400 dark:text-zinc-500 hidden md:block">
             {section.canvasRows?.length || 0} rows &middot;{" "}
-            {section.canvasRows?.reduce((acc, r) => acc + r.cells.length, 0) || 0} blocks
+            {section.canvasRows?.reduce(
+              (acc, r) => acc + r.cells.reduce((cAcc, c) => cAcc + 1 + (c.stackedCells?.length || 0), 0),
+              0
+            ) || 0}{" "}
+            blocks
           </span>
 
           {/* Clean Preview Toggle */}
