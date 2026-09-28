@@ -165,7 +165,7 @@ function MetricCardBlock({
 
   return (
     <div
-      className={`w-full h-full rounded-2xl border p-4 transition-all duration-200 select-none ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} shadow-sm`}
+      className={`w-full h-full rounded-2xl border p-4 transition-all duration-200 select-none ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} shadow-sm ${editingField ? "relative z-50" : "relative z-10"}`}
     >
       {/* Label (inline editable on double click) */}
       <div className="text-[11px] font-semibold text-slate-600 dark:text-zinc-400 line-clamp-2 leading-snug mb-2">
@@ -676,7 +676,7 @@ function SingleBadgeItemCard({
   return (
     <>
       <div
-        className={`group/single-badge relative rounded-2xl border p-3 flex flex-col gap-2 transition-all duration-150 select-none ${colors.bg} ${colors.border} ${
+        className={`group/single-badge relative rounded-2xl border p-3 flex flex-col gap-2 transition-all duration-150 select-none ${colors.bg} ${colors.border} ${editingField ? "z-50" : "z-10"} ${
           !isPreview ? "hover:ring-2 hover:ring-[#9D61FF] hover:shadow-md cursor-pointer" : ""
         }`}
         onClick={(e) => {
