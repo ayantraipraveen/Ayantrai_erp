@@ -600,3 +600,20 @@ textarea::-moz-selection {
   scrollbar-width: none !important;
 }
 
+/* ================= RICH TEXT CONTENTEDITABLE SELECTION ================= */
+/* Allow user to see real-time color changes on selected text without white override */
+[contenteditable]::selection,
+[contenteditable] *::selection,
+.dynamic-word-editor::selection,
+.dynamic-word-editor *::selection {
+  background-color: rgba(37, 99, 235, 0.28) !important;
+  color: inherit !important;
+}
+[contenteditable]::-moz-selection,
+[contenteditable] *::-moz-selection,
+.dynamic-word-editor::-moz-selection,
+.dynamic-word-editor *::-moz-selection {
+  background-color: rgba(37, 99, 235, 0.28) !important;
+  color: inherit !important;
+}
+

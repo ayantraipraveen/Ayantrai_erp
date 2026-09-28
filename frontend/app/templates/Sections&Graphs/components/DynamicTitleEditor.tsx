@@ -225,13 +225,69 @@ export function DynamicTextEditor({
     const range = sel.getRangeAt(0);
     if (!editorRef.current.contains(range.commonAncestorContainer)) return;
 
-    if (range.collapsed) {
-      if (styles.color) editorRef.current.style.color = styles.color;
-      if (styles.fontFamily) editorRef.current.style.fontFamily = styles.fontFamily;
-      if (styles.fontSize) editorRef.current.style.fontSize = styles.fontSize;
+    // Case 1: If nothing is selected (cursor only, collapsed), apply to whole input content
+    if (range.collapsed || !savedOffsetsRef.current || savedOffsetsRef.current.start === savedOffsetsRef.current.end) {
+      if (styles.color) {
+        editorRef.current.style.color = styles.color;
+        editorRef.current.querySelectorAll("span").forEach((s) => {
+          (s as HTMLElement).style.color = styles.color!;
+        });
+      }
+      if (styles.fontFamily) {
+        editorRef.current.style.fontFamily = styles.fontFamily;
+        editorRef.current.querySelectorAll("span").forEach((s) => {
+          (s as HTMLElement).style.fontFamily = styles.fontFamily!;
+        });
+      }
+      if (styles.fontSize) {
+        editorRef.current.style.fontSize = styles.fontSize;
+        editorRef.current.querySelectorAll("span").forEach((s) => {
+          (s as HTMLElement).style.fontSize = styles.fontSize!;
+        });
+      }
+      if (styles.fontWeight) {
+        editorRef.current.style.fontWeight = styles.fontWeight;
+        editorRef.current.querySelectorAll("span").forEach((s) => {
+          (s as HTMLElement).style.fontWeight = styles.fontWeight!;
+        });
+      }
+      if (styles.fontStyle) {
+        editorRef.current.style.fontStyle = styles.fontStyle;
+        editorRef.current.querySelectorAll("span").forEach((s) => {
+          (s as HTMLElement).style.fontStyle = styles.fontStyle!;
+        });
+      }
+      if (styles.textDecoration) {
+        editorRef.current.style.textDecoration = styles.textDecoration;
+        editorRef.current.querySelectorAll("span").forEach((s) => {
+          (s as HTMLElement).style.textDecoration = styles.textDecoration!;
+        });
+      }
       return;
     }
 
+    // Case 2: If the selection is already a single span inside the editor, update its styles directly
+    const commonNode = range.commonAncestorContainer;
+    const parentSpan = (commonNode.nodeType === Node.TEXT_NODE ? commonNode.parentElement : commonNode as HTMLElement);
+    if (
+      parentSpan &&
+      parentSpan.tagName === "SPAN" &&
+      editorRef.current.contains(parentSpan) &&
+      parentSpan !== editorRef.current &&
+      (range.toString() === parentSpan.textContent || range.toString().trim() === parentSpan.textContent?.trim())
+    ) {
+      if (styles.color) parentSpan.style.color = styles.color;
+      if (styles.fontFamily) parentSpan.style.fontFamily = styles.fontFamily;
+      if (styles.fontSize) parentSpan.style.fontSize = styles.fontSize;
+      if (styles.fontWeight) parentSpan.style.fontWeight = styles.fontWeight;
+      if (styles.fontStyle) parentSpan.style.fontStyle = styles.fontStyle;
+      if (styles.textDecoration) parentSpan.style.textDecoration = styles.textDecoration;
+      
+      savedOffsetsRef.current = getSelectionOffsets(editorRef.current);
+      return;
+    }
+
+    // Case 3: Partial selection or multi-element selection
     const fragment = range.extractContents();
 
     // Clean up existing matching styles on any inner child elements
@@ -244,6 +300,9 @@ export function DynamicTextEditor({
       if (styles.fontWeight) htmlEl.style.fontWeight = "";
       if (styles.fontStyle) htmlEl.style.fontStyle = "";
       if (styles.textDecoration) htmlEl.style.textDecoration = "";
+      if (htmlEl.tagName === "SPAN" && (!htmlEl.getAttribute("style") || htmlEl.style.length === 0)) {
+        htmlEl.replaceWith(...Array.from(htmlEl.childNodes));
+      }
     });
 
     const span = document.createElement("span");
@@ -550,7 +609,11 @@ export function DynamicTextEditor({
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyColor(col.hex)}
-                className="w-4 h-4 rounded-full border border-slate-300/80 dark:border-zinc-700 hover:scale-125 transition-transform cursor-pointer shadow-2xs"
+                className={`w-4 h-4 rounded-full border transition-all cursor-pointer shadow-2xs ${
+                  activeColor.toLowerCase() === col.hex.toLowerCase()
+                    ? "ring-2 ring-blue-500 scale-125 border-white dark:border-white shadow-xs"
+                    : "border-slate-300/80 dark:border-zinc-700 hover:scale-125"
+                }`}
                 style={{ backgroundColor: col.hex }}
                 title={`Apply ${col.name} to selected text`}
               />
@@ -618,7 +681,7 @@ export function DynamicTextEditor({
         style={{
           fontSize: `${defaultFontSize}px`,
         }}
-        className={`w-full min-h-[38px] px-3 py-1.5 rounded-xl border-2 border-[#2563eb] bg-white dark:bg-zinc-900 outline-none shadow-sm select-text ${className}`}
+        className={`w-full min-h-[38px] px-3 py-1.5 rounded-xl border-2 border-[#2563eb] bg-white dark:bg-zinc-900 outline-none shadow-sm select-text dynamic-word-editor selection:bg-blue-500/20 selection:text-current ${className}`}
         aria-label={placeholder}
       />
     </div>
