@@ -60,6 +60,73 @@ export interface DynamicTextEditorProps {
   onCancel: () => void;
 }
 
+// Helper: get character offset selection relative to editor root
+function getSelectionOffsets(root: HTMLElement): { start: number; end: number } | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const range = sel.getRangeAt(0);
+  if (!root.contains(range.commonAncestorContainer)) return null;
+
+  const preRange = range.cloneRange();
+  preRange.selectNodeContents(root);
+  preRange.setEnd(range.startContainer, range.startOffset);
+  const start = preRange.toString().length;
+  const end = start + range.toString().length;
+
+  return { start, end };
+}
+
+// Helper: restore character offset selection relative to editor root
+function restoreSelectionOffsets(root: HTMLElement, offsets: { start: number; end: number } | null) {
+  if (!offsets) return;
+  const sel = window.getSelection();
+  if (!sel) return;
+
+  const { start, end } = offsets;
+  if (start < 0 || end < start) return;
+
+  let charIndex = 0;
+  let startNode: Node | null = null;
+  let startOffset = 0;
+  let endNode: Node | null = null;
+  let endOffset = 0;
+
+  function traverse(node: Node): boolean {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const len = node.textContent?.length || 0;
+      if (!startNode && charIndex + len >= start) {
+        startNode = node;
+        startOffset = start - charIndex;
+      }
+      if (!endNode && charIndex + len >= end) {
+        endNode = node;
+        endOffset = end - charIndex;
+        return true;
+      }
+      charIndex += len;
+    } else {
+      for (let i = 0; i < node.childNodes.length; i++) {
+        if (traverse(node.childNodes[i])) return true;
+      }
+    }
+    return false;
+  }
+
+  traverse(root);
+
+  if (startNode && endNode) {
+    try {
+      const newRange = document.createRange();
+      newRange.setStart(startNode, startOffset);
+      newRange.setEnd(endNode, endOffset);
+      sel.removeAllRanges();
+      sel.addRange(newRange);
+    } catch {
+      // ignore
+    }
+  }
+}
+
 /**
  * Universal Microsoft Word-style dynamic rich text editor.
  * The user selects any part of the text with their cursor and clicks a color/font,
@@ -78,7 +145,7 @@ export function DynamicTextEditor({
 }: DynamicTextEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
-  const savedRangeRef = useRef<Range | null>(null);
+  const savedOffsetsRef = useRef<{ start: number; end: number } | null>(null);
 
   const [selectedFont, setSelectedFont] = useState<string>("Inter");
   const [fontSize, setFontSize] = useState<number>(defaultFontSize);
@@ -123,13 +190,12 @@ export function DynamicTextEditor({
     };
   }, [initialValue, onSave]);
 
-  // Keep savedRangeRef synchronized whenever selection changes
+  // Keep savedOffsetsRef synchronized whenever selection changes
   const handleSelectionChange = useCallback(() => {
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
-    const range = sel.getRangeAt(0);
-    if (editorRef.current.contains(range.commonAncestorContainer)) {
-      savedRangeRef.current = range.cloneRange();
+    if (!editorRef.current) return;
+    const offsets = getSelectionOffsets(editorRef.current);
+    if (offsets && offsets.start !== offsets.end) {
+      savedOffsetsRef.current = offsets;
     }
   }, []);
 
@@ -140,117 +206,120 @@ export function DynamicTextEditor({
     };
   }, [handleSelectionChange]);
 
-  // Restore the saved selection range if focus shifted
-  const restoreRange = (): boolean => {
-    const sel = window.getSelection();
-    if (!sel || !savedRangeRef.current || !editorRef.current) return false;
-    try {
-      sel.removeAllRanges();
-      sel.addRange(savedRangeRef.current);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  // Apply font size to the highlighted text (or entire container if nothing selected)
-  const applyFontSize = (sizePx: number) => {
-    setFontSize(sizePx);
+  // Apply style to highlighted text (or entire container if nothing selected)
+  const applyStyleToSelectedText = (styles: {
+    color?: string;
+    fontFamily?: string;
+    fontSize?: string;
+    fontWeight?: string;
+    fontStyle?: string;
+    textDecoration?: string;
+  }) => {
     if (!editorRef.current) return;
     editorRef.current.focus();
 
-    restoreRange();
+    restoreSelectionOffsets(editorRef.current, savedOffsetsRef.current);
     const sel = window.getSelection();
-
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
-      editorRef.current.style.fontSize = `${sizePx}px`;
-      return;
-    }
+    if (!sel || sel.rangeCount === 0) return;
 
     const range = sel.getRangeAt(0);
     if (!editorRef.current.contains(range.commonAncestorContainer)) return;
 
+    if (range.collapsed) {
+      if (styles.color) editorRef.current.style.color = styles.color;
+      if (styles.fontFamily) editorRef.current.style.fontFamily = styles.fontFamily;
+      if (styles.fontSize) editorRef.current.style.fontSize = styles.fontSize;
+      return;
+    }
+
+    const fragment = range.extractContents();
+
+    // Clean up existing matching styles on any inner child elements
+    const descendants = fragment.querySelectorAll("*");
+    descendants.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      if (styles.color) htmlEl.style.color = "";
+      if (styles.fontFamily) htmlEl.style.fontFamily = "";
+      if (styles.fontSize) htmlEl.style.fontSize = "";
+      if (styles.fontWeight) htmlEl.style.fontWeight = "";
+      if (styles.fontStyle) htmlEl.style.fontStyle = "";
+      if (styles.textDecoration) htmlEl.style.textDecoration = "";
+    });
+
     const span = document.createElement("span");
-    span.style.fontSize = `${sizePx}px`;
-    span.appendChild(range.extractContents());
+    if (styles.color) span.style.color = styles.color;
+    if (styles.fontFamily) span.style.fontFamily = styles.fontFamily;
+    if (styles.fontSize) span.style.fontSize = styles.fontSize;
+    if (styles.fontWeight) span.style.fontWeight = styles.fontWeight;
+    if (styles.fontStyle) span.style.fontStyle = styles.fontStyle;
+    if (styles.textDecoration) span.style.textDecoration = styles.textDecoration;
+
+    span.appendChild(fragment);
     range.insertNode(span);
+
+    // Keep selection highlighted on the newly styled span
     sel.removeAllRanges();
     const newRange = document.createRange();
     newRange.selectNodeContents(span);
     sel.addRange(newRange);
-    savedRangeRef.current = newRange.cloneRange();
+
+    savedOffsetsRef.current = getSelectionOffsets(editorRef.current);
   };
 
-  // Apply color to the highlighted text (or entire container if nothing selected)
+  // Apply font size
+  const applyFontSize = (sizePx: number) => {
+    setFontSize(sizePx);
+    applyStyleToSelectedText({ fontSize: `${sizePx}px` });
+  };
+
+  // Apply color
   const applyColor = (hex: string) => {
     setActiveColor(hex);
     setCustomHex(hex);
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-
-    restoreRange();
-    const sel = window.getSelection();
-
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
-      editorRef.current.style.color = hex;
-      return;
-    }
-
-    const range = sel.getRangeAt(0);
-    if (!editorRef.current.contains(range.commonAncestorContainer)) return;
-
-    try {
-      document.execCommand("styleWithCSS", false, "true");
-      document.execCommand("foreColor", false, hex);
-    } catch {
-      const span = document.createElement("span");
-      span.style.color = hex;
-      span.appendChild(range.extractContents());
-      range.insertNode(span);
-      sel.removeAllRanges();
-      const newRange = document.createRange();
-      newRange.selectNodeContents(span);
-      sel.addRange(newRange);
-      savedRangeRef.current = newRange.cloneRange();
-    }
+    applyStyleToSelectedText({ color: hex });
   };
 
-  // Apply font family to selection (or entire container)
+  // Apply font family
   const applyFont = (fontOption: TitleFontOption) => {
     setSelectedFont(fontOption.name);
     setFontMenuOpen(false);
+    applyStyleToSelectedText({ fontFamily: fontOption.family });
+  };
+
+  // Toggle Bold / Italic / Underline
+  const toggleStyle = (
+    styleProp: "fontWeight" | "fontStyle" | "textDecoration",
+    onVal: string,
+    offVal: string
+  ) => {
     if (!editorRef.current) return;
     editorRef.current.focus();
-
-    restoreRange();
+    restoreSelectionOffsets(editorRef.current, savedOffsetsRef.current);
     const sel = window.getSelection();
-
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
-      editorRef.current.style.fontFamily = fontOption.family;
-      return;
-    }
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
 
     const range = sel.getRangeAt(0);
     if (!editorRef.current.contains(range.commonAncestorContainer)) return;
 
-    const span = document.createElement("span");
-    span.style.fontFamily = fontOption.family;
-    span.appendChild(range.extractContents());
-    range.insertNode(span);
-    sel.removeAllRanges();
-    const newRange = document.createRange();
-    newRange.selectNodeContents(span);
-    sel.addRange(newRange);
-    savedRangeRef.current = newRange.cloneRange();
-  };
+    const parentEl =
+      range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+        ? (range.commonAncestorContainer as HTMLElement)
+        : range.commonAncestorContainer.parentElement;
 
-  // Bold, Italic, Underline
-  const applyExecCommand = (command: "bold" | "italic" | "underline") => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-    restoreRange();
-    document.execCommand("styleWithCSS", false, "true");
-    document.execCommand(command, false);
+    let isCurrent = false;
+    if (parentEl) {
+      const computed = window.getComputedStyle(parentEl);
+      if (styleProp === "fontWeight") {
+        isCurrent = computed.fontWeight === "700" || computed.fontWeight === "bold" || parentEl.style.fontWeight === "bold";
+      } else if (styleProp === "fontStyle") {
+        isCurrent = computed.fontStyle === "italic" || parentEl.style.fontStyle === "italic";
+      } else if (styleProp === "textDecoration") {
+        isCurrent = computed.textDecorationLine.includes("underline") || parentEl.style.textDecoration.includes("underline");
+      }
+    }
+
+    const newVal = isCurrent ? offVal : onVal;
+    applyStyleToSelectedText({ [styleProp]: newVal });
   };
 
   // Commit and Save
@@ -350,7 +419,7 @@ export function DynamicTextEditor({
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => applyExecCommand("bold")}
+              onClick={() => toggleStyle("fontWeight", "bold", "normal")}
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold cursor-pointer"
               title="Bold (Ctrl+B)"
             >
@@ -359,7 +428,7 @@ export function DynamicTextEditor({
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => applyExecCommand("italic")}
+              onClick={() => toggleStyle("fontStyle", "italic", "normal")}
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 italic cursor-pointer"
               title="Italic (Ctrl+I)"
             >
@@ -368,7 +437,7 @@ export function DynamicTextEditor({
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => applyExecCommand("underline")}
+              onClick={() => toggleStyle("textDecoration", "underline", "none")}
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 underline cursor-pointer"
               title="Underline (Ctrl+U)"
             >
@@ -517,6 +586,23 @@ export function DynamicTextEditor({
         contentEditable
         suppressContentEditableWarning
         onKeyDown={(e) => {
+          if (e.ctrlKey || e.metaKey) {
+            if (e.key === "b" || e.key === "B") {
+              e.preventDefault();
+              toggleStyle("fontWeight", "bold", "normal");
+              return;
+            }
+            if (e.key === "i" || e.key === "I") {
+              e.preventDefault();
+              toggleStyle("fontStyle", "italic", "normal");
+              return;
+            }
+            if (e.key === "u" || e.key === "U") {
+              e.preventDefault();
+              toggleStyle("textDecoration", "underline", "none");
+              return;
+            }
+          }
           if (!multiline && e.key === "Enter") {
             e.preventDefault();
             handleSave();
@@ -540,12 +626,49 @@ export function DynamicTextEditor({
 }
 
 /**
+ * Fallback dual-tone HTML generator for Section Eyebrow
+ */
+export function getFallbackEyebrowHtml(eyebrow?: string, isDarkPaper?: boolean): string {
+  const trimmed = (eyebrow || "").trim();
+  if (!trimmed) return "";
+  const parts = trimmed.split(/\s+/);
+  if (parts.length <= 1) {
+    const col = isDarkPaper ? "#38bdf8" : "#0d2562";
+    return `<span style="color: ${col}">${trimmed}</span>`;
+  }
+  const firstPart = parts.slice(0, -1).join(" ");
+  const lastWord = parts[parts.length - 1];
+  const col1 = isDarkPaper ? "#93c5fd" : "#0d2562";
+  const col2 = isDarkPaper ? "#38bdf8" : "#2563eb";
+  return `<span style="color: ${col1}">${firstPart}</span> <span style="color: ${col2}">${lastWord}</span>`;
+}
+
+/**
+ * Fallback dual-tone HTML generator for Section Title
+ */
+export function getFallbackTitleHtml(name?: string, isDarkPaper?: boolean): string {
+  const trimmed = (name || "").trim();
+  if (!trimmed) return "";
+  const parts = trimmed.split(/\s+/);
+  if (parts.length <= 1) {
+    const col = isDarkPaper ? "#ffffff" : "#050a1a";
+    return `<span style="color: ${col}">${trimmed}</span>`;
+  }
+  const mainPart = parts.slice(0, -1).join(" ");
+  const accentWord = parts[parts.length - 1];
+  const col1 = isDarkPaper ? "#ffffff" : "#050a1a";
+  const col2 = isDarkPaper ? "#38bdf8" : "#2563eb";
+  return `<span style="color: ${col1}">${mainPart}</span> <span style="color: ${col2}">${accentWord}</span>`;
+}
+
+/**
  * Section Title Editor (alias over DynamicTextEditor configured for main title typography)
  */
 export function DynamicTitleEditor({
   initialName,
   initialHtml,
   isDarkPaper,
+  paperTone,
   onSave,
   onCancel,
 }: {
@@ -559,7 +682,7 @@ export function DynamicTitleEditor({
   return (
     <DynamicTextEditor
       initialValue={initialName}
-      initialHtml={initialHtml}
+      initialHtml={initialHtml || getFallbackTitleHtml(initialName, isDarkPaper)}
       isDarkPaper={isDarkPaper}
       defaultFontSize={40}
       multiline={false}
