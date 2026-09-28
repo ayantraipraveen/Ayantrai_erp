@@ -555,14 +555,18 @@ select:autofill:focus {
 }
 
 /* Theme-Aware Text Selection Highlights (Document & Form Inputs) */
-::selection,
+::selection {
+  background-color: rgba(139, 76, 240, 0.28);
+}
 input::selection,
 textarea::selection {
   background-color: rgba(139, 76, 240, 0.28);
   color: #0f172a;
 }
 
-::-moz-selection,
+::-moz-selection {
+  background-color: rgba(139, 76, 240, 0.28);
+}
 input::-moz-selection,
 textarea::-moz-selection {
   background-color: rgba(139, 76, 240, 0.28);
@@ -571,7 +575,9 @@ textarea::-moz-selection {
 
 .dark ::selection,
 :root.dark ::selection,
-[data-theme="dark"] ::selection,
+[data-theme="dark"] ::selection {
+  background-color: rgba(157, 97, 255, 0.38);
+}
 .dark input::selection,
 .dark textarea::selection,
 [data-theme="dark"] input::selection,
@@ -582,7 +588,9 @@ textarea::-moz-selection {
 
 .dark ::-moz-selection,
 :root.dark ::-moz-selection,
-[data-theme="dark"] ::-moz-selection,
+[data-theme="dark"] ::-moz-selection {
+  background-color: rgba(157, 97, 255, 0.38);
+}
 .dark input::-moz-selection,
 .dark textarea::-moz-selection,
 [data-theme="dark"] input::-moz-selection,
@@ -601,19 +609,20 @@ textarea::-moz-selection {
 }
 
 /* ================= RICH TEXT CONTENTEDITABLE SELECTION ================= */
-/* Allow user to see real-time color changes on selected text without white override */
+/* Allow user to see real-time color changes on selected text without color override */
 [contenteditable]::selection,
 [contenteditable] *::selection,
 .dynamic-word-editor::selection,
 .dynamic-word-editor *::selection {
-  background-color: rgba(37, 99, 235, 0.28) !important;
-  color: inherit !important;
+  background-color: rgba(37, 99, 235, 0.16) !important;
+  color: currentColor !important;
+  -webkit-text-fill-color: currentColor !important;
 }
 [contenteditable]::-moz-selection,
 [contenteditable] *::-moz-selection,
 .dynamic-word-editor::-moz-selection,
 .dynamic-word-editor *::-moz-selection {
-  background-color: rgba(37, 99, 235, 0.28) !important;
-  color: inherit !important;
+  background-color: rgba(37, 99, 235, 0.16) !important;
+  color: currentColor !important;
 }
 
