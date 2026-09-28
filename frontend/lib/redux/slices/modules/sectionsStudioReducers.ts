@@ -96,6 +96,8 @@ export const sectionsStudioReducers = {
         headerSpacing?: "compact" | "normal" | "spacious";
         titleHtml?: string;
         titleStyle?: Partial<LibrarySection["titleStyle"]>;
+        eyebrowHtml?: string;
+        descriptionHtml?: string;
         changes?: Partial<LibrarySection>;
       }>
     ) => {
@@ -107,7 +109,9 @@ export const sectionsStudioReducers = {
           if (c.titleHtml !== undefined) sec.titleHtml = c.titleHtml;
           if (c.titleStyle !== undefined) sec.titleStyle = { ...sec.titleStyle, ...c.titleStyle };
           if (c.eyebrow !== undefined) sec.eyebrow = c.eyebrow;
+          if (c.eyebrowHtml !== undefined) sec.eyebrowHtml = c.eyebrowHtml;
           if (c.description !== undefined) sec.description = c.description;
+          if (c.descriptionHtml !== undefined) sec.descriptionHtml = c.descriptionHtml;
           if (c.icon !== undefined) sec.icon = c.icon;
           if (c.watermarkId !== undefined) sec.watermarkId = c.watermarkId;
           if (c.headerSpacing !== undefined) sec.headerSpacing = c.headerSpacing;
@@ -116,7 +120,9 @@ export const sectionsStudioReducers = {
         if (action.payload.titleHtml !== undefined) sec.titleHtml = action.payload.titleHtml;
         if (action.payload.titleStyle !== undefined) sec.titleStyle = { ...sec.titleStyle, ...action.payload.titleStyle };
         if (action.payload.eyebrow !== undefined) sec.eyebrow = action.payload.eyebrow;
+        if (action.payload.eyebrowHtml !== undefined) sec.eyebrowHtml = action.payload.eyebrowHtml;
         if (action.payload.description !== undefined) sec.description = action.payload.description;
+        if (action.payload.descriptionHtml !== undefined) sec.descriptionHtml = action.payload.descriptionHtml;
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
         if (action.payload.watermarkId !== undefined) sec.watermarkId = action.payload.watermarkId;
         if (action.payload.headerSpacing !== undefined) sec.headerSpacing = action.payload.headerSpacing;

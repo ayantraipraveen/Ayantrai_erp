@@ -367,7 +367,9 @@ export interface LibrarySection {
   titleHtml?: string;
   titleStyle?: SectionTitleStyle;
   eyebrow: string;
+  eyebrowHtml?: string;
   description: string;
+  descriptionHtml?: string;
   type: "core" | "custom";
   icon?: string;
   updatedAt: string;

@@ -33,6 +33,7 @@ import {
   CanvasBadgeStrip,
   LibraryMetricCard,
 } from "@/lib/redux/slices/reportModuleSlice";
+import { DynamicTextEditor } from "./DynamicTitleEditor";
 import { PALETTE_RAMPS } from "./constants/chartTypes";
 import ChartRenderer from "./ChartRenderer";
 import { CARD_BG_PRESETS } from "./CanvasContextRibbon";
@@ -345,36 +346,32 @@ function InsightBlock({
 
       <div className="flex-1 min-w-0">
         {!isPreview && isEditing ? (
-          <textarea
-            value={localText}
-            autoFocus
-            rows={2}
-            onChange={(e) => setLocalText(e.target.value)}
-            onBlur={handleCommit}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleCommit();
+          <DynamicTextEditor
+            initialValue={insight.text}
+            initialHtml={insight.text}
+            defaultFontSize={12}
+            multiline={true}
+            className="text-xs leading-relaxed"
+            placeholder="Key operational observation..."
+            onSave={(_plain, html) => {
+              if (onUpdateInsight) {
+                onUpdateInsight(html);
               }
-              if (e.key === "Escape") {
-                setLocalText(insight.text);
-                setIsEditing(false);
-              }
+              setIsEditing(false);
             }}
-            className="w-full bg-slate-50 dark:bg-zinc-900 border border-[#8B3DFF] rounded-lg p-2 text-xs text-slate-800 dark:text-zinc-200 leading-relaxed outline-none shadow-sm resize-none"
+            onCancel={() => setIsEditing(false)}
           />
         ) : (
-          <p
+          <div
             onDoubleClick={(e) => {
               if (isPreview) return;
               e.stopPropagation();
               setIsEditing(true);
             }}
-            title={!isPreview ? "Double-click to edit insight observation" : undefined}
-            className={`text-xs text-slate-700 dark:text-zinc-300 leading-relaxed ${!isPreview ? "hover:bg-purple-500/5 rounded p-0.5 cursor-text transition-colors" : ""}`}
-          >
-            {insight.text}
-          </p>
+            title={!isPreview ? "Double-click to format observation (Word style)" : undefined}
+            className={`text-xs text-slate-700 dark:text-zinc-300 leading-relaxed select-text ${!isPreview ? "hover:bg-purple-500/5 rounded p-0.5 cursor-text transition-colors" : ""}`}
+            dangerouslySetInnerHTML={{ __html: insight.text }}
+          />
         )}
       </div>
     </div>
@@ -394,35 +391,24 @@ function TextBlock({
   if (!tb) return null;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [localContent, setLocalContent] = useState(tb.content);
-
-  useEffect(() => {
-    setLocalContent(tb.content);
-  }, [tb.content]);
-
-  const handleCommit = () => {
-    if (onUpdateTextBlock) {
-      onUpdateTextBlock(localContent);
-    }
-    setIsEditing(false);
-  };
 
   return (
     <div className="w-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/50 p-4 shadow-sm">
       {!isPreview && isEditing ? (
-        <textarea
-          value={localContent}
-          autoFocus
-          rows={3}
-          onChange={(e) => setLocalContent(e.target.value)}
-          onBlur={handleCommit}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") {
-              setLocalContent(tb.content);
-              setIsEditing(false);
+        <DynamicTextEditor
+          initialValue={tb.content}
+          initialHtml={tb.content}
+          defaultFontSize={14}
+          multiline={true}
+          className="text-sm leading-relaxed min-h-[60px]"
+          placeholder="Type paragraph commentary..."
+          onSave={(_plain, html) => {
+            if (onUpdateTextBlock) {
+              onUpdateTextBlock(html);
             }
+            setIsEditing(false);
           }}
-          className="w-full bg-white dark:bg-zinc-900 border border-[#8B3DFF] rounded-lg p-2.5 text-sm text-slate-800 dark:text-zinc-200 leading-relaxed outline-none shadow-sm resize-none"
+          onCancel={() => setIsEditing(false)}
         />
       ) : (
         <div
@@ -431,15 +417,12 @@ function TextBlock({
             e.stopPropagation();
             setIsEditing(true);
           }}
-          title={!isPreview ? "Double-click to edit text block" : undefined}
-          className={!isPreview ? "hover:bg-purple-500/5 rounded p-1 cursor-text transition-colors" : ""}
-        >
-          {tb.content ? (
-            <p className="text-sm text-slate-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">{tb.content}</p>
-          ) : (
-            <p className="text-sm text-slate-400 italic">Empty text block — double click to type content.</p>
-          )}
-        </div>
+          title={!isPreview ? "Double-click to format text block (Word style)" : undefined}
+          className={!isPreview ? "hover:bg-purple-500/5 rounded p-1 cursor-text transition-colors select-text" : "select-text"}
+          dangerouslySetInnerHTML={{
+            __html: tb.content || "<p class='text-sm text-slate-400 italic'>Empty text block — double click to type content.</p>",
+          }}
+        />
       )}
     </div>
   );

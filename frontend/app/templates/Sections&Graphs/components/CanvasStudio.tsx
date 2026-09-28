@@ -91,7 +91,13 @@ import {
   CanvasMarginConfig,
   getPaperToneColor,
 } from "./CanvasContextRibbon";
-import { DynamicTitleEditor, renderDynamicTitle } from "./DynamicTitleEditor";
+import {
+  DynamicTitleEditor,
+  DynamicTextEditor,
+  renderDynamicTitle,
+  renderDynamicEyebrow,
+  renderDynamicText,
+} from "./DynamicTitleEditor";
 
 // ─── Standard Physical A4 Dimensions at 96 DPI ────────────────────────────────
 export const A4_WIDTH_PX = 794;
@@ -2362,48 +2368,43 @@ export function CanvasStudio({
                           >
                             <div className="flex items-center justify-between gap-3 mb-1.5">
                               {editingSectionField === "eyebrow" ? (
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={localSectionEyebrow}
-                                    onChange={(e) => setLocalSectionEyebrow(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") commitSectionHeaderUpdate();
-                                      if (e.key === "Escape") setEditingSectionField(null);
-                                    }}
-                                    autoFocus
-                                    className="text-[12.5px] font-bold uppercase tracking-[0.15em] font-sans px-2 py-0.5 rounded border border-[#2563eb] bg-white dark:bg-zinc-900 text-[#0d2562] dark:text-sky-400 outline-none shadow-xs"
-                                    aria-label="Section eyebrow"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={commitSectionHeaderUpdate}
-                                    className="p-1 rounded bg-[#2563eb] text-white hover:bg-blue-700 cursor-pointer"
-                                    title="Save Eyebrow"
-                                  >
-                                    <Check className="w-3 h-3" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setEditingSectionField(null)}
-                                    className="p-1 rounded bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-300 cursor-pointer"
-                                    title="Cancel"
-                                  >
-                                    <X className="w-3 h-3" />
-                                  </button>
-                                </div>
+                                <DynamicTextEditor
+                                  initialValue={section.eyebrow}
+                                  initialHtml={section.eyebrowHtml}
+                                  isDarkPaper={isDarkPaper}
+                                  defaultFontSize={12.5}
+                                  multiline={false}
+                                  className="text-[12.5px] font-bold uppercase tracking-[0.15em] font-sans"
+                                  placeholder="Section eyebrow..."
+                                  onSave={(newVal, newHtml) => {
+                                    dispatch(
+                                      updateLibrarySection({
+                                        id: section.id,
+                                        eyebrow: newVal,
+                                        eyebrowHtml: newHtml,
+                                        changes: {
+                                          eyebrow: newVal,
+                                          eyebrowHtml: newHtml,
+                                        },
+                                      })
+                                    );
+                                    setLocalSectionEyebrow(newVal);
+                                    setEditingSectionField(null);
+                                    dispatch(showGlobalToast({ message: "Eyebrow updated!", type: "success" }));
+                                  }}
+                                  onCancel={() => setEditingSectionField(null)}
+                                />
                               ) : (
                                 <span
                                   onDoubleClick={() => {
                                     if (!activeIsPreview) {
-                                      setLocalSectionEyebrow(section.eyebrow);
                                       setEditingSectionField("eyebrow");
                                     }
                                   }}
                                   className="text-[12.5px] font-bold uppercase tracking-[0.15em] font-sans leading-none cursor-pointer transition-colors"
-                                  title="Double-click to edit eyebrow"
+                                  title="Double-click to format eyebrow (Word style)"
                                 >
-                                  {renderDualToneEyebrow(section.eyebrow, sectionTextColor, isDarkPaper)}
+                                  {renderDynamicEyebrow(section.eyebrowHtml, section.eyebrow, sectionTextColor, isDarkPaper)}
                                 </span>
                               )}
 
@@ -2515,46 +2516,37 @@ export function CanvasStudio({
                               </h1>
                             )}
 
-                            {/* Subtitle / Description */}
                             {editingSectionField === "description" ? (
-                              <div className="flex items-start gap-2 mt-2">
-                                <textarea
-                                  value={localSectionDesc}
-                                  onChange={(e) => setLocalSectionDesc(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter" && !e.shiftKey) {
-                                      e.preventDefault();
-                                      commitSectionHeaderUpdate();
-                                    }
-                                    if (e.key === "Escape") setEditingSectionField(null);
-                                  }}
-                                  autoFocus
-                                  rows={2}
-                                  className="w-full text-[14px] leading-relaxed px-2 py-1 rounded border border-[#2563eb] bg-white dark:bg-zinc-900 text-[#4b556b] dark:text-zinc-200 outline-none shadow-xs resize-none"
-                                  aria-label="Section description"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={commitSectionHeaderUpdate}
-                                  className="p-1.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 cursor-pointer mt-0.5"
-                                  title="Save Description"
-                                >
-                                  <Check className="w-4 h-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingSectionField(null)}
-                                  className="p-1.5 rounded-lg bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-300 cursor-pointer mt-0.5"
-                                  title="Cancel"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ) : section.description ? (
+                              <DynamicTextEditor
+                                initialValue={section.description}
+                                initialHtml={section.descriptionHtml}
+                                isDarkPaper={isDarkPaper}
+                                defaultFontSize={14}
+                                multiline={true}
+                                className="text-[14px] sm:text-[14.5px] leading-relaxed font-normal min-h-[50px]"
+                                placeholder="Section description..."
+                                onSave={(newVal, newHtml) => {
+                                  dispatch(
+                                    updateLibrarySection({
+                                      id: section.id,
+                                      description: newVal,
+                                      descriptionHtml: newHtml,
+                                      changes: {
+                                        description: newVal,
+                                        descriptionHtml: newHtml,
+                                      },
+                                    })
+                                  );
+                                  setLocalSectionDesc(newVal);
+                                  setEditingSectionField(null);
+                                  dispatch(showGlobalToast({ message: "Description updated!", type: "success" }));
+                                }}
+                                onCancel={() => setEditingSectionField(null)}
+                              />
+                            ) : section.description || section.descriptionHtml ? (
                               <p
                                 onDoubleClick={() => {
                                   if (!activeIsPreview) {
-                                    setLocalSectionDesc(section.description);
                                     setEditingSectionField("description");
                                   }
                                 }}
@@ -2566,9 +2558,9 @@ export function CanvasStudio({
                                     : ""
                                 }`}
                                 style={sectionTextColor ? { color: sectionTextColor, opacity: 0.9 } : undefined}
-                                title="Double-click to edit description"
+                                title="Double-click to format description (Word style)"
                               >
-                                {section.description}
+                                {renderDynamicText(section.descriptionHtml, section.description, sectionTextColor)}
                               </p>
                             ) : null}
                           </div>
@@ -2592,7 +2584,7 @@ export function CanvasStudio({
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] font-bold uppercase tracking-[0.14em] font-sans">
-                                  {renderDualToneEyebrow(section.eyebrow, sectionTextColor, isDarkPaper)} &bull; CONTINUATION
+                                  {renderDynamicEyebrow(section.eyebrowHtml, section.eyebrow, sectionTextColor, isDarkPaper)} &bull; CONTINUATION
                                 </span>
                                 <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20">
                                   A4 Split (1123px)

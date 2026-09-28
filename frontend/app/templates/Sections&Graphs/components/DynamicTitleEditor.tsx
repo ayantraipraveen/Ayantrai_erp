@@ -6,15 +6,12 @@ import {
   X,
   Type,
   ChevronDown,
-  Sparkles,
   Pipette,
   Bold,
   Italic,
   Underline,
-  Eye,
   Minus,
   Plus,
-  Palette,
 } from "lucide-react";
 
 export interface TitleFontOption {
@@ -44,121 +41,68 @@ export const TITLE_THEME_COLORS = [
   { name: "Electric Azure", hex: "#2563eb" },
   { name: "Sky Blue", hex: "#0284c7" },
   { name: "AyantrAI Purple", hex: "#9D61FF" },
-  { name: "Violet", hex: "#7c3aed" },
   { name: "Emerald Green", hex: "#059669" },
-  { name: "Teal", hex: "#0d9488" },
   { name: "Sunset Amber", hex: "#d97706" },
   { name: "Crimson Red", hex: "#dc2626" },
-  { name: "Rose Pink", hex: "#e11d48" },
   { name: "Slate Gray", hex: "#475569" },
   { name: "Pure White", hex: "#ffffff" },
 ];
 
-export const DUAL_TONE_PRESETS = [
-  { name: "Azure Blue", primary: "#050a1a", accent: "#2563eb" },
-  { name: "AyantrAI Purple", primary: "#050a1a", accent: "#9D61FF" },
-  { name: "Emerald Safety", primary: "#050a1a", accent: "#059669" },
-  { name: "Amber Warning", primary: "#050a1a", accent: "#d97706" },
-  { name: "Crimson Alert", primary: "#050a1a", accent: "#dc2626" },
-  { name: "Solid Dark", primary: "#050a1a", accent: "#050a1a" },
-];
-
-export interface DynamicTitleEditorProps {
-  initialName: string;
+export interface DynamicTextEditorProps {
+  initialValue: string;
   initialHtml?: string;
   isDarkPaper?: boolean;
-  paperTone?: string;
-  onSave: (name: string, html: string) => void;
+  defaultFontSize?: number;
+  multiline?: boolean;
+  className?: string;
+  placeholder?: string;
+  onSave: (plainText: string, html: string) => void;
   onCancel: () => void;
 }
 
 /**
- * Microsoft Word-style dynamic title editor with live WYSIWYG preview in edit mode.
- * Allows selecting ANY word or range of text and applying specific text colors,
- * font families, font sizes, weights, and styles.
+ * Universal Microsoft Word-style dynamic rich text editor.
+ * The user selects any part of the text with their cursor and clicks a color/font,
+ * applying styling specifically and exclusively to the selected text.
  */
-export function DynamicTitleEditor({
-  initialName,
+export function DynamicTextEditor({
+  initialValue,
   initialHtml,
   isDarkPaper,
-  paperTone = "white",
+  defaultFontSize = 14,
+  multiline = false,
+  className = "",
+  placeholder = "Type text...",
   onSave,
   onCancel,
-}: DynamicTitleEditorProps) {
+}: DynamicTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
 
-  const [selectedText, setSelectedText] = useState<string>("");
   const [selectedFont, setSelectedFont] = useState<string>("Inter");
-  const [fontSize, setFontSize] = useState<number>(40);
+  const [fontSize, setFontSize] = useState<number>(defaultFontSize);
   const [activeColor, setActiveColor] = useState<string>("#2563eb");
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const [customHex, setCustomHex] = useState("#2563eb");
-  const [words, setWords] = useState<string[]>([]);
-  const [liveHtml, setLiveHtml] = useState<string>("");
-  const [selectedWordIndex, setSelectedWordIndex] = useState<number | null>(null);
-
-  // Compute paper background tone for live preview
-  const paperBgColor = React.useMemo(() => {
-    switch (paperTone) {
-      case "slate":
-        return "#f1f5f9";
-      case "cream":
-        return "#fefce8";
-      case "dark":
-        return "#11151e";
-      default:
-        return "#ffffff";
-    }
-  }, [paperTone]);
 
   // Initialize HTML content on mount
   useEffect(() => {
     if (!editorRef.current) return;
-    let initialRendered = "";
     if (initialHtml && initialHtml.trim()) {
-      initialRendered = initialHtml;
+      editorRef.current.innerHTML = initialHtml;
     } else {
-      const trimmed = (initialName || "").trim();
-      const parts = trimmed.split(/\s+/);
-      if (parts.length <= 1) {
-        const color = isDarkPaper ? "#ffffff" : "#050a1a";
-        initialRendered = `<span style="color: ${color}; font-weight: 900;">${trimmed}</span>`;
-      } else {
-        const firstPart = parts.slice(0, -1).join(" ");
-        const lastWord = parts[parts.length - 1];
-        const primaryColor = isDarkPaper ? "#ffffff" : "#050a1a";
-        const accentColor = isDarkPaper ? "#38bdf8" : "#2563eb";
-        initialRendered = `<span style="color: ${primaryColor}; font-weight: 900;">${firstPart}</span> <span style="color: ${accentColor}; font-weight: 900;">${lastWord}</span>`;
-      }
+      editorRef.current.innerHTML = initialValue || "";
     }
-    editorRef.current.innerHTML = initialRendered;
-    setLiveHtml(initialRendered);
-    updateWordsFromEditor();
-  }, [initialHtml, initialName, isDarkPaper]);
+  }, [initialHtml, initialValue]);
 
-  const updateWordsFromEditor = () => {
-    if (!editorRef.current) return;
-    const text = editorRef.current.innerText || "";
-    const list = text.trim().split(/\s+/).filter(Boolean);
-    setWords(list);
-    setLiveHtml(editorRef.current.innerHTML);
-  };
-
-  // Keep savedRangeRef synchronized on selection changes
+  // Keep savedRangeRef synchronized whenever selection changes
   const handleSelectionChange = useCallback(() => {
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || !editorRef.current) {
-      return;
-    }
+    if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
     const range = sel.getRangeAt(0);
     if (editorRef.current.contains(range.commonAncestorContainer)) {
       savedRangeRef.current = range.cloneRange();
-      const str = range.toString();
-      setSelectedText(str);
-    } else {
-      setSelectedText("");
     }
   }, []);
 
@@ -182,7 +126,7 @@ export function DynamicTitleEditor({
     }
   };
 
-  // Apply color to selection (or entire editor if nothing selected)
+  // Apply color to the highlighted text (or entire container if nothing selected)
   const applyColor = (hex: string) => {
     setActiveColor(hex);
     setCustomHex(hex);
@@ -193,16 +137,13 @@ export function DynamicTitleEditor({
     const sel = window.getSelection();
 
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
-      // If no text specifically highlighted, apply to the entire title container
       editorRef.current.style.color = hex;
-      setLiveHtml(editorRef.current.innerHTML);
       return;
     }
 
     const range = sel.getRangeAt(0);
     if (!editorRef.current.contains(range.commonAncestorContainer)) return;
 
-    // Apply color specifically to the selected range
     try {
       document.execCommand("styleWithCSS", false, "true");
       document.execCommand("foreColor", false, hex);
@@ -217,12 +158,9 @@ export function DynamicTitleEditor({
       sel.addRange(newRange);
       savedRangeRef.current = newRange.cloneRange();
     }
-
-    setLiveHtml(editorRef.current.innerHTML);
-    updateWordsFromEditor();
   };
 
-  // Apply font family to selection (or entire editor)
+  // Apply font family to selection (or entire container)
   const applyFont = (fontOption: TitleFontOption) => {
     setSelectedFont(fontOption.name);
     setFontMenuOpen(false);
@@ -234,7 +172,6 @@ export function DynamicTitleEditor({
 
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
       editorRef.current.style.fontFamily = fontOption.family;
-      setLiveHtml(editorRef.current.innerHTML);
       return;
     }
 
@@ -255,68 +192,15 @@ export function DynamicTitleEditor({
       sel.addRange(newRange);
       savedRangeRef.current = newRange.cloneRange();
     }
-
-    setLiveHtml(editorRef.current.innerHTML);
-    updateWordsFromEditor();
   };
 
-  // Apply Bold, Italic, Underline
+  // Bold, Italic, Underline
   const applyExecCommand = (command: "bold" | "italic" | "underline") => {
     if (!editorRef.current) return;
     editorRef.current.focus();
     restoreRange();
     document.execCommand("styleWithCSS", false, "true");
     document.execCommand(command, false);
-    setLiveHtml(editorRef.current.innerHTML);
-    updateWordsFromEditor();
-  };
-
-  // Programmatically select a specific word in the editor
-  const selectWord = (wordText: string, index: number) => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-    setSelectedWordIndex(index);
-
-    const walker = document.createTreeWalker(editorRef.current, NodeFilter.SHOW_TEXT, null);
-    let currentNode: Node | null;
-    let matchCount = 0;
-
-    while ((currentNode = walker.nextNode())) {
-      const val = currentNode.nodeValue || "";
-      const pos = val.indexOf(wordText);
-      if (pos !== -1) {
-        if (matchCount === index || matchCount >= 0) {
-          const range = document.createRange();
-          range.setStart(currentNode, pos);
-          range.setEnd(currentNode, pos + wordText.length);
-          const sel = window.getSelection();
-          if (sel) {
-            sel.removeAllRanges();
-            sel.addRange(range);
-            savedRangeRef.current = range.cloneRange();
-            setSelectedText(wordText);
-          }
-          return;
-        }
-        matchCount++;
-      }
-    }
-  };
-
-  // Apply quick dual-tone preset
-  const applyDualTonePreset = (primary: string, accent: string) => {
-    if (!editorRef.current) return;
-    const text = (editorRef.current.innerText || "").trim();
-    if (!text) return;
-    const parts = text.split(/\s+/);
-    if (parts.length <= 1) {
-      editorRef.current.innerHTML = `<span style="color: ${accent}; font-weight: 900;">${text}</span>`;
-    } else {
-      const first = parts.slice(0, -1).join(" ");
-      const last = parts[parts.length - 1];
-      editorRef.current.innerHTML = `<span style="color: ${primary}; font-weight: 900;">${first}</span> <span style="color: ${accent}; font-weight: 900;">${last}</span>`;
-    }
-    updateWordsFromEditor();
   };
 
   // Commit and Save
@@ -324,13 +208,13 @@ export function DynamicTitleEditor({
     if (!editorRef.current) return;
     const html = editorRef.current.innerHTML;
     const plainText = (editorRef.current.innerText || "").trim();
-    onSave(plainText || initialName, html);
+    onSave(plainText || initialValue, html);
   };
 
   return (
-    <div className="relative my-2 p-3.5 rounded-2xl border-2 border-[#2563eb] bg-white dark:bg-[#0c1017] shadow-2xl space-y-3 z-30 animate-fadeIn">
-      {/* ── Microsoft Word-Style Formatting Ribbon ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-200 dark:border-zinc-800 text-xs select-none">
+    <div className="relative my-1 select-text w-full">
+      {/* ── Compact Word Formatting Toolbar directly attached above the input ── */}
+      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5 p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-md text-xs select-none">
         <div className="flex flex-wrap items-center gap-1.5">
           {/* Font Family Dropdown */}
           <div className="relative">
@@ -341,12 +225,12 @@ export function DynamicTitleEditor({
                 setFontMenuOpen(!fontMenuOpen);
                 setColorMenuOpen(false);
               }}
-              className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1.5 text-slate-800 dark:text-zinc-200 font-semibold cursor-pointer shadow-2xs"
+              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1 text-slate-800 dark:text-zinc-200 font-semibold cursor-pointer shadow-2xs"
               title="Font Family"
             >
-              <Type className="w-3.5 h-3.5 text-[#2563eb]" />
-              <span className="max-w-[100px] truncate">{selectedFont}</span>
-              <ChevronDown className="w-3 h-3 opacity-60" />
+              <Type className="w-3 h-3 text-[#2563eb]" />
+              <span className="max-w-[85px] truncate text-[11px]">{selectedFont}</span>
+              <ChevronDown className="w-2.5 h-2.5 opacity-60" />
             </button>
 
             {fontMenuOpen && (
@@ -384,14 +268,14 @@ export function DynamicTitleEditor({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
-                const next = Math.max(20, fontSize - 2);
+                const next = Math.max(10, fontSize - 2);
                 setFontSize(next);
                 if (editorRef.current) editorRef.current.style.fontSize = `${next}px`;
               }}
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 cursor-pointer"
               title="Decrease Font Size"
             >
-              <Minus className="w-3 h-3" />
+              <Minus className="w-2.5 h-2.5" />
             </button>
             <span className="px-1.5 font-mono text-[11px] font-bold text-slate-800 dark:text-zinc-200">
               {fontSize}px
@@ -407,7 +291,7 @@ export function DynamicTitleEditor({
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 cursor-pointer"
               title="Increase Font Size"
             >
-              <Plus className="w-3 h-3" />
+              <Plus className="w-2.5 h-2.5" />
             </button>
           </div>
 
@@ -422,7 +306,7 @@ export function DynamicTitleEditor({
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold cursor-pointer"
               title="Bold (Ctrl+B)"
             >
-              <Bold className="w-3.5 h-3.5" />
+              <Bold className="w-3 h-3" />
             </button>
             <button
               type="button"
@@ -431,7 +315,7 @@ export function DynamicTitleEditor({
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 italic cursor-pointer"
               title="Italic (Ctrl+I)"
             >
-              <Italic className="w-3.5 h-3.5" />
+              <Italic className="w-3 h-3" />
             </button>
             <button
               type="button"
@@ -440,7 +324,7 @@ export function DynamicTitleEditor({
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 underline cursor-pointer"
               title="Underline (Ctrl+U)"
             >
-              <Underline className="w-3.5 h-3.5" />
+              <Underline className="w-3 h-3" />
             </button>
           </div>
 
@@ -455,14 +339,14 @@ export function DynamicTitleEditor({
                 setColorMenuOpen(!colorMenuOpen);
                 setFontMenuOpen(false);
               }}
-              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              title="Text Color (Applies to selection)"
+              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1 cursor-pointer shadow-2xs"
+              title="Text Color (Select text and click color)"
             >
               <div className="flex flex-col items-center">
-                <span className="text-xs font-black leading-none">A</span>
-                <span className="w-3.5 h-1 mt-0.5 rounded-full" style={{ backgroundColor: activeColor }} />
+                <span className="text-[11px] font-black leading-none">A</span>
+                <span className="w-3 h-0.5 mt-0.5 rounded-full" style={{ backgroundColor: activeColor }} />
               </div>
-              <ChevronDown className="w-3 h-3 opacity-60" />
+              <ChevronDown className="w-2.5 h-2.5 opacity-60" />
             </button>
 
             {colorMenuOpen && (
@@ -471,7 +355,7 @@ export function DynamicTitleEditor({
                 className="absolute left-0 top-full mt-1.5 w-60 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#11151e] shadow-2xl p-3 z-50 space-y-2.5 animate-fadeIn"
               >
                 <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  {selectedText ? `Color for "${selectedText}"` : "Color for Text"}
+                  Select Color for Selected Text
                 </div>
 
                 {/* Swatches Grid */}
@@ -541,9 +425,9 @@ export function DynamicTitleEditor({
             )}
           </div>
 
-          {/* Quick Color Swatches Bar */}
-          <div className="hidden sm:flex items-center gap-1 pl-1">
-            {TITLE_THEME_COLORS.slice(0, 6).map((col) => (
+          {/* Quick Color Swatches Row */}
+          <div className="flex items-center gap-1 pl-1">
+            {TITLE_THEME_COLORS.map((col) => (
               <button
                 key={col.hex}
                 type="button"
@@ -557,13 +441,13 @@ export function DynamicTitleEditor({
           </div>
         </div>
 
-        {/* Action Controls: Done & Cancel */}
-        <div className="flex items-center gap-1.5 ml-auto">
+        {/* Action Controls: Save & Cancel */}
+        <div className="flex items-center gap-1 ml-auto">
           <button
             type="button"
             onClick={handleSave}
             className="h-7 px-3 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 font-bold flex items-center gap-1 cursor-pointer shadow-xs"
-            title="Save Title (Enter)"
+            title="Save (Enter)"
           >
             <Check className="w-3.5 h-3.5" />
             <span>Save</span>
@@ -579,125 +463,121 @@ export function DynamicTitleEditor({
         </div>
       </div>
 
-      {/* ── Selection Status & Interactive Word Chips ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-semibold text-slate-400">Words:</span>
-          {words.map((w, idx) => (
-            <button
-              key={`${w}-${idx}`}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => selectWord(w, idx)}
-              className={`px-2.5 py-0.5 rounded-full border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
-                selectedText === w || selectedWordIndex === idx
-                  ? "bg-blue-100 text-blue-800 border-blue-400 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-600 shadow-xs ring-1 ring-blue-400"
-                  : "bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:border-blue-300"
-              }`}
-              title={`Click to select "${w}" and apply color/font`}
-            >
-              <span>{w}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Dual-Tone Quick Presets */}
-        <div className="flex items-center gap-1.5">
-          <Sparkles className="w-3 h-3 text-[#9D61FF]" />
-          <span className="text-[10px] uppercase font-bold text-slate-400">Presets:</span>
-          {DUAL_TONE_PRESETS.slice(0, 3).map((p) => (
-            <button
-              key={p.name}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => applyDualTonePreset(p.primary, p.accent)}
-              className="px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 hover:bg-blue-50 text-[10px] font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer"
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Selection Action Banner (When Text is Selected) ── */}
-      {selectedText ? (
-        <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-[#2563eb]">Selected text:</span>
-            <span className="px-2 py-0.5 rounded font-mono font-bold bg-white dark:bg-zinc-900 text-[#2563eb] border border-blue-300 dark:border-blue-800 shadow-2xs">
-              &ldquo;{selectedText}&rdquo;
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] font-semibold text-slate-500 mr-1">Apply Color:</span>
-            {TITLE_THEME_COLORS.slice(0, 5).map((col) => (
-              <button
-                key={col.hex}
-                type="button"
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => applyColor(col.hex)}
-                className="w-4 h-4 rounded-full border border-slate-300 hover:scale-125 transition-transform cursor-pointer shadow-2xs"
-                style={{ backgroundColor: col.hex }}
-                title={`Apply ${col.name} to "${selectedText}"`}
-              />
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {/* ── Rich ContentEditable Title Canvas (Input Mode) ── */}
-      <div className="relative">
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={updateWordsFromEditor}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSave();
-            }
-            if (e.key === "Escape") {
-              onCancel();
-            }
-          }}
-          style={{
-            fontSize: `${fontSize}px`,
-            fontFamily: TITLE_FONTS.find((f) => f.name === selectedFont)?.family || "'Inter', sans-serif",
-          }}
-          className="w-full min-h-[58px] font-black tracking-[-0.035em] leading-[1.08] px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 outline-none focus:ring-2 focus:ring-[#2563eb]/40 select-text"
-          aria-label="Rich Section Title Editor"
-        />
-      </div>
-
-      {/* ── LIVE PREVIEW IN EDIT MODE (Requested by User) ── */}
+      {/* ── The Single Editable Text Input ── */}
       <div
-        className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800/80 shadow-inner space-y-1.5 transition-all overflow-hidden"
-        style={{ backgroundColor: paperBgColor }}
-      >
-        <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
-          <div className="flex items-center gap-1.5 text-[#2563eb]">
-            <Eye className="w-3.5 h-3.5" />
-            <span className="uppercase tracking-wider">Live Document Preview (Real-Time Result)</span>
-          </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200/60 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300">
-            Paper: {paperTone} • {selectedFont} • {fontSize}px
-          </span>
-        </div>
-
-        {/* Exact Live Rendered Output */}
-        <div
-          className="min-h-[50px] font-black tracking-[-0.035em] leading-[1.08] select-none py-1.5 transition-all"
-          style={{
-            fontSize: `${fontSize}px`,
-            fontFamily: TITLE_FONTS.find((f) => f.name === selectedFont)?.family || "'Inter', sans-serif",
-          }}
-          dangerouslySetInnerHTML={{
-            __html: liveHtml || "<span class='text-slate-300 italic'>Type title above...</span>",
-          }}
-        />
-      </div>
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        onKeyDown={(e) => {
+          if (!multiline && e.key === "Enter") {
+            e.preventDefault();
+            handleSave();
+          }
+          if (multiline && e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            handleSave();
+          }
+          if (e.key === "Escape") {
+            onCancel();
+          }
+        }}
+        style={{
+          fontSize: `${fontSize}px`,
+          fontFamily: TITLE_FONTS.find((f) => f.name === selectedFont)?.family || "'Inter', sans-serif",
+        }}
+        className={`w-full min-h-[38px] px-3 py-1.5 rounded-xl border-2 border-[#2563eb] bg-white dark:bg-zinc-900 outline-none shadow-sm select-text ${className}`}
+        aria-label={placeholder}
+      />
     </div>
+  );
+}
+
+/**
+ * Section Title Editor (alias over DynamicTextEditor configured for main title typography)
+ */
+export function DynamicTitleEditor({
+  initialName,
+  initialHtml,
+  isDarkPaper,
+  onSave,
+  onCancel,
+}: {
+  initialName: string;
+  initialHtml?: string;
+  isDarkPaper?: boolean;
+  paperTone?: string;
+  onSave: (name: string, html: string) => void;
+  onCancel: () => void;
+}) {
+  return (
+    <DynamicTextEditor
+      initialValue={initialName}
+      initialHtml={initialHtml}
+      isDarkPaper={isDarkPaper}
+      defaultFontSize={40}
+      multiline={false}
+      className="text-2xl sm:text-[34px] lg:text-[40px] font-black tracking-[-0.035em] leading-[1.08]"
+      onSave={onSave}
+      onCancel={onCancel}
+    />
+  );
+}
+
+/**
+ * Universal text renderer: renders rich HTML if available, or plain text.
+ */
+export function renderDynamicText(
+  html?: string,
+  plainText?: string,
+  sectionTextColor?: string
+): React.ReactNode {
+  if (html && html.trim()) {
+    return (
+      <span
+        dangerouslySetInnerHTML={{ __html: html }}
+        className="inline select-text"
+        style={sectionTextColor ? { color: sectionTextColor } : undefined}
+      />
+    );
+  }
+  return <span style={sectionTextColor ? { color: sectionTextColor } : undefined}>{plainText || ""}</span>;
+}
+
+/**
+ * Dual-tone eyebrow renderer with rich HTML support.
+ */
+export function renderDynamicEyebrow(
+  eyebrowHtml?: string,
+  eyebrow?: string,
+  sectionTextColor?: string,
+  isDarkPaper?: boolean
+): React.ReactNode {
+  if (eyebrowHtml && eyebrowHtml.trim()) {
+    return (
+      <span
+        dangerouslySetInnerHTML={{ __html: eyebrowHtml }}
+        className="inline select-text"
+        style={sectionTextColor ? { color: sectionTextColor } : undefined}
+      />
+    );
+  }
+
+  const trimmed = (eyebrow || "").trim();
+  if (!trimmed) return null;
+  if (sectionTextColor) {
+    return <span style={{ color: sectionTextColor }}>{trimmed}</span>;
+  }
+  const parts = trimmed.split(/\s+/);
+  if (parts.length <= 1) {
+    return <span className={isDarkPaper ? "text-sky-400" : "text-[#0d2562] dark:text-sky-400"}>{trimmed}</span>;
+  }
+  const firstPart = parts.slice(0, -1).join(" ");
+  const lastWord = parts[parts.length - 1];
+  return (
+    <>
+      <span className={isDarkPaper ? "text-blue-300" : "text-[#0d2562] dark:text-blue-300"}>{firstPart}</span>{" "}
+      <span className={isDarkPaper ? "text-sky-400" : "text-[#2563eb] dark:text-sky-400"}>{lastWord}</span>
+    </>
   );
 }
 
@@ -710,7 +590,6 @@ export function renderDynamicTitle(
   sectionTextColor?: string,
   isDarkPaper?: boolean
 ): React.ReactNode {
-  // If user has custom rich HTML, render it directly
   if (titleHtml && titleHtml.trim()) {
     return (
       <span
@@ -721,7 +600,6 @@ export function renderDynamicTitle(
     );
   }
 
-  // Fallback to dual-tone word split
   const trimmed = (name || "").trim();
   if (!trimmed) return null;
 
