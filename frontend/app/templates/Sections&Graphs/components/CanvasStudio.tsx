@@ -2312,7 +2312,7 @@ export function CanvasStudio({
 
                           {/* Section-specific Header Bar (Pixel-Perfect Matching Design Target) */}
                           <div
-                            className={`relative z-10 px-0 group/section-header transition-all select-text ${
+                            className={`relative ${editingSectionField ? "z-50" : "z-10"} px-0 group/section-header transition-all select-text ${
                               section.headerSpacing === "compact"
                                 ? "pt-2 pb-1.5"
                                 : section.headerSpacing === "spacious"
@@ -2435,6 +2435,7 @@ export function CanvasStudio({
                                 initialHtml={section.titleHtml || getFallbackTitleHtml(section.name, isDarkPaper)}
                                 isDarkPaper={isDarkPaper}
                                 paperTone={paperTone}
+                                toolbarPosition="bottom"
                                 onSave={(newName, newHtml) => {
                                   dispatch(
                                     updateLibrarySection({
