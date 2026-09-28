@@ -54,6 +54,8 @@ export interface DynamicTextEditorProps {
   isDarkPaper?: boolean;
   defaultFontSize?: number;
   multiline?: boolean;
+  toolbarPosition?: "top" | "bottom" | "auto";
+  toolbarAlign?: "left" | "right" | "center" | "auto";
   className?: string;
   placeholder?: string;
   onSave: (plainText: string, html: string) => void;
