@@ -428,6 +428,7 @@ function TextBlock({
   );
 }
 
+
 // ── Single Badge Quick Editor Modal/Popover ──────────────────────────────────
 function SingleBadgeEditorModal({
   badge,

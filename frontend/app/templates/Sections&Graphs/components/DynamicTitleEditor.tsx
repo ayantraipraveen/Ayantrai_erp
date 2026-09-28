@@ -76,6 +76,7 @@ export function DynamicTextEditor({
   onSave,
   onCancel,
 }: DynamicTextEditorProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
 
@@ -86,7 +87,7 @@ export function DynamicTextEditor({
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const [customHex, setCustomHex] = useState("#2563eb");
 
-  // Initialize HTML content on mount
+  // Initialize HTML content on mount & focus
   useEffect(() => {
     if (!editorRef.current) return;
     if (initialHtml && initialHtml.trim()) {
@@ -94,7 +95,33 @@ export function DynamicTextEditor({
     } else {
       editorRef.current.innerHTML = initialValue || "";
     }
+    // Give focus so the user can immediately select or type
+    try {
+      editorRef.current.focus();
+    } catch {
+      // ignore
+    }
   }, [initialHtml, initialValue]);
+
+  // Auto-commit when clicking completely outside this editor container
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        if (editorRef.current) {
+          const html = editorRef.current.innerHTML;
+          const plainText = (editorRef.current.innerText || "").trim();
+          onSave(plainText || initialValue, html);
+        }
+      }
+    };
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }, 200);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [initialValue, onSave]);
 
   // Keep savedRangeRef synchronized whenever selection changes
   const handleSelectionChange = useCallback(() => {
@@ -124,6 +151,34 @@ export function DynamicTextEditor({
     } catch {
       return false;
     }
+  };
+
+  // Apply font size to the highlighted text (or entire container if nothing selected)
+  const applyFontSize = (sizePx: number) => {
+    setFontSize(sizePx);
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+
+    restoreRange();
+    const sel = window.getSelection();
+
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+      editorRef.current.style.fontSize = `${sizePx}px`;
+      return;
+    }
+
+    const range = sel.getRangeAt(0);
+    if (!editorRef.current.contains(range.commonAncestorContainer)) return;
+
+    const span = document.createElement("span");
+    span.style.fontSize = `${sizePx}px`;
+    span.appendChild(range.extractContents());
+    range.insertNode(span);
+    sel.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(span);
+    sel.addRange(newRange);
+    savedRangeRef.current = newRange.cloneRange();
   };
 
   // Apply color to the highlighted text (or entire container if nothing selected)
@@ -178,20 +233,15 @@ export function DynamicTextEditor({
     const range = sel.getRangeAt(0);
     if (!editorRef.current.contains(range.commonAncestorContainer)) return;
 
-    try {
-      document.execCommand("styleWithCSS", false, "true");
-      document.execCommand("fontName", false, fontOption.family);
-    } catch {
-      const span = document.createElement("span");
-      span.style.fontFamily = fontOption.family;
-      span.appendChild(range.extractContents());
-      range.insertNode(span);
-      sel.removeAllRanges();
-      const newRange = document.createRange();
-      newRange.selectNodeContents(span);
-      sel.addRange(newRange);
-      savedRangeRef.current = newRange.cloneRange();
-    }
+    const span = document.createElement("span");
+    span.style.fontFamily = fontOption.family;
+    span.appendChild(range.extractContents());
+    range.insertNode(span);
+    sel.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(span);
+    sel.addRange(newRange);
+    savedRangeRef.current = newRange.cloneRange();
   };
 
   // Bold, Italic, Underline
@@ -212,7 +262,7 @@ export function DynamicTextEditor({
   };
 
   return (
-    <div className="relative my-1 select-text w-full">
+    <div ref={containerRef} className="relative my-1 select-text w-full">
       {/* ── Compact Word Formatting Toolbar directly attached above the input ── */}
       <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5 p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-md text-xs select-none">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -269,8 +319,7 @@ export function DynamicTextEditor({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const next = Math.max(10, fontSize - 2);
-                setFontSize(next);
-                if (editorRef.current) editorRef.current.style.fontSize = `${next}px`;
+                applyFontSize(next);
               }}
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 cursor-pointer"
               title="Decrease Font Size"
@@ -285,8 +334,7 @@ export function DynamicTextEditor({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 const next = Math.min(64, fontSize + 2);
-                setFontSize(next);
-                if (editorRef.current) editorRef.current.style.fontSize = `${next}px`;
+                applyFontSize(next);
               }}
               className="p-1 rounded hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400 cursor-pointer"
               title="Increase Font Size"
