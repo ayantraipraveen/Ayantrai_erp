@@ -802,6 +802,8 @@ export function DynamicTitleEditor({
   initialHtml,
   isDarkPaper,
   paperTone,
+  toolbarPosition,
+  toolbarAlign,
   onSave,
   onCancel,
 }: {
@@ -809,6 +811,8 @@ export function DynamicTitleEditor({
   initialHtml?: string;
   isDarkPaper?: boolean;
   paperTone?: string;
+  toolbarPosition?: "top" | "bottom" | "auto";
+  toolbarAlign?: "left" | "right" | "center" | "auto";
   onSave: (name: string, html: string) => void;
   onCancel: () => void;
 }) {
@@ -818,6 +822,8 @@ export function DynamicTitleEditor({
       initialHtml={initialHtml || getFallbackTitleHtml(initialName, isDarkPaper)}
       isDarkPaper={isDarkPaper}
       defaultFontSize={40}
+      toolbarPosition={toolbarPosition}
+      toolbarAlign={toolbarAlign}
       multiline={false}
       className="text-2xl sm:text-[34px] lg:text-[40px] font-black tracking-[-0.035em] leading-[1.08]"
       onSave={onSave}

@@ -2193,7 +2193,7 @@ export function CanvasStudio({
                             className="relative z-30 min-h-[160px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-visible"
                             style={{ backgroundColor: getPaperToneColor(paperTone) }}
                           >
-                            <div className="relative grid min-h-[160px] grid-cols-[minmax(0,1fr)_minmax(0,1.75fr)_minmax(0,0.9fr)_90px] items-stretch gap-0 px-0 py-0">
+                            <div className="relative grid min-h-[160px] grid-cols-[minmax(0,1fr)_minmax(0,1.75fr)_minmax(0,0.9fr)_90px] items-stretch gap-0 px-0 py-0 overflow-visible">
                               <div className="flex min-w-0 flex-col justify-center px-3 py-1">
                                 <Image
                                   src="/sitesafe-header-logo.svg"
@@ -2205,7 +2205,7 @@ export function CanvasStudio({
                                 />
                               </div>
 
-                              <div className="min-w-0 flex flex-col justify-center ">
+                              <div className={`min-w-0 flex flex-col justify-center ${editingHeaderValue === "taglinePrimary" || editingHeaderValue === "taglineSecondary" ? "relative z-50" : "relative z-10"}`}>
                                <div className="flex flex-col gap-1 border-l-2 border-[#2454d8] pl-4  px-6 py-5">
                                  {editingHeaderValue === "taglinePrimary" ? (
                                    <DynamicTextEditor
@@ -2213,6 +2213,7 @@ export function CanvasStudio({
                                      initialHtml={headerValues.taglinePrimaryHtml}
                                      defaultFontSize={17}
                                      multiline={false}
+                                     toolbarPosition="top"
                                      className="text-[17px] font-semibold italic leading-tight text-[#2454d8]"
                                      onSave={(plain, html) => updateHeaderValueWithHtml("taglinePrimary", plain, html)}
                                      onCancel={() => setEditingHeaderValue(null)}
@@ -2233,6 +2234,7 @@ export function CanvasStudio({
                                      initialHtml={headerValues.taglineSecondaryHtml}
                                      defaultFontSize={17}
                                      multiline={false}
+                                     toolbarPosition="bottom"
                                      className="text-[17px] font-semibold italic leading-tight text-[#2454d8]"
                                      onSave={(plain, html) => updateHeaderValueWithHtml("taglineSecondary", plain, html)}
                                      onCancel={() => setEditingHeaderValue(null)}
@@ -2250,7 +2252,7 @@ export function CanvasStudio({
                                 </div>
                               </div>
 
-                              <div className="min-w-0 flex flex-col justify-center px-2 py-5">
+                              <div className={`min-w-0 flex flex-col justify-center px-2 py-5 ${editingHeaderValue === "title" || editingHeaderValue === "period" ? "relative z-50" : "relative z-10"}`}>
                                 <div className="relative">
                                   {editingHeaderValue === "title" ? (
                                     <DynamicTextEditor
@@ -2258,6 +2260,7 @@ export function CanvasStudio({
                                       initialHtml={headerValues.titleHtml}
                                       defaultFontSize={headerTitleFormat.fontSize || 30}
                                       multiline={false}
+                                      toolbarPosition="top"
                                       className="text-2xl sm:text-3xl font-black leading-tight"
                                       onSave={(plain, html) => updateHeaderValueWithHtml("title", plain, html)}
                                       onCancel={() => setEditingHeaderValue(null)}
@@ -2280,6 +2283,7 @@ export function CanvasStudio({
                                     initialHtml={headerValues.periodHtml}
                                     defaultFontSize={12}
                                     multiline={false}
+                                    toolbarPosition="bottom"
                                     className="mt-1 text-[12px] font-semibold leading-tight text-[#1836a0]"
                                     onSave={(plain, html) => updateHeaderValueWithHtml("period", plain, html)}
                                     onCancel={() => setEditingHeaderValue(null)}
@@ -2680,13 +2684,14 @@ export function CanvasStudio({
                           className="relative z-10 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
                           style={{ backgroundColor: getPaperToneColor(paperTone) }}
                         >
-                          <div className="min-w-0">
+                          <div className={`min-w-0 ${editingFooterValue === "company" || editingFooterValue === "websites" ? "relative z-50" : "relative z-10"}`}>
                             {editingFooterValue === "company" ? (
                               <DynamicTextEditor
                                 initialValue={footerValues.company}
                                 initialHtml={footerValues.companyHtml}
                                 defaultFontSize={14}
                                 multiline={false}
+                                toolbarPosition="top"
                                 className="text-sm font-bold text-[#1836a0]"
                                 onSave={(plain, html) => updateFooterValueWithHtml("company", plain, html)}
                                 onCancel={() => setEditingFooterValue(null)}
@@ -2706,6 +2711,7 @@ export function CanvasStudio({
                                 initialHtml={footerValues.websitesHtml}
                                 defaultFontSize={12}
                                 multiline={false}
+                                toolbarPosition="top"
                                 className="mt-1 text-xs font-semibold text-[#1836a0]"
                                 onSave={(plain, html) => updateFooterValueWithHtml("websites", plain, html)}
                                 onCancel={() => setEditingFooterValue(null)}
@@ -2723,25 +2729,29 @@ export function CanvasStudio({
 
                           <div className="h-[2px] w-full bg-[#1836a0]/60" />
 
-                          {editingFooterValue === "quote" ? (
-                            <DynamicTextEditor
-                              initialValue={footerValues.quote}
-                              initialHtml={footerValues.quoteHtml}
-                              defaultFontSize={14}
-                              multiline={false}
-                              className="text-right text-sm font-semibold text-[#1836a0]"
-                              onSave={(plain, html) => updateFooterValueWithHtml("quote", plain, html)}
-                              onCancel={() => setEditingFooterValue(null)}
-                            />
-                          ) : (
-                            <p
-                              className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
-                              onDoubleClick={() => !activeIsPreview && setEditingFooterValue("quote")}
-                              title="Double-click to format safety quote (Word style)"
-                            >
-                              &ldquo;{renderDynamicText(footerValues.quoteHtml, footerValues.quote)}&rdquo;
-                            </p>
-                          )}
+                          <div className={`min-w-0 ${editingFooterValue === "quote" ? "relative z-50" : "relative z-10"}`}>
+                            {editingFooterValue === "quote" ? (
+                              <DynamicTextEditor
+                                initialValue={footerValues.quote}
+                                initialHtml={footerValues.quoteHtml}
+                                defaultFontSize={14}
+                                multiline={false}
+                                toolbarPosition="top"
+                                toolbarAlign="right"
+                                className="text-right text-sm font-semibold text-[#1836a0]"
+                                onSave={(plain, html) => updateFooterValueWithHtml("quote", plain, html)}
+                                onCancel={() => setEditingFooterValue(null)}
+                              />
+                            ) : (
+                              <p
+                                className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
+                                onDoubleClick={() => !activeIsPreview && setEditingFooterValue("quote")}
+                                title="Double-click to format safety quote (Word style)"
+                              >
+                                &ldquo;{renderDynamicText(footerValues.quoteHtml, footerValues.quote)}&rdquo;
+                              </p>
+                            )}
+                          </div>
                         </footer>
                       ) : (
                         <footer
