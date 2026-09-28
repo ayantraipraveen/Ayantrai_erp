@@ -29,6 +29,7 @@ export interface WatermarkStampConfig {
   scale: number;        // 20 to 300 (percent)
   rotation: number;     // -90 to 90 (degrees)
   placement: WatermarkPlacement;
+  layer?: "back" | "front";
   xOffset?: number;     // -50 to 50 (% horizontal offset)
   yOffset?: number;     // -50 to 50 (% vertical offset)
 }
@@ -42,6 +43,7 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkStampConfig = {
   scale: 100,
   rotation: -18,
   placement: "center",
+  layer: "back",
   xOffset: 0,
   yOffset: 0,
 };
@@ -152,3 +154,4 @@ export function saveSectionWatermarkConfig(sectionId: string, config: WatermarkS
     console.warn("Failed to save watermark config", e);
   }
 }
+

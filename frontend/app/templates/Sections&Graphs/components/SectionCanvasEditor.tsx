@@ -393,6 +393,16 @@ export default function SectionCanvasEditor({
         case "divider":
           cell = { id: `cell-div-${ts}`, colSpan: 4, blockType: "divider" };
           break;
+        case "element":
+          if (e.elementBlock) {
+            cell = {
+              id: `cell-el-${ts}`,
+              colSpan: 4,
+              blockType: "element",
+              elementBlock: { ...e.elementBlock, isWatermark: false },
+            };
+          }
+          break;
       }
 
       if (cell !== null) {
@@ -437,6 +447,27 @@ export default function SectionCanvasEditor({
       }
     },
     [dispatch, section]
+  );
+
+  const handleAddWatermarkElement = useCallback(
+    (watermarkId: string) => {
+      const watermark = uploadedWatermarks.find((item) => item.id === watermarkId);
+      if (!watermark) return;
+      handleSidebarAddBlock({
+        blockType: "element",
+        elementBlock: {
+          sourceId: watermark.id,
+          svgContent: watermark.svgContent,
+          name: watermark.name,
+          opacity: 100,
+          rotation: 0,
+          scale: 100,
+          isWatermark: false,
+          layer: "front",
+        },
+      });
+    },
+    [handleSidebarAddBlock, uploadedWatermarks]
   );
 
   // ── Cell Edit Trigger ───────────────────────────────────────────────────────
@@ -853,6 +884,7 @@ export default function SectionCanvasEditor({
             uploadedWatermarks={uploadedWatermarks}
             activeWatermarkId={watermarkConfig.watermarkId}
             onSelectWatermark={handleSelectWatermark}
+            onAddWatermarkElement={handleAddWatermarkElement}
             watermarkConfig={watermarkConfig}
             onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
           />

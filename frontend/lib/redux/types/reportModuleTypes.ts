@@ -317,7 +317,30 @@ export type CanvasBlockType =
   | "insight"
   | "text"
   | "badge-strip"
-  | "divider";
+  | "divider"
+  | "element"; // SVG element / decorative asset (can also be used as watermark layer)
+
+/** A reusable SVG decorative element — can sit as a canvas block OR as a watermark overlay */
+export interface CanvasElementBlock {
+  /** Unique id of the source asset from the Element Library */
+  sourceId: string;
+  /** The raw SVG markup to render */
+  svgContent: string;
+  /** Display name of the element */
+  name: string;
+  /** Opacity 0-100 */
+  opacity: number;
+  /** Rotation in degrees */
+  rotation: number;
+  /** Scale percentage (e.g. 100 = default) */
+  scale: number;
+  /** Use as overlay watermark on the whole section page instead of inline canvas block */
+  isWatermark: boolean;
+  /** Placement when used as watermark */
+  watermarkPlacement?: "center" | "top-right" | "bottom-right" | "bottom-left" | "top-left" | "tiled" | "footer";
+  /** z-index layer: 'back' = behind content (default for watermarks), 'front' = above content */
+  layer?: "back" | "front";
+}
 
 export interface CanvasCellStyle {
   fontFamily?: "sans" | "serif" | "mono" | "rounded";
@@ -347,6 +370,7 @@ export interface CanvasCell {
   insight?: LibraryKeyInsightItem;
   textBlock?: CanvasTextBlock;
   badgeStrip?: CanvasBadgeStrip;
+  elementBlock?: CanvasElementBlock; // SVG element / watermark asset
   // divider has no data payload
 }
 

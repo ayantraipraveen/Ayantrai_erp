@@ -1214,6 +1214,7 @@ function WatermarkStampLayer({
   wmRotation,
   wmXOffset,
   wmYOffset,
+  wmLayer,
   isDarkPaper,
   isWatermarkSelected,
   activeIsPreview,
@@ -1231,6 +1232,7 @@ function WatermarkStampLayer({
   wmRotation: number;
   wmXOffset: number;
   wmYOffset: number;
+  wmLayer: "back" | "front";
   isDarkPaper: boolean;
   isWatermarkSelected: boolean;
   activeIsPreview: boolean;
@@ -1245,7 +1247,7 @@ function WatermarkStampLayer({
 
   return (
     <div
-      className={`absolute inset-0 select-none z-10 overflow-hidden flex p-8 sm:p-12 transition-all duration-300 ${
+      className={`absolute inset-0 select-none ${isWatermarkSelected ? "z-30" : wmLayer === "back" ? "z-[5]" : "z-20"} overflow-hidden flex p-8 sm:p-12 transition-all duration-300 ${
         getPlacementClass(wmPlacement)
       } ${isWatermarkSelected ? "pointer-events-auto" : "pointer-events-none"}`}
     >
@@ -1374,6 +1376,16 @@ function WatermarkStampLayer({
                 </button>
 
                 <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
+
+                <button
+                  type="button"
+                  onClick={() => onUpdateWatermarkConfig?.({ layer: wmLayer === "back" ? "front" : "back" })}
+                  className="w-5 h-5 rounded hover:bg-purple-100 text-slate-600 flex items-center justify-center cursor-pointer"
+                  title={wmLayer === "back" ? "Bring watermark in front of page content" : "Send watermark behind page content"}
+                  aria-label={wmLayer === "back" ? "Bring watermark forward" : "Send watermark backward"}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                </button>
 
                 <button
                   type="button"
@@ -1966,23 +1978,23 @@ export function CanvasStudio({
 
   const paperBgClass =
     paperTone === "slate"
-      ? "bg-slate-50 dark:bg-zinc-900"
+      ? "bg-slate-50 text-slate-900"
       : paperTone === "paper" || paperTone === "cream"
-      ? "bg-[#faf8f5] dark:bg-[#15130f]"
+      ? "bg-[#faf8f5] text-slate-900"
       : paperTone === "linen"
-      ? "bg-[#f4f1ea] dark:bg-[#181613]"
+      ? "bg-[#f4f1ea] text-slate-900"
       : paperTone === "ice"
-      ? "bg-[#f0f7ff] dark:bg-[#0c1322]"
+      ? "bg-[#f0f7ff] text-slate-900"
       : paperTone === "mint"
-      ? "bg-[#f2f9f5] dark:bg-[#0b1812]"
+      ? "bg-[#f2f9f5] text-slate-900"
       : paperTone === "rose"
-      ? "bg-[#fff5f7] dark:bg-[#1a0c10]"
+      ? "bg-[#fff5f7] text-slate-900"
       : paperTone === "amber"
-      ? "bg-[#fffbeb] dark:bg-[#1a1608]"
+      ? "bg-[#fffbeb] text-slate-900"
       : paperTone === "dark"
-      ? "bg-[#0b0e14] dark:bg-[#07090d]"
+      ? "bg-[#0f172a] text-white"
       : !isCustomColor
-      ? "bg-white dark:bg-[#0c1017]"
+      ? "bg-white text-slate-900"
       : "";
 
   const customPaperStyle: React.CSSProperties = isCustomColor
@@ -1998,6 +2010,7 @@ export function CanvasStudio({
   const wmPlacement = watermarkConfig?.placement ?? "center";
   const wmXOffset = watermarkConfig?.xOffset ?? 0;
   const wmYOffset = watermarkConfig?.yOffset ?? 0;
+  const wmLayer = watermarkConfig?.layer ?? "back";
 
   const [isWatermarkSelected, setIsWatermarkSelected] = useState(false);
   const [isDraggingWatermark, setIsDraggingWatermark] = useState(false);
@@ -2179,6 +2192,7 @@ export function CanvasStudio({
                       wmRotation={wmRotation}
                       wmXOffset={wmXOffset}
                       wmYOffset={wmYOffset}
+                      wmLayer={wmLayer}
                       isDarkPaper={isDarkPaper}
                       isWatermarkSelected={isWatermarkSelected}
                       activeIsPreview={activeIsPreview}
@@ -2207,7 +2221,7 @@ export function CanvasStudio({
                           {/* Fixed Sitesafe Report Header */}
                           <div
                             className="relative z-30 min-h-[160px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-visible"
-                            style={{ backgroundColor: getPaperToneColor(paperTone) }}
+                            style={{ backgroundColor: paperTone === "dark" || isDarkPaper ? getPaperToneColor(paperTone) : undefined }}
                           >
                             <div className="relative grid min-h-[160px] grid-cols-[minmax(0,1fr)_minmax(0,1.75fr)_minmax(0,0.9fr)_90px] items-stretch gap-0 px-0 py-0 overflow-visible">
                               <div className="flex min-w-0 flex-col justify-center px-3 py-1">

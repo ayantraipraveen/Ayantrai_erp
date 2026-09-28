@@ -1079,6 +1079,35 @@ function DividerBlock() {
   );
 }
 
+function ElementBlock({ cell }: { cell: CanvasCell }) {
+  const elem = cell.elementBlock;
+  if (!elem || !elem.svgContent) {
+    return (
+      <div className="w-full h-full min-h-[90px] rounded-2xl border border-dashed border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/30 flex items-center justify-center p-4 text-xs text-slate-400 font-mono">
+        Empty SVG Element
+      </div>
+    );
+  }
+
+  const opacity = (elem.opacity ?? 100) / 100;
+  const scale = (elem.scale ?? 100) / 100;
+  const rotation = elem.rotation ?? 0;
+
+  return (
+    <div className="w-full h-full min-h-[90px] flex-1 flex items-center justify-center p-3 overflow-hidden select-none">
+      <div
+        className="w-full h-full max-w-full flex items-center justify-center transition-transform duration-100 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
+        style={{
+          opacity,
+          transform: `rotate(${rotation}deg) scale(${scale})`,
+          transformOrigin: "center center",
+        }}
+        dangerouslySetInnerHTML={{ __html: elem.svgContent }}
+      />
+    </div>
+  );
+}
+
 // ── Helper to resolve CanvasCellStyle overrides ──────────────────────────────
 export function getCellStyleClasses(style?: CanvasCell["style"]): {
   fontClass: string;
@@ -1280,6 +1309,8 @@ export function CanvasBlockRenderer({
         );
       case "divider":
         return <DividerBlock />;
+      case "element":
+        return <ElementBlock cell={cell} />;
       default:
         return null;
     }

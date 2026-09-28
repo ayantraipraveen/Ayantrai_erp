@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import {
   CanvasBlockType,
+  CanvasElementBlock,
   GraphType,
   LibraryChartCard,
 } from "@/lib/redux/slices/reportModuleSlice";
@@ -44,6 +45,7 @@ import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
 
 export interface SidebarAddBlockEvent {
   blockType: CanvasBlockType;
+  elementBlock?: CanvasElementBlock;
   chartType?: GraphType;
   customChart?: LibraryChartCard;
   targetRowId?: string;
@@ -67,6 +69,7 @@ export interface CanvasSidebarProps {
   uploadedWatermarks?: UploadedSvgWatermark[];
   activeWatermarkId?: string | null;
   onSelectWatermark?: (watermarkId: string | null) => void;
+  onAddWatermarkElement?: (watermarkId: string) => void;
   watermarkConfig?: WatermarkStampConfig;
   onUpdateWatermarkConfig?: (cfg: Partial<WatermarkStampConfig>) => void;
   isCollapsed?: boolean;
@@ -372,6 +375,7 @@ export function CanvasSidebar({
   uploadedWatermarks = [],
   activeWatermarkId,
   onSelectWatermark,
+  onAddWatermarkElement,
   watermarkConfig,
   onUpdateWatermarkConfig,
   isCollapsed,
@@ -701,20 +705,20 @@ export function CanvasSidebar({
           )}
 
           
-          {/* ── WATERMARK STAMPS ── */}
+          {/* ── SVG ELEMENTS AND WATERMARKS ── */}
           {(selectedCategory === "all" || selectedCategory === "watermarks") && (
             <div className="space-y-2 pt-1">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[10px] font-mono uppercase font-bold text-[#8B3DFF] flex items-center gap-1.5">
-                  <Stamp className="w-3.5 h-3.5" />
-                  Document Watermarks ({filteredWatermarks.length})
+                  <Layers className="w-3.5 h-3.5" />
+                  SVG Elements ({filteredWatermarks.length})
                 </span>
                 <a
                   href="/templates/Sections&Graphs/watermark"
                   target="_blank"
                   rel="noreferrer"
                   className="text-[9px] text-[#8B3DFF] hover:underline flex items-center gap-0.5 font-semibold"
-                  title="Open Watermark Studio to upload more SVGs"
+                  title="Upload more SVG assets"
                 >
                   <span>Upload</span>
                   <ExternalLink className="w-2.5 h-2.5" />
@@ -723,7 +727,7 @@ export function CanvasSidebar({
 
               {filteredWatermarks.length === 0 ? (
                 <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 text-center text-xs text-slate-400">
-                  No watermarks found
+                  No SVG elements found
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -732,8 +736,7 @@ export function CanvasSidebar({
                     return (
                       <div
                         key={wm.id}
-                        onClick={() => onSelectWatermark && onSelectWatermark(isApplied ? null : wm.id)}
-                        className={`group relative rounded-2xl border p-3 transition-all duration-200 cursor-pointer overflow-hidden space-y-2 ${
+                        className={`group relative rounded-2xl border p-3 transition-all duration-200 overflow-hidden space-y-2 ${
                           isApplied
                             ? "border-[#8B3DFF] bg-[#8B3DFF]/10 shadow-md ring-1 ring-[#8B3DFF]"
                             : "border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#8B3DFF]/60 hover:shadow-lg"
@@ -765,36 +768,34 @@ export function CanvasSidebar({
                           dangerouslySetInnerHTML={{ __html: wm.svgContent }}
                         />
 
-                        <div className="flex items-center justify-between pt-1">
+                        <div className="flex items-center justify-between gap-2 pt-1">
                           <span className="text-[10px] font-mono text-slate-400 truncate">
                             {wm.fileName}
                           </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (onSelectWatermark) {
-                                onSelectWatermark(isApplied ? null : wm.id);
-                              }
-                            }}
-                            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                              isApplied
-                                ? "bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-300"
-                                : "bg-[#8B3DFF] hover:bg-[#7c3aed] text-white shadow-sm"
-                            }`}
-                          >
-                            {isApplied ? (
-                              <>
-                                <X className="w-3 h-3" />
-                                <span>Remove</span>
-                              </>
-                            ) : (
-                              <>
-                                <Check className="w-3 h-3" />
-                                <span>Apply</span>
-                              </>
-                            )}
-                          </button>
+                          <div className="flex flex-shrink-0 items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => onAddWatermarkElement?.(wm.id)}
+                              className="flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-600 transition-colors hover:border-[#8B3DFF] hover:text-[#8B3DFF] dark:border-zinc-700 dark:text-zinc-300"
+                              title="Place this graphic on the page"
+                            >
+                              <Plus className="h-3 w-3" />
+                              <span>Element</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onSelectWatermark?.(isApplied ? null : wm.id)}
+                              className={`flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold transition-colors ${
+                                isApplied
+                                  ? "border border-rose-300 bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white"
+                                  : "bg-[#8B3DFF] text-white hover:bg-[#7c3aed]"
+                              }`}
+                              title={isApplied ? "Remove as watermark" : "Apply as page watermark"}
+                            >
+                              {isApplied ? <X className="h-3 w-3" /> : <Stamp className="h-3 w-3" />}
+                              <span>{isApplied ? "Remove" : "Watermark"}</span>
+                            </button>
+                          </div>
                         </div>
 
                         {/* If applied, show quick resize & placement controls */}
@@ -838,6 +839,15 @@ export function CanvasSidebar({
                               title="Cycle Location"
                             >
                               Pos: {watermarkConfig.placement ?? "center"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateWatermarkConfig({ layer: watermarkConfig.layer === "front" ? "back" : "front" })}
+                              className="flex items-center gap-1 rounded-lg border border-purple-200 bg-white px-2 py-0.5 text-[10px] font-mono uppercase text-slate-700 hover:bg-purple-50 dark:border-purple-800 dark:bg-zinc-900 dark:text-zinc-300"
+                              title={watermarkConfig.layer === "front" ? "Send watermark behind page content" : "Bring watermark in front of page content"}
+                            >
+                              <Layers className="h-3 w-3" />
+                              {watermarkConfig.layer === "front" ? "Front" : "Back"}
                             </button>
                           </div>
                         )}
