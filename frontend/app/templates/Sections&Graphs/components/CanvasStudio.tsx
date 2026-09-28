@@ -97,6 +97,8 @@ import {
   renderDynamicTitle,
   renderDynamicEyebrow,
   renderDynamicText,
+  getFallbackEyebrowHtml,
+  getFallbackTitleHtml,
 } from "./DynamicTitleEditor";
 
 // ─── Standard Physical A4 Dimensions at 96 DPI ────────────────────────────────
@@ -2313,15 +2315,15 @@ export function CanvasStudio({
                             }`}
                             style={{ backgroundColor: getPaperToneColor(paperTone) }}
                           >
-                            <div className="flex items-center justify-between gap-3 mb-1.5">
-                              {editingSectionField === "eyebrow" ? (
+                            {editingSectionField === "eyebrow" ? (
+                              <div className="w-full mb-3">
                                 <DynamicTextEditor
                                   initialValue={section.eyebrow}
-                                  initialHtml={section.eyebrowHtml}
+                                  initialHtml={section.eyebrowHtml || getFallbackEyebrowHtml(section.eyebrow, isDarkPaper)}
                                   isDarkPaper={isDarkPaper}
                                   defaultFontSize={12.5}
                                   multiline={false}
-                                  className="text-[12.5px] font-bold uppercase tracking-[0.15em] font-sans"
+                                  className="text-[12.5px] font-bold uppercase tracking-[0.15em]"
                                   placeholder="Section eyebrow..."
                                   onSave={(newVal, newHtml) => {
                                     dispatch(
@@ -2341,7 +2343,9 @@ export function CanvasStudio({
                                   }}
                                   onCancel={() => setEditingSectionField(null)}
                                 />
-                              ) : (
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between gap-3 mb-1.5">
                                 <span
                                   onDoubleClick={() => {
                                     if (!activeIsPreview) {
@@ -2353,78 +2357,76 @@ export function CanvasStudio({
                                 >
                                   {renderDynamicEyebrow(section.eyebrowHtml, section.eyebrow, sectionTextColor, isDarkPaper)}
                                 </span>
-                              )}
 
-                              {/* Right Header Controls: Spacing + Watermark + Edit Header Button */}
-                              <div className="flex items-center gap-2">
-                                {/* Header Spacing / Height Preset Selector */}
-                                {!activeIsPreview && (
-                                  <div className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-0.5 bg-slate-100 dark:bg-zinc-800 rounded-lg p-0.5 text-[10px] font-medium text-slate-500">
-                                    <span className="px-1 text-[9px] text-slate-400 font-mono">Pad:</span>
-                                    {(["compact", "normal", "spacious"] as const).map((space) => (
+                                {/* Right Header Controls: Spacing + Watermark + Edit Header Button */}
+                                {!editingSectionField && !activeIsPreview && (
+                                  <div className="flex items-center gap-2">
+                                    {/* Header Spacing / Height Preset Selector */}
+                                    <div className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-0.5 bg-slate-100 dark:bg-zinc-800 rounded-lg p-0.5 text-[10px] font-medium text-slate-500">
+                                      <span className="px-1 text-[9px] text-slate-400 font-mono">Pad:</span>
+                                      {(["compact", "normal", "spacious"] as const).map((space) => (
+                                        <button
+                                          key={space}
+                                          type="button"
+                                          onClick={() => {
+                                            dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));
+                                          }}
+                                          className={`px-1.5 py-0.5 rounded capitalize transition-colors cursor-pointer ${
+                                            (section.headerSpacing || "normal") === space
+                                              ? "bg-white dark:bg-zinc-700 text-[#8B3DFF] font-bold shadow-xs"
+                                              : "hover:text-slate-900 dark:hover:text-white"
+                                          }`}
+                                          title={`Set header vertical padding to ${space}`}
+                                        >
+                                          {space}
+                                        </button>
+                                      ))}
+                                    </div>
+
+                                    {activeWatermark && (
                                       <button
-                                        key={space}
                                         type="button"
-                                        onClick={() => {
-                                          dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setIsWatermarkSelected(!isWatermarkSelected);
                                         }}
-                                        className={`px-1.5 py-0.5 rounded capitalize transition-colors cursor-pointer ${
-                                          (section.headerSpacing || "normal") === space
-                                            ? "bg-white dark:bg-zinc-700 text-[#8B3DFF] font-bold shadow-xs"
-                                            : "hover:text-slate-900 dark:hover:text-white"
+                                        className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
+                                          isWatermarkSelected
+                                            ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
+                                            : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
                                         }`}
-                                        title={`Set header vertical padding to ${space}`}
+                                        title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
                                       >
-                                        {space}
+                                        <Stamp className="w-2.5 h-2.5" />
+                                        <span>{activeWatermark.name}</span>
+                                        <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
                                       </button>
-                                    ))}
+                                    )}
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setLocalSectionName(section.name);
+                                        setLocalSectionEyebrow(section.eyebrow);
+                                        setLocalSectionDesc(section.description);
+                                        setEditingSectionField("name");
+                                      }}
+                                      className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-[#2563eb] px-2 py-0.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
+                                      title="Edit Section Header"
+                                    >
+                                      <Edit2 className="w-3 h-3" />
+                                      <span className="hidden sm:inline">Edit Header</span>
+                                    </button>
                                   </div>
                                 )}
-
-                                {activeWatermark && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setIsWatermarkSelected(!isWatermarkSelected);
-                                    }}
-                                    className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
-                                      isWatermarkSelected
-                                        ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
-                                        : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
-                                    }`}
-                                    title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
-                                  >
-                                    <Stamp className="w-2.5 h-2.5" />
-                                    <span>{activeWatermark.name}</span>
-                                    <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
-                                  </button>
-                                )}
-
-                                {!activeIsPreview && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setLocalSectionName(section.name);
-                                      setLocalSectionEyebrow(section.eyebrow);
-                                      setLocalSectionDesc(section.description);
-                                      setEditingSectionField("name");
-                                    }}
-                                    className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-[#2563eb] px-2 py-0.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
-                                    title="Edit Section Header"
-                                  >
-                                    <Edit2 className="w-3 h-3" />
-                                    <span className="hidden sm:inline">Edit Header</span>
-                                  </button>
-                                )}
                               </div>
-                            </div>
+                            )}
 
                             {/* Main Section Title: Dynamic Word-Style Typography & Color Studio */}
                             {editingSectionField === "name" ? (
                               <DynamicTitleEditor
                                 initialName={section.name}
-                                initialHtml={section.titleHtml}
+                                initialHtml={section.titleHtml || getFallbackTitleHtml(section.name, isDarkPaper)}
                                 isDarkPaper={isDarkPaper}
                                 paperTone={paperTone}
                                 onSave={(newName, newHtml) => {
