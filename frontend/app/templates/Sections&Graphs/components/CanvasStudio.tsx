@@ -2061,23 +2061,24 @@ export function CanvasStudio({
                         <div>
                           {/* Fixed Sitesafe Report Header */}
                           <div
-                            className="relative z-10 min-h-[150px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden"
+                            className="relative z-10 min-h-[160px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden"
                             style={{ backgroundColor: getPaperToneColor(paperTone) }}
                           >
-                            <div className="relative h-full grid grid-cols-[1.05fr_1.25fr_1fr] items-center gap-5 px-6 py-5">
-                              <div className="flex min-w-0 flex-col justify-center">
+                            <div className="relative grid min-h-[160px] grid-cols-[minmax(0,1fr)_minmax(0,1.75fr)_minmax(0,0.9fr)_90px] items-stretch gap-0 px-0 py-0">
+                              <div className="flex min-w-0 flex-col justify-center px-3 py-1">
                                 <Image
                                   src="/sitesafe-header-logo.svg"
                                   alt="Sitesafe by AyantrAI"
-                                  width={340}
-                                  height={95}
-                                  className="h-[90px] w-[280px] object-contain object-left"
+                                  width={1254}
+                                  height={1254}
+                                  className="h-[150px] w-[150px] object-contain object-left"
                                   priority
                                 />
                               </div>
 
-                              <div className="min-w-0 border-l-2 border-[#2454d8] pl-6">
-                                {editingHeaderValue === "taglinePrimary" ? (
+                              <div className="min-w-0 flex flex-col justify-center ">
+                               <div className="flex flex-col gap-1 border-l-2 border-[#2454d8] pl-4  px-6 py-5">
+                                 {editingHeaderValue === "taglinePrimary" ? (
                                   <input
                                     autoFocus
                                     value={headerValues.taglinePrimary}
@@ -2121,10 +2122,10 @@ export function CanvasStudio({
                                     {headerValues.taglineSecondary}
                                   </p>
                                 )}
+                               </div>
                               </div>
 
-                              <div className="relative min-w-0 self-stretch flex items-center justify-between gap-4 border-l-2 border-[#2454d8] pl-6 pr-20">
-                                <div className="min-w-0">
+                              <div className="min-w-0 flex flex-col justify-center px-2 py-5">
                                   {editingHeaderValue === "title" ? (
                                     <input
                                       autoFocus
@@ -2170,11 +2171,11 @@ export function CanvasStudio({
                                     </p>
                                   )}
                                   <div className="mt-2 h-1 w-14 rounded-full bg-[#2454d8]" />
-                                </div>
-                                <div className="absolute -right-6 -top-5 -bottom-5 flex w-[72px] flex-col items-center justify-center bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
-                                  <span className="text-[10px] font-semibold">Page</span>
-                                  <span className="text-[25px] font-black leading-none">{String(page.pageNumber).padStart(2, "0")}</span>
-                                </div>
+                              </div>
+                              {/* Page Badge - flush right, full height */}
+                              <div className="flex flex-col items-center justify-center border-l-2 border-[#2454d8] bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
+                                <span className="text-[10px] font-semibold">Page</span>
+                                <span className="text-[25px] font-black leading-none">{String(page.pageNumber).padStart(2, "0")}</span>
                               </div>
                             </div>
                           </div>
