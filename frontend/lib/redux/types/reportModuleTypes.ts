@@ -326,7 +326,9 @@ export interface CanvasCellStyle {
   textAlign?: "left" | "center" | "right";
   textColor?: string;
   cardBg?: string; // preset id or hex color (e.g. 'white', 'slate', 'glass', 'purple', 'indigo', 'emerald', 'amber', 'rose', 'dark')
-  borderColor?: string;
+  borderColor?: string; // preset id or hex color or 'transparent'
+  borderWidth?: number; // 0, 1, 2, 3, 4
+  borderStyle?: "solid" | "dashed" | "dotted" | "none";
   backgroundOpacity?: number; // card background opacity from 0 to 100
 }
 

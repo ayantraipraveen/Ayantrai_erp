@@ -125,6 +125,18 @@ export const CARD_BG_PRESETS: { id: string; label: string; color: string; border
   { id: "dark",     label: "Midnight",    color: "#0f172a", border: "#334155", darkBg: "#0f172a" },
 ];
 
+export const CARD_BORDER_PRESETS: { id: string; label: string; color: string }[] = [
+  { id: "none",        label: "None",         color: "transparent" },
+  { id: "slate-light", label: "Light Slate",  color: "#e2e8f0" },
+  { id: "slate-dark",  label: "Muted Slate",  color: "#94a3b8" },
+  { id: "purple",      label: "Purple",       color: "#c084fc" },
+  { id: "blue",        label: "Royal Blue",   color: "#60a5fa" },
+  { id: "emerald",     label: "Emerald",      color: "#34d399" },
+  { id: "amber",       label: "Amber",        color: "#fbbf24" },
+  { id: "rose",        label: "Rose",         color: "#f87171" },
+  { id: "dark",        label: "Midnight",     color: "#334155" },
+];
+
 const TEXT_COLOR_SWATCHES = [
   { hex: "#0f172a", label: "Slate Dark" },
   { hex: "#1e293b", label: "Charcoal" },
@@ -198,6 +210,7 @@ export function CanvasContextRibbon({
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const [bgMenuOpen, setBgMenuOpen] = useState(false);
+  const [borderMenuOpen, setBorderMenuOpen] = useState(false);
   const [watermarkMenuOpen, setWatermarkMenuOpen] = useState(false);
   const [paperColorMenuOpen, setPaperColorMenuOpen] = useState(false);
   const [sectionTextColorMenuOpen, setSectionTextColorMenuOpen] = useState(false);
@@ -210,6 +223,7 @@ export function CanvasContextRibbon({
       setFontMenuOpen(false);
       setColorMenuOpen(false);
       setBgMenuOpen(false);
+      setBorderMenuOpen(false);
       setWatermarkMenuOpen(false);
       setPaperColorMenuOpen(false);
       setSectionTextColorMenuOpen(false);
@@ -427,6 +441,47 @@ export function CanvasContextRibbon({
                   if (onUpdateCellStyle) onUpdateCellStyle({ cardBg: undefined });
                 }}
                 onClose={() => setBgMenuOpen(false)}
+              />
+            )}
+          </div>
+
+          {/* ── Card Border Presets Dropdown ── */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setBorderMenuOpen(!borderMenuOpen);
+                setBgMenuOpen(false);
+                setFontMenuOpen(false);
+                setColorMenuOpen(false);
+                setWatermarkMenuOpen(false);
+              }}
+              className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-purple-400 bg-white dark:bg-zinc-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-slate-700 dark:text-zinc-200"
+              title="Card Border Color & Style"
+            >
+              <Square className="w-3.5 h-3.5 text-[#8B3DFF]" />
+              <span>Border</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+
+            {borderMenuOpen && (
+              <CardBorderPopover
+                currentBorderColor={currentStyle.borderColor}
+                currentBorderStyle={currentStyle.borderStyle}
+                currentBorderWidth={currentStyle.borderWidth}
+                onSelectBorder={(patch) => {
+                  if (onUpdateCellStyle) onUpdateCellStyle(patch);
+                }}
+                onReset={() => {
+                  if (onUpdateCellStyle) {
+                    onUpdateCellStyle({
+                      borderColor: undefined,
+                      borderStyle: undefined,
+                      borderWidth: undefined,
+                    });
+                  }
+                }}
+                onClose={() => setBorderMenuOpen(false)}
               />
             )}
           </div>
@@ -2037,6 +2092,235 @@ function CardBgPopover({
             <RotateCw className="w-3 h-3" />
             <span className="text-[10px]">Reset</span>
           </button>
+        </div>
+      </div>
+
+      {/* Done Button */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+      >
+        Apply & Close
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Card Border Presets & Color/Style Popover Menu
+ */
+function CardBorderPopover({
+  currentBorderColor,
+  currentBorderStyle,
+  currentBorderWidth,
+  onSelectBorder,
+  onReset,
+  onClose,
+}: {
+  currentBorderColor?: string;
+  currentBorderStyle?: "solid" | "dashed" | "dotted" | "none";
+  currentBorderWidth?: number;
+  onSelectBorder: (patch: {
+    borderColor?: string;
+    borderStyle?: "solid" | "dashed" | "dotted" | "none";
+    borderWidth?: number;
+  }) => void;
+  onReset: () => void;
+  onClose: () => void;
+}) {
+  const [activeHex, setActiveHex] = useState(
+    currentBorderColor && currentBorderColor !== "transparent" ? currentBorderColor : "#e2e8f0"
+  );
+  const colorPickerRef = useRef<HTMLInputElement>(null);
+
+  const handleNativeColorInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setActiveHex(val);
+    onSelectBorder({
+      borderColor: val,
+      borderWidth: currentBorderWidth && currentBorderWidth > 0 ? currentBorderWidth : 1,
+      borderStyle: currentBorderStyle === "none" ? "solid" : currentBorderStyle ?? "solid",
+    });
+  };
+
+  return (
+    <div className="absolute top-9 left-0 w-64 sm:w-72 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-3.5 z-50 space-y-3.5 animate-fadeIn">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-purple-500/10 text-[#8B3DFF] flex items-center justify-center font-bold">
+            <Square className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white">Card Border</h4>
+            <p className="text-[10px] text-slate-400">Color, width & line style</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onReset}
+          className="text-[10px] text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+        >
+          Reset
+        </button>
+      </div>
+
+      {/* Border Style & Width Row */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          <span>Border Style</span>
+          <span>Width</span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          {/* Style pills */}
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 p-0.5">
+            {(["solid", "dashed", "dotted", "none"] as const).map((st) => (
+              <button
+                key={st}
+                type="button"
+                onClick={() =>
+                  onSelectBorder({
+                    borderStyle: st,
+                    borderColor:
+                      st === "none"
+                        ? "transparent"
+                        : currentBorderColor && currentBorderColor !== "transparent"
+                        ? currentBorderColor
+                        : "#e2e8f0",
+                    borderWidth: st === "none" ? 0 : currentBorderWidth && currentBorderWidth > 0 ? currentBorderWidth : 1,
+                  })
+                }
+                className={`px-2 py-0.5 rounded text-[10px] font-bold capitalize transition-colors cursor-pointer ${
+                  (currentBorderStyle || "solid") === st
+                    ? "bg-[#8B3DFF] text-white"
+                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900"
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+
+          {/* Width pills */}
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 p-0.5">
+            {[1, 2, 3, 4].map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() =>
+                  onSelectBorder({
+                    borderWidth: w,
+                    borderStyle: currentBorderStyle === "none" ? "solid" : currentBorderStyle ?? "solid",
+                  })
+                }
+                className={`w-5 h-5 rounded text-[10px] font-bold font-mono transition-colors cursor-pointer flex items-center justify-center ${
+                  (currentBorderWidth ?? 1) === w
+                    ? "bg-[#8B3DFF] text-white"
+                    : "text-slate-600 dark:text-zinc-400 hover:text-slate-900"
+                }`}
+              >
+                {w}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Color Swatches Grid */}
+      <div className="space-y-1.5">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          Border Colors
+        </div>
+        <div className="grid grid-cols-5 gap-1.5">
+          {CARD_BORDER_PRESETS.map((p) => {
+            const isSelected =
+              currentBorderColor === p.color ||
+              (p.id === "none" && (currentBorderStyle === "none" || currentBorderColor === "transparent"));
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  if (p.id === "none") {
+                    onSelectBorder({
+                      borderColor: "transparent",
+                      borderStyle: "none",
+                      borderWidth: 0,
+                    });
+                  } else {
+                    onSelectBorder({
+                      borderColor: p.color,
+                      borderStyle: currentBorderStyle === "none" ? "solid" : currentBorderStyle ?? "solid",
+                      borderWidth: currentBorderWidth && currentBorderWidth > 0 ? currentBorderWidth : 1,
+                    });
+                  }
+                }}
+                className={`h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer relative ${
+                  isSelected ? "ring-2 ring-[#8B3DFF] scale-105 shadow-xs" : "hover:scale-105 border-slate-300 dark:border-zinc-700"
+                }`}
+                style={{ backgroundColor: p.color === "transparent" ? "#ffffff" : p.color }}
+                title={p.label}
+              >
+                {p.id === "none" ? (
+                  <span className="text-[9px] font-bold text-slate-400">None</span>
+                ) : isSelected ? (
+                  <Check
+                    className={`w-3 h-3 ${
+                      p.id === "dark" || p.id === "purple" || p.id === "blue" ? "text-white" : "text-slate-900"
+                    }`}
+                  />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Custom Color Input & Color Picker */}
+      <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          Custom Border Color
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => colorPickerRef.current?.click()}
+              className="w-8 h-8 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center shadow-xs hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
+              style={{ backgroundColor: activeHex }}
+              title="Open border color picker"
+            >
+              <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
+                <Pipette className="w-3.5 h-3.5 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" />
+              </div>
+            </button>
+            <input
+              ref={colorPickerRef}
+              type="color"
+              value={activeHex.startsWith("#") ? activeHex : "#e2e8f0"}
+              onChange={handleNativeColorInput}
+              className="absolute inset-0 h-8 w-8 cursor-pointer opacity-0"
+              aria-label="Choose custom border color"
+            />
+          </div>
+          <input
+            type="text"
+            value={activeHex}
+            onChange={(e) => {
+              const val = e.target.value;
+              setActiveHex(val);
+              if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                onSelectBorder({
+                  borderColor: val,
+                  borderStyle: currentBorderStyle === "none" ? "solid" : currentBorderStyle ?? "solid",
+                  borderWidth: currentBorderWidth ?? 1,
+                });
+              }
+            }}
+            placeholder="#E2E8F0"
+            className="h-8 flex-1 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-2.5 font-mono text-xs text-slate-800 dark:text-zinc-200 uppercase outline-none focus:border-[#8B3DFF]"
+          />
         </div>
       </div>
 

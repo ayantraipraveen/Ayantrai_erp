@@ -56,6 +56,8 @@ export interface DynamicTextEditorProps {
   multiline?: boolean;
   toolbarPosition?: "top" | "bottom" | "auto";
   toolbarAlign?: "left" | "right" | "center" | "auto";
+  editorBorderColor?: string;
+  editorBgColor?: string;
   className?: string;
   placeholder?: string;
   onSave: (plainText: string, html: string) => void;
@@ -142,6 +144,8 @@ export function DynamicTextEditor({
   multiline = false,
   toolbarPosition = "auto",
   toolbarAlign = "auto",
+  editorBorderColor,
+  editorBgColor,
   className = "",
   placeholder = "Type text...",
   onSave,
@@ -159,7 +163,6 @@ export function DynamicTextEditor({
   const [customHex, setCustomHex] = useState("#2563eb");
   const [detectedPlacement, setDetectedPlacement] = useState<"top" | "bottom">("top");
   const [detectedAlign, setDetectedAlign] = useState<"left" | "right">("left");
-  const [horizontalShift, setHorizontalShift] = useState<number>(0);
 
   // Dynamically position floating toolbar above or below and clamp horizontally to avoid clipping
   useEffect(() => {
@@ -179,19 +182,13 @@ export function DynamicTextEditor({
         ? artboard.getBoundingClientRect().right
         : window.innerWidth;
 
-      const boundaryLeft = artboard
-        ? artboard.getBoundingClientRect().left
-        : 0;
-
       const availableToRight = boundaryRight - rect.left - 24;
       const targetToolbarWidth = 460;
 
       if (availableToRight < targetToolbarWidth) {
         setDetectedAlign("right");
-        setHorizontalShift(0);
       } else {
         setDetectedAlign("left");
-        setHorizontalShift(0);
       }
     }
   }, []);
@@ -440,7 +437,7 @@ export function DynamicTextEditor({
     <div ref={containerRef} className="relative select-text w-full">
       {/* ── Floating Word Formatting Toolbar (Absolute overlay: Zero Layout Shift) ── */}
       <div
-        className={`absolute z-50 flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 text-xs select-none w-max max-w-[92vw] transition-all duration-150 ${
+        className={`absolute z-50 flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 text-xs select-none w-max max-w-[92vw] whitespace-nowrap shrink-0 transition-all duration-150 ${
           effectivePlacement === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
         } ${
           effectiveAlign === "right"
@@ -451,12 +448,11 @@ export function DynamicTextEditor({
         }`}
         style={{
           boxShadow: "0 14px 34px -4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06)",
-          transform: horizontalShift > 0 ? `translateX(-${horizontalShift}px)` : undefined,
         }}
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
           {/* Font Family Dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
@@ -464,12 +460,12 @@ export function DynamicTextEditor({
                 setFontMenuOpen(!fontMenuOpen);
                 setColorMenuOpen(false);
               }}
-              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1 text-slate-800 dark:text-zinc-200 font-semibold cursor-pointer shadow-2xs"
+              className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1.5 text-slate-800 dark:text-zinc-200 font-semibold cursor-pointer shadow-2xs shrink-0"
               title="Font Family"
             >
-              <Type className="w-3 h-3 text-[#2563eb]" />
-              <span className="max-w-[55px] truncate text-[11px]">{selectedFont}</span>
-              <ChevronDown className="w-2.5 h-2.5 opacity-60" />
+              <Type className="w-3.5 h-3.5 text-[#2563eb] shrink-0" />
+              <span className="text-[11px] font-semibold shrink-0">{selectedFont}</span>
+              <ChevronDown className="w-2.5 h-2.5 opacity-60 shrink-0" />
             </button>
 
             {fontMenuOpen && (
@@ -502,7 +498,7 @@ export function DynamicTextEditor({
           </div>
 
           {/* Font Size Stepper */}
-          <div className="flex items-center rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 px-1 py-0.5 shadow-2xs">
+          <div className="flex items-center rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 px-1 py-0.5 shadow-2xs shrink-0">
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
@@ -532,10 +528,10 @@ export function DynamicTextEditor({
             </button>
           </div>
 
-          <div className="w-px h-5 bg-slate-200 dark:bg-zinc-800" />
+          <div className="w-px h-5 bg-slate-200 dark:bg-zinc-800 shrink-0" />
 
           {/* B, I, U Word Toggles */}
-          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 p-0.5 shadow-2xs">
+          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 p-0.5 shadow-2xs shrink-0">
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
@@ -565,10 +561,10 @@ export function DynamicTextEditor({
             </button>
           </div>
 
-          <div className="w-px h-5 bg-slate-200 dark:bg-zinc-800" />
+          <div className="w-px h-5 bg-slate-200 dark:bg-zinc-800 shrink-0" />
 
           {/* Word-Style Text Color Tool ('A' with color bar) */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
@@ -576,7 +572,7 @@ export function DynamicTextEditor({
                 setColorMenuOpen(!colorMenuOpen);
                 setFontMenuOpen(false);
               }}
-              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1 cursor-pointer shadow-2xs"
+              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1 cursor-pointer shadow-2xs shrink-0"
               title="Text Color (Select text and click color)"
             >
               <div className="flex flex-col items-center">
@@ -766,11 +762,13 @@ export function DynamicTextEditor({
         }}
         style={{
           fontSize: `${defaultFontSize}px`,
+          borderColor: editorBorderColor || undefined,
+          backgroundColor: editorBgColor || undefined,
         }}
-        className={`w-full outline-none select-text dynamic-word-editor selection:bg-blue-500/20 selection:text-current rounded-lg transition-all ${
+        className={`w-full outline-none select-text dynamic-word-editor rounded-lg transition-all ${
           multiline
-            ? "min-h-[44px] px-2.5 py-1.5 border-2 border-[#2563eb] bg-white/95 dark:bg-zinc-900/95 shadow-sm"
-            : "min-h-[26px] px-1.5 py-0.5 border-2 border-[#2563eb] bg-white/95 dark:bg-zinc-900/95 shadow-sm"
+            ? `min-h-[44px] px-2.5 py-1.5 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} shadow-sm`
+            : `min-h-[26px] px-1.5 py-0.5 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} shadow-sm`
         } ${className}`}
         aria-label={placeholder}
       />

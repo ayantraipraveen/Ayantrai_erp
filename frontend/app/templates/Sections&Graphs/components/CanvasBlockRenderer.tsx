@@ -377,24 +377,62 @@ function TextBlock({
   cell,
   isPreview,
   onUpdateTextBlock,
+  style,
 }: {
   cell: CanvasCell;
   isPreview?: boolean;
   onUpdateTextBlock?: (content: string) => void;
+  style?: React.CSSProperties;
 }) {
   const tb = cell.textBlock;
   if (!tb) return null;
 
   const [isEditing, setIsEditing] = useState(false);
 
+  // Compute dynamic card background & border from cell.style or passed style
+  const cardBgPreset = cell.style?.cardBg ? CARD_BG_PRESETS.find((p) => p.id === cell.style?.cardBg) : undefined;
+  const rawBgColor = cardBgPreset?.color || cell.style?.cardBg;
+  const dynamicBg = rawBgColor
+    ? cell.style?.backgroundOpacity !== undefined
+      ? withAlpha(rawBgColor, cell.style.backgroundOpacity)
+      : rawBgColor
+    : undefined;
+
+  const dynamicBorderColor =
+    cell.style?.borderColor === "none" || cell.style?.borderColor === "transparent"
+      ? "transparent"
+      : cell.style?.borderColor || cardBgPreset?.border;
+
+  const dynamicBorderWidth =
+    cell.style?.borderWidth !== undefined
+      ? `${cell.style.borderWidth}px`
+      : cell.style?.borderStyle === "none" || cell.style?.borderColor === "transparent" || cell.style?.borderColor === "none"
+      ? "0px"
+      : undefined;
+
+  const dynamicBorderStyle = cell.style?.borderStyle || undefined;
+
   return (
-    <div className="w-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/50 p-4 shadow-sm">
+    <div
+      className={`w-full rounded-2xl border p-4 shadow-sm transition-all duration-150 ${
+        !dynamicBg ? "bg-slate-50/70 dark:bg-zinc-900/50" : ""
+      } ${!dynamicBorderColor ? "border-slate-200 dark:border-zinc-800" : ""}`}
+      style={{
+        backgroundColor: dynamicBg,
+        borderColor: dynamicBorderColor,
+        borderWidth: dynamicBorderWidth,
+        borderStyle: dynamicBorderStyle,
+        ...style,
+      }}
+    >
       {!isPreview && isEditing ? (
         <DynamicTextEditor
           initialValue={tb.content}
           initialHtml={tb.content}
           defaultFontSize={14}
           multiline={true}
+          editorBorderColor={dynamicBorderColor && dynamicBorderColor !== "transparent" ? dynamicBorderColor : undefined}
+          editorBgColor={dynamicBg}
           className="text-sm leading-relaxed min-h-[60px]"
           placeholder="Type paragraph commentary..."
           onSave={(_plain, html) => {
@@ -893,8 +931,14 @@ function DividerBlock() {
 }
 
 // ── Helper to resolve CanvasCellStyle overrides ──────────────────────────────
-export function getCellStyleClasses(style?: CanvasCell["style"]) {
-  if (!style) return { fontClass: "", alignClass: "", bgClass: "", styleProps: {} };
+export function getCellStyleClasses(style?: CanvasCell["style"]): {
+  fontClass: string;
+  alignClass: string;
+  bgClass: string;
+  textColorClass: string;
+  styleProps: React.CSSProperties;
+} {
+  if (!style) return { fontClass: "", alignClass: "", bgClass: "", textColorClass: "", styleProps: {} };
 
   const fontClass =
     style.fontFamily === "serif"
@@ -937,6 +981,25 @@ const styleProps: React.CSSProperties = {};
   }
 
   
+  if (style.borderColor) {
+    if (style.borderColor === "none" || style.borderColor === "transparent") {
+      styleProps.borderColor = "transparent";
+      styleProps.borderWidth = "0px";
+    } else {
+      styleProps.borderColor = style.borderColor;
+      styleProps.borderWidth = style.borderWidth !== undefined ? `${style.borderWidth}px` : "1px";
+    }
+  }
+  if (style.borderStyle) {
+    styleProps.borderStyle = style.borderStyle;
+  }
+  if (style.borderWidth !== undefined) {
+    styleProps.borderWidth = `${style.borderWidth}px`;
+    if (style.borderWidth === 0) {
+      styleProps.borderStyle = "none";
+    }
+  }
+
   let textColorClass = "";
   if (style.textColor) {
     styleProps.color = style.textColor;
@@ -966,10 +1029,13 @@ function withAlpha(color: string, opacity: number): string {
 }
 
 function getCardBackgroundColor(style?: CanvasCell["style"]): string | undefined {
-  if (!style?.cardBg || style.backgroundOpacity === undefined) return undefined;
+  if (!style?.cardBg) return undefined;
   const preset = CARD_BG_PRESETS.find((item) => item.id === style.cardBg);
   const color = preset?.color || style.cardBg;
-  return withAlpha(color, style.backgroundOpacity);
+  if (style.backgroundOpacity !== undefined) {
+    return withAlpha(color, style.backgroundOpacity);
+  }
+  return color;
 }
 
 
@@ -1036,11 +1102,17 @@ export function CanvasBlockRenderer({
   };
 
   const renderedInner = renderInner();
-  const innerWithBackground = backgroundColor && React.isValidElement(renderedInner)
+  const cardStyles: React.CSSProperties = {};
+  if (backgroundColor) cardStyles.backgroundColor = backgroundColor;
+  if (styleProps.borderColor) cardStyles.borderColor = styleProps.borderColor;
+  if (styleProps.borderWidth) cardStyles.borderWidth = styleProps.borderWidth;
+  if (styleProps.borderStyle) cardStyles.borderStyle = styleProps.borderStyle;
+
+  const innerWithBackground = Object.keys(cardStyles).length > 0 && React.isValidElement(renderedInner)
     ? React.cloneElement(renderedInner as React.ReactElement<{ style?: React.CSSProperties }>, {
         style: {
           ...(renderedInner as React.ReactElement<{ style?: React.CSSProperties }>).props.style,
-          backgroundColor,
+          ...cardStyles,
         },
       })
     : renderedInner;
