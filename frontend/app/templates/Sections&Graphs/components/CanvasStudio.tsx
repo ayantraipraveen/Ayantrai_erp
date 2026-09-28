@@ -729,8 +729,10 @@ function SortableCell({
         <div
           {...attributes}
           {...listeners}
-          className="absolute top-2 left-2 z-20 opacity-0 group-hover/cell:opacity-100 transition-opacity bg-black/70 hover:bg-black/90 text-white rounded-md px-1.5 py-0.5 text-[9px] font-mono font-bold flex items-center gap-1 cursor-grab active:cursor-grabbing backdrop-blur-xs shadow-xs"
-          title="Drag horizontally to reorder within row"
+          className={`absolute top-2 left-2 z-20 ${
+            isSelected ? "opacity-100 ring-2 ring-[#8B3DFF] shadow-md" : "opacity-0 group-hover/cell:opacity-100"
+          } transition-opacity bg-black/80 hover:bg-black text-white rounded-md px-1.5 py-0.5 text-[9px] font-mono font-bold flex items-center gap-1 cursor-grab active:cursor-grabbing backdrop-blur-xs shadow-xs`}
+          title="Drag to move card anywhere (within row or across rows)"
         >
           <GripVertical className="w-2.5 h-2.5" />
           <span className="capitalize">{cell.blockType.replace("-", " ")}</span>
@@ -789,6 +791,15 @@ function SortableCell({
       {/* Floating cell action bar */}
       {!isPreview && !isCellEditing && (isSelected || isResizing || isHeightResizing) && (
         <div className={`absolute -top-11 ${toolbarPlacementClass} z-40 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 shadow-xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap`}>
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 -ml-0.5 text-slate-400 hover:text-[#8B3DFF] rounded flex items-center"
+            title="Drag to move card anywhere across canvas"
+          >
+            <GripVertical className="w-3.5 h-3.5" />
+          </div>
+
           <div className="flex items-center gap-1 font-mono text-[11px] text-purple-600 dark:text-purple-400 font-bold px-1">
             <span>{Math.round(currentPercent)}%</span>
           </div>
@@ -2310,6 +2321,7 @@ export function CanvasStudio({
                 toIndex: targetIndex === -1 ? toRow.cells.length : targetIndex,
               })
             );
+            dispatch(showGlobalToast({ message: "Moved card to new row!", type: "success" }));
           }
         }
       }

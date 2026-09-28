@@ -455,6 +455,26 @@ export default function SectionCanvasEditor({
             })
           );
         } else {
+          // If a row is currently selected and has room (< 4 cells), add directly into that row
+          if (selectedRowId) {
+            const activeRow = section.canvasRows?.find((r) => r.id === selectedRowId);
+            if (activeRow && activeRow.cells.length < 4) {
+              dispatch(
+                addCellToRow({
+                  sectionId: section.id,
+                  rowId: selectedRowId,
+                  cell,
+                })
+              );
+              dispatch(
+                showGlobalToast({
+                  message: `${e.blockType.replace("-", " ")} added to selected row!`,
+                  type: "success",
+                })
+              );
+              return;
+            }
+          }
           dispatch(addRowWithCell({ sectionId: section.id, cell }));
           dispatch(
             showGlobalToast({
