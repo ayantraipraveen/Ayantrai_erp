@@ -7,6 +7,7 @@ import {
   AlertCircle,
   Edit2,
   Eye,
+  Columns,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -63,6 +64,7 @@ import {
   KeyInsightModal,
   BadgeStripModal,
 } from "./SectionCanvasModals";
+import NestedLayoutBuilder from "./nestedLayout/NestedLayoutBuilder";
 
 export { PALETTE_RAMPS } from "./constants/chartTypes";
 
@@ -79,6 +81,7 @@ export default function SectionCanvasEditor({
   const librarySections = useAppSelector((s) => s.reportModule.librarySections || []);
   const section = librarySections.find((s) => s.id === sectionId);
   const chartEditorFullscreen = useAppSelector((s) => s.reportModule.chartEditorFullscreen);
+  const [nestedLayoutOpen, setNestedLayoutOpen] = useState(false);
 
   // ── Document Watermark Studio State ─────────────────────────────────────────
   const [uploadedWatermarks, setUploadedWatermarks] = useState<UploadedSvgWatermark[]>([]);
@@ -738,6 +741,20 @@ export default function SectionCanvasEditor({
     );
   }
 
+  // Fullscreen Nested 12-Column Layout Architect Guard
+  if (nestedLayoutOpen && section) {
+    return (
+      <NestedLayoutBuilder
+        section={section}
+        onClose={() => setNestedLayoutOpen(false)}
+        allCharts={allLibraryCharts}
+        allMetrics={section.metricCards || []}
+        allInsights={section.keyInsights || []}
+        allSections={librarySections}
+      />
+    );
+  }
+
   if (!section) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
@@ -814,6 +831,17 @@ export default function SectionCanvasEditor({
           >
             <Eye className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{isPreview ? "Exit Preview" : "Preview"}</span>
+          </button>
+
+          {/* 12-Column Recursive Nested Layout Architect */}
+          <button
+            type="button"
+            onClick={() => setNestedLayoutOpen(true)}
+            className="h-8 px-3 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            title="Switch to 12-Column Recursive Nested Layout Architect"
+          >
+            <Columns className="w-3.5 h-3.5 text-[#9D61FF]" />
+            <span className="hidden sm:inline">Nested Layout (12-Col)</span>
           </button>
 
           {/* Save to Library */}

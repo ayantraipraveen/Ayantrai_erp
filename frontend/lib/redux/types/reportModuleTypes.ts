@@ -69,6 +69,34 @@ export interface TemplateBlock {
   graphs?: TemplateGraphConfig[];
 }
 
+// ── Nested Layout System Types ───────────────────────────────────────────────
+export type LayoutNodeType = "row" | "column" | "block";
+export type LayoutBlockType = "chart" | "metric-card" | "key-insights" | "text" | "section";
+
+export interface LayoutBlockNode {
+  id?: string;
+  type: "block";
+  blockType: LayoutBlockType;
+  refId?: string; // Reference to existing saved chart/section/card in library
+  title?: string;
+  data?: any; // Inline override or specific parameters
+}
+
+export interface LayoutColumnNode {
+  id?: string;
+  type: "column";
+  span: number; // 1 to 12
+  children: (LayoutRowNode | LayoutColumnNode | LayoutBlockNode)[];
+}
+
+export interface LayoutRowNode {
+  id?: string;
+  type: "row";
+  children: (LayoutColumnNode | LayoutRowNode | LayoutBlockNode)[];
+}
+
+export type LayoutNode = LayoutRowNode | LayoutColumnNode | LayoutBlockNode;
+
 export interface ReportTemplate {
   id: string;
   name: string;
@@ -84,6 +112,7 @@ export interface ReportTemplate {
   rejection_reason?: string;
   remarks?: string;
   version: string;
+  layoutTree?: LayoutRowNode;
 }
 
 export interface ApproveTemplatePayload {
@@ -408,6 +437,7 @@ export interface LibrarySection {
   keyInsights: LibraryKeyInsightItem[];
   // New canvas layout (row-based Canva-like editor)
   canvasRows?: CanvasRow[];
+  layoutTree?: LayoutRowNode;
   watermarkId?: string;
 }
 

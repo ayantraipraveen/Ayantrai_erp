@@ -14,6 +14,7 @@ import {
   CanvasBadgeStrip,
   CanvasBadgeItem,
   GraphType,
+  LayoutRowNode,
 } from "../../types/reportModuleTypes";
 
 /**
@@ -98,6 +99,7 @@ export const sectionsStudioReducers = {
         titleStyle?: Partial<LibrarySection["titleStyle"]>;
         eyebrowHtml?: string;
         descriptionHtml?: string;
+        layoutTree?: LayoutRowNode;
         changes?: Partial<LibrarySection>;
       }>
     ) => {
@@ -115,6 +117,7 @@ export const sectionsStudioReducers = {
           if (c.icon !== undefined) sec.icon = c.icon;
           if (c.watermarkId !== undefined) sec.watermarkId = c.watermarkId;
           if (c.headerSpacing !== undefined) sec.headerSpacing = c.headerSpacing;
+          if (c.layoutTree !== undefined) sec.layoutTree = c.layoutTree;
         }
         if (action.payload.name !== undefined) sec.name = action.payload.name;
         if (action.payload.titleHtml !== undefined) sec.titleHtml = action.payload.titleHtml;
@@ -126,6 +129,7 @@ export const sectionsStudioReducers = {
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
         if (action.payload.watermarkId !== undefined) sec.watermarkId = action.payload.watermarkId;
         if (action.payload.headerSpacing !== undefined) sec.headerSpacing = action.payload.headerSpacing;
+        if (action.payload.layoutTree !== undefined) sec.layoutTree = action.payload.layoutTree;
         sec.updatedAt = "Just now";
       }
     },
