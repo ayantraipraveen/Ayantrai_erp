@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, XCircle, CheckCircle2 } from "lucide-react";
 import { useTemplates } from "./TemplatesContext";
+import LayoutNodeRenderer from "../Sections&Graphs/components/nestedLayout/LayoutNodeRenderer";
 
 /**
  * Inspection and Superadmin Review/Approval Modal.
@@ -117,6 +118,23 @@ export default function TemplateReviewModal() {
             ))}
           </div>
         </div>
+
+        {/* Nested 12-Column Responsive Layout Tree Preview if present */}
+        {selectedTemplate.layoutTree && (
+          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-zinc-800">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                12-Column Responsive Layout Tree:
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-[#9D61FF] font-bold">
+                Nested Multi-Column System
+              </span>
+            </div>
+            <div className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-black/40 overflow-hidden">
+              <LayoutNodeRenderer node={selectedTemplate.layoutTree} isPrint={false} />
+            </div>
+          </div>
+        )}
 
         {/* Superadmin Decision Controls */}
         {activeRole === "superadmin" && selectedTemplate.status === "pending" && (
