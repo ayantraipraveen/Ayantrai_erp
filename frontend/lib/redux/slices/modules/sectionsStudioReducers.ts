@@ -94,6 +94,8 @@ export const sectionsStudioReducers = {
         icon?: string;
         watermarkId?: string;
         headerSpacing?: "compact" | "normal" | "spacious";
+        titleHtml?: string;
+        titleStyle?: Partial<LibrarySection["titleStyle"]>;
         changes?: Partial<LibrarySection>;
       }>
     ) => {
@@ -102,6 +104,8 @@ export const sectionsStudioReducers = {
         const c = action.payload.changes;
         if (c) {
           if (c.name !== undefined) sec.name = c.name;
+          if (c.titleHtml !== undefined) sec.titleHtml = c.titleHtml;
+          if (c.titleStyle !== undefined) sec.titleStyle = { ...sec.titleStyle, ...c.titleStyle };
           if (c.eyebrow !== undefined) sec.eyebrow = c.eyebrow;
           if (c.description !== undefined) sec.description = c.description;
           if (c.icon !== undefined) sec.icon = c.icon;
@@ -109,6 +113,8 @@ export const sectionsStudioReducers = {
           if (c.headerSpacing !== undefined) sec.headerSpacing = c.headerSpacing;
         }
         if (action.payload.name !== undefined) sec.name = action.payload.name;
+        if (action.payload.titleHtml !== undefined) sec.titleHtml = action.payload.titleHtml;
+        if (action.payload.titleStyle !== undefined) sec.titleStyle = { ...sec.titleStyle, ...action.payload.titleStyle };
         if (action.payload.eyebrow !== undefined) sec.eyebrow = action.payload.eyebrow;
         if (action.payload.description !== undefined) sec.description = action.payload.description;
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;

@@ -352,9 +352,20 @@ export interface CanvasRow {
   pageBreakBefore?: boolean;
 }
 
+export interface SectionTitleStyle {
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string | number;
+  color?: string;
+  accentColor?: string;
+  letterSpacing?: string;
+}
+
 export interface LibrarySection {
   id: string;
   name: string;
+  titleHtml?: string;
+  titleStyle?: SectionTitleStyle;
   eyebrow: string;
   description: string;
   type: "core" | "custom";

@@ -50,6 +50,13 @@ import {
   Stamp,
   Sliders,
   FileText,
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  Italic,
+  Type,
+  Underline,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
@@ -1376,6 +1383,26 @@ function WatermarkStampLayer({
   );
 }
 
+type HeaderTitleFormat = {
+  fontFamily: "sans" | "serif" | "mono" | "rounded";
+  fontSize: number;
+  color: string;
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  textAlign: "left" | "center" | "right";
+};
+
+const DEFAULT_HEADER_TITLE_FORMAT: HeaderTitleFormat = {
+  fontFamily: "sans",
+  fontSize: 19,
+  color: "#1836a0",
+  bold: true,
+  italic: false,
+  underline: false,
+  textAlign: "left",
+};
+
 // ─── Main CanvasStudio ────────────────────────────────────────────────────────
 export interface CanvasStudioProps {
   section: LibrarySection;
@@ -1527,7 +1554,9 @@ export function CanvasStudio({
   const [internalShowGuides, setInternalShowGuides] = useState(false);
   const [internalIsPreview, setInternalIsPreview] = useState(false);
   const [headerValuesBySection, setHeaderValuesBySection] = useState<Record<string, { taglinePrimary: string; taglineSecondary: string; title: string; period: string }>>({});
+  const [headerTitleFormatsBySection, setHeaderTitleFormatsBySection] = useState<Record<string, HeaderTitleFormat>>({});
   const [editingHeaderValue, setEditingHeaderValue] = useState<"taglinePrimary" | "taglineSecondary" | "title" | "period" | null>(null);
+  const [isHeaderTitleFormatOpen, setIsHeaderTitleFormatOpen] = useState(false);
   const [footerValuesBySection, setFooterValuesBySection] = useState<Record<string, { company: string; websites: string; quote: string }>>({});
   const [editingFooterValue, setEditingFooterValue] = useState<"company" | "websites" | "quote" | null>(null);
 
@@ -1536,6 +1565,32 @@ export function CanvasStudio({
     taglineSecondary: "Intelligence for Every Site.",
     title: "Monthly Report",
     period: "01 Sept 2025 - 30 Sept 2025",
+  };
+  const headerTitleFormat = headerTitleFormatsBySection[section.id] || DEFAULT_HEADER_TITLE_FORMAT;
+  const headerTitleFontFamily = {
+    sans: "var(--font-geist-sans), Arial, sans-serif",
+    serif: "Georgia, 'Times New Roman', serif",
+    mono: "ui-monospace, SFMono-Regular, Menlo, monospace",
+    rounded: "var(--font-geist-sans), 'Trebuchet MS', sans-serif",
+  }[headerTitleFormat.fontFamily];
+  const headerTitleTextStyle: React.CSSProperties = {
+    fontFamily: headerTitleFontFamily,
+    fontSize: `${headerTitleFormat.fontSize}px`,
+    color: headerTitleFormat.color,
+    fontWeight: headerTitleFormat.bold ? 900 : 500,
+    fontStyle: headerTitleFormat.italic ? "italic" : "normal",
+    textDecoration: headerTitleFormat.underline ? "underline" : "none",
+    textAlign: headerTitleFormat.textAlign,
+  };
+
+  const updateHeaderTitleFormat = <Key extends keyof HeaderTitleFormat,>(
+    field: Key,
+    value: HeaderTitleFormat[Key]
+  ) => {
+    setHeaderTitleFormatsBySection((current) => ({
+      ...current,
+      [section.id]: { ...(current[section.id] || DEFAULT_HEADER_TITLE_FORMAT), [field]: value },
+    }));
   };
 
   const updateHeaderValue = (field: "taglinePrimary" | "taglineSecondary" | "title" | "period", value: string) => {
@@ -2061,7 +2116,7 @@ export function CanvasStudio({
                         <div>
                           {/* Fixed Sitesafe Report Header */}
                           <div
-                            className="relative z-10 min-h-[160px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden"
+                            className="relative z-30 min-h-[160px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-visible"
                             style={{ backgroundColor: getPaperToneColor(paperTone) }}
                           >
                             <div className="relative grid min-h-[160px] grid-cols-[minmax(0,1fr)_minmax(0,1.75fr)_minmax(0,0.9fr)_90px] items-stretch gap-0 px-0 py-0">
@@ -2126,6 +2181,7 @@ export function CanvasStudio({
                               </div>
 
                               <div className="min-w-0 flex flex-col justify-center px-2 py-5">
+                                <div className="relative">
                                   {editingHeaderValue === "title" ? (
                                     <input
                                       autoFocus
@@ -2135,12 +2191,14 @@ export function CanvasStudio({
                                       onKeyDown={(event) => {
                                         if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
                                       }}
-                                      className="w-full bg-transparent text-[19px] font-black leading-tight text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                                      className="w-full bg-transparent pr-7 leading-tight outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
+                                      style={headerTitleTextStyle}
                                       aria-label="Report title"
                                     />
                                   ) : (
                                     <p
-                                      className="cursor-text text-[19px] font-black leading-tight text-[#1836a0]"
+                                      className="cursor-text pr-7 leading-tight"
+                                      style={headerTitleTextStyle}
                                       onClick={() => !activeIsPreview && setEditingHeaderValue("title")}
                                       onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("title")}
                                       title="Double-click to edit report title"
@@ -2148,6 +2206,116 @@ export function CanvasStudio({
                                       {headerValues.title}
                                     </p>
                                   )}
+                                  {!activeIsPreview && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => setIsHeaderTitleFormatOpen((open) => !open)}
+                                        className="absolute right-0 top-0 z-20 rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-[#8B3DFF]"
+                                        title="Format report title"
+                                        aria-label="Format report title"
+                                        aria-expanded={isHeaderTitleFormatOpen}
+                                      >
+                                        <Type className="h-3.5 w-3.5" />
+                                      </button>
+                                      {isHeaderTitleFormatOpen && (
+                                        <div className="absolute right-0 top-8 z-[60] w-[292px] rounded-lg border border-slate-200 bg-white p-2.5 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+                                          <div className="grid grid-cols-[1fr_68px_30px] items-end gap-2">
+                                            <label className="flex min-w-0 flex-col gap-1 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
+                                              Font
+                                              <select
+                                                value={headerTitleFormat.fontFamily}
+                                                onChange={(event) => updateHeaderTitleFormat("fontFamily", event.target.value as HeaderTitleFormat["fontFamily"])}
+                                                className="h-7 min-w-0 rounded border border-slate-200 bg-white px-1.5 text-xs text-slate-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                                                aria-label="Title font family"
+                                              >
+                                                <option value="sans">Sans</option>
+                                                <option value="serif">Serif</option>
+                                                <option value="mono">Monospace</option>
+                                                <option value="rounded">Rounded</option>
+                                              </select>
+                                            </label>
+                                            <label className="flex flex-col gap-1 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
+                                              Size
+                                              <input
+                                                type="number"
+                                                min={12}
+                                                max={48}
+                                                value={headerTitleFormat.fontSize}
+                                                onChange={(event) => updateHeaderTitleFormat("fontSize", Math.min(48, Math.max(12, Number(event.target.value) || 12)))}
+                                                className="h-7 w-full rounded border border-slate-200 bg-white px-1.5 text-xs text-slate-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                                                aria-label="Title font size"
+                                              />
+                                            </label>
+                                            <label className="flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
+                                              Color
+                                              <input
+                                                type="color"
+                                                value={headerTitleFormat.color}
+                                                onChange={(event) => updateHeaderTitleFormat("color", event.target.value)}
+                                                className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-800"
+                                                aria-label="Title text color"
+                                              />
+                                            </label>
+                                          </div>
+                                          <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 dark:border-zinc-800">
+                                            <div className="flex items-center gap-1">
+                                              <button
+                                                type="button"
+                                                onClick={() => updateHeaderTitleFormat("bold", !headerTitleFormat.bold)}
+                                                className={`rounded p-1.5 ${headerTitleFormat.bold ? "bg-[#8B3DFF]/10 text-[#8B3DFF]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
+                                                title="Bold"
+                                                aria-label="Bold"
+                                                aria-pressed={headerTitleFormat.bold}
+                                              >
+                                                <Bold className="h-3.5 w-3.5" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => updateHeaderTitleFormat("italic", !headerTitleFormat.italic)}
+                                                className={`rounded p-1.5 ${headerTitleFormat.italic ? "bg-[#8B3DFF]/10 text-[#8B3DFF]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
+                                                title="Italic"
+                                                aria-label="Italic"
+                                                aria-pressed={headerTitleFormat.italic}
+                                              >
+                                                <Italic className="h-3.5 w-3.5" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => updateHeaderTitleFormat("underline", !headerTitleFormat.underline)}
+                                                className={`rounded p-1.5 ${headerTitleFormat.underline ? "bg-[#8B3DFF]/10 text-[#8B3DFF]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
+                                                title="Underline"
+                                                aria-label="Underline"
+                                                aria-pressed={headerTitleFormat.underline}
+                                              >
+                                                <Underline className="h-3.5 w-3.5" />
+                                              </button>
+                                            </div>
+                                            <div className="flex items-center gap-0.5 rounded border border-slate-200 p-0.5 dark:border-zinc-700">
+                                              {([
+                                                { value: "left", Icon: AlignLeft, label: "Align left" },
+                                                { value: "center", Icon: AlignCenter, label: "Align center" },
+                                                { value: "right", Icon: AlignRight, label: "Align right" },
+                                              ] as const).map(({ value, Icon, label }) => (
+                                                <button
+                                                  key={value}
+                                                  type="button"
+                                                  onClick={() => updateHeaderTitleFormat("textAlign", value)}
+                                                  className={`rounded p-1 ${headerTitleFormat.textAlign === value ? "bg-[#8B3DFF]/10 text-[#8B3DFF]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
+                                                  title={label}
+                                                  aria-label={label}
+                                                  aria-pressed={headerTitleFormat.textAlign === value}
+                                                >
+                                                  <Icon className="h-3.5 w-3.5" />
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
                                   {editingHeaderValue === "period" ? (
                                     <input
                                       autoFocus
@@ -2444,7 +2612,7 @@ export function CanvasStudio({
                           </div>
 
                           <div className="relative flex items-center gap-4">
-                            <span className="text-[11px] font-semibold text-slate-500 italic hidden sm:inline">
+                            <span className="hidden max-w-[220px] truncate sm:inline" style={headerTitleTextStyle}>
                               {headerValues.title}
                             </span>
                             <div className="-my-2.5 -mr-6 h-[56px] w-[68px] flex flex-col items-center justify-center bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
