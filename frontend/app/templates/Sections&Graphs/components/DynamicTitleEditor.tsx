@@ -153,6 +153,25 @@ export function DynamicTextEditor({
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
   const [customHex, setCustomHex] = useState("#2563eb");
+  const [toolbarPlacement, setToolbarPlacement] = useState<"top" | "bottom">("top");
+  const [toolbarAlign, setToolbarAlign] = useState<"left" | "right">("left");
+
+  // Dynamically position floating toolbar above or below to avoid clipping and eliminate layout push
+  useEffect(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      if (rect.top < 85) {
+        setToolbarPlacement("bottom");
+      } else {
+        setToolbarPlacement("top");
+      }
+      if (window.innerWidth - rect.left < 580) {
+        setToolbarAlign("right");
+      } else {
+        setToolbarAlign("left");
+      }
+    }
+  }, []);
 
   // Initialize HTML content on mount & focus
   useEffect(() => {
@@ -390,10 +409,17 @@ export function DynamicTextEditor({
   };
 
   return (
-    <div ref={containerRef} className="relative my-1 select-text w-full">
-      {/* ── Compact Word Formatting Toolbar directly attached above the input ── */}
-      <div className="flex flex-wrap items-center justify-between gap-1.5 mb-1.5 p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-md text-xs select-none">
-        <div className="flex flex-wrap items-center gap-1.5">
+    <div ref={containerRef} className="relative select-text w-full">
+      {/* ── Floating Word Formatting Toolbar (Absolute overlay: Zero Layout Shift) ── */}
+      <div
+        className={`absolute z-50 flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-2xl text-xs select-none w-max max-w-[92vw] transition-all duration-150 ${
+          toolbarPlacement === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
+        } ${toolbarAlign === "right" ? "right-0" : "left-0"}`}
+        style={{
+          boxShadow: "0 14px 34px -4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06)",
+        }}
+      >
+        <div className="flex items-center gap-1.5">
           {/* Font Family Dropdown */}
           <div className="relative">
             <button
@@ -647,7 +673,7 @@ export function DynamicTextEditor({
         </div>
 
         {/* Action Controls: Save & Cancel */}
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-zinc-800 ml-1">
           <button
             type="button"
             onClick={handleSave}
@@ -706,7 +732,11 @@ export function DynamicTextEditor({
         style={{
           fontSize: `${defaultFontSize}px`,
         }}
-        className={`w-full min-h-[38px] px-3 py-1.5 rounded-xl border-2 border-[#2563eb] bg-white dark:bg-zinc-900 outline-none shadow-sm select-text dynamic-word-editor selection:bg-blue-500/20 selection:text-current ${className}`}
+        className={`w-full outline-none select-text dynamic-word-editor selection:bg-blue-500/20 selection:text-current rounded-lg transition-all ${
+          multiline
+            ? "min-h-[44px] px-2.5 py-1.5 border-2 border-[#2563eb] bg-white/95 dark:bg-zinc-900/95 shadow-sm"
+            : "min-h-[26px] px-1.5 py-0.5 border-2 border-[#2563eb] bg-white/95 dark:bg-zinc-900/95 shadow-sm"
+        } ${className}`}
         aria-label={placeholder}
       />
     </div>
