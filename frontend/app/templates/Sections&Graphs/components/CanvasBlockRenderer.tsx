@@ -109,6 +109,8 @@ interface BlockRendererProps {
   cell: CanvasCell;
   isSelected?: boolean;
   isPreview?: boolean;
+  isForceEditing?: boolean;
+  onEditingChange?: (isEditing: boolean) => void;
   onUpdateMetricCard?: (card: LibraryMetricCard) => void;
   onUpdateInsight?: (text: string) => void;
   onUpdateTextBlock?: (content: string) => void;
@@ -310,60 +312,79 @@ function ChartBlock({ cell }: { cell: CanvasCell }) {
 function InsightBlock({
   cell,
   isPreview,
+  isForceEditing,
+  onEditingChange,
   onUpdateInsight,
 }: {
   cell: CanvasCell;
   isPreview?: boolean;
+  isForceEditing?: boolean;
+  onEditingChange?: (isEditing: boolean) => void;
   onUpdateInsight?: (text: string) => void;
 }) {
   const insight = cell.insight;
   if (!insight) return null;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [localText, setLocalText] = useState(insight.text);
+  const activeEditing = isEditing || isForceEditing;
 
   useEffect(() => {
-    setLocalText(insight.text);
-  }, [insight.text]);
-
-  const handleCommit = () => {
-    if (onUpdateInsight && localText.trim()) {
-      onUpdateInsight(localText.trim());
+    if (isForceEditing) {
+      setIsEditing(true);
     }
+  }, [isForceEditing]);
+
+  const handleStartEditing = () => {
+    if (isPreview || activeEditing) return;
+    setIsEditing(true);
+    if (onEditingChange) onEditingChange(true);
+  };
+
+  const handleFinishEditing = () => {
     setIsEditing(false);
+    if (onEditingChange) onEditingChange(false);
   };
 
   return (
-    <div className="w-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 flex items-start gap-3.5 shadow-sm">
+    <div
+      onClick={(e) => {
+        if (!isPreview && !activeEditing) {
+          e.stopPropagation();
+          handleStartEditing();
+        }
+      }}
+      className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 flex items-start gap-3.5 shadow-sm"
+    >
       <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#9D61FF] to-blue-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
         <Lightbulb className="w-3.5 h-3.5" />
       </div>
 
       <div className="flex-1 min-w-0">
-        {!isPreview && isEditing ? (
+        {!isPreview && activeEditing ? (
           <DynamicTextEditor
             initialValue={insight.text}
             initialHtml={insight.text}
             defaultFontSize={12}
             multiline={true}
+            toolbarPosition="top"
             className="text-xs leading-relaxed"
             placeholder="Key operational observation..."
             onSave={(_plain, html) => {
               if (onUpdateInsight) {
                 onUpdateInsight(html);
               }
-              setIsEditing(false);
+              handleFinishEditing();
             }}
-            onCancel={() => setIsEditing(false)}
+            onCancel={handleFinishEditing}
           />
         ) : (
           <div
             onDoubleClick={(e) => {
               if (isPreview) return;
               e.stopPropagation();
-              setIsEditing(true);
+              handleStartEditing();
             }}
-            title={!isPreview ? "Double-click to format observation (Word style)" : undefined}
+            title={!isPreview ? "Click to format observation (Word style)" : undefined}
             className={`text-xs text-slate-700 dark:text-zinc-300 leading-relaxed select-text ${!isPreview ? "hover:bg-purple-500/5 rounded p-0.5 cursor-text transition-colors" : ""}`}
             dangerouslySetInnerHTML={{ __html: insight.text }}
           />
@@ -376,11 +397,15 @@ function InsightBlock({
 function TextBlock({
   cell,
   isPreview,
+  isForceEditing,
+  onEditingChange,
   onUpdateTextBlock,
   style,
 }: {
   cell: CanvasCell;
   isPreview?: boolean;
+  isForceEditing?: boolean;
+  onEditingChange?: (isEditing: boolean) => void;
   onUpdateTextBlock?: (content: string) => void;
   style?: React.CSSProperties;
 }) {
@@ -388,6 +413,24 @@ function TextBlock({
   if (!tb) return null;
 
   const [isEditing, setIsEditing] = useState(false);
+  const activeEditing = isEditing || isForceEditing;
+
+  useEffect(() => {
+    if (isForceEditing) {
+      setIsEditing(true);
+    }
+  }, [isForceEditing]);
+
+  const handleStartEditing = () => {
+    if (isPreview || activeEditing) return;
+    setIsEditing(true);
+    if (onEditingChange) onEditingChange(true);
+  };
+
+  const handleFinishEditing = () => {
+    setIsEditing(false);
+    if (onEditingChange) onEditingChange(false);
+  };
 
   // Compute dynamic card background & border from cell.style or passed style
   const cardBgPreset = cell.style?.cardBg ? CARD_BG_PRESETS.find((p) => p.id === cell.style?.cardBg) : undefined;
@@ -412,9 +455,32 @@ function TextBlock({
 
   const dynamicBorderStyle = cell.style?.borderStyle || undefined;
 
+  const isContentEmpty =
+    !tb.content ||
+    tb.content.trim() === "" ||
+    tb.content.includes("Empty text block") ||
+    tb.content === "<p><br></p>" ||
+    tb.content === "<br>";
+
+  const contentToEdit = isContentEmpty ? "" : tb.content;
+
   return (
     <div
-      className={`w-full rounded-2xl border p-4 shadow-sm transition-all duration-150 ${
+      onClick={(e) => {
+        if (!isPreview && !activeEditing) {
+          e.stopPropagation();
+          handleStartEditing();
+        }
+      }}
+      onDoubleClick={(e) => {
+        if (!isPreview && !activeEditing) {
+          e.stopPropagation();
+          handleStartEditing();
+        }
+      }}
+      className={`w-full h-full flex-1 min-h-0 rounded-2xl border p-4 shadow-sm transition-all duration-150 flex flex-col ${
+        !activeEditing ? "cursor-text hover:border-purple-300 dark:hover:border-purple-700/60" : ""
+      } ${
         !dynamicBg ? "bg-slate-50/70 dark:bg-zinc-900/50" : ""
       } ${!dynamicBorderColor ? "border-slate-200 dark:border-zinc-800" : ""}`}
       style={{
@@ -425,35 +491,33 @@ function TextBlock({
         ...style,
       }}
     >
-      {!isPreview && isEditing ? (
+      {!isPreview && activeEditing ? (
         <DynamicTextEditor
-          initialValue={tb.content}
-          initialHtml={tb.content}
+          initialValue={contentToEdit}
+          initialHtml={contentToEdit}
           defaultFontSize={14}
           multiline={true}
+          toolbarPosition="top"
           editorBorderColor={dynamicBorderColor && dynamicBorderColor !== "transparent" ? dynamicBorderColor : undefined}
           editorBgColor={dynamicBg}
-          className="text-sm leading-relaxed min-h-[60px]"
-          placeholder="Type paragraph commentary..."
+          className="text-sm leading-relaxed w-full h-full min-h-[60px] flex-1"
+          placeholder="Empty text block — click to type content."
           onSave={(_plain, html) => {
             if (onUpdateTextBlock) {
               onUpdateTextBlock(html);
             }
-            setIsEditing(false);
+            handleFinishEditing();
           }}
-          onCancel={() => setIsEditing(false)}
+          onCancel={handleFinishEditing}
         />
       ) : (
         <div
-          onDoubleClick={(e) => {
-            if (isPreview) return;
-            e.stopPropagation();
-            setIsEditing(true);
-          }}
-          title={!isPreview ? "Double-click to format text block (Word style)" : undefined}
-          className={!isPreview ? "hover:bg-purple-500/5 rounded p-1 cursor-text transition-colors select-text" : "select-text"}
+          title={!isPreview ? "Click to format text block (Word style)" : undefined}
+          className="w-full h-full min-h-[60px] flex-1 select-text leading-relaxed text-sm text-slate-800 dark:text-zinc-200"
           dangerouslySetInnerHTML={{
-            __html: tb.content || "<p class='text-sm text-slate-400 italic'>Empty text block — double click to type content.</p>",
+            __html: isContentEmpty
+              ? "<p class='text-sm text-slate-400 italic'>Empty text block — double click to type content.</p>"
+              : tb.content,
           }}
         />
       )}
@@ -1044,6 +1108,8 @@ export function CanvasBlockRenderer({
   cell,
   isSelected,
   isPreview,
+  isForceEditing,
+  onEditingChange,
   onUpdateMetricCard,
   onUpdateInsight,
   onUpdateTextBlock,
@@ -1072,6 +1138,8 @@ export function CanvasBlockRenderer({
           <InsightBlock
             cell={cell}
             isPreview={isPreview}
+            isForceEditing={isForceEditing}
+            onEditingChange={onEditingChange}
             onUpdateInsight={onUpdateInsight}
           />
         );
@@ -1080,6 +1148,8 @@ export function CanvasBlockRenderer({
           <TextBlock
             cell={cell}
             isPreview={isPreview}
+            isForceEditing={isForceEditing}
+            onEditingChange={onEditingChange}
             onUpdateTextBlock={onUpdateTextBlock}
           />
         );
@@ -1119,7 +1189,7 @@ export function CanvasBlockRenderer({
 
   return (
     <div
-      className={`w-full h-full transition-all ${fontClass} ${alignClass} ${bgClass} ${textColorClass}`}
+      className={`w-full h-full flex-1 min-h-0 flex flex-col transition-all ${fontClass} ${alignClass} ${bgClass} ${textColorClass}`}
       style={styleProps}
     >
       {innerWithBackground}

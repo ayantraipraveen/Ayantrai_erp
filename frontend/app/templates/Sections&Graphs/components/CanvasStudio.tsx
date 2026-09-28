@@ -524,6 +524,14 @@ function SortableCell({
     setResizeHeight(cell.customHeight);
   }, [cell.customHeight]);
 
+  const [isCellEditing, setIsCellEditing] = useState(false);
+
+  useEffect(() => {
+    if (!isSelected) {
+      setIsCellEditing(false);
+    }
+  }, [isSelected]);
+
   const currentPercent = isResizing ? resizePercent : (cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : defaultWidthForCount));
   const currentHeight = isHeightResizing ? resizeHeight : cell.customHeight;
   const widthStyle = getCellWidthStyle(currentPercent);
@@ -757,7 +765,7 @@ function SortableCell({
       )}
 
       {/* Floating cell action bar */}
-      {!isPreview && (isSelected || isResizing || isHeightResizing) && (
+      {!isPreview && !isCellEditing && (isSelected || isResizing || isHeightResizing) && (
         <div className={`absolute -top-11 ${toolbarPlacementClass} z-40 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 shadow-xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap`}>
           <div className="flex items-center gap-1 font-mono text-[11px] text-purple-600 dark:text-purple-400 font-bold px-1">
             <span>{Math.round(currentPercent)}%</span>
@@ -877,7 +885,11 @@ function SortableCell({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              if (typeof onEdit === "function") onEdit(cell, rowId);
+              if (cell.blockType === "text" || cell.blockType === "insight") {
+                setIsCellEditing(true);
+              } else if (typeof onEdit === "function") {
+                onEdit(cell, rowId);
+              }
             }}
             className="p-1 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer rounded"
             title="Edit block properties"
@@ -912,11 +924,13 @@ function SortableCell({
       )}
 
       {/* Render the actual cell content block */}
-      <div className="w-full flex-1 h-full min-h-0">
+      <div className="w-full flex-1 h-full min-h-0 flex flex-col">
         <CanvasBlockRenderer
           cell={cell}
           isSelected={isSelected}
           isPreview={isPreview}
+          isForceEditing={isCellEditing}
+          onEditingChange={(editing) => setIsCellEditing(editing)}
           onUpdateMetricCard={(card) => {
             if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, cell.id, card);
           }}

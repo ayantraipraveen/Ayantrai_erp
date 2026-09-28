@@ -221,7 +221,8 @@ export function DynamicTextEditor({
         if (editorRef.current) {
           const html = editorRef.current.innerHTML;
           const plainText = (editorRef.current.innerText || "").trim();
-          onSave(plainText || initialValue, html);
+          const isActuallyEmpty = !plainText || html === "<br>" || html === "<p><br></p>";
+          onSave(isActuallyEmpty ? "" : (plainText || initialValue), isActuallyEmpty ? "" : html);
         }
       }
     };
@@ -430,11 +431,12 @@ export function DynamicTextEditor({
     if (!editorRef.current) return;
     const html = editorRef.current.innerHTML;
     const plainText = (editorRef.current.innerText || "").trim();
-    onSave(plainText || initialValue, html);
+    const isActuallyEmpty = !plainText || html === "<br>" || html === "<p><br></p>";
+    onSave(isActuallyEmpty ? "" : (plainText || initialValue), isActuallyEmpty ? "" : html);
   };
 
   return (
-    <div ref={containerRef} className="relative select-text w-full">
+    <div ref={containerRef} className={`relative select-text w-full ${multiline ? "h-full flex flex-col min-h-0 flex-1" : ""}`}>
       {/* ── Floating Word Formatting Toolbar (Absolute overlay: Zero Layout Shift) ── */}
       <div
         className={`absolute z-50 flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 text-xs select-none w-max max-w-[92vw] whitespace-nowrap shrink-0 transition-all duration-150 ${
@@ -730,6 +732,7 @@ export function DynamicTextEditor({
         ref={editorRef}
         contentEditable
         suppressContentEditableWarning
+        data-placeholder={placeholder}
         onKeyDown={(e) => {
           if (e.ctrlKey || e.metaKey) {
             if (e.key === "b" || e.key === "B") {
@@ -767,7 +770,7 @@ export function DynamicTextEditor({
         }}
         className={`w-full outline-none select-text dynamic-word-editor rounded-lg transition-all ${
           multiline
-            ? `min-h-[44px] px-2.5 py-1.5 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} shadow-sm`
+            ? `min-h-[50px] p-2 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} shadow-sm flex-1`
             : `min-h-[26px] px-1.5 py-0.5 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} shadow-sm`
         } ${className}`}
         aria-label={placeholder}

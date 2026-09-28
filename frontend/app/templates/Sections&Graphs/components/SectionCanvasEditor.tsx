@@ -480,12 +480,7 @@ export default function SectionCanvasEditor({
           }
           break;
         case "text":
-          if (cell.textBlock) {
-            setEditingInsight(null);
-            setEditingInsightCellMeta({ cell, rowId });
-            setInsightText(cell.textBlock.content);
-            setInsightModalOpen(true);
-          }
+          // Handled directly via inline editing on the canvas with Word-style toolbar
           break;
         case "badge-strip":
           if (cell.badgeStrip) {
