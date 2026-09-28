@@ -530,8 +530,7 @@ export function DynamicTextEditor({
           }
         }}
         style={{
-          fontSize: `${fontSize}px`,
-          fontFamily: TITLE_FONTS.find((f) => f.name === selectedFont)?.family || "'Inter', sans-serif",
+          fontSize: `${defaultFontSize}px`,
         }}
         className={`w-full min-h-[38px] px-3 py-1.5 rounded-xl border-2 border-[#2563eb] bg-white dark:bg-zinc-900 outline-none shadow-sm select-text ${className}`}
         aria-label={placeholder}

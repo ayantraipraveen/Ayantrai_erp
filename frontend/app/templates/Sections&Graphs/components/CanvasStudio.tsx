@@ -1560,18 +1560,48 @@ export function CanvasStudio({
   const [internalShowGrid, setInternalShowGrid] = useState(true);
   const [internalShowGuides, setInternalShowGuides] = useState(false);
   const [internalIsPreview, setInternalIsPreview] = useState(false);
-  const [headerValuesBySection, setHeaderValuesBySection] = useState<Record<string, { taglinePrimary: string; taglineSecondary: string; title: string; period: string }>>({});
+  const [headerValuesBySection, setHeaderValuesBySection] = useState<
+    Record<
+      string,
+      {
+        taglinePrimary: string;
+        taglinePrimaryHtml?: string;
+        taglineSecondary: string;
+        taglineSecondaryHtml?: string;
+        title: string;
+        titleHtml?: string;
+        period: string;
+        periodHtml?: string;
+      }
+    >
+  >({});
   const [headerTitleFormatsBySection, setHeaderTitleFormatsBySection] = useState<Record<string, HeaderTitleFormat>>({});
   const [editingHeaderValue, setEditingHeaderValue] = useState<"taglinePrimary" | "taglineSecondary" | "title" | "period" | null>(null);
   const [isHeaderTitleFormatOpen, setIsHeaderTitleFormatOpen] = useState(false);
-  const [footerValuesBySection, setFooterValuesBySection] = useState<Record<string, { company: string; websites: string; quote: string }>>({});
+  const [footerValuesBySection, setFooterValuesBySection] = useState<
+    Record<
+      string,
+      {
+        company: string;
+        companyHtml?: string;
+        websites: string;
+        websitesHtml?: string;
+        quote: string;
+        quoteHtml?: string;
+      }
+    >
+  >({});
   const [editingFooterValue, setEditingFooterValue] = useState<"company" | "websites" | "quote" | null>(null);
 
   const headerValues = headerValuesBySection[section.id] || {
     taglinePrimary: "Visibility for Every Worker;",
+    taglinePrimaryHtml: "",
     taglineSecondary: "Intelligence for Every Site.",
+    taglineSecondaryHtml: "",
     title: "Monthly Report",
+    titleHtml: "",
     period: "01 Sept 2025 - 30 Sept 2025",
+    periodHtml: "",
   };
   const headerTitleFormat = headerTitleFormatsBySection[section.id] || DEFAULT_HEADER_TITLE_FORMAT;
   const headerTitleFontFamily = {
@@ -1607,12 +1637,31 @@ export function CanvasStudio({
     }));
   };
 
+  const updateHeaderValueWithHtml = (
+    field: "taglinePrimary" | "taglineSecondary" | "title" | "period",
+    plainText: string,
+    html: string
+  ) => {
+    setHeaderValuesBySection((current) => ({
+      ...current,
+      [section.id]: {
+        ...headerValues,
+        [field]: plainText,
+        [`${field}Html`]: html,
+      },
+    }));
+    setEditingHeaderValue(null);
+  };
+
   const commitHeaderValue = () => setEditingHeaderValue(null);
 
   const footerValues = footerValuesBySection[section.id] || {
     company: "AyantrAI Private Limited",
+    companyHtml: "",
     websites: "www.ayantrai.com  |  www.sitesafe.ai",
+    websitesHtml: "",
     quote: "Every Worker Returns Home Safe",
+    quoteHtml: "",
   };
 
   const updateFooterValue = (field: "company" | "websites" | "quote", value: string) => {
@@ -1620,6 +1669,22 @@ export function CanvasStudio({
       ...current,
       [section.id]: { ...footerValues, [field]: value },
     }));
+  };
+
+  const updateFooterValueWithHtml = (
+    field: "company" | "websites" | "quote",
+    plainText: string,
+    html: string
+  ) => {
+    setFooterValuesBySection((current) => ({
+      ...current,
+      [section.id]: {
+        ...footerValues,
+        [field]: plainText,
+        [`${field}Html`]: html,
+      },
+    }));
+    setEditingFooterValue(null);
   };
 
   const commitFooterValue = () => setEditingFooterValue(null);
@@ -2141,66 +2206,59 @@ export function CanvasStudio({
                               <div className="min-w-0 flex flex-col justify-center ">
                                <div className="flex flex-col gap-1 border-l-2 border-[#2454d8] pl-4  px-6 py-5">
                                  {editingHeaderValue === "taglinePrimary" ? (
-                                  <input
-                                    autoFocus
-                                    value={headerValues.taglinePrimary}
-                                    onChange={(event) => updateHeaderValue("taglinePrimary", event.target.value)}
-                                    onBlur={commitHeaderValue}
-                                    onKeyDown={(event) => {
-                                      if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
-                                    }}
-                                    className="w-full bg-transparent text-[17px] font-semibold italic leading-tight text-[#2454d8] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                                    aria-label="Primary report tagline"
-                                  />
-                                ) : (
-                                  <p
-                                    className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
-                                    onClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
-                                    onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
-                                    title="Click to edit primary report tagline"
-                                  >
-                                    {headerValues.taglinePrimary}
-                                  </p>
-                                )}
-                                {editingHeaderValue === "taglineSecondary" ? (
-                                  <input
-                                    autoFocus
-                                    value={headerValues.taglineSecondary}
-                                    onChange={(event) => updateHeaderValue("taglineSecondary", event.target.value)}
-                                    onBlur={commitHeaderValue}
-                                    onKeyDown={(event) => {
-                                      if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
-                                    }}
-                                    className="w-full bg-transparent text-[17px] font-semibold italic leading-tight text-[#2454d8] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                                    aria-label="Secondary report tagline"
-                                  />
-                                ) : (
-                                  <p
-                                    className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
-                                    onClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
-                                    onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
-                                    title="Click to edit secondary report tagline"
-                                  >
-                                    {headerValues.taglineSecondary}
-                                  </p>
-                                )}
-                               </div>
+                                   <DynamicTextEditor
+                                     initialValue={headerValues.taglinePrimary}
+                                     initialHtml={headerValues.taglinePrimaryHtml}
+                                     defaultFontSize={17}
+                                     multiline={false}
+                                     className="text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                     onSave={(plain, html) => updateHeaderValueWithHtml("taglinePrimary", plain, html)}
+                                     onCancel={() => setEditingHeaderValue(null)}
+                                   />
+                                 ) : (
+                                   <p
+                                     className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                     onClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
+                                     onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
+                                     title="Double-click to format primary report tagline (Word style)"
+                                   >
+                                     {renderDynamicText(headerValues.taglinePrimaryHtml, headerValues.taglinePrimary)}
+                                   </p>
+                                 )}
+                                 {editingHeaderValue === "taglineSecondary" ? (
+                                   <DynamicTextEditor
+                                     initialValue={headerValues.taglineSecondary}
+                                     initialHtml={headerValues.taglineSecondaryHtml}
+                                     defaultFontSize={17}
+                                     multiline={false}
+                                     className="text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                     onSave={(plain, html) => updateHeaderValueWithHtml("taglineSecondary", plain, html)}
+                                     onCancel={() => setEditingHeaderValue(null)}
+                                   />
+                                 ) : (
+                                   <p
+                                     className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                     onClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
+                                     onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
+                                     title="Double-click to format secondary report tagline (Word style)"
+                                   >
+                                     {renderDynamicText(headerValues.taglineSecondaryHtml, headerValues.taglineSecondary)}
+                                   </p>
+                                 )}
+                                </div>
                               </div>
 
                               <div className="min-w-0 flex flex-col justify-center px-2 py-5">
                                 <div className="relative">
                                   {editingHeaderValue === "title" ? (
-                                    <input
-                                      autoFocus
-                                      value={headerValues.title}
-                                      onChange={(event) => updateHeaderValue("title", event.target.value)}
-                                      onBlur={commitHeaderValue}
-                                      onKeyDown={(event) => {
-                                        if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
-                                      }}
-                                      className="w-full bg-transparent pr-7 leading-tight outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                                      style={headerTitleTextStyle}
-                                      aria-label="Report title"
+                                    <DynamicTextEditor
+                                      initialValue={headerValues.title}
+                                      initialHtml={headerValues.titleHtml}
+                                      defaultFontSize={headerTitleFormat.fontSize || 30}
+                                      multiline={false}
+                                      className="text-2xl sm:text-3xl font-black leading-tight"
+                                      onSave={(plain, html) => updateHeaderValueWithHtml("title", plain, html)}
+                                      onCancel={() => setEditingHeaderValue(null)}
                                     />
                                   ) : (
                                     <p
@@ -2208,144 +2266,33 @@ export function CanvasStudio({
                                       style={headerTitleTextStyle}
                                       onClick={() => !activeIsPreview && setEditingHeaderValue("title")}
                                       onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("title")}
-                                      title="Double-click to edit report title"
+                                      title="Double-click to format report title (Word style)"
                                     >
-                                      {headerValues.title}
+                                      {renderDynamicText(headerValues.titleHtml, headerValues.title)}
                                     </p>
-                                  )}
-                                  {!activeIsPreview && (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={() => setIsHeaderTitleFormatOpen((open) => !open)}
-                                        className="absolute right-0 top-0 z-20 rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-[#8B3DFF]"
-                                        title="Format report title"
-                                        aria-label="Format report title"
-                                        aria-expanded={isHeaderTitleFormatOpen}
-                                      >
-                                        <Type className="h-3.5 w-3.5" />
-                                      </button>
-                                      {isHeaderTitleFormatOpen && (
-                                        <div className="absolute right-0 top-8 z-[60] w-[292px] rounded-lg border border-slate-200 bg-white p-2.5 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
-                                          <div className="grid grid-cols-[1fr_68px_30px] items-end gap-2">
-                                            <label className="flex min-w-0 flex-col gap-1 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
-                                              Font
-                                              <select
-                                                value={headerTitleFormat.fontFamily}
-                                                onChange={(event) => updateHeaderTitleFormat("fontFamily", event.target.value as HeaderTitleFormat["fontFamily"])}
-                                                className="h-7 min-w-0 rounded border border-slate-200 bg-white px-1.5 text-xs text-slate-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                                                aria-label="Title font family"
-                                              >
-                                                <option value="sans">Sans</option>
-                                                <option value="serif">Serif</option>
-                                                <option value="mono">Monospace</option>
-                                                <option value="rounded">Rounded</option>
-                                              </select>
-                                            </label>
-                                            <label className="flex flex-col gap-1 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
-                                              Size
-                                              <input
-                                                type="number"
-                                                min={12}
-                                                max={48}
-                                                value={headerTitleFormat.fontSize}
-                                                onChange={(event) => updateHeaderTitleFormat("fontSize", Math.min(48, Math.max(12, Number(event.target.value) || 12)))}
-                                                className="h-7 w-full rounded border border-slate-200 bg-white px-1.5 text-xs text-slate-800 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
-                                                aria-label="Title font size"
-                                              />
-                                            </label>
-                                            <label className="flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
-                                              Color
-                                              <input
-                                                type="color"
-                                                value={headerTitleFormat.color}
-                                                onChange={(event) => updateHeaderTitleFormat("color", event.target.value)}
-                                                className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-800"
-                                                aria-label="Title text color"
-                                              />
-                                            </label>
-                                          </div>
-                                          <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2 dark:border-zinc-800">
-                                            <div className="flex items-center gap-1">
-                                              <button
-                                                type="button"
-                                                onClick={() => updateHeaderTitleFormat("bold", !headerTitleFormat.bold)}
-                                                className={`rounded p-1.5 ${headerTitleFormat.bold ? "bg-[#8B3DFF]/10 text-[#8B3DFF]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
-                                                title="Bold"
-                                                aria-label="Bold"
-                                                aria-pressed={headerTitleFormat.bold}
-                                              >
-                                                <Bold className="h-3.5 w-3.5" />
-                                              </button>
-                                              <button
-                                                type="button"
-                                                onClick={() => updateHeaderTitleFormat("italic", !headerTitleFormat.italic)}
-                                                className={`rounded p-1.5 ${headerTitleFormat.italic ? "bg-[#8B3DFF]/10 text-[#8B3DFF]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
-                                                title="Italic"
-                                                aria-label="Italic"
-                                                aria-pressed={headerTitleFormat.italic}
-                                              >
-                                                <Italic className="h-3.5 w-3.5" />
-                                              </button>
-                                              <button
-                                                type="button"
-                                                onClick={() => updateHeaderTitleFormat("underline", !headerTitleFormat.underline)}
-                                                className={`rounded p-1.5 ${headerTitleFormat.underline ? "bg-[#8B3DFF]/10 text-[#8B3DFF]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
-                                                title="Underline"
-                                                aria-label="Underline"
-                                                aria-pressed={headerTitleFormat.underline}
-                                              >
-                                                <Underline className="h-3.5 w-3.5" />
-                                              </button>
-                                            </div>
-                                            <div className="flex items-center gap-0.5 rounded border border-slate-200 p-0.5 dark:border-zinc-700">
-                                              {([
-                                                { value: "left", Icon: AlignLeft, label: "Align left" },
-                                                { value: "center", Icon: AlignCenter, label: "Align center" },
-                                                { value: "right", Icon: AlignRight, label: "Align right" },
-                                              ] as const).map(({ value, Icon, label }) => (
-                                                <button
-                                                  key={value}
-                                                  type="button"
-                                                  onClick={() => updateHeaderTitleFormat("textAlign", value)}
-                                                  className={`rounded p-1 ${headerTitleFormat.textAlign === value ? "bg-[#8B3DFF]/10 text-[#8B3DFF]" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"}`}
-                                                  title={label}
-                                                  aria-label={label}
-                                                  aria-pressed={headerTitleFormat.textAlign === value}
-                                                >
-                                                  <Icon className="h-3.5 w-3.5" />
-                                                </button>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </>
                                   )}
                                 </div>
-                                  {editingHeaderValue === "period" ? (
-                                    <input
-                                      autoFocus
-                                      value={headerValues.period}
-                                      onChange={(event) => updateHeaderValue("period", event.target.value)}
-                                      onBlur={commitHeaderValue}
-                                      onKeyDown={(event) => {
-                                        if (event.key === "Enter" || event.key === "Escape") commitHeaderValue();
-                                      }}
-                                      className="mt-1 w-full bg-transparent text-[12px] font-semibold leading-tight text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                                      aria-label="Report period"
-                                    />
-                                  ) : (
-                                    <p
-                                      className="mt-1 cursor-text text-[12px] font-semibold leading-tight text-[#1836a0]"
-                                      onClick={() => !activeIsPreview && setEditingHeaderValue("period")}
-                                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("period")}
-                                      title="Double-click to edit report period"
-                                    >
-                                      {headerValues.period}
-                                    </p>
-                                  )}
-                                  <div className="mt-2 h-1 w-14 rounded-full bg-[#2454d8]" />
+                                {editingHeaderValue === "period" ? (
+                                  <DynamicTextEditor
+                                    initialValue={headerValues.period}
+                                    initialHtml={headerValues.periodHtml}
+                                    defaultFontSize={12}
+                                    multiline={false}
+                                    className="mt-1 text-[12px] font-semibold leading-tight text-[#1836a0]"
+                                    onSave={(plain, html) => updateHeaderValueWithHtml("period", plain, html)}
+                                    onCancel={() => setEditingHeaderValue(null)}
+                                  />
+                                ) : (
+                                  <p
+                                    className="mt-1 cursor-text text-[12px] font-semibold leading-tight text-[#1836a0]"
+                                    onClick={() => !activeIsPreview && setEditingHeaderValue("period")}
+                                    onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("period")}
+                                    title="Double-click to format report period (Word style)"
+                                  >
+                                    {renderDynamicText(headerValues.periodHtml, headerValues.period)}
+                                  </p>
+                                )}
+                                <div className="mt-2 h-1 w-14 rounded-full bg-[#2454d8]" />
                               </div>
                               {/* Page Badge - flush right, full height */}
                               <div className="flex flex-col items-center justify-center border-l-2 border-[#2454d8] bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
@@ -2458,14 +2405,10 @@ export function CanvasStudio({
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      if (onEditHeader) {
-                                        onEditHeader();
-                                      } else {
-                                        setLocalSectionName(section.name);
-                                        setLocalSectionEyebrow(section.eyebrow);
-                                        setLocalSectionDesc(section.description);
-                                        setEditingSectionField("name");
-                                      }
+                                      setLocalSectionName(section.name);
+                                      setLocalSectionEyebrow(section.eyebrow);
+                                      setLocalSectionDesc(section.description);
+                                      setEditingSectionField("name");
                                     }}
                                     className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-[#2563eb] px-2 py-0.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
                                     title="Edit Section Header"
@@ -2598,7 +2541,7 @@ export function CanvasStudio({
 
                           <div className="relative flex items-center gap-4">
                             <span className="hidden max-w-[220px] truncate sm:inline" style={headerTitleTextStyle}>
-                              {headerValues.title}
+                              {renderDynamicText(headerValues.titleHtml, headerValues.title)}
                             </span>
                             <div className="-my-2.5 -mr-6 h-[56px] w-[68px] flex flex-col items-center justify-center bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
                               <span className="text-[9px] font-semibold">Page</span>
@@ -2737,45 +2680,41 @@ export function CanvasStudio({
                         >
                           <div className="min-w-0">
                             {editingFooterValue === "company" ? (
-                              <input
-                                autoFocus
-                                value={footerValues.company}
-                                onChange={(event) => updateFooterValue("company", event.target.value)}
-                                onBlur={commitFooterValue}
-                                onKeyDown={(event) => {
-                                  if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
-                                }}
-                                className="w-full bg-transparent text-sm font-bold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                                aria-label="Footer company name"
+                              <DynamicTextEditor
+                                initialValue={footerValues.company}
+                                initialHtml={footerValues.companyHtml}
+                                defaultFontSize={14}
+                                multiline={false}
+                                className="text-sm font-bold text-[#1836a0]"
+                                onSave={(plain, html) => updateFooterValueWithHtml("company", plain, html)}
+                                onCancel={() => setEditingFooterValue(null)}
                               />
                             ) : (
                               <p
                                 className="cursor-text text-sm font-bold text-[#1836a0]"
                                 onDoubleClick={() => !activeIsPreview && setEditingFooterValue("company")}
-                                title="Double-click to edit company name"
+                                title="Double-click to format company name (Word style)"
                               >
-                                {footerValues.company}
+                                {renderDynamicText(footerValues.companyHtml, footerValues.company)}
                               </p>
                             )}
                             {editingFooterValue === "websites" ? (
-                              <input
-                                autoFocus
-                                value={footerValues.websites}
-                                onChange={(event) => updateFooterValue("websites", event.target.value)}
-                                onBlur={commitFooterValue}
-                                onKeyDown={(event) => {
-                                  if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
-                                }}
-                                className="mt-1 w-full bg-transparent text-xs font-semibold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                                aria-label="Footer website links"
+                              <DynamicTextEditor
+                                initialValue={footerValues.websites}
+                                initialHtml={footerValues.websitesHtml}
+                                defaultFontSize={12}
+                                multiline={false}
+                                className="mt-1 text-xs font-semibold text-[#1836a0]"
+                                onSave={(plain, html) => updateFooterValueWithHtml("websites", plain, html)}
+                                onCancel={() => setEditingFooterValue(null)}
                               />
                             ) : (
                               <p
                                 className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
                                 onDoubleClick={() => !activeIsPreview && setEditingFooterValue("websites")}
-                                title="Double-click to edit website links"
+                                title="Double-click to format website links (Word style)"
                               >
-                                {footerValues.websites}
+                                {renderDynamicText(footerValues.websitesHtml, footerValues.websites)}
                               </p>
                             )}
                           </div>
@@ -2783,24 +2722,22 @@ export function CanvasStudio({
                           <div className="h-[2px] w-full bg-[#1836a0]/60" />
 
                           {editingFooterValue === "quote" ? (
-                            <input
-                              autoFocus
-                              value={footerValues.quote}
-                              onChange={(event) => updateFooterValue("quote", event.target.value)}
-                              onBlur={commitFooterValue}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === "Escape") commitFooterValue();
-                              }}
-                              className="w-full bg-transparent text-right text-sm font-semibold text-[#1836a0] outline-none ring-1 ring-[#2454d8]/40 rounded-sm"
-                              aria-label="Footer safety quote"
+                            <DynamicTextEditor
+                              initialValue={footerValues.quote}
+                              initialHtml={footerValues.quoteHtml}
+                              defaultFontSize={14}
+                              multiline={false}
+                              className="text-right text-sm font-semibold text-[#1836a0]"
+                              onSave={(plain, html) => updateFooterValueWithHtml("quote", plain, html)}
+                              onCancel={() => setEditingFooterValue(null)}
                             />
                           ) : (
                             <p
                               className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
                               onDoubleClick={() => !activeIsPreview && setEditingFooterValue("quote")}
-                              title="Double-click to edit safety quote"
+                              title="Double-click to format safety quote (Word style)"
                             >
-                              &ldquo;{footerValues.quote}&rdquo;
+                              &ldquo;{renderDynamicText(footerValues.quoteHtml, footerValues.quote)}&rdquo;
                             </p>
                           )}
                         </footer>

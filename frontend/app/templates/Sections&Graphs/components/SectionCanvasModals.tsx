@@ -30,6 +30,7 @@ import {
 } from "@/lib/redux/slices/reportModuleSlice";
 import { BADGE_COLOR_PALETTES, BADGE_AVAILABLE_ICONS } from "./CanvasBlockRenderer";
 import { PALETTE_RAMPS } from "./constants/chartTypes";
+import { DynamicTextEditor } from "./DynamicTitleEditor";
 
 // ================= MODAL 1: EDIT SECTION HEADER =================
 interface EditSectionHeaderModalProps {
@@ -76,11 +77,14 @@ export function EditSectionHeaderModal({
             <label className="font-semibold text-slate-700 dark:text-zinc-300">
               Section Name *
             </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
+            <DynamicTextEditor
+              initialValue={name}
+              initialHtml={name}
+              defaultFontSize={16}
+              className="font-bold text-sm"
+              placeholder="Section Name..."
+              onSave={(plain, html) => setName(html)}
+              onCancel={onClose}
             />
           </div>
 
@@ -88,11 +92,14 @@ export function EditSectionHeaderModal({
             <label className="font-semibold text-slate-700 dark:text-zinc-300">
               Eyebrow Label (Small-caps report tag)
             </label>
-            <input
-              type="text"
-              value={eyebrow}
-              onChange={(e) => setEyebrow(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono uppercase focus:outline-none focus:border-[#9D61FF]"
+            <DynamicTextEditor
+              initialValue={eyebrow}
+              initialHtml={eyebrow}
+              defaultFontSize={12}
+              className="text-xs font-mono uppercase"
+              placeholder="Eyebrow..."
+              onSave={(plain, html) => setEyebrow(html)}
+              onCancel={onClose}
             />
           </div>
 
@@ -100,11 +107,15 @@ export function EditSectionHeaderModal({
             <label className="font-semibold text-slate-700 dark:text-zinc-300">
               Description / Audit Scope
             </label>
-            <textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
+            <DynamicTextEditor
+              initialValue={description}
+              initialHtml={description}
+              defaultFontSize={13}
+              multiline={true}
+              className="text-xs leading-relaxed min-h-[50px]"
+              placeholder="Description..."
+              onSave={(plain, html) => setDescription(html)}
+              onCancel={onClose}
             />
           </div>
         </div>
@@ -331,12 +342,15 @@ export function KeyInsightModal({
             <label className="font-semibold text-slate-700 dark:text-zinc-300">
               Insight Sentence / Formatted Observation *
             </label>
-            <textarea
-              rows={4}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
+            <DynamicTextEditor
+              initialValue={text}
+              initialHtml={text}
+              defaultFontSize={13}
+              multiline={true}
+              className="text-xs leading-relaxed min-h-[70px]"
               placeholder="e.g. Peak biometric check-in occurred between 08:30 AM and 08:50 AM with zero optical gate latency."
-              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
+              onSave={(plain, html) => setText(html)}
+              onCancel={onClose}
             />
           </div>
         </div>

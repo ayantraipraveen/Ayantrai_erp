@@ -33,7 +33,7 @@ import {
   CanvasBadgeStrip,
   LibraryMetricCard,
 } from "@/lib/redux/slices/reportModuleSlice";
-import { DynamicTextEditor } from "./DynamicTitleEditor";
+import { DynamicTextEditor, renderDynamicText } from "./DynamicTitleEditor";
 import { PALETTE_RAMPS } from "./constants/chartTypes";
 import ChartRenderer from "./ChartRenderer";
 import { CARD_BG_PRESETS } from "./CanvasContextRibbon";
@@ -170,17 +170,15 @@ function MetricCardBlock({
       {/* Label (inline editable on double click) */}
       <div className="text-[11px] font-semibold text-slate-600 dark:text-zinc-400 line-clamp-2 leading-snug mb-2">
         {!isPreview && editingField === "label" ? (
-          <input
-            type="text"
-            value={localLabel}
-            autoFocus
-            onChange={(e) => setLocalLabel(e.target.value)}
-            onBlur={() => commitCardChange({ label: localLabel.trim() || card.label })}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commitCardChange({ label: localLabel.trim() || card.label });
-              if (e.key === "Escape") { setLocalLabel(card.label); setEditingField(null); }
+          <DynamicTextEditor
+            initialValue={card.label}
+            initialHtml={(card as any).labelHtml}
+            defaultFontSize={11}
+            className="text-[11px] font-semibold leading-snug"
+            onSave={(plain, html) => {
+              commitCardChange({ label: plain, labelHtml: html } as any);
             }}
-            className="w-full bg-white/90 dark:bg-zinc-900 border border-[#8B3DFF] rounded px-1.5 py-0.5 text-xs font-semibold text-slate-800 dark:text-white outline-none shadow-sm"
+            onCancel={() => setEditingField(null)}
           />
         ) : (
           <span
@@ -189,10 +187,10 @@ function MetricCardBlock({
               e.stopPropagation();
               setEditingField("label");
             }}
-            title={!isPreview ? "Double-click to edit label inline" : undefined}
+            title={!isPreview ? "Double-click to format label (Word style)" : undefined}
             className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
           >
-            {card.label}
+            {renderDynamicText((card as any).labelHtml, card.label)}
           </span>
         )}
       </div>
@@ -200,17 +198,15 @@ function MetricCardBlock({
       {/* Primary Value (inline editable on double click) */}
       <div className={`text-2xl font-black font-mono tracking-tight ${ramp.textLight} ${ramp.textDark}`}>
         {!isPreview && editingField === "value" ? (
-          <input
-            type="text"
-            value={localValue}
-            autoFocus
-            onChange={(e) => setLocalValue(e.target.value)}
-            onBlur={() => commitCardChange({ value: localValue.trim() || card.value })}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commitCardChange({ value: localValue.trim() || card.value });
-              if (e.key === "Escape") { setLocalValue(card.value); setEditingField(null); }
+          <DynamicTextEditor
+            initialValue={card.value}
+            initialHtml={(card as any).valueHtml}
+            defaultFontSize={24}
+            className="text-2xl font-black font-mono"
+            onSave={(plain, html) => {
+              commitCardChange({ value: plain, valueHtml: html } as any);
             }}
-            className="w-full bg-white/90 dark:bg-zinc-900 border border-[#8B3DFF] rounded px-1.5 py-0.5 text-2xl font-black font-mono outline-none shadow-sm"
+            onCancel={() => setEditingField(null)}
           />
         ) : (
           <span
@@ -219,10 +215,10 @@ function MetricCardBlock({
               e.stopPropagation();
               setEditingField("value");
             }}
-            title={!isPreview ? "Double-click to edit value inline" : undefined}
+            title={!isPreview ? "Double-click to format value (Word style)" : undefined}
             className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
           >
-            {card.value}
+            {renderDynamicText((card as any).valueHtml, card.value)}
           </span>
         )}
       </div>
@@ -240,19 +236,18 @@ function MetricCardBlock({
           {card.trendDirection === "no-change" && <span>—</span>}
 
           {!isPreview && editingField === "trend" ? (
-            <input
-              type="text"
-              value={localTrendVal}
-              autoFocus
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => setLocalTrendVal(e.target.value)}
-              onBlur={() => commitCardChange({ trendValue: localTrendVal.trim() || card.trendValue })}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitCardChange({ trendValue: localTrendVal.trim() || card.trendValue });
-                if (e.key === "Escape") { setLocalTrendVal(card.trendValue); setEditingField(null); }
-              }}
-              className="w-28 bg-white/90 dark:bg-zinc-900 border border-[#8B3DFF] rounded px-1 text-[10px] font-mono outline-none"
-            />
+            <div onClick={(e) => e.stopPropagation()} className="min-w-[120px]">
+              <DynamicTextEditor
+                initialValue={card.trendValue}
+                initialHtml={(card as any).trendValueHtml}
+                defaultFontSize={10}
+                className="text-[10px] font-mono font-bold"
+                onSave={(plain, html) => {
+                  commitCardChange({ trendValue: plain, trendValueHtml: html } as any);
+                }}
+                onCancel={() => setEditingField(null)}
+              />
+            </div>
           ) : (
             <span
               onDoubleClick={(e) => {
@@ -260,9 +255,9 @@ function MetricCardBlock({
                 e.stopPropagation();
                 setEditingField("trend");
               }}
-              title={!isPreview ? "Double-click to edit trend text inline" : undefined}
+              title={!isPreview ? "Double-click to format trend text (Word style)" : undefined}
             >
-              {card.trendValue}
+              {renderDynamicText((card as any).trendValueHtml, card.trendValue)}
             </span>
           )}
         </button>
@@ -735,20 +730,16 @@ function SingleBadgeItemCard({
         {/* Metric Value (double-click inline edit) */}
         <div className={`text-lg font-black font-mono leading-tight ${colors.text}`}>
           {!isPreview && editingField === "value" ? (
-            <input
-              type="text"
-              autoFocus
-              value={localVal}
-              onChange={(e) => setLocalVal(e.target.value)}
-              onBlur={commitValue}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitValue();
-                if (e.key === "Escape") {
-                  setLocalVal(badge.value);
-                  setEditingField(null);
-                }
+            <DynamicTextEditor
+              initialValue={badge.value}
+              initialHtml={(badge as any).valueHtml}
+              defaultFontSize={18}
+              className="text-lg font-black font-mono leading-tight"
+              onSave={(plain, html) => {
+                if (onUpdateBadge) onUpdateBadge({ value: plain, valueHtml: html } as any);
+                setEditingField(null);
               }}
-              className="w-full bg-white dark:bg-zinc-900 border border-[#9D61FF] rounded px-1 text-sm font-mono font-black text-slate-900 dark:text-white outline-none shadow-xs"
+              onCancel={() => setEditingField(null)}
             />
           ) : (
             <span
@@ -757,10 +748,10 @@ function SingleBadgeItemCard({
                 e.stopPropagation();
                 setEditingField("value");
               }}
-              title={!isPreview ? "Double-click to edit value inline, or click pencil" : undefined}
+              title={!isPreview ? "Double-click to format value (Word style)" : undefined}
               className={!isPreview ? "hover:underline cursor-text" : ""}
             >
-              {badge.value}
+              {renderDynamicText((badge as any).valueHtml, badge.value)}
             </span>
           )}
         </div>
@@ -768,20 +759,16 @@ function SingleBadgeItemCard({
         {/* Badge Label (double-click inline edit) */}
         <div className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 leading-tight">
           {!isPreview && editingField === "label" ? (
-            <input
-              type="text"
-              autoFocus
-              value={localLbl}
-              onChange={(e) => setLocalLbl(e.target.value)}
-              onBlur={commitLabel}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") commitLabel();
-                if (e.key === "Escape") {
-                  setLocalLbl(badge.label);
-                  setEditingField(null);
-                }
+            <DynamicTextEditor
+              initialValue={badge.label}
+              initialHtml={(badge as any).labelHtml}
+              defaultFontSize={10}
+              className="text-[10px] font-medium leading-tight"
+              onSave={(plain, html) => {
+                if (onUpdateBadge) onUpdateBadge({ label: plain, labelHtml: html } as any);
+                setEditingField(null);
               }}
-              className="w-full bg-white dark:bg-zinc-900 border border-[#9D61FF] rounded px-1 text-[10px] font-medium text-slate-900 dark:text-white outline-none shadow-xs"
+              onCancel={() => setEditingField(null)}
             />
           ) : (
             <span
@@ -790,10 +777,10 @@ function SingleBadgeItemCard({
                 e.stopPropagation();
                 setEditingField("label");
               }}
-              title={!isPreview ? "Double-click to edit label inline" : undefined}
+              title={!isPreview ? "Double-click to format label (Word style)" : undefined}
               className={!isPreview ? "hover:underline cursor-text" : ""}
             >
-              {badge.label}
+              {renderDynamicText((badge as any).labelHtml, badge.label)}
             </span>
           )}
         </div>
