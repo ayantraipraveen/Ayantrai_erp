@@ -649,14 +649,14 @@ export function DynamicTextEditor({
           </div>
 
           {/* Quick Color Swatches Row + Custom Color Picker */}
-          <div className="flex items-center gap-1 pl-1">
+          <div className="flex items-center gap-1 pl-0.5 shrink-0">
             {TITLE_THEME_COLORS.map((col) => (
               <button
                 key={col.hex}
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyColor(col.hex)}
-                className={`w-4 h-4 rounded-full border transition-all cursor-pointer shadow-2xs ${
+                className={`w-3.5 h-3.5 rounded-full border transition-all cursor-pointer shadow-2xs shrink-0 ${
                   activeColor.toLowerCase() === col.hex.toLowerCase()
                     ? "ring-2 ring-blue-500 scale-125 border-white dark:border-white shadow-xs"
                     : "border-slate-300/80 dark:border-zinc-700 hover:scale-125"
@@ -668,7 +668,7 @@ export function DynamicTextEditor({
 
             {/* Direct Custom Color Picker Tile (Rainbow gradient with Eyedropper) */}
             <label
-              className="relative w-5 h-5 rounded-full cursor-pointer shadow-2xs hover:scale-125 transition-transform flex items-center justify-center overflow-hidden border border-slate-300 dark:border-zinc-600 ml-0.5"
+              className="relative w-4.5 h-4.5 rounded-full cursor-pointer shadow-2xs hover:scale-125 transition-transform flex items-center justify-center overflow-hidden border border-slate-300 dark:border-zinc-600 ml-0.5 shrink-0"
               style={{
                 background: "conic-gradient(from 180deg, #ff0000, #ff8000, #ffff00, #00ff00, #00ffff, #0066ff, #9900ff, #ff0088, #ff0000)",
               }}
@@ -688,11 +688,11 @@ export function DynamicTextEditor({
         </div>
 
         {/* Action Controls: Save & Cancel */}
-        <div className="flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-zinc-800 ml-1">
+        <div className="flex items-center gap-1 pl-1 border-l border-slate-200 dark:border-zinc-800 ml-0.5 shrink-0">
           <button
             type="button"
             onClick={handleSave}
-            className="h-7 px-3 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 font-bold flex items-center gap-1 cursor-pointer shadow-xs"
+            className="h-7 px-2.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 font-bold flex items-center gap-1 cursor-pointer shadow-xs text-xs shrink-0"
             title="Save (Enter)"
           >
             <Check className="w-3.5 h-3.5" />
@@ -701,7 +701,7 @@ export function DynamicTextEditor({
           <button
             type="button"
             onClick={onCancel}
-            className="h-7 px-2 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 cursor-pointer"
+            className="h-7 px-2 rounded-lg bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 cursor-pointer text-xs shrink-0"
             title="Cancel (Esc)"
           >
             <X className="w-3.5 h-3.5" />
