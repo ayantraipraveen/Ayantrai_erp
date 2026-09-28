@@ -9,4 +9,3 @@ export { CanvasBlockRenderer } from "./CanvasBlockRenderer";
 export * from "./constants/chartTypes";
 export * from "./watermarkStorage";
 export * from "./DynamicTitleEditor";
-export * from "./nestedLayout";

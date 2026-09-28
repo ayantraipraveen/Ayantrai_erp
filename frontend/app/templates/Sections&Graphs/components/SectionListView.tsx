@@ -28,7 +28,6 @@ import {
   X,
   PlusCircle,
   Stamp,
-  Columns,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -40,7 +39,6 @@ import {
 } from "@/lib/redux/slices/reportModuleSlice";
 import { Tooltip } from "@/app/Component";
 import Link from "next/link";
-import NestedLayoutBuilder from "./nestedLayout/NestedLayoutBuilder";
 
 interface SectionListViewProps {
   onSelectSection: (sectionId: string) => void;
@@ -70,11 +68,6 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
 
   // Delete confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  // Nested layout builder modal state
-  const [nestedBuilderSectionId, setNestedBuilderSectionId] = useState<string | null>(null);
-  const nestedBuilderSection = useMemo(() => {
-    return librarySections.find((s) => s.id === nestedBuilderSectionId) || null;
-  }, [librarySections, nestedBuilderSectionId]);
 
   // Statistics
   const coreSectionsCount = useMemo(
@@ -290,20 +283,6 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
             <span>Watermark</span>
           </Link>
 
-          {/* Nested Layout 12-Col Engine Shortcut */}
-          <button
-            type="button"
-            onClick={() => {
-              if (librarySections.length > 0) {
-                setNestedBuilderSectionId(librarySections[0].id);
-              }
-            }}
-            className="h-9 px-3.5 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-            title="Open 12-Column Recursive Layout Architect"
-          >
-            <Columns className="w-3.5 h-3.5 text-[#9D61FF]" />
-            <span>Nested Layout</span>
-          </button>
 
           {/* Create Section Action navigating to /templates/Sections&Graphs/create */}
           <Link
@@ -439,16 +418,6 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                         </button>
                       )}
 
-                      {/* Nested Layout button */}
-                      <button
-                        type="button"
-                        onClick={() => setNestedBuilderSectionId(sec.id)}
-                        className="h-8 px-2.5 rounded-xl border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer"
-                        title="Open 12-Column Recursive Nested Layout Architect"
-                      >
-                        <Columns className="w-3 h-3 text-[#9D61FF]" />
-                        <span className="hidden sm:inline">Nested Layout</span>
-                      </button>
 
                       {/* Open Visual Canvas Editor */}
                       <button
@@ -587,17 +556,6 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
         </div>
       )}
 
-      {/* Fullscreen Nested Layout Builder Modal */}
-      {nestedBuilderSection && (
-        <NestedLayoutBuilder
-          section={nestedBuilderSection}
-          onClose={() => setNestedBuilderSectionId(null)}
-          allCharts={librarySections.flatMap((s) => s.charts || [])}
-          allMetrics={nestedBuilderSection.metricCards || []}
-          allInsights={nestedBuilderSection.keyInsights || []}
-          allSections={librarySections}
-        />
-      )}
     </div>
   );
 }

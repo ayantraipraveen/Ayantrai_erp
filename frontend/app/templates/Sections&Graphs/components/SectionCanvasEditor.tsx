@@ -7,7 +7,6 @@ import {
   AlertCircle,
   Edit2,
   Eye,
-  Columns,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -38,6 +37,10 @@ import {
   CanvasCellStyle,
   duplicateCanvasCell,
   deleteCanvasCell,
+  stackCellBelow,
+  moveCellToStackBelow,
+  unstackCellToRow,
+  reorderStackedCells,
   showGlobalToast,
   setChartEditorFullscreen,
 } from "@/lib/redux/slices/reportModuleSlice";
@@ -64,7 +67,6 @@ import {
   KeyInsightModal,
   BadgeStripModal,
 } from "./SectionCanvasModals";
-import NestedLayoutBuilder from "./nestedLayout/NestedLayoutBuilder";
 
 export { PALETTE_RAMPS } from "./constants/chartTypes";
 
@@ -81,7 +83,6 @@ export default function SectionCanvasEditor({
   const librarySections = useAppSelector((s) => s.reportModule.librarySections || []);
   const section = librarySections.find((s) => s.id === sectionId);
   const chartEditorFullscreen = useAppSelector((s) => s.reportModule.chartEditorFullscreen);
-  const [nestedLayoutOpen, setNestedLayoutOpen] = useState(false);
 
   // ── Document Watermark Studio State ─────────────────────────────────────────
   const [uploadedWatermarks, setUploadedWatermarks] = useState<UploadedSvgWatermark[]>([]);
@@ -409,7 +410,22 @@ export default function SectionCanvasEditor({
       }
 
       if (cell !== null) {
-        if (e.targetRowId) {
+        if (e.targetStackCellId && e.targetRowId) {
+          dispatch(
+            stackCellBelow({
+              sectionId: section.id,
+              rowId: e.targetRowId,
+              targetCellId: e.targetStackCellId,
+              cell,
+            })
+          );
+          dispatch(
+            showGlobalToast({
+              message: `${e.blockType.replace("-", " ")} stacked directly below card!`,
+              type: "success",
+            })
+          );
+        } else if (e.targetRowId) {
           dispatch(
             addCellToRow({
               sectionId: section.id,
@@ -678,6 +694,37 @@ export default function SectionCanvasEditor({
     dispatch(showGlobalToast({ message: "Block removed.", type: "info" }));
   }, [dispatch, sectionId, selectedRowId, selectedCellId]);
 
+  const handleMoveCellToStackBelow = useCallback(
+    (sourceCellId: string, targetCellId: string, rowId: string) => {
+      dispatch(moveCellToStackBelow({ sectionId, rowId, sourceCellId, targetCellId }));
+      dispatch(showGlobalToast({ message: "Stacked card directly underneath!", type: "success" }));
+    },
+    [dispatch, sectionId]
+  );
+
+  const handleStackCellBelow = useCallback(
+    (rowId: string, targetCellId: string, cell: CanvasCell) => {
+      dispatch(stackCellBelow({ sectionId, rowId, targetCellId, cell }));
+      dispatch(showGlobalToast({ message: "Card stacked below!", type: "success" }));
+    },
+    [dispatch, sectionId]
+  );
+
+  const handleUnstackCell = useCallback(
+    (rowId: string, cellId: string) => {
+      dispatch(unstackCellToRow({ sectionId, rowId, cellId }));
+      dispatch(showGlobalToast({ message: "Unstacked card back to row", type: "info" }));
+    },
+    [dispatch, sectionId]
+  );
+
+  const handleReorderStacked = useCallback(
+    (rowId: string, parentCellId: string, direction: "up" | "down", index: number) => {
+      dispatch(reorderStackedCells({ sectionId, rowId, parentCellId, direction, stackedCellIndex: index }));
+    },
+    [dispatch, sectionId]
+  );
+
   // ── Keyboard Shortcuts (Canva Feel) ─────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -741,19 +788,6 @@ export default function SectionCanvasEditor({
     );
   }
 
-  // Fullscreen Nested 12-Column Layout Architect Guard
-  if (nestedLayoutOpen && section) {
-    return (
-      <NestedLayoutBuilder
-        section={section}
-        onClose={() => setNestedLayoutOpen(false)}
-        allCharts={allLibraryCharts}
-        allMetrics={section.metricCards || []}
-        allInsights={section.keyInsights || []}
-        allSections={librarySections}
-      />
-    );
-  }
 
   if (!section) {
     return (
@@ -831,17 +865,6 @@ export default function SectionCanvasEditor({
           >
             <Eye className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">{isPreview ? "Exit Preview" : "Preview"}</span>
-          </button>
-
-          {/* 12-Column Recursive Nested Layout Architect */}
-          <button
-            type="button"
-            onClick={() => setNestedLayoutOpen(true)}
-            className="h-8 px-3 rounded-xl border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
-            title="Switch to 12-Column Recursive Nested Layout Architect"
-          >
-            <Columns className="w-3.5 h-3.5 text-[#9D61FF]" />
-            <span className="hidden sm:inline">Nested Layout (12-Col)</span>
           </button>
 
           {/* Save to Library */}
@@ -953,6 +976,10 @@ export default function SectionCanvasEditor({
           onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
           onSelectWatermark={handleSelectWatermark}
           onDropBlock={handleSidebarAddBlock}
+          onMoveCellToStackBelow={handleMoveCellToStackBelow}
+          onStackCellBelow={handleStackCellBelow}
+          onUnstackCell={handleUnstackCell}
+          onReorderStacked={handleReorderStacked}
           onEditHeader={() => {
             setEditName(section.name);
             setEditEyebrow(section.eyebrow);

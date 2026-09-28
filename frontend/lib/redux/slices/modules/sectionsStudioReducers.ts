@@ -14,7 +14,6 @@ import {
   CanvasBadgeStrip,
   CanvasBadgeItem,
   GraphType,
-  LayoutRowNode,
 } from "../../types/reportModuleTypes";
 
 /**
@@ -39,6 +38,30 @@ export function autoBalanceRowCells(row: CanvasRow): void {
     c.customWidth = w;
     c.colSpan = colSpan;
   });
+}
+
+/**
+ * Finds a cell in a row, whether it is a top-level cell or inside a stacked column (stackedCells)
+ */
+export function findCellInRow(
+  row: CanvasRow,
+  cellId: string
+): { cell: CanvasCell; parentCell?: CanvasCell; index: number; isStacked: boolean } | null {
+  if (!row.cells) return null;
+  for (let i = 0; i < row.cells.length; i++) {
+    const c = row.cells[i];
+    if (c.id === cellId) {
+      return { cell: c, index: i, isStacked: false };
+    }
+    if (c.stackedCells && c.stackedCells.length > 0) {
+      for (let j = 0; j < c.stackedCells.length; j++) {
+        if (c.stackedCells[j].id === cellId) {
+          return { cell: c.stackedCells[j], parentCell: c, index: j, isStacked: true };
+        }
+      }
+    }
+  }
+  return null;
 }
 
 export const sectionsStudioReducers = {
@@ -99,7 +122,6 @@ export const sectionsStudioReducers = {
         titleStyle?: Partial<LibrarySection["titleStyle"]>;
         eyebrowHtml?: string;
         descriptionHtml?: string;
-        layoutTree?: LayoutRowNode;
         changes?: Partial<LibrarySection>;
       }>
     ) => {
@@ -117,7 +139,6 @@ export const sectionsStudioReducers = {
           if (c.icon !== undefined) sec.icon = c.icon;
           if (c.watermarkId !== undefined) sec.watermarkId = c.watermarkId;
           if (c.headerSpacing !== undefined) sec.headerSpacing = c.headerSpacing;
-          if (c.layoutTree !== undefined) sec.layoutTree = c.layoutTree;
         }
         if (action.payload.name !== undefined) sec.name = action.payload.name;
         if (action.payload.titleHtml !== undefined) sec.titleHtml = action.payload.titleHtml;
@@ -129,7 +150,6 @@ export const sectionsStudioReducers = {
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
         if (action.payload.watermarkId !== undefined) sec.watermarkId = action.payload.watermarkId;
         if (action.payload.headerSpacing !== undefined) sec.headerSpacing = action.payload.headerSpacing;
-        if (action.payload.layoutTree !== undefined) sec.layoutTree = action.payload.layoutTree;
         sec.updatedAt = "Just now";
       }
     },
@@ -557,7 +577,7 @@ export const sectionsStudioReducers = {
       }
     },
 
-    /** Duplicate a cell within its row */
+    /** Duplicate a cell within its row or within its column stack */
     duplicateCanvasCell: (
       state: ReportModuleState,
       action: PayloadAction<{
@@ -571,10 +591,10 @@ export const sectionsStudioReducers = {
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
       if (!row) return;
 
-      const cellIdx = row.cells.findIndex((c: CanvasCell) => c.id === cellId);
-      if (cellIdx === -1) return;
+      const found = findCellInRow(row, cellId);
+      if (!found) return;
 
-      const original = row.cells[cellIdx];
+      const original = found.cell;
       const ts = Date.now();
       const cloned: CanvasCell = {
         ...original,
@@ -602,12 +622,17 @@ export const sectionsStudioReducers = {
             }
           : undefined,
       };
-      row.cells.splice(cellIdx + 1, 0, cloned);
-      autoBalanceRowCells(row);
+
+      if (found.isStacked && found.parentCell?.stackedCells) {
+        found.parentCell.stackedCells.splice(found.index + 1, 0, cloned);
+      } else {
+        row.cells.splice(found.index + 1, 0, cloned);
+        autoBalanceRowCells(row);
+      }
       if (sec) sec.updatedAt = "Just now";
     },
 
-    /** Delete a cell from a row */
+    /** Delete a cell from a row or from a column stack */
     deleteCanvasCell: (
       state: ReportModuleState,
       action: PayloadAction<{
@@ -619,9 +644,169 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      if (row) {
-        row.cells = row.cells.filter((c: CanvasCell) => c.id !== cellId);
+      if (!row) return;
+
+      const found = findCellInRow(row, cellId);
+      if (!found) return;
+
+      if (found.isStacked && found.parentCell?.stackedCells) {
+        found.parentCell.stackedCells.splice(found.index, 1);
+      } else {
+        row.cells.splice(found.index, 1);
         autoBalanceRowCells(row);
+      }
+      if (sec) sec.updatedAt = "Just now";
+    },
+
+    /** Stacks a new cell directly below a target cell in the same column (Canva Stack) */
+    stackCellBelow: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        targetCellId: string;
+        cell: CanvasCell;
+        insertAtIndex?: number;
+      }>
+    ) => {
+      const { sectionId, rowId, targetCellId, cell, insertAtIndex } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      if (!row) return;
+
+      const target = row.cells.find((c: CanvasCell) => c.id === targetCellId);
+      if (target) {
+        if (!target.stackedCells) target.stackedCells = [];
+        if (typeof insertAtIndex === "number" && insertAtIndex >= 0 && insertAtIndex <= target.stackedCells.length) {
+          target.stackedCells.splice(insertAtIndex, 0, cell);
+        } else {
+          target.stackedCells.push(cell);
+        }
+        if (sec) sec.updatedAt = "Just now";
+      } else {
+        // Target might be one of the stacked cells
+        for (const topCell of row.cells) {
+          if (topCell.stackedCells) {
+            const idx = topCell.stackedCells.findIndex((c) => c.id === targetCellId);
+            if (idx !== -1) {
+              topCell.stackedCells.splice(idx + 1, 0, cell);
+              if (sec) sec.updatedAt = "Just now";
+              return;
+            }
+          }
+        }
+      }
+    },
+
+    /** Moves an existing row cell to be stacked directly below another cell (Canva Stack) */
+    moveCellToStackBelow: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        sourceCellId: string;
+        targetCellId: string;
+      }>
+    ) => {
+      const { sectionId, rowId, sourceCellId, targetCellId } = action.payload;
+      if (sourceCellId === targetCellId) return;
+
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      if (!row) return;
+
+      // Extract source cell
+      let sourceCell: CanvasCell | null = null;
+      const sourceIdx = row.cells.findIndex((c) => c.id === sourceCellId);
+      if (sourceIdx !== -1) {
+        sourceCell = row.cells.splice(sourceIdx, 1)[0];
+        autoBalanceRowCells(row);
+      } else {
+        for (const topCell of row.cells) {
+          if (topCell.stackedCells) {
+            const sIdx = topCell.stackedCells.findIndex((c) => c.id === sourceCellId);
+            if (sIdx !== -1) {
+              sourceCell = topCell.stackedCells.splice(sIdx, 1)[0];
+              break;
+            }
+          }
+        }
+      }
+
+      if (!sourceCell) return;
+
+      // Insert into target's stack
+      const targetTop = row.cells.find((c) => c.id === targetCellId);
+      if (targetTop) {
+        if (!targetTop.stackedCells) targetTop.stackedCells = [];
+        targetTop.stackedCells.push(sourceCell);
+        if (sec) sec.updatedAt = "Just now";
+        return;
+      }
+
+      for (const topCell of row.cells) {
+        if (topCell.stackedCells) {
+          const tIdx = topCell.stackedCells.findIndex((c) => c.id === targetCellId);
+          if (tIdx !== -1) {
+            topCell.stackedCells.splice(tIdx + 1, 0, sourceCell);
+            if (sec) sec.updatedAt = "Just now";
+            return;
+          }
+        }
+      }
+    },
+
+    /** Pops a stacked cell out to become a regular top-level cell in the row */
+    unstackCellToRow: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      if (!row) return;
+
+      for (let i = 0; i < row.cells.length; i++) {
+        const topCell = row.cells[i];
+        if (topCell.stackedCells) {
+          const sIdx = topCell.stackedCells.findIndex((c) => c.id === cellId);
+          if (sIdx !== -1) {
+            const [unstacked] = topCell.stackedCells.splice(sIdx, 1);
+            row.cells.splice(i + 1, 0, unstacked);
+            autoBalanceRowCells(row);
+            if (sec) sec.updatedAt = "Just now";
+            return;
+          }
+        }
+      }
+    },
+
+    /** Reorders cells inside a stacked column */
+    reorderStackedCells: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        parentCellId: string;
+        direction: "up" | "down";
+        stackedCellIndex: number;
+      }>
+    ) => {
+      const { sectionId, rowId, parentCellId, direction, stackedCellIndex } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      const parentCell = row?.cells.find((c: CanvasCell) => c.id === parentCellId);
+      if (!parentCell?.stackedCells) return;
+
+      const targetIndex = direction === "up" ? stackedCellIndex - 1 : stackedCellIndex + 1;
+      if (targetIndex >= 0 && targetIndex < parentCell.stackedCells.length) {
+        const temp = parentCell.stackedCells[stackedCellIndex];
+        parentCell.stackedCells[stackedCellIndex] = parentCell.stackedCells[targetIndex];
+        parentCell.stackedCells[targetIndex] = temp;
         if (sec) sec.updatedAt = "Just now";
       }
     },

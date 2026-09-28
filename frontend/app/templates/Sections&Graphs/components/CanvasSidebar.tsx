@@ -51,6 +51,7 @@ export interface SidebarAddBlockEvent {
   targetRowId?: string;
   targetCellIndex?: number;
   insertRowAtIndex?: number;
+  targetStackCellId?: string;
 }
 
 export function handleBlockDragStart(

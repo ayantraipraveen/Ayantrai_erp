@@ -57,6 +57,12 @@ import {
   Italic,
   Type,
   Underline,
+  CornerDownLeft,
+  ExternalLink,
+  ArrowUp,
+  ArrowDown,
+  Activity,
+  Lightbulb,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
@@ -459,6 +465,13 @@ interface SortableCellProps {
   isDraggingOverlay?: boolean;
   cellIndex?: number;
   totalCellsInRow?: number;
+  selectedCellId?: string | null;
+  previousCellId?: string;
+  onMoveToStackBelow?: (sourceCellId: string, targetCellId: string) => void;
+  onStackCellBelow?: (cell: CanvasCell) => void;
+  onUnstackCell?: (cellId: string) => void;
+  onReorderStacked?: (parentCellId: string, direction: "up" | "down", index: number) => void;
+  onDropToStack?: (targetCellId: string, data: any) => void;
 }
 
 function SortableCell({
@@ -484,6 +497,13 @@ function SortableCell({
   isDraggingOverlay = false,
   cellIndex,
   totalCellsInRow,
+  selectedCellId,
+  previousCellId,
+  onMoveToStackBelow,
+  onStackCellBelow,
+  onUnstackCell,
+  onReorderStacked,
+  onDropToStack,
 }: SortableCellProps) {
   const isFirstInRow = cellIndex === 0;
   const isLastInRow = typeof totalCellsInRow === "number" && totalCellsInRow > 1 && cellIndex === totalCellsInRow - 1;
@@ -514,6 +534,8 @@ function SortableCell({
   const initialHeight = cell.customHeight;
   const [isHeightResizing, setIsHeightResizing] = useState(false);
   const [resizeHeight, setResizeHeight] = useState<number | undefined>(initialHeight);
+  const [isDragOverBottom, setIsDragOverBottom] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const cellDomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -920,39 +942,326 @@ function SortableCell({
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
+
+          {/* Quick 1-click Stack under left card (Canva Stack) */}
+          {cellIndex !== undefined && cellIndex > 0 && previousCellId && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (typeof onMoveToStackBelow === "function") {
+                  onMoveToStackBelow(cell.id, previousCellId);
+                }
+              }}
+              className="px-2 py-0.5 rounded text-[10px] font-bold text-[#8B3DFF] bg-[#8B3DFF]/10 hover:bg-[#8B3DFF]/20 border border-purple-300 dark:border-purple-800 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+              title="Move under card to the left to stack tightly in one column (Canva Stack)"
+            >
+              <CornerDownLeft className="w-3 h-3" />
+              <span>Stack under left card</span>
+            </button>
+          )}
+
+          {/* Quick Add Block Below (Canva Stack) */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setQuickAddOpen((prev) => !prev);
+            }}
+            className={`p-1 transition-colors cursor-pointer rounded flex items-center gap-1 text-[10px] font-bold ${
+              quickAddOpen ? "bg-[#8B3DFF] text-white" : "text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-[#8B3DFF]/10"
+            }`}
+            title="Stack another block directly below this card (Canva Stack)"
+          >
+            <Plus className="w-3 h-3" />
+            <span className="hidden sm:inline">Stack</span>
+          </button>
         </div>
       )}
 
-      {/* Render the actual cell content block */}
-      <div className="w-full flex-1 h-full min-h-0 flex flex-col">
-        <CanvasBlockRenderer
-          cell={cell}
-          isSelected={isSelected}
-          isPreview={isPreview}
-          isForceEditing={isCellEditing}
-          onEditingChange={(editing) => setIsCellEditing(editing)}
-          onUpdateMetricCard={(card) => {
-            if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, cell.id, card);
-          }}
-          onUpdateInsight={(text) => {
-            if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, cell.id, text);
-          }}
-          onUpdateTextBlock={(content) => {
-            if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, cell.id, content);
-          }}
-          onUpdateBadgeStrip={(strip) => {
-            if (typeof onUpdateBadgeStrip === "function") onUpdateBadgeStrip(rowId, cell.id, strip);
-          }}
-          onUpdateSingleBadge={(badgeId, patch) => {
-            if (typeof onUpdateSingleBadge === "function") onUpdateSingleBadge(rowId, cell.id, badgeId, patch);
-          }}
-          onAddBadge={() => {
-            if (typeof onAddBadge === "function") onAddBadge(rowId, cell.id);
-          }}
-          onDeleteBadge={(badgeId) => {
-            if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, cell.id, badgeId);
-          }}
-        />
+      {/* Render the actual cell content block and vertically stacked blocks */}
+      <div className="w-full flex-1 h-full min-h-0 flex flex-col gap-3">
+        {/* Primary Block */}
+        <div className="w-full relative group/primary-block">
+          <CanvasBlockRenderer
+            cell={cell}
+            isSelected={isSelected}
+            isPreview={isPreview}
+            isForceEditing={isCellEditing}
+            onEditingChange={(editing) => setIsCellEditing(editing)}
+            onUpdateMetricCard={(card) => {
+              if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, cell.id, card);
+            }}
+            onUpdateInsight={(text) => {
+              if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, cell.id, text);
+            }}
+            onUpdateTextBlock={(content) => {
+              if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, cell.id, content);
+            }}
+            onUpdateBadgeStrip={(strip) => {
+              if (typeof onUpdateBadgeStrip === "function") onUpdateBadgeStrip(rowId, cell.id, strip);
+            }}
+            onUpdateSingleBadge={(badgeId, patch) => {
+              if (typeof onUpdateSingleBadge === "function") onUpdateSingleBadge(rowId, cell.id, badgeId, patch);
+            }}
+            onAddBadge={() => {
+              if (typeof onAddBadge === "function") onAddBadge(rowId, cell.id);
+            }}
+            onDeleteBadge={(badgeId) => {
+              if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, cell.id, badgeId);
+            }}
+          />
+        </div>
+
+        {/* Stacked Blocks underneath (Canva Column Stack) */}
+        {cell.stackedCells && cell.stackedCells.length > 0 && (
+          <div className="w-full flex flex-col gap-3">
+            {cell.stackedCells.map((sc, sIdx) => {
+              const isStackedSelected = selectedCellId === sc.id;
+              return (
+                <div
+                  key={sc.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!isPreview && typeof onSelect === "function") {
+                      onSelect(sc.id, rowId);
+                    }
+                  }}
+                  className={`relative group/stacked-block w-full transition-all ${
+                    isStackedSelected && !isPreview ? "ring-2 ring-[#8B3DFF] rounded-2xl shadow-lg" : ""
+                  }`}
+                >
+                  {/* Mini Hover Toolbar for Stacked Item */}
+                  {!isPreview && (
+                    <div className="absolute -top-3.5 right-2 z-30 opacity-0 group-hover/stacked-block:opacity-100 transition-opacity flex items-center gap-0.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-1.5 py-0.5 shadow-md text-xs backdrop-blur-sm">
+                      {sIdx > 0 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (typeof onReorderStacked === "function") {
+                              onReorderStacked(cell.id, "up", sIdx);
+                            }
+                          }}
+                          className="p-0.5 text-slate-500 hover:text-purple-600 rounded cursor-pointer"
+                          title="Move up in stack"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {sIdx < cell.stackedCells!.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (typeof onReorderStacked === "function") {
+                              onReorderStacked(cell.id, "down", sIdx);
+                            }
+                          }}
+                          className="p-0.5 text-slate-500 hover:text-purple-600 rounded cursor-pointer"
+                          title="Move down in stack"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (typeof onUnstackCell === "function") {
+                            onUnstackCell(sc.id);
+                          }
+                        }}
+                        className="px-1.5 py-0.5 text-[9px] font-mono text-slate-600 dark:text-zinc-300 hover:text-purple-600 rounded cursor-pointer flex items-center gap-0.5 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                        title="Unstack to row as standalone block"
+                      >
+                        <ExternalLink className="w-2.5 h-2.5" />
+                        <span>Unstack</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (typeof onDuplicate === "function") {
+                            onDuplicate(sc.id, rowId);
+                          }
+                        }}
+                        className="p-0.5 text-slate-500 hover:text-emerald-600 rounded cursor-pointer"
+                        title="Duplicate block"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (typeof onDelete === "function") {
+                            onDelete(sc.id, rowId);
+                          }
+                        }}
+                        className="p-0.5 text-slate-500 hover:text-rose-500 rounded cursor-pointer"
+                        title="Delete block"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+
+                  <CanvasBlockRenderer
+                    cell={sc}
+                    isSelected={isStackedSelected}
+                    isPreview={isPreview}
+                    onUpdateMetricCard={(card) => {
+                      if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, sc.id, card);
+                    }}
+                    onUpdateInsight={(text) => {
+                      if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, sc.id, text);
+                    }}
+                    onUpdateTextBlock={(content) => {
+                      if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, sc.id, content);
+                    }}
+                    onUpdateBadgeStrip={(strip) => {
+                      if (typeof onUpdateBadgeStrip === "function") onUpdateBadgeStrip(rowId, sc.id, strip);
+                    }}
+                    onUpdateSingleBadge={(badgeId, patch) => {
+                      if (typeof onUpdateSingleBadge === "function") onUpdateSingleBadge(rowId, sc.id, badgeId, patch);
+                    }}
+                    onAddBadge={() => {
+                      if (typeof onAddBadge === "function") onAddBadge(rowId, sc.id);
+                    }}
+                    onDeleteBadge={(badgeId) => {
+                      if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, sc.id, badgeId);
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Canva-style Bottom Edge Drop Zone / Hover Stacking Target */}
+        {!isPreview && (
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.dataTransfer.dropEffect = "copy";
+              if (!isDragOverBottom) setIsDragOverBottom(true);
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                setIsDragOverBottom(false);
+              }
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragOverBottom(false);
+              try {
+                const raw = e.dataTransfer.getData("application/json");
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                if (typeof onDropToStack === "function") {
+                  onDropToStack(cell.id, data);
+                }
+              } catch (err) {
+                console.error("Drop to stack error:", err);
+              }
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setQuickAddOpen((prev) => !prev);
+            }}
+            className={`w-full transition-all flex items-center justify-center rounded-xl cursor-pointer ${
+              isDragOverBottom
+                ? "py-2.5 bg-purple-500/20 border-2 border-dashed border-[#8B3DFF] text-[#8B3DFF] text-xs font-bold shadow-md animate-pulse"
+                : "h-2.5 -my-1 opacity-0 hover:opacity-100 hover:h-6 hover:bg-purple-500/10 hover:border hover:border-dashed hover:border-purple-400 text-purple-600 text-[10px] font-semibold"
+            }`}
+            title="Click or drop block here to stack directly below (Canva Column)"
+          >
+            <div className="flex items-center gap-1">
+              <Plus className="w-3 h-3" />
+              <span>Drop or click to stack below</span>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Add Menu Popup (Canva-Style In-Place Block Adder) */}
+        {quickAddOpen && !isPreview && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="p-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl flex items-center gap-1.5 z-40 text-xs animate-scaleUp"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                const ts = Date.now();
+                if (typeof onStackCellBelow === "function") {
+                  onStackCellBelow({
+                    id: `cell-mc-${ts}`,
+                    colSpan: cell.colSpan || 1,
+                    blockType: "metric-card",
+                    metricCard: {
+                      id: `mc-${ts}`,
+                      label: "New KPI Indicator",
+                      value: "96.5%",
+                      tintColor: "blue",
+                      trendDirection: "up",
+                      trendValue: "+1.8%",
+                    },
+                  });
+                }
+                setQuickAddOpen(false);
+              }}
+              className="px-2.5 py-1 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-[#8B3DFF] font-semibold text-[11px] cursor-pointer flex items-center gap-1"
+            >
+              <Activity className="w-3 h-3" /> Metric Card
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const ts = Date.now();
+                if (typeof onStackCellBelow === "function") {
+                  onStackCellBelow({
+                    id: `cell-tb-${ts}`,
+                    colSpan: cell.colSpan || 1,
+                    blockType: "text",
+                    textBlock: { id: `tb-${ts}`, content: "" },
+                  });
+                }
+                setQuickAddOpen(false);
+              }}
+              className="px-2.5 py-1 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 font-semibold text-[11px] cursor-pointer flex items-center gap-1"
+            >
+              <Type className="w-3 h-3" /> Text Block
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const ts = Date.now();
+                if (typeof onStackCellBelow === "function") {
+                  onStackCellBelow({
+                    id: `cell-ki-${ts}`,
+                    colSpan: cell.colSpan || 1,
+                    blockType: "insight",
+                    insight: { id: `ki-${ts}`, text: "Supervisory insight note." },
+                  });
+                }
+                setQuickAddOpen(false);
+              }}
+              className="px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 font-semibold text-[11px] cursor-pointer flex items-center gap-1"
+            >
+              <Lightbulb className="w-3 h-3" /> Key Insight
+            </button>
+            <button
+              type="button"
+              onClick={() => setQuickAddOpen(false)}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 cursor-pointer ml-auto"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -984,6 +1293,10 @@ interface SortableRowProps {
   onRemoveRow: (rowId: string) => void;
   onTogglePageBreak?: (rowId: string) => void;
   onDropBlock?: (e: SidebarAddBlockEvent) => void;
+  onMoveCellToStackBelow?: (sourceCellId: string, targetCellId: string, rowId: string) => void;
+  onStackCellBelow?: (rowId: string, targetCellId: string, cell: CanvasCell) => void;
+  onUnstackCell?: (rowId: string, cellId: string) => void;
+  onReorderStacked?: (rowId: string, parentCellId: string, direction: "up" | "down", index: number) => void;
 }
 
 function SortableRow({
@@ -1011,6 +1324,10 @@ function SortableRow({
   onRemoveRow,
   onTogglePageBreak,
   onDropBlock,
+  onMoveCellToStackBelow,
+  onStackCellBelow,
+  onUnstackCell,
+  onReorderStacked,
 }: SortableRowProps) {
   const [isDragOverRow, setIsDragOverRow] = useState(false);
   const {
@@ -1165,6 +1482,8 @@ function SortableRow({
                 cellIndex={idx}
                 totalCellsInRow={row.cells.length}
                 isSelected={selectedCellId === cell.id}
+                selectedCellId={selectedCellId}
+                previousCellId={idx > 0 ? row.cells[idx - 1].id : undefined}
                 isPreview={isPreview}
                 onSelect={(cellId, rId) => {
                   if (typeof onSelectCell === "function") {
@@ -1184,6 +1503,33 @@ function SortableRow({
                 onUpdateSingleBadge={onUpdateSingleBadge}
                 onAddBadge={onAddBadge}
                 onDeleteBadge={onDeleteBadge}
+                onMoveToStackBelow={(sourceId, targetId) => {
+                  if (typeof onMoveCellToStackBelow === "function") {
+                    onMoveCellToStackBelow(sourceId, targetId, row.id);
+                  }
+                }}
+                onStackCellBelow={(newCell) => {
+                  if (typeof onStackCellBelow === "function") {
+                    onStackCellBelow(row.id, cell.id, newCell);
+                  }
+                }}
+                onUnstackCell={(cellId) => {
+                  if (typeof onUnstackCell === "function") {
+                    onUnstackCell(row.id, cellId);
+                  }
+                }}
+                onReorderStacked={(parentCellId, dir, index) => {
+                  if (typeof onReorderStacked === "function") {
+                    onReorderStacked(row.id, parentCellId, dir, index);
+                  }
+                }}
+                onDropToStack={(targetCellId, data) => {
+                  if (data?.blockType && typeof onDropBlock === "function") {
+                    onDropBlock({ ...data, targetRowId: row.id, targetStackCellId: targetCellId });
+                  } else if (data?.cell?.id && typeof onMoveCellToStackBelow === "function") {
+                    onMoveCellToStackBelow(data.cell.id, targetCellId, row.id);
+                  }
+                }}
               />
             ))
           )}
@@ -1471,6 +1817,10 @@ export interface CanvasStudioProps {
   onSelectWatermark?: ((w: UploadedSvgWatermark | null) => void) | ((watermarkId: string | null) => void);
   onDropBlock?: (e: SidebarAddBlockEvent) => void;
   onEditHeader?: () => void;
+  onMoveCellToStackBelow?: (sourceCellId: string, targetCellId: string, rowId: string) => void;
+  onStackCellBelow?: (rowId: string, targetCellId: string, cell: CanvasCell) => void;
+  onUnstackCell?: (rowId: string, cellId: string) => void;
+  onReorderStacked?: (rowId: string, parentCellId: string, direction: "up" | "down", index: number) => void;
 }
 
 // ─── Dual-Tone Typography Helpers (Matching Design Target) ────────────────────
@@ -1557,6 +1907,10 @@ export function CanvasStudio({
   onSelectWatermark,
   onDropBlock,
   onEditHeader,
+  onMoveCellToStackBelow,
+  onStackCellBelow,
+  onUnstackCell,
+  onReorderStacked,
 }: CanvasStudioProps) {
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
@@ -2658,6 +3012,10 @@ export function CanvasStudio({
                                     onRemoveRow={handleRemoveRow}
                                     onTogglePageBreak={handleTogglePageBreak}
                                     onDropBlock={onDropBlock}
+                                    onMoveCellToStackBelow={onMoveCellToStackBelow}
+                                    onStackCellBelow={onStackCellBelow}
+                                    onUnstackCell={onUnstackCell}
+                                    onReorderStacked={onReorderStacked}
                                   />
                                   {/* Drop zone below this row */}
                                   {!activeIsPreview && (
