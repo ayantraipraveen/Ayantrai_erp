@@ -2220,8 +2220,8 @@ export function CanvasStudio({
                         <div>
                           {/* Fixed Sitesafe Report Header */}
                           <div
-                            className="relative z-30 min-h-[160px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-visible"
-                            style={{ backgroundColor: paperTone === "dark" || isDarkPaper ? getPaperToneColor(paperTone) : undefined }}
+                            className="relative z-30 min-h-[160px] border-b border-slate-200/80 overflow-visible"
+                            style={{ backgroundColor: paperTone === "dark" ? "#0f172a" : undefined }}
                           >
                             <div className="relative grid min-h-[160px] grid-cols-[minmax(0,1fr)_minmax(0,1.75fr)_minmax(0,0.9fr)_90px] items-stretch gap-0 px-0 py-0 overflow-visible">
                               <div className="flex min-w-0 flex-col justify-center px-3 py-1">
