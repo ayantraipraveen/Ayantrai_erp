@@ -407,6 +407,7 @@ function SortableCell({
   useEffect(() => {
     if (!isSelected) {
       setIsCellEditing(false);
+      setQuickAddOpen(false);
     }
   }, [isSelected]);
 
@@ -602,8 +603,8 @@ function SortableCell({
     : 0;
 
   const effectiveMinHeight = hasStacked
-    ? baseBlockHeight + stackedExtraHeight + 36 // includes stacked cards + bottom stack drop zone
-    : (currentHeight ? Math.max(140, currentHeight) : undefined);
+    ? baseBlockHeight + stackedExtraHeight + (quickAddOpen ? 52 : 36) // includes stacked cards + bottom stack drop zone
+    : (currentHeight ? Math.max(140, currentHeight) + (quickAddOpen ? 52 : 0) : (quickAddOpen ? 190 : undefined));
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -611,7 +612,7 @@ function SortableCell({
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
     maxWidth: widthStyle,
-    height: hasStacked ? undefined : (currentHeight ? `${Math.max(140, currentHeight)}px` : undefined),
+    height: hasStacked || quickAddOpen ? undefined : (currentHeight ? `${Math.max(140, currentHeight)}px` : undefined),
     minHeight: effectiveMinHeight ? `${effectiveMinHeight}px` : undefined,
     flexShrink: 0,
     flexGrow: 0,
@@ -1099,156 +1100,169 @@ function SortableCell({
           </div>
         )}
 
-        {/* Canva-style Bottom Edge Drop Zone — FIXED HEIGHT, no layout-shifting padding changes */}
+        {/* Canva-style Bottom Edge Drop Zone & Inline Quick-Add Slot */}
         {!isPreview && !isSelfDragging && (
-          <div
-            ref={setStackDropRef}
-            onDragOver={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              e.dataTransfer.dropEffect = "copy";
-              if (!isDragOverBottom) setIsDragOverBottom(true);
-            }}
-            onDragLeave={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                setIsDragOverBottom(false);
-              }
-            }}
-            onDrop={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsDragOverBottom(false);
-              try {
-                const raw = e.dataTransfer.getData("application/json");
-                if (!raw) return;
-                const data = JSON.parse(raw);
-                if (typeof onDropToStack === "function") {
-                  onDropToStack(cell.id, data);
-                }
-              } catch (err) {
-                console.error("Drop to stack error:", err);
-              }
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setQuickAddOpen((prev) => !prev);
-            }}
-            className={`w-full h-7 flex items-center justify-center rounded-lg cursor-pointer select-none transition-colors duration-150 ${
-              isStackDropOver || isDragOverBottom
-                ? "bg-purple-500/20 border-2 border-dashed border-[#8B3DFF] text-[#8B3DFF] text-[10px] font-bold"
-                : isOtherDragging
-                ? "bg-purple-50/60 dark:bg-purple-950/30 border border-dashed border-purple-300 dark:border-purple-700 text-purple-500 text-[10px]"
-                : isSelected
-                ? "border border-dashed border-purple-300/60 dark:border-purple-800/60 text-purple-500/80 dark:text-purple-400/80 text-[10px]"
-                : "opacity-0 group-hover/cell:opacity-100 border border-dashed border-slate-300/70 dark:border-zinc-700/70 text-slate-400 text-[10px]"
-            }`}
-            title="Drop card or click to stack another block directly below in this column"
-          >
-            <div className="flex items-center gap-1">
-              <Plus className="w-3 h-3" />
-              <span>
-                {isStackDropOver || isDragOverBottom
-                  ? "Drop to stack here"
-                  : isOtherDragging
-                  ? "Drop to stack"
-                  : "Stack below"}
-              </span>
+          quickAddOpen && !isStackDropOver && !isDragOverBottom ? (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full p-1.5 bg-white dark:bg-zinc-900 border-2 border-purple-400 dark:border-purple-600 rounded-xl shadow-lg flex flex-wrap items-center justify-between gap-1.5 animate-in fade-in zoom-in-95 duration-100 z-30"
+            >
+              <div className="flex items-center gap-1 pl-1">
+                <Plus className="w-3 h-3 text-[#8B3DFF]" />
+                <span className="text-[10px] font-bold text-[#8B3DFF] font-mono uppercase tracking-wider">Stack:</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ts = Date.now();
+                    if (typeof onStackCellBelow === "function") {
+                      onStackCellBelow({
+                        id: `cell-mc-${ts}`,
+                        colSpan: cell.colSpan || 1,
+                        blockType: "metric-card",
+                        metricCard: {
+                          id: `mc-${ts}`,
+                          label: "New KPI Indicator",
+                          value: "96.5%",
+                          tintColor: "blue",
+                          trendDirection: "up",
+                          trendValue: "+1.8%",
+                        },
+                      });
+                    }
+                    setQuickAddOpen(false);
+                  }}
+                  className="px-2 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-[#8B3DFF] font-semibold text-[11px] cursor-pointer flex items-center gap-1 transition-colors"
+                  title="Stack a Metric Card below"
+                >
+                  <Activity className="w-3 h-3" /> Metric Card
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ts = Date.now();
+                    if (typeof onStackCellBelow === "function") {
+                      onStackCellBelow({
+                        id: `cell-tb-${ts}`,
+                        colSpan: cell.colSpan || 1,
+                        blockType: "text",
+                        textBlock: { id: `tb-${ts}`, content: "" },
+                      });
+                    }
+                    setQuickAddOpen(false);
+                  }}
+                  className="px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 font-semibold text-[11px] cursor-pointer flex items-center gap-1 transition-colors"
+                  title="Stack a Text Block below"
+                >
+                  <Type className="w-3 h-3" /> Text Block
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ts = Date.now();
+                    if (typeof onStackCellBelow === "function") {
+                      onStackCellBelow({
+                        id: `cell-ki-${ts}`,
+                        colSpan: cell.colSpan || 1,
+                        blockType: "insight",
+                        insight: { id: `ki-${ts}`, text: "Supervisory insight note." },
+                      });
+                    }
+                    setQuickAddOpen(false);
+                  }}
+                  className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 font-semibold text-[11px] cursor-pointer flex items-center gap-1 transition-colors"
+                  title="Stack a Key Insight below"
+                >
+                  <Lightbulb className="w-3 h-3" /> Key Insight
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ts = Date.now();
+                    if (typeof onStackCellBelow === "function") {
+                      onStackCellBelow({
+                        id: `cell-div-${ts}`,
+                        colSpan: cell.colSpan || 1,
+                        blockType: "divider",
+                      });
+                    }
+                    setQuickAddOpen(false);
+                  }}
+                  className="px-2 py-1 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 text-slate-600 dark:text-zinc-300 font-semibold text-[11px] cursor-pointer flex items-center gap-1 transition-colors"
+                  title="Stack a Divider below"
+                >
+                  <Minus className="w-3 h-3" /> Divider
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setQuickAddOpen(false);
+                }}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer ml-auto transition-colors"
+                title="Cancel"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
-          </div>
-        )}
-
-        {/* Quick Add Menu Popup — positioned with adequate width so buttons do not wrap/truncate */}
-        {quickAddOpen && !isPreview && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className={`absolute bottom-9 ${toolbarPlacementClass === "right-0" ? "right-0" : "left-0"} z-50 p-1.5 min-w-[280px] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-2xl flex items-center gap-1.5 text-xs animate-in fade-in slide-in-from-bottom-1 duration-100`}
-          >
-            <button
-              type="button"
-              onClick={() => {
-                const ts = Date.now();
-                if (typeof onStackCellBelow === "function") {
-                  onStackCellBelow({
-                    id: `cell-mc-${ts}`,
-                    colSpan: cell.colSpan || 1,
-                    blockType: "metric-card",
-                    metricCard: {
-                      id: `mc-${ts}`,
-                      label: "New KPI Indicator",
-                      value: "96.5%",
-                      tintColor: "blue",
-                      trendDirection: "up",
-                      trendValue: "+1.8%",
-                    },
-                  });
-                }
-                setQuickAddOpen(false);
+          ) : (
+            <div
+              ref={setStackDropRef}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = "copy";
+                if (!isDragOverBottom) setIsDragOverBottom(true);
               }}
-              className="px-2.5 py-1 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-[#8B3DFF] font-semibold text-[11px] cursor-pointer flex items-center gap-1"
-            >
-              <Activity className="w-3 h-3" /> Metric Card
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const ts = Date.now();
-                if (typeof onStackCellBelow === "function") {
-                  onStackCellBelow({
-                    id: `cell-tb-${ts}`,
-                    colSpan: cell.colSpan || 1,
-                    blockType: "text",
-                    textBlock: { id: `tb-${ts}`, content: "" },
-                  });
+              onDragLeave={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  setIsDragOverBottom(false);
                 }
-                setQuickAddOpen(false);
               }}
-              className="px-2.5 py-1 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 font-semibold text-[11px] cursor-pointer flex items-center gap-1"
-            >
-              <Type className="w-3 h-3" /> Text Block
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const ts = Date.now();
-                if (typeof onStackCellBelow === "function") {
-                  onStackCellBelow({
-                    id: `cell-ki-${ts}`,
-                    colSpan: cell.colSpan || 1,
-                    blockType: "insight",
-                    insight: { id: `ki-${ts}`, text: "Supervisory insight note." },
-                  });
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragOverBottom(false);
+                try {
+                  const raw = e.dataTransfer.getData("application/json");
+                  if (!raw) return;
+                  const data = JSON.parse(raw);
+                  if (typeof onDropToStack === "function") {
+                    onDropToStack(cell.id, data);
+                  }
+                } catch (err) {
+                  console.error("Drop to stack error:", err);
                 }
-                setQuickAddOpen(false);
               }}
-              className="px-2.5 py-1 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 font-semibold text-[11px] cursor-pointer flex items-center gap-1"
-            >
-              <Lightbulb className="w-3 h-3" /> Key Insight
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const ts = Date.now();
-                if (typeof onStackCellBelow === "function") {
-                  onStackCellBelow({
-                    id: `cell-div-${ts}`,
-                    colSpan: cell.colSpan || 1,
-                    blockType: "divider",
-                  });
-                }
-                setQuickAddOpen(false);
+              onClick={(e) => {
+                e.stopPropagation();
+                setQuickAddOpen(true);
               }}
-              className="px-2.5 py-1 rounded-xl bg-slate-500/10 hover:bg-slate-500/20 text-slate-600 dark:text-zinc-300 font-semibold text-[11px] cursor-pointer flex items-center gap-1"
+              className={`w-full h-7 flex items-center justify-center rounded-lg cursor-pointer select-none transition-colors duration-150 ${
+                isStackDropOver || isDragOverBottom
+                  ? "bg-purple-500/20 border-2 border-dashed border-[#8B3DFF] text-[#8B3DFF] text-[10px] font-bold"
+                  : isOtherDragging
+                  ? "bg-purple-50/60 dark:bg-purple-950/30 border border-dashed border-purple-300 dark:border-purple-700 text-purple-500 text-[10px]"
+                  : isSelected
+                  ? "border border-dashed border-purple-300/60 dark:border-purple-800/60 text-purple-500/80 dark:text-purple-400/80 text-[10px]"
+                  : "opacity-0 group-hover/cell:opacity-100 border border-dashed border-slate-300/70 dark:border-zinc-700/70 text-slate-400 text-[10px]"
+              }`}
+              title="Drop card or click to stack another block directly below in this column"
             >
-              <Minus className="w-3 h-3" /> Divider
-            </button>
-            <button
-              type="button"
-              onClick={() => setQuickAddOpen(false)}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 cursor-pointer ml-auto"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
+              <div className="flex items-center gap-1">
+                <Plus className="w-3 h-3" />
+                <span>
+                  {isStackDropOver || isDragOverBottom
+                    ? "Drop to stack here"
+                    : isOtherDragging
+                    ? "Drop to stack"
+                    : "Stack below"}
+                </span>
+              </div>
+            </div>
+          )
         )}
       </div>
     </div>
@@ -2730,7 +2744,7 @@ export function CanvasStudio({
                       boxSizing: "border-box",
                     }}
                     className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${
-                      editingHeaderValue || editingSectionField || editingFooterValue || selectedCellId ? "overflow-visible" : "overflow-hidden"
+                      editingHeaderValue || editingSectionField || editingFooterValue || activeSelectedCellId ? "overflow-visible" : "overflow-hidden"
                     } transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-between`}
                   >
                     {/* Margin Guides (if enabled) */}
