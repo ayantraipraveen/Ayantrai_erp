@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   createLibrarySection,
@@ -15,21 +15,27 @@ export interface CreateSectionStudioProps {
   defaultName?: string;
   defaultEyebrow?: string;
   defaultDescription?: string;
+  initialSectionId?: string;
 }
 
 /**
  * Dedicated Create Studio Component
  * Located in: frontend/app/templates/Sections&Graphs/create/components/CreateSectionStudio.tsx
- * Manages creation of a new blank section and renders the A4 Canva Editor.
+ * Manages creation of a new section or loads an existing section with prefilled data into the A4 Canva Editor.
  */
 export default function CreateSectionStudio({
   onBack,
   defaultName = "Department-wise Trends",
   defaultEyebrow = "ATTENDANCE ANALYSIS",
   defaultDescription = "A detailed view of attendance, late comings and early exits across departments.",
+  initialSectionId,
 }: CreateSectionStudioProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+  const librarySections = useAppSelector((state) => state.reportModule.librarySections || []);
+
+  const querySectionId = initialSectionId || searchParams.get("id") || searchParams.get("sectionId");
 
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const initializedRef = useRef(false);
@@ -38,7 +44,17 @@ export default function CreateSectionStudio({
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    // Create a new blank section with empty rows and default metadata
+    // If an existing section ID was provided, pre-fill and load its canvas data
+    if (querySectionId) {
+      const existing = librarySections.find((s) => s.id === querySectionId);
+      if (existing) {
+        dispatch(setSelectedLibrarySectionId(existing.id));
+        setActiveSectionId(existing.id);
+        return;
+      }
+    }
+
+    // Otherwise, create a new blank section with empty rows and default metadata
     const newId = `sec-custom-${Date.now()}`;
     dispatch(
       createLibrarySection({
@@ -54,7 +70,7 @@ export default function CreateSectionStudio({
     );
     dispatch(setSelectedLibrarySectionId(newId));
     setActiveSectionId(newId);
-  }, [dispatch, defaultName, defaultEyebrow, defaultDescription]);
+  }, [dispatch, querySectionId, librarySections, defaultName, defaultEyebrow, defaultDescription]);
 
   const handleBack = () => {
     dispatch(setSelectedLibrarySectionId(null));
