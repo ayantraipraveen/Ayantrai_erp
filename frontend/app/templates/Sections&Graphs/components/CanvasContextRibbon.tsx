@@ -39,6 +39,8 @@ import {
   ExternalLink,
   ChevronDown,
   Ruler,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 
@@ -67,6 +69,10 @@ export interface CanvasContextRibbonProps {
   onTogglePreview: () => void;
   showRulers?: boolean;
   onToggleRulers?: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
 
   // Printable page margins and corner radius
   marginConfig?: CanvasMarginConfig;
@@ -168,6 +174,10 @@ export function CanvasContextRibbon({
   onTogglePreview,
   showRulers = false,
   onToggleRulers,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
   marginConfig = DEFAULT_CANVAS_MARGIN,
   onUpdateMarginConfig,
   onUpdateCellStyle,
@@ -249,9 +259,41 @@ export function CanvasContextRibbon({
     return (
       <div
         ref={ribbonRef}
-        className="relative h-11 flex-shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 bg-slate-50/95 dark:bg-[#090d14]/95 border-b border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md overflow-visible select-none animate-fadeIn z-40"
+        className="relative h-11 flex-shrink-0 flex items-center justify-between gap-2 px-3 sm:px-4 bg-slate-50/95 dark:bg-[#090d14]/95 border-b border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md overflow-x-auto no-scrollbar select-none animate-fadeIn z-40"
       >
-        <div className="flex items-center gap-2 flex-nowrap">
+        <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+          {/* Undo / Redo controls */}
+          {onUndo && (
+            <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-zinc-800 pr-1.5 mr-0.5">
+              <button
+                type="button"
+                onClick={onUndo}
+                disabled={!canUndo}
+                className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                  canUndo
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+                    : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+                }`}
+                title="Undo (Ctrl+Z)"
+              >
+                <Undo2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={onRedo}
+                disabled={!canRedo}
+                className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                  canRedo
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+                    : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+                }`}
+                title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
+              >
+                <Redo2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Active Block Type Tag */}
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#9D61FF]/15 text-[#9D61FF] border border-[#9D61FF]/30 text-xs font-bold font-mono">
             {selectedCell.blockType === "metric-card" && <Activity className="w-3.5 h-3.5" />}
@@ -646,7 +688,7 @@ export function CanvasContextRibbon({
         </div>
 
         {/* Right action group */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
           {/* Watermark Quick Access */}
           <button
             type="button"
@@ -730,7 +772,39 @@ export function CanvasContextRibbon({
       ref={ribbonRef}
       className="relative h-11 flex-shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 bg-slate-50/95 dark:bg-[#090d14]/95 border-b border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md overflow-visible select-none z-40"
     >
-      <div className="flex min-w-0 flex-1 items-center gap-3 overflow-visible">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 overflow-visible">
+        {/* Undo / Redo controls (Global canvas) */}
+        {onUndo && (
+          <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-zinc-800 pr-1.5 mr-0.5">
+            <button
+              type="button"
+              onClick={onUndo}
+              disabled={!canUndo}
+              className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                canUndo
+                  ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+                  : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+              }`}
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={onRedo}
+              disabled={!canRedo}
+              className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                canRedo
+                  ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+                  : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+              }`}
+              title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Section info badge */}
         <div className="flex min-w-0 shrink items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
           <span className="max-w-[130px] shrink-0 truncate text-[10px] font-mono uppercase font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md border border-sky-500/20">{sectionEyebrow}</span>
