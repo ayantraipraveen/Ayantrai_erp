@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Check,
   X,
@@ -153,6 +154,8 @@ export function DynamicTextEditor({
 }: DynamicTextEditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
+  const fontBtnRef = useRef<HTMLButtonElement | null>(null);
+  const colorBtnRef = useRef<HTMLButtonElement | null>(null);
   const savedOffsetsRef = useRef<{ start: number; end: number } | null>(null);
 
   const [selectedFont, setSelectedFont] = useState<string>("Inter");
@@ -160,9 +163,79 @@ export function DynamicTextEditor({
   const [activeColor, setActiveColor] = useState<string>("#2563eb");
   const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
+  const [fontMenuPos, setFontMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const [colorMenuPos, setColorMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [customHex, setCustomHex] = useState("#2563eb");
   const [detectedPlacement, setDetectedPlacement] = useState<"top" | "bottom">("top");
   const [detectedAlign, setDetectedAlign] = useState<"left" | "right">("left");
+
+  // Track coordinates for Font Family dropdown portal
+  useEffect(() => {
+    if (!fontMenuOpen || !fontBtnRef.current) return;
+    const updatePos = () => {
+      if (!fontBtnRef.current) return;
+      const rect = fontBtnRef.current.getBoundingClientRect();
+      const popoverW = 208; // w-52
+      let left = rect.left;
+      if (left + popoverW > window.innerWidth - 12) {
+        left = Math.max(12, window.innerWidth - popoverW - 12);
+      }
+      if (left < 12) left = 12;
+      let top = rect.bottom + 6;
+      if (top + 260 > window.innerHeight && rect.top > 260) {
+        top = rect.top - 260;
+      }
+      setFontMenuPos({ top, left });
+    };
+    updatePos();
+    window.addEventListener("scroll", updatePos, true);
+    window.addEventListener("resize", updatePos);
+    return () => {
+      window.removeEventListener("scroll", updatePos, true);
+      window.removeEventListener("resize", updatePos);
+    };
+  }, [fontMenuOpen]);
+
+  // Track coordinates for Color Tool dropdown portal
+  useEffect(() => {
+    if (!colorMenuOpen || !colorBtnRef.current) return;
+    const updatePos = () => {
+      if (!colorBtnRef.current) return;
+      const rect = colorBtnRef.current.getBoundingClientRect();
+      const popoverW = 240; // w-60
+      let left = rect.left;
+      if (left + popoverW > window.innerWidth - 12) {
+        left = Math.max(12, window.innerWidth - popoverW - 12);
+      }
+      if (left < 12) left = 12;
+      let top = rect.bottom + 6;
+      if (top + 320 > window.innerHeight && rect.top > 320) {
+        top = rect.top - 320;
+      }
+      setColorMenuPos({ top, left });
+    };
+    updatePos();
+    window.addEventListener("scroll", updatePos, true);
+    window.addEventListener("resize", updatePos);
+    return () => {
+      window.removeEventListener("scroll", updatePos, true);
+      window.removeEventListener("resize", updatePos);
+    };
+  }, [colorMenuOpen]);
+
+  // Dismiss portal dropdowns when clicking outside
+  useEffect(() => {
+    if (!fontMenuOpen && !colorMenuOpen) return;
+    const handleMenuOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest(".portal-title-dropdown")) return;
+      if (fontBtnRef.current?.contains(target) || colorBtnRef.current?.contains(target)) return;
+      setFontMenuOpen(false);
+      setColorMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handleMenuOutside);
+    return () => document.removeEventListener("mousedown", handleMenuOutside);
+  }, [fontMenuOpen, colorMenuOpen]);
 
   // Dynamically position floating toolbar above or below and clamp horizontally to avoid clipping
   useEffect(() => {
@@ -214,9 +287,13 @@ export function DynamicTextEditor({
     }
   }, [initialHtml, initialValue]);
 
-  // Auto-commit when clicking completely outside this editor container
+  // Auto-commit when clicking completely outside this editor container (ignoring portal dropdown clicks)
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest(".portal-title-dropdown")) {
+        return; // Don't auto-commit if interacting with portal dropdowns
+      }
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         if (editorRef.current) {
           const html = editorRef.current.innerHTML;
@@ -456,6 +533,7 @@ export function DynamicTextEditor({
           {/* Font Family Dropdown */}
           <div className="relative shrink-0">
             <button
+              ref={fontBtnRef}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
@@ -470,33 +548,42 @@ export function DynamicTextEditor({
               <ChevronDown className="w-2.5 h-2.5 opacity-60 shrink-0" />
             </button>
 
-            {fontMenuOpen && (
-              <div
-                onMouseDown={(e) => e.preventDefault()}
-                className="absolute left-0 top-full mt-1.5 w-52 max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#11151e] shadow-2xl p-1 z-50 animate-fadeIn"
-              >
-                <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Select Font
-                </div>
-                {TITLE_FONTS.map((font) => (
-                  <button
-                    key={font.id}
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => applyFont(font)}
-                    className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer ${
-                      selectedFont === font.name
-                        ? "text-[#2563eb] font-bold bg-blue-50/70 dark:bg-blue-950/30"
-                        : "text-slate-700 dark:text-zinc-300"
-                    }`}
-                    style={{ fontFamily: font.family }}
-                  >
-                    <span>{font.name}</span>
-                    <span className="text-[10px] text-slate-400 font-sans font-normal">{font.category}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+            {fontMenuOpen && typeof document !== "undefined" && fontMenuPos &&
+              createPortal(
+                <div
+                  onMouseDown={(e) => e.preventDefault()}
+                  style={{
+                    position: "fixed",
+                    top: fontMenuPos.top,
+                    left: fontMenuPos.left,
+                    zIndex: 99999,
+                  }}
+                  className="portal-title-dropdown w-52 max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#11151e] shadow-2xl p-1 animate-fadeIn select-none"
+                >
+                  <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Select Font
+                  </div>
+                  {TITLE_FONTS.map((font) => (
+                    <button
+                      key={font.id}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyFont(font)}
+                      className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs flex items-center justify-between hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer ${
+                        selectedFont === font.name
+                          ? "text-[#2563eb] font-bold bg-blue-50/70 dark:bg-blue-950/30"
+                          : "text-slate-700 dark:text-zinc-300"
+                      }`}
+                      style={{ fontFamily: font.family }}
+                    >
+                      <span>{font.name}</span>
+                      <span className="text-[10px] text-slate-400 font-sans font-normal">{font.category}</span>
+                    </button>
+                  ))}
+                </div>,
+                document.body
+              )
+            }
           </div>
 
           {/* Font Size Stepper */}
@@ -568,6 +655,7 @@ export function DynamicTextEditor({
           {/* Word-Style Text Color Tool ('A' with color bar) */}
           <div className="relative shrink-0">
             <button
+              ref={colorBtnRef}
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
@@ -584,86 +672,95 @@ export function DynamicTextEditor({
               <ChevronDown className="w-2.5 h-2.5 opacity-60" />
             </button>
 
-            {colorMenuOpen && (
-              <div
-                onMouseDown={(e) => e.preventDefault()}
-                className="absolute left-0 top-full mt-1.5 w-60 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#11151e] shadow-2xl p-3 z-50 space-y-2.5 animate-fadeIn"
-              >
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Select Color for Selected Text
-                </div>
+            {colorMenuOpen && typeof document !== "undefined" && colorMenuPos &&
+              createPortal(
+                <div
+                  onMouseDown={(e) => e.preventDefault()}
+                  style={{
+                    position: "fixed",
+                    top: colorMenuPos.top,
+                    left: colorMenuPos.left,
+                    zIndex: 99999,
+                  }}
+                  className="portal-title-dropdown w-60 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#11151e] shadow-2xl p-3 space-y-2.5 animate-fadeIn select-none"
+                >
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Select Color for Selected Text
+                  </div>
 
-                {/* Swatches Grid */}
-                <div className="grid grid-cols-6 gap-1.5">
-                  {TITLE_THEME_COLORS.map((col) => (
+                  {/* Swatches Grid */}
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {TITLE_THEME_COLORS.map((col) => (
+                      <button
+                        key={col.hex}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          applyColor(col.hex);
+                          setColorMenuOpen(false);
+                        }}
+                        className="w-7 h-7 rounded-lg border border-slate-300 dark:border-zinc-700 hover:scale-110 transition-transform cursor-pointer shadow-2xs relative flex items-center justify-center"
+                        style={{ backgroundColor: col.hex }}
+                        title={col.name}
+                      >
+                        {activeColor.toLowerCase() === col.hex.toLowerCase() && (
+                          <Check className={`w-3.5 h-3.5 ${col.hex === "#ffffff" ? "text-slate-900" : "text-white"}`} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom Hex & Native Color Eyedropper */}
+                  <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/80 flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        value={customHex}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomHex(val);
+                          if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                            applyColor(val);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            applyColor(customHex);
+                            setColorMenuOpen(false);
+                          }
+                        }}
+                        placeholder="#2563EB"
+                        className="w-full h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono outline-none"
+                      />
+                    </div>
+                    <label className="h-7 w-7 rounded-lg border border-slate-300 dark:border-zinc-700 flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800">
+                      <Pipette className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-300" />
+                      <input
+                        type="color"
+                        value={customHex.startsWith("#") && customHex.length === 7 ? customHex : "#2563eb"}
+                        onChange={(e) => {
+                          setCustomHex(e.target.value);
+                          applyColor(e.target.value);
+                        }}
+                        className="sr-only"
+                      />
+                    </label>
                     <button
-                      key={col.hex}
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
-                        applyColor(col.hex);
+                        applyColor(customHex);
                         setColorMenuOpen(false);
                       }}
-                      className="w-7 h-7 rounded-lg border border-slate-300 dark:border-zinc-700 hover:scale-110 transition-transform cursor-pointer shadow-2xs relative flex items-center justify-center"
-                      style={{ backgroundColor: col.hex }}
-                      title={col.name}
+                      className="h-7 px-2.5 rounded-lg bg-[#2563eb] text-white text-xs font-bold cursor-pointer"
                     >
-                      {activeColor.toLowerCase() === col.hex.toLowerCase() && (
-                        <Check className={`w-3.5 h-3.5 ${col.hex === "#ffffff" ? "text-slate-900" : "text-white"}`} />
-                      )}
+                      Apply
                     </button>
-                  ))}
-                </div>
-
-                {/* Custom Hex & Native Color Eyedropper */}
-                <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/80 flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={customHex}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setCustomHex(val);
-                        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-                          applyColor(val);
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          applyColor(customHex);
-                          setColorMenuOpen(false);
-                        }
-                      }}
-                      placeholder="#2563EB"
-                      className="w-full h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono outline-none"
-                    />
                   </div>
-                  <label className="h-7 w-7 rounded-lg border border-slate-300 dark:border-zinc-700 flex items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800">
-                    <Pipette className="w-3.5 h-3.5 text-slate-600 dark:text-zinc-300" />
-                    <input
-                      type="color"
-                      value={customHex.startsWith("#") && customHex.length === 7 ? customHex : "#2563eb"}
-                      onChange={(e) => {
-                        setCustomHex(e.target.value);
-                        applyColor(e.target.value);
-                      }}
-                      className="sr-only"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      applyColor(customHex);
-                      setColorMenuOpen(false);
-                    }}
-                    className="h-7 px-2.5 rounded-lg bg-[#2563eb] text-white text-xs font-bold cursor-pointer"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
-            )}
+                </div>,
+                document.body
+              )
+            }
           </div>
 
           {/* Quick Color Swatches Row + Custom Color Picker */}
