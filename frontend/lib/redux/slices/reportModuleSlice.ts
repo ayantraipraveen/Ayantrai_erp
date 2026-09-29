@@ -148,6 +148,7 @@ export const {
   moveCellBetweenRows,
   reorderCellsInRow,
   reorderCanvasRows,
+  setSectionCanvasRows,
   duplicateCanvasCell,
   deleteCanvasCell,
   stackCellBelow,

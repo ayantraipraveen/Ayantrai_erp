@@ -483,7 +483,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
+      const newH = Math.min(680, Math.max(140, Math.round(startH + deltaY)));
       setResizeHeight(newH);
     };
 
@@ -495,7 +495,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const finalH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
+      const finalH = Math.min(680, Math.max(140, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       if (typeof onHeightChange === "function") {
@@ -534,7 +534,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
+      const newH = Math.min(680, Math.max(140, Math.round(startH + deltaY)));
       setResizeHeight(newH);
     };
 
@@ -554,7 +554,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const finalH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
+      const finalH = Math.min(680, Math.max(140, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       let colSpan: 1 | 2 | 3 | 4 = 1;
@@ -584,7 +584,8 @@ function SortableCell({
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
     maxWidth: widthStyle,
-    height: currentHeight ? `${currentHeight}px` : undefined,
+    height: currentHeight ? `${Math.max(140, currentHeight)}px` : undefined,
+    minHeight: currentHeight ? `${Math.max(140, currentHeight)}px` : undefined,
     flexShrink: 0,
     flexGrow: 0,
     boxSizing: "border-box",
@@ -608,13 +609,13 @@ function SortableCell({
         }
       }}
     >
-      {/* Draggable cell badge tag */}
+      {/* Draggable cell badge tag (positioned top-right to avoid blocking card label) */}
       {!isPreview && (
         <div
           {...attributes}
           {...listeners}
-          className={`absolute top-2 left-2 z-20 ${
-            isSelected ? "opacity-100 ring-2 ring-[#8B3DFF] shadow-md" : "opacity-0 group-hover/cell:opacity-100"
+          className={`absolute top-1.5 right-2 z-20 ${
+            isSelected ? "opacity-0 pointer-events-none" : "opacity-0 group-hover/cell:opacity-100"
           } transition-opacity bg-black/80 hover:bg-black text-white rounded-md px-1.5 py-0.5 text-[9px] font-mono font-bold flex items-center gap-1 cursor-grab active:cursor-grabbing backdrop-blur-xs shadow-xs`}
           title="Drag to move card anywhere (within row or across rows)"
         >
@@ -808,7 +809,7 @@ function SortableCell({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const newH = Math.max(80, (currentHeight || 300) - 25);
+                const newH = Math.max(140, (currentHeight || 300) - 25);
                 setResizeHeight(newH);
                 if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
               }}
@@ -913,9 +914,9 @@ function SortableCell({
       )}
 
       {/* Render the actual cell content block and vertically stacked blocks */}
-      <div className="w-full flex-1 h-full min-h-0 flex flex-col gap-3">
+      <div className="w-full flex-1 flex flex-col gap-3 min-h-fit">
         {/* Primary Block */}
-        <div className="w-full relative group/primary-block">
+        <div className="w-full flex-1 flex flex-col relative group/primary-block">
           <CanvasBlockRenderer
             cell={cell}
             isSelected={isSelected}

@@ -577,7 +577,22 @@ export const sectionsStudioReducers = {
       }
     },
 
-    /** Duplicate a cell within its row or within its column stack */
+    /** Set or restore entire canvasRows state for Undo/Redo or history */
+    setSectionCanvasRows: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        canvasRows: CanvasRow[];
+      }>
+    ) => {
+      const sec = state.librarySections.find(
+        (s: LibrarySection) => s.id === action.payload.sectionId
+      );
+      if (sec) {
+        sec.canvasRows = action.payload.canvasRows;
+        sec.updatedAt = "Just now";
+      }
+    },
     duplicateCanvasCell: (
       state: ReportModuleState,
       action: PayloadAction<{

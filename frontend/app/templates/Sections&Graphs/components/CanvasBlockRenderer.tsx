@@ -151,7 +151,7 @@ function MetricCardBlock({
 
   return (
     <div
-      className={`w-full h-full rounded-2xl border p-4 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} shadow-sm ${editingField ? "relative z-50" : "relative z-10"}`}
+      className={`w-full h-full min-h-[140px] rounded-2xl border p-4 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} shadow-sm ${editingField ? "relative z-50" : "relative z-10"}`}
     >
       {/* Label (inline editable on double click) */}
       <div className="text-[11px] font-semibold text-slate-600 dark:text-zinc-400 line-clamp-2 leading-snug mb-2">
@@ -182,7 +182,7 @@ function MetricCardBlock({
       </div>
 
       {/* Primary Value (inline editable on double click) */}
-      <div className={`text-2xl font-black font-mono tracking-tight ${ramp.textLight} ${ramp.textDark}`}>
+      <div className={`text-2xl font-black font-mono tracking-tight leading-tight ${ramp.textLight} ${ramp.textDark}`}>
         {!isPreview && editingField === "value" ? (
           <DynamicTextEditor
             initialValue={card.value}
