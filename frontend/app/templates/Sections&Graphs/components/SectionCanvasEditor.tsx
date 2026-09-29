@@ -108,7 +108,7 @@ export default function SectionCanvasEditor({
   const [sectionTextColor, setSectionTextColor] = useState<string | undefined>(undefined);
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
-  const [showRulers, setShowRulers] = useState(true);
+  const [showRulers, setShowRulers] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [isPreview, setIsPreview] = useState(false);
   const [marginConfig, setMarginConfig] = useState<CanvasMarginConfig>(DEFAULT_CANVAS_MARGIN);

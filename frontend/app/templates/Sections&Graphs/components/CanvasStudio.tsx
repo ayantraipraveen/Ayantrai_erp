@@ -1830,7 +1830,7 @@ export function CanvasStudio({
   onToggleGrid,
   showGuides = false,
   onToggleGuides,
-  showRulers = true,
+  showRulers = false,
   onToggleRulers,
   zoom = 1,
   setZoom,
@@ -1879,7 +1879,7 @@ export function CanvasStudio({
   const [internalZoom, setInternalZoom] = useState(1);
   const [internalShowGrid, setInternalShowGrid] = useState(true);
   const [internalShowGuides, setInternalShowGuides] = useState(false);
-  const [internalShowRulers, setInternalShowRulers] = useState(true);
+  const [internalShowRulers, setInternalShowRulers] = useState(false);
   const [rulerUnit, setRulerUnit] = useState<RulerUnit>("px");
   const [pageMousePos, setPageMousePos] = useState<Record<number, { x: number; y: number } | null>>({});
   const [internalIsPreview, setInternalIsPreview] = useState(false);

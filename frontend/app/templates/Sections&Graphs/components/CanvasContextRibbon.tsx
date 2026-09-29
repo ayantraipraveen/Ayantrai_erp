@@ -166,7 +166,7 @@ export function CanvasContextRibbon({
   onToggleGuides,
   isPreview,
   onTogglePreview,
-  showRulers = true,
+  showRulers = false,
   onToggleRulers,
   marginConfig = DEFAULT_CANVAS_MARGIN,
   onUpdateMarginConfig,
