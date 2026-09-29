@@ -578,14 +578,41 @@ function SortableCell({
     window.addEventListener("mouseup", handleMouseUp);
   };
 
+  const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
+
+  const baseBlockHeight = currentHeight || (
+    cell.blockType === "chart" ? 370 :
+    cell.blockType === "badge-strip" ? 140 :
+    cell.blockType === "insight" ? 110 :
+    cell.blockType === "text" ? 90 :
+    cell.blockType === "divider" ? 32 : 140
+  );
+
+  const stackedExtraHeight = hasStacked
+    ? cell.stackedCells!.reduce((acc, sc) => {
+        const scH = sc.customHeight || (
+          sc.blockType === "chart" ? 370 :
+          sc.blockType === "badge-strip" ? 140 :
+          sc.blockType === "insight" ? 110 :
+          sc.blockType === "text" ? 90 :
+          sc.blockType === "divider" ? 32 : 140
+        );
+        return acc + scH + 12; // 12px gap between stacked cards
+      }, 0)
+    : 0;
+
+  const effectiveMinHeight = hasStacked
+    ? baseBlockHeight + stackedExtraHeight + 36 // includes stacked cards + bottom stack drop zone
+    : (currentHeight ? Math.max(140, currentHeight) : undefined);
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition: isResizing || isHeightResizing ? "none" : transition,
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
     maxWidth: widthStyle,
-    height: currentHeight ? `${Math.max(140, currentHeight)}px` : undefined,
-    minHeight: currentHeight ? `${Math.max(140, currentHeight)}px` : undefined,
+    height: hasStacked ? undefined : (currentHeight ? `${Math.max(140, currentHeight)}px` : undefined),
+    minHeight: effectiveMinHeight ? `${effectiveMinHeight}px` : undefined,
     flexShrink: 0,
     flexGrow: 0,
     boxSizing: "border-box",
@@ -709,9 +736,9 @@ function SortableCell({
         </div>
       )}
 
-      {/* Floating cell action bar — inside artboard, overlays card top */}
+      {/* Floating cell action bar — positioned above card with clean elevation */}
       {!isPreview && !isCellEditing && (isSelected || isResizing || isHeightResizing) && (
-        <div className={`absolute top-0 ${toolbarPlacementClass} z-40 flex items-center gap-0.5 bg-white/97 dark:bg-zinc-900/97 border border-slate-200 dark:border-zinc-800 rounded-b-xl px-1.5 py-0.5 shadow-lg backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap`}>
+        <div className={`absolute -top-10 ${toolbarPlacementClass} z-40 flex items-center gap-0.5 bg-white/97 dark:bg-zinc-900/97 border border-slate-200 dark:border-zinc-800 rounded-xl px-1.5 py-0.5 shadow-lg backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap`}>
           <div
             {...attributes}
             {...listeners}
@@ -915,7 +942,7 @@ function SortableCell({
       {/* Render the actual cell content block and vertically stacked blocks */}
       <div className="w-full flex-1 flex flex-col gap-3 min-h-fit">
         {/* Primary Block */}
-        <div className="w-full flex-1 flex flex-col relative group/primary-block">
+        <div className={`w-full ${hasStacked ? "flex-shrink-0" : "flex-1"} flex flex-col relative group/primary-block`}>
           <CanvasBlockRenderer
             cell={cell}
             isSelected={isSelected}
@@ -1130,11 +1157,11 @@ function SortableCell({
           </div>
         )}
 
-        {/* Quick Add Menu Popup — absolutely positioned so it doesn't shift layout */}
+        {/* Quick Add Menu Popup — positioned with adequate width so buttons do not wrap/truncate */}
         {quickAddOpen && !isPreview && (
           <div
             onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-9 left-0 right-0 z-50 p-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl flex items-center gap-1.5 text-xs animate-in fade-in slide-in-from-bottom-1 duration-100"
+            className={`absolute bottom-9 ${toolbarPlacementClass === "right-0" ? "right-0" : "left-0"} z-50 p-1.5 min-w-[280px] bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-2xl flex items-center gap-1.5 text-xs animate-in fade-in slide-in-from-bottom-1 duration-100`}
           >
             <button
               type="button"
@@ -2703,7 +2730,7 @@ export function CanvasStudio({
                       boxSizing: "border-box",
                     }}
                     className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${
-                      editingHeaderValue || editingSectionField || editingFooterValue ? "overflow-visible" : "overflow-hidden"
+                      editingHeaderValue || editingSectionField || editingFooterValue || selectedCellId ? "overflow-visible" : "overflow-hidden"
                     } transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-between`}
                   >
                     {/* Margin Guides (if enabled) */}
