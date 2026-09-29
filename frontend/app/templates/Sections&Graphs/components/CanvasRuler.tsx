@@ -281,13 +281,10 @@ export function CanvasRuler({
         {/* Dimension Pill (Width Tag) */}
         <div
           className="absolute right-1 top-1 px-1.5 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] border border-purple-500/30 text-[8px] font-bold font-mono pointer-events-none flex items-center gap-1 shadow-xs"
-          title={`A4 Width: ${formatValue(pageWidth)}${activeUnit} (794px @ 96DPI = 595pt @ 72DPI PDF = 210mm ISO)`}
+          title={`Standard A4 PDF Width: ${formatValue(pageWidth)}${activeUnit} (595px • 210mm)`}
         >
           <span>{formatValue(pageWidth)}{activeUnit}</span>
           <span className="opacity-70 font-normal">W</span>
-          <span className="text-[7.5px] text-slate-400 dark:text-zinc-500 hidden sm:inline">
-            {activeUnit === "pt" ? "• 595pt PDF" : activeUnit === "px" ? "• 794px Web" : "• 210mm"}
-          </span>
         </div>
       </div>
 
@@ -410,7 +407,7 @@ export function CanvasRuler({
         {/* Dimension Pill (Height Tag) */}
         <div
           className="absolute left-0.5 bottom-1 px-1 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] border border-purple-500/30 text-[7.5px] font-bold font-mono pointer-events-none flex items-center justify-center shadow-xs"
-          title={`A4 Height: ${formatValue(pageHeight)}${activeUnit} (1123px @ 96DPI = 842pt @ 72DPI PDF = 297mm ISO)`}
+          title={`Standard A4 PDF Height: ${formatValue(pageHeight)}${activeUnit} (842px • 297mm)`}
         >
           <span>{formatValue(pageHeight)}{activeUnit}</span>
         </div>
