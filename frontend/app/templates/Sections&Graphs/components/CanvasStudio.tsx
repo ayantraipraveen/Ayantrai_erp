@@ -2650,7 +2650,7 @@ export function CanvasStudio({
                     key={`page-ruler-wrapper-${page.pageIndex}`}
                     className="relative"
                     style={{
-                      marginTop: activeShowRulers && !activeIsPreview ? "28px" : undefined,
+                      marginTop: activeShowRulers && !activeIsPreview ? "24px" : undefined,
                       marginLeft: activeShowRulers && !activeIsPreview ? "32px" : undefined,
                     }}
                     onMouseMove={(e) => {
@@ -2694,7 +2694,7 @@ export function CanvasStudio({
                       id={`canvas-page-${page.pageIndex}`}
                     style={{
                       ...customPaperStyle,
-                      borderRadius: `${marginConfig.radius}px`,
+                      borderRadius: "2px",
                       width: `${activePageWidth}px`,
                       minWidth: `${activePageWidth}px`,
                       maxWidth: `${activePageWidth}px`,
@@ -2716,7 +2716,7 @@ export function CanvasStudio({
                           right: marginConfig.right,
                           bottom: marginConfig.bottom,
                           left: marginConfig.left,
-                          borderRadius: Math.max(0, marginConfig.radius - 2),
+                          borderRadius: "2px",
                         }}
                       />
                     )}

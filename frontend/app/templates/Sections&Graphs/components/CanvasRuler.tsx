@@ -149,15 +149,15 @@ export function CanvasRuler({
       {/* ── Top-Left Corner Origin Tile (Unit Switcher) ── */}
       <div
         onClick={handleToggleUnit}
-        className={`absolute -top-6 -left-8 w-8 h-6 flex items-center justify-center border-t border-l border-r border-b ${cornerBg} rounded-tl-lg font-mono text-[9px] font-bold cursor-pointer select-none hover:bg-[#9D61FF] hover:text-white transition-colors z-30 shadow-xs`}
+        className={`absolute -top-6 -left-8 w-8 h-6 flex items-center justify-center border-t border-l border-r border-b ${cornerBg} font-mono text-[9px] font-bold cursor-pointer select-none hover:bg-[#9D61FF] hover:text-white transition-colors z-30 shadow-xs`}
         title={`Click to switch unit (px [Standard PDF: 595×842] → pt → mm [210×297] → in). Current: ${activeUnit.toUpperCase()}`}
       >
         <span className="uppercase">{activeUnit}</span>
       </div>
 
-      {/* ── Horizontal Top Ruler (0 to 794px) ── */}
+      {/* ── Horizontal Top Ruler (0 to 595px) ── */}
       <div
-        className={`absolute -top-6 left-0 right-0 h-6 border-t border-b border-r ${rulerBg} select-none z-30 overflow-hidden font-mono text-[8.5px] rounded-tr-lg shadow-xs`}
+        className={`absolute -top-6 left-0 right-0 h-6 border-t border-b border-r ${rulerBg} select-none z-30 overflow-hidden font-mono text-[8.5px] shadow-xs`}
         style={{ width: `${pageWidth}px` }}
       >
         <svg
@@ -182,14 +182,14 @@ export function CanvasRuler({
                   stroke={color}
                   strokeWidth={1}
                 />
-                {t.type === "major" && t.pos < pageWidth - 20 && (
+                {t.type === "major" && (
                   <text
-                    x={t.pos + 2}
+                    x={t.pos >= pageWidth - 25 ? t.pos - 2 : t.pos + 2}
                     y={11}
                     fill={textColor}
                     fontSize={8}
                     fontFamily="monospace"
-                    textAnchor="start"
+                    textAnchor={t.pos >= pageWidth - 25 ? "end" : "start"}
                   >
                     {t.label}
                   </text>
@@ -270,20 +270,11 @@ export function CanvasRuler({
             </g>
           )}
         </svg>
-
-        {/* Dimension Pill (Width Tag) */}
-        <div
-          className="absolute right-1 top-1 px-1.5 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] border border-purple-500/30 text-[8px] font-bold font-mono pointer-events-none flex items-center gap-1 shadow-xs"
-          title={`Standard A4 PDF Width: ${formatValue(pageWidth)}${activeUnit} (595px • 210mm)`}
-        >
-          <span>{formatValue(pageWidth)}{activeUnit}</span>
-          <span className="opacity-70 font-normal">W</span>
-        </div>
       </div>
 
-      {/* ── Vertical Left Ruler (0 to 1123px) ── */}
+      {/* ── Vertical Left Ruler (0 to 842px) ── */}
       <div
-        className={`absolute top-0 -left-8 bottom-0 w-8 border-l border-b border-t ${rulerBg} select-none z-30 overflow-hidden font-mono text-[8.5px] rounded-bl-lg shadow-xs`}
+        className={`absolute top-0 -left-8 bottom-0 w-8 border-l border-b border-t ${rulerBg} select-none z-30 overflow-hidden font-mono text-[8.5px] shadow-xs`}
         style={{ height: `${pageHeight}px` }}
       >
         <svg
@@ -308,10 +299,10 @@ export function CanvasRuler({
                   stroke={color}
                   strokeWidth={1}
                 />
-                {t.type === "major" && t.pos < pageHeight - 15 && (
+                {t.type === "major" && (
                   <text
                     x={2}
-                    y={t.pos + 8}
+                    y={t.pos >= pageHeight - 10 ? t.pos - 2 : t.pos + 8}
                     fill={textColor}
                     fontSize={7.5}
                     fontFamily="monospace"
@@ -396,14 +387,6 @@ export function CanvasRuler({
             </g>
           )}
         </svg>
-
-        {/* Dimension Pill (Height Tag) */}
-        <div
-          className="absolute left-0.5 bottom-1 px-1 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] border border-purple-500/30 text-[7.5px] font-bold font-mono pointer-events-none flex items-center justify-center shadow-xs"
-          title={`Standard A4 PDF Height: ${formatValue(pageHeight)}${activeUnit} (842px • 297mm)`}
-        >
-          <span>{formatValue(pageHeight)}{activeUnit}</span>
-        </div>
       </div>
     </>
   );
