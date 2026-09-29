@@ -20,6 +20,11 @@ export default function SectionsGraphsPage() {
     (state) => state.reportModule.selectedLibrarySectionId
   );
 
+  // When visiting the catalog overview route, ensure no section is locked in inline editor mode
+  React.useEffect(() => {
+    dispatch(setSelectedLibrarySectionId(null));
+  }, [dispatch]);
+
   return (
     <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden bg-white dark:bg-[#0c1017]">
       {/* Main Content Area */}

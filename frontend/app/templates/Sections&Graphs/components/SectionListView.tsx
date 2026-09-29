@@ -346,7 +346,16 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                             </span>
                           )}
                         </div>
-                        <h2 className="text-base font-bold text-slate-900 dark:text-white mt-1.5 group-hover:text-[#9D61FF] transition-colors">
+                        <h2
+                          onClick={() => {
+                            if (typeof onSelectSection === "function") {
+                              onSelectSection(sec.id);
+                            }
+                            router.push(`/templates/Sections&Graphs/edit?id=${sec.id}`);
+                          }}
+                          className="text-base font-bold text-slate-900 dark:text-white mt-1.5 group-hover:text-[#9D61FF] transition-colors cursor-pointer"
+                          title="Click to open Visual Canvas Studio"
+                        >
                           {sec.name}
                         </h2>
                       </div>
