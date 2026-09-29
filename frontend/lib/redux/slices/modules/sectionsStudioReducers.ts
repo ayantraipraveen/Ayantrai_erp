@@ -853,10 +853,17 @@ export const sectionsStudioReducers = {
       if (!row) return;
       const found = findCellInRow(row, cellId);
       if (found) {
-        const target = found.parentCell || found.cell;
-        target.colSpan = colSpan;
-        if (customWidth !== undefined) {
-          target.customWidth = customWidth;
+        if (found.isStacked) {
+          // Individual stacked cell width within its column container (e.g. 25%, 50%, 75%, 100%)
+          found.cell.customWidth = customWidth !== undefined
+            ? Math.max(15, Math.min(100, Math.round(customWidth)))
+            : (colSpan === 4 ? 100 : colSpan === 3 ? 75 : colSpan === 2 ? 50 : 25);
+        } else {
+          // Top-level column width
+          found.cell.colSpan = colSpan;
+          if (customWidth !== undefined) {
+            found.cell.customWidth = customWidth;
+          }
         }
         if (sec) sec.updatedAt = "Just now";
       }
@@ -878,15 +885,20 @@ export const sectionsStudioReducers = {
       if (!row) return;
       const found = findCellInRow(row, cellId);
       if (found) {
-        const target = found.parentCell || found.cell;
         const clamped = Math.max(15, Math.min(100, Math.round(customWidth)));
-        target.customWidth = clamped;
-        target.colSpan = (clamped <= 30 ? 1 : clamped <= 55 ? 2 : clamped <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
+        if (found.isStacked) {
+          // Individual stacked cell width
+          found.cell.customWidth = clamped;
+        } else {
+          // Column width
+          found.cell.customWidth = clamped;
+          found.cell.colSpan = (clamped <= 30 ? 1 : clamped <= 55 ? 2 : clamped <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
+        }
         if (sec) sec.updatedAt = "Just now";
       }
     },
 
-    /** Update a cell's height to any arbitrary pixel value (80px to 800px) or undefined for Auto */
+    /** Update a cell's height to any arbitrary pixel value (80px to 520px to prevent footer overflow) or undefined for Auto */
     updateCellHeight: (
       state: ReportModuleState,
       action: PayloadAction<{
@@ -903,7 +915,7 @@ export const sectionsStudioReducers = {
       const found = findCellInRow(row, cellId);
       if (found) {
         if (typeof customHeight === "number") {
-          found.cell.customHeight = Math.max(80, Math.min(800, Math.round(customHeight)));
+          found.cell.customHeight = Math.max(80, Math.min(520, Math.round(customHeight)));
         } else {
           found.cell.customHeight = undefined;
         }

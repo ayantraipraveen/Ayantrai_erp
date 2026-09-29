@@ -305,6 +305,136 @@ export function CanvasContextRibbon({
             <span className="capitalize">{selectedCell.blockType.replace("-", " ")}</span>
           </div>
 
+          {/* Fluid Width Controls (Always Visible) */}
+          {(() => {
+            const currentCellWidth = Math.round(selectedCell.customWidth ?? (selectedCell.colSpan ? selectedCell.colSpan * 25 : 50));
+            const baseHeightForCell =
+              selectedCell.customHeight || (
+                selectedCell.blockType === "chart" ? 370 :
+                selectedCell.blockType === "badge-strip" ? 140 :
+                selectedCell.blockType === "insight" ? 110 :
+                selectedCell.blockType === "text" ? 90 :
+                selectedCell.blockType === "divider" ? 32 : 140
+              );
+
+            return (
+              <>
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+                  <span className="text-[10px] font-mono font-bold text-slate-400 px-1">Width:</span>
+                  {([25, 33, 50, 75, 100] as const).map((w) => (
+                    <button
+                      key={w}
+                      type="button"
+                      onClick={() => {
+                        if (onUpdateWidth) onUpdateWidth(w);
+                        else {
+                          const span = (w <= 30 ? 1 : w <= 55 ? 2 : w <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
+                          onUpdateColSpan(span);
+                        }
+                      }}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                        currentCellWidth === w
+                          ? "bg-[#9D61FF] text-white shadow-xs"
+                          : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
+                      }`}
+                      title={`Set block width to ${w}%`}
+                    >
+                      {w}%
+                    </button>
+                  ))}
+                  {/* Steppers for fluid adjustable width */}
+                  <div className="flex items-center border-l border-slate-200 dark:border-zinc-700 pl-1 ml-0.5 gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = Math.max(15, currentCellWidth - 5);
+                        if (onUpdateWidth) onUpdateWidth(next);
+                      }}
+                      className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
+                      title="Decrease width by 5%"
+                    >
+                      -
+                    </button>
+                    <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[28px] text-center">
+                      {currentCellWidth}%
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = Math.min(100, currentCellWidth + 5);
+                        if (onUpdateWidth) onUpdateWidth(next);
+                      }}
+                      className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
+                      title="Increase width by 5%"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Fluid Height Controls (Always Visible & Capped at 520px) */}
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+                  <span className="text-[10px] font-mono font-bold text-slate-400 px-1">Height:</span>
+                  {([
+                    { label: "Auto", val: undefined },
+                    { label: "S", val: 140 },
+                    { label: "M", val: 240 },
+                    { label: "L", val: 360 },
+                  ] as const).map((h) => {
+                    const isSelected = h.val === undefined
+                      ? selectedCell.customHeight === undefined
+                      : selectedCell.customHeight === h.val;
+                    return (
+                      <button
+                        key={h.label}
+                        type="button"
+                        onClick={() => onUpdateHeight && onUpdateHeight(h.val)}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-[#9D61FF] text-white shadow-xs"
+                            : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
+                        }`}
+                        title={h.val ? `Set block height to ${h.val}px` : "Reset block height to Auto"}
+                      >
+                        {h.label}
+                      </button>
+                    );
+                  })}
+                  {/* Steppers for fluid adjustable height */}
+                  <div className="flex items-center border-l border-slate-200 dark:border-zinc-700 pl-1 ml-0.5 gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const curr = selectedCell.customHeight ?? baseHeightForCell;
+                        const next = Math.max(80, curr - 20);
+                        if (onUpdateHeight) onUpdateHeight(next);
+                      }}
+                      className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
+                      title="Decrease height by 20px"
+                    >
+                      -
+                    </button>
+                    <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[38px] text-center">
+                      {selectedCell.customHeight ? `${selectedCell.customHeight}px` : "Auto"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const curr = selectedCell.customHeight ?? baseHeightForCell;
+                        const next = Math.min(520, curr + 20);
+                        if (onUpdateHeight) onUpdateHeight(next);
+                      }}
+                      className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
+                      title="Increase height by 20px"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+
           <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
 
           {/* ── Font Family Dropdown ── */}
@@ -570,135 +700,7 @@ export function CanvasContextRibbon({
             </>
           )}
 
-          {/* Fluid Width Controls (Adjustable % and Presets) */}
-          {(() => {
-            const currentCellWidth = Math.round(selectedCell.customWidth ?? (selectedCell.colSpan ? selectedCell.colSpan * 25 : 50));
-            const baseHeightForCell =
-              selectedCell.customHeight || (
-                selectedCell.blockType === "chart" ? 370 :
-                selectedCell.blockType === "badge-strip" ? 140 :
-                selectedCell.blockType === "insight" ? 110 :
-                selectedCell.blockType === "text" ? 90 :
-                selectedCell.blockType === "divider" ? 32 : 140
-              );
 
-            return (
-              <>
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
-                  <span className="text-[10px] font-mono font-bold text-slate-400 px-1">Width:</span>
-                  {([25, 33, 50, 75, 100] as const).map((w) => (
-                    <button
-                      key={w}
-                      type="button"
-                      onClick={() => {
-                        if (onUpdateWidth) onUpdateWidth(w);
-                        else {
-                          const span = (w <= 30 ? 1 : w <= 55 ? 2 : w <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
-                          onUpdateColSpan(span);
-                        }
-                      }}
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
-                        currentCellWidth === w
-                          ? "bg-[#9D61FF] text-white shadow-xs"
-                          : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
-                      }`}
-                      title={`Set block width to ${w}%`}
-                    >
-                      {w}%
-                    </button>
-                  ))}
-                  {/* Steppers for fluid adjustable width */}
-                  <div className="flex items-center border-l border-slate-200 dark:border-zinc-700 pl-1 ml-0.5 gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = Math.max(15, currentCellWidth - 5);
-                        if (onUpdateWidth) onUpdateWidth(next);
-                      }}
-                      className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
-                      title="Decrease width by 5%"
-                    >
-                      -
-                    </button>
-                    <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[28px] text-center">
-                      {currentCellWidth}%
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = Math.min(100, currentCellWidth + 5);
-                        if (onUpdateWidth) onUpdateWidth(next);
-                      }}
-                      className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
-                      title="Increase width by 5%"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                {/* Fluid Height Controls (Adjustable px and Presets) */}
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
-                  <span className="text-[10px] font-mono font-bold text-slate-400 px-1">Height:</span>
-                  {([
-                    { label: "Auto", val: undefined },
-                    { label: "S", val: 200 },
-                    { label: "M", val: 300 },
-                    { label: "L", val: 400 },
-                  ] as const).map((h) => {
-                    const isSelected = h.val === undefined
-                      ? selectedCell.customHeight === undefined
-                      : selectedCell.customHeight === h.val;
-                    return (
-                      <button
-                        key={h.label}
-                        type="button"
-                        onClick={() => onUpdateHeight && onUpdateHeight(h.val)}
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
-                          isSelected
-                            ? "bg-[#9D61FF] text-white shadow-xs"
-                            : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
-                        }`}
-                        title={h.val ? `Set block height to ${h.val}px` : "Reset block height to Auto"}
-                      >
-                        {h.label}
-                      </button>
-                    );
-                  })}
-                  {/* Steppers for fluid adjustable height */}
-                  <div className="flex items-center border-l border-slate-200 dark:border-zinc-700 pl-1 ml-0.5 gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const curr = selectedCell.customHeight ?? baseHeightForCell;
-                        const next = Math.max(80, curr - 20);
-                        if (onUpdateHeight) onUpdateHeight(next);
-                      }}
-                      className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
-                      title="Decrease height by 20px"
-                    >
-                      -
-                    </button>
-                    <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[38px] text-center">
-                      {selectedCell.customHeight ? `${selectedCell.customHeight}px` : "Auto"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const curr = selectedCell.customHeight ?? baseHeightForCell;
-                        const next = Math.min(800, curr + 20);
-                        if (onUpdateHeight) onUpdateHeight(next);
-                      }}
-                      className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
-                      title="Increase height by 20px"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </>
-            );
-          })()}
         </div>
 
         {/* Right action group */}

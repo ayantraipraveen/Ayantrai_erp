@@ -231,10 +231,11 @@ export default function SectionCanvasEditor({
         if (cell.stackedCells && cell.stackedCells.length > 0) {
           const sc = cell.stackedCells.find((s) => s.id === selectedCellId);
           if (sc) {
+            const w = sc.customWidth ?? 100;
             return {
               ...sc,
-              customWidth: cell.customWidth,
-              colSpan: cell.colSpan,
+              customWidth: w,
+              colSpan: (w <= 30 ? 1 : w <= 55 ? 2 : w <= 80 ? 3 : 4) as 1 | 2 | 3 | 4,
             };
           }
         }
