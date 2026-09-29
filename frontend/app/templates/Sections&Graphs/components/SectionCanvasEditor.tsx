@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   ArrowLeft,
   AlertCircle,
   Edit2,
   Eye,
   Save,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
+  CanvasRow,
   CanvasCell,
   CanvasBadgeStrip,
   CanvasBadgeItem,
@@ -43,6 +46,7 @@ import {
   reorderStackedCells,
   showGlobalToast,
   setChartEditorFullscreen,
+  setSectionCanvasRows,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasSidebar, SidebarAddBlockEvent } from "./CanvasSidebar";
 import {
@@ -112,6 +116,71 @@ export default function SectionCanvasEditor({
   const [zoom, setZoom] = useState(1);
   const [isPreview, setIsPreview] = useState(false);
   const [marginConfig, setMarginConfig] = useState<CanvasMarginConfig>(DEFAULT_CANVAS_MARGIN);
+
+  // ── Undo / Redo History Management (Ctrl+Z / Ctrl+Y) ───────────────────────
+  const undoStackRef = useRef<CanvasRow[][]>([]);
+  const redoStackRef = useRef<CanvasRow[][]>([]);
+  const lastRecordedRowsRef = useRef<string>("");
+  const isUndoRedoOperationRef = useRef<boolean>(false);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  // Track canvasRows changes and push snapshots onto undo stack
+  useEffect(() => {
+    if (!section?.canvasRows) return;
+    const currentJson = JSON.stringify(section.canvasRows);
+    
+    // Skip if nothing changed
+    if (currentJson === lastRecordedRowsRef.current) return;
+    
+    if (isUndoRedoOperationRef.current) {
+      isUndoRedoOperationRef.current = false;
+      lastRecordedRowsRef.current = currentJson;
+      setCanUndo(undoStackRef.current.length > 0);
+      setCanRedo(redoStackRef.current.length > 0);
+      return;
+    }
+
+    // If we had a previous state recorded, push it to undo stack
+    if (lastRecordedRowsRef.current) {
+      try {
+        const prevRows = JSON.parse(lastRecordedRowsRef.current);
+        undoStackRef.current.push(prevRows);
+        if (undoStackRef.current.length > 50) {
+          undoStackRef.current.shift();
+        }
+        redoStackRef.current = [];
+      } catch (err) {
+        console.error("Error saving undo snapshot:", err);
+      }
+    }
+
+    lastRecordedRowsRef.current = currentJson;
+    setCanUndo(undoStackRef.current.length > 0);
+    setCanRedo(false);
+  }, [section?.canvasRows]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStackRef.current.length === 0 || !section?.canvasRows) return;
+    const prevRows = undoStackRef.current.pop()!;
+    redoStackRef.current.push(JSON.parse(JSON.stringify(section.canvasRows)));
+    isUndoRedoOperationRef.current = true;
+    dispatch(setSectionCanvasRows({ sectionId, canvasRows: prevRows }));
+    setCanUndo(undoStackRef.current.length > 0);
+    setCanRedo(true);
+    dispatch(showGlobalToast({ message: "Undo: Restored previous layout (Ctrl+Z)", type: "info" }));
+  }, [dispatch, sectionId, section?.canvasRows]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStackRef.current.length === 0 || !section?.canvasRows) return;
+    const nextRows = redoStackRef.current.pop()!;
+    undoStackRef.current.push(JSON.parse(JSON.stringify(section.canvasRows)));
+    isUndoRedoOperationRef.current = true;
+    dispatch(setSectionCanvasRows({ sectionId, canvasRows: nextRows }));
+    setCanUndo(true);
+    setCanRedo(redoStackRef.current.length > 0);
+    dispatch(showGlobalToast({ message: "Redo: Reapplied layout (Ctrl+Y)", type: "info" }));
+  }, [dispatch, sectionId, section?.canvasRows]);
 
   // Derive active selected cell
   
@@ -767,6 +836,23 @@ export default function SectionCanvasEditor({
 
       if (isInput) return; // don't intercept typing
 
+      // Undo: Ctrl+Z or Cmd+Z (without Shift)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+        return;
+      }
+
+      // Redo: Ctrl+Y, Cmd+Y, or Ctrl+Shift+Z, Cmd+Shift+Z
+      if (
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "z")
+      ) {
+        e.preventDefault();
+        handleRedo();
+        return;
+      }
+
       // Delete or Backspace removes active cell
       if ((e.key === "Delete" || e.key === "Backspace") && selectedCellId && selectedRowId) {
         e.preventDefault();
@@ -791,7 +877,7 @@ export default function SectionCanvasEditor({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPreview, selectedCellId, selectedRowId, handleDeleteActive, handleDuplicateActive]);
+  }, [isPreview, selectedCellId, selectedRowId, handleDeleteActive, handleDuplicateActive, handleUndo, handleRedo]);
 
   // Fullscreen Telemetry Studio Guard
   if (chartModalOpen && chartEditorFullscreen && editingChart && editingChartCellMeta) {
@@ -886,6 +972,36 @@ export default function SectionCanvasEditor({
             blocks
           </span>
 
+          {/* Undo / Redo Toolbar Buttons */}
+          <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-zinc-800 pr-2 mr-1">
+            <button
+              type="button"
+              onClick={handleUndo}
+              disabled={!canUndo}
+              className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                canUndo
+                  ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                  : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+              }`}
+              title="Undo (Ctrl+Z)"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={handleRedo}
+              disabled={!canRedo}
+              className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                canRedo
+                  ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                  : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+              }`}
+              title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
+            >
+              <Redo2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {/* Clean Preview Toggle */}
           <button
             type="button"
@@ -958,6 +1074,10 @@ export default function SectionCanvasEditor({
         onSelectWatermark={handleSelectWatermark}
         watermarkConfig={watermarkConfig}
         onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
 
       {/* ── Main Studio Workspace ── */}
