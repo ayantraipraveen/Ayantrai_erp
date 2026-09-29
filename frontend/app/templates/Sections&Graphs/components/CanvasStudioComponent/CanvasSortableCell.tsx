@@ -125,8 +125,20 @@ export function SortableCell({
       setPortalPos(null);
       return;
     }
+
+    let topPos = rect.bottom + 4;
+    const pageEl = cellDomRef.current.closest("[id^='canvas-page-']") as HTMLElement | null;
+    const footerEl = pageEl?.querySelector("footer") as HTMLElement | null;
+    if (footerEl) {
+      const footerRect = footerEl.getBoundingClientRect();
+      const maxAllowedTop = footerRect.top - 34;
+      if (topPos > maxAllowedTop) {
+        topPos = maxAllowedTop;
+      }
+    }
+
     setPortalPos({
-      top: rect.bottom + 4,
+      top: topPos,
       left: rect.left,
       width: rect.width,
     });
@@ -246,7 +258,63 @@ export function SortableCell({
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const maxColumnHeight = (currentPageNumber ?? 1) === 1 ? 480 : 540;
+  const getAvailableHeightToFooter = useCallback((): number => {
+    if (!cellDomRef.current) {
+      return (currentPageNumber ?? 1) === 1 ? 420 : 440;
+    }
+    const pageEl = cellDomRef.current.closest("[id^='canvas-page-']") as HTMLElement | null;
+    if (!pageEl) return 440;
+
+    const footerEl = pageEl.querySelector("footer") as HTMLElement | null;
+    const cellRect = cellDomRef.current.getBoundingClientRect();
+
+    if (footerEl) {
+      const footerRect = footerEl.getBoundingClientRect();
+      const distanceToFooter = (footerRect.top - cellRect.top) / effectiveZoom;
+
+      let rowsBelowHeight = 0;
+      const rowEl = cellDomRef.current.closest(".canvas-row-item, [data-row-id], .group\\/row") as HTMLElement | null;
+      if (rowEl && rowEl.parentElement) {
+        let nextRow = rowEl.nextElementSibling as HTMLElement | null;
+        while (nextRow) {
+          if (nextRow.classList.contains("canvas-row-item") || nextRow.hasAttribute("data-row-id") || nextRow.classList.contains("group/row")) {
+            rowsBelowHeight += (nextRow.getBoundingClientRect().height / effectiveZoom) + 12;
+          }
+          nextRow = nextRow.nextElementSibling as HTMLElement | null;
+        }
+      }
+
+      const reservedBottomSpace = (isPreview ? 16 : 48) + rowsBelowHeight;
+      const maxUsable = Math.floor(distanceToFooter - reservedBottomSpace);
+      return Math.max(70, Math.min(460, maxUsable));
+    }
+
+    const pageRect = pageEl.getBoundingClientRect();
+    const distanceToPageBottom = (pageRect.bottom - cellRect.top) / effectiveZoom;
+    return Math.max(70, Math.min(460, Math.floor(distanceToPageBottom - (isPreview ? 32 : 72))));
+  }, [currentPageNumber, effectiveZoom, isPreview]);
+
+  const [dynamicMaxHeight, setDynamicMaxHeight] = useState<number>(() => {
+    return (currentPageNumber ?? 1) === 1 ? 420 : 440;
+  });
+
+  const updateDynamicMaxHeight = useCallback(() => {
+    const allowed = getAvailableHeightToFooter();
+    setDynamicMaxHeight((prev) => (Math.abs(prev - allowed) > 2 ? allowed : prev));
+  }, [getAvailableHeightToFooter]);
+
+  useEffect(() => {
+    updateDynamicMaxHeight();
+    const handler = () => updateDynamicMaxHeight();
+    window.addEventListener("resize", handler);
+    window.addEventListener("scroll", handler, true);
+    return () => {
+      window.removeEventListener("resize", handler);
+      window.removeEventListener("scroll", handler, true);
+    };
+  }, [updateDynamicMaxHeight]);
+
+  const maxColumnHeight = dynamicMaxHeight;
   const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
   const bottomZoneH = 0; // Rendered in React portal, takes zero internal cell layout height
 
@@ -315,7 +383,8 @@ export function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(maxPrimaryH, Math.max(70, Math.round(startH + deltaY)));
+      const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
+      const newH = Math.min(currentAllowed, Math.max(70, Math.round(startH + deltaY)));
       setResizeHeight(newH);
       if (typeof onHeightChange === "function") {
         onHeightChange(cell.id, rowId, newH);
@@ -330,7 +399,8 @@ export function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const finalH = Math.min(maxPrimaryH, Math.max(70, Math.round(startH + deltaY)));
+      const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
+      const finalH = Math.min(currentAllowed, Math.max(70, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       if (typeof onHeightChange === "function") {
@@ -370,7 +440,8 @@ export function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(maxPrimaryH, Math.max(70, Math.round(startH + deltaY)));
+      const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
+      const newH = Math.min(currentAllowed, Math.max(70, Math.round(startH + deltaY)));
       setResizeHeight(newH);
       if (typeof onHeightChange === "function") {
         onHeightChange(cell.id, rowId, newH);
@@ -393,7 +464,8 @@ export function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const finalH = Math.min(maxPrimaryH, Math.max(70, Math.round(startH + deltaY)));
+      const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
+      const finalH = Math.min(currentAllowed, Math.max(70, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       let colSpan: 1 | 2 | 3 | 4 = 1;
@@ -688,30 +760,34 @@ export function SortableCell({
               { label: "S", h: 200 },
               { label: "M", h: 300 },
               { label: "L", h: 400 },
-            ].map((preset) => (
-              <button
-                key={preset.label}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setResizeHeight(preset.h);
-                  if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, preset.h);
-                }}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
-                  currentHeight && Math.abs(currentHeight - preset.h) <= 15
-                    ? "bg-[#8B3DFF] text-white font-bold"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
-                }`}
-                title={`Set height to ${preset.label} (${preset.h}px)`}
-              >
-                {preset.label}
-              </button>
-            ))}
+            ].map((preset) => {
+              const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
+              const targetH = Math.min(currentAllowed, preset.h);
+              return (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setResizeHeight(targetH);
+                    if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, targetH);
+                  }}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                    currentHeight && Math.abs(currentHeight - targetH) <= 15
+                      ? "bg-[#8B3DFF] text-white font-bold"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
+                  }`}
+                  title={`Set height to ${preset.label} (${targetH}px)`}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const newH = Math.max(80, (currentHeight || baseBlockHeight) - 25);
+                const newH = Math.max(70, (currentHeight || baseBlockHeight) - 25);
                 setResizeHeight(newH);
                 if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
               }}
@@ -724,7 +800,9 @@ export function SortableCell({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const newH = Math.min(800, (currentHeight || baseBlockHeight) + 25);
+                const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
+                const targetH = (currentHeight || baseBlockHeight) + 25;
+                const newH = Math.min(currentAllowed, targetH);
                 setResizeHeight(newH);
                 if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
               }}
@@ -817,7 +895,10 @@ export function SortableCell({
       {/* Render the actual cell content block and vertically stacked blocks */}
       <div className="w-full flex-1 flex flex-col gap-3 min-h-fit">
         {/* Primary Block */}
-        <div className="w-full flex-none flex flex-col relative group/primary-block">
+        <div
+          style={{ maxHeight: `${maxPrimaryH}px` }}
+          className="w-full flex-none flex flex-col relative group/primary-block overflow-hidden"
+        >
           <CanvasBlockRenderer
             cell={cell}
             isSelected={isSelected}

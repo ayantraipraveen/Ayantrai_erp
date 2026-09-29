@@ -859,5 +859,9 @@ export default function ChartRenderer({
     );
   }
 
-  return renderChart();
+  return (
+    <div className="w-full h-full min-h-0 max-h-full flex items-center justify-center overflow-hidden [&>div]:!min-h-[140px] [&>div]:!max-h-full [&>div]:!h-full">
+      {renderChart()}
+    </div>
+  );
 }

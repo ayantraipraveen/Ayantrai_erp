@@ -62,7 +62,8 @@ export function SortableRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group/row overflow-visible transition-colors duration-100 ${
+      data-row-id={row.id}
+      className={`relative group/row canvas-row-item overflow-visible transition-colors duration-100 ${
         isRowSelected && !isPreview ? "ring-1 ring-purple-300/30 rounded-2xl" : ""
       }`}
       onClick={() => {

@@ -261,8 +261,8 @@ function ChartBlock({ cell }: { cell: CanvasCell }) {
 
   return (
     <div
-      style={customHeight ? { height: `${customHeight}px` } : undefined}
-      className={`w-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden ${
+      style={customHeight ? { height: `${customHeight}px`, maxHeight: "100%" } : { maxHeight: "100%" }}
+      className={`w-full max-h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden ${
         customHeight ? "space-y-1.5" : "space-y-3"
       }`}
     >
@@ -1306,10 +1306,11 @@ export function CanvasBlockRenderer({
   };
 
   const renderedInner = renderInner();
-  const cardStyles: React.CSSProperties = {};
+  const cardStyles: React.CSSProperties = {
+    maxHeight: "100%",
+  };
   if (cell.customHeight) {
     cardStyles.height = `${cell.customHeight}px`;
-    cardStyles.minHeight = `${cell.customHeight}px`;
   }
   if (backgroundColor) cardStyles.backgroundColor = backgroundColor;
   if (styleProps.borderColor) cardStyles.borderColor = styleProps.borderColor;

@@ -1121,7 +1121,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                         </div>
 
                       {/* Canvas Rows Container for this Page */}
-                      <div className="relative z-10 px-0 pt-7 pb-2 space-y-2 flex-1 min-h-0 overflow-visible">
+                      <div className="relative z-10 px-0 pt-3 pb-1.5 space-y-2 flex-1 min-h-0 overflow-visible">
                         {page.rows.length === 0 ? (
                           <div
                             onDragOver={(e) => {
