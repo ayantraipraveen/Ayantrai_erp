@@ -915,7 +915,8 @@ export const sectionsStudioReducers = {
       const found = findCellInRow(row, cellId);
       if (found) {
         if (typeof customHeight === "number") {
-          found.cell.customHeight = Math.max(80, Math.min(520, Math.round(customHeight)));
+          const maxH = found.isStacked ? 320 : 480;
+          found.cell.customHeight = Math.max(70, Math.min(maxH, Math.round(customHeight)));
         } else {
           found.cell.customHeight = undefined;
         }

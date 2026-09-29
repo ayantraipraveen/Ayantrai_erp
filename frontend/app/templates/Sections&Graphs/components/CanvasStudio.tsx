@@ -310,6 +310,7 @@ interface SortableCellProps {
   activeDragCellId?: string | null;
   onAddBlockBeside?: (rowId: string, cellIndex: number, blockType: CanvasBlockType) => void;
   zoom?: number;
+  currentPageNumber?: number;
 }
 
 function SortableCell({
@@ -345,6 +346,7 @@ function SortableCell({
   activeDragCellId,
   onAddBlockBeside,
   zoom = 1,
+  currentPageNumber = 1,
 }: SortableCellProps) {
   const isFirstInRow = cellIndex === 0;
   const isLastInRow = typeof totalCellsInRow === "number" && totalCellsInRow > 1 && cellIndex === totalCellsInRow - 1;
@@ -469,6 +471,60 @@ function SortableCell({
     window.addEventListener("mouseup", handleMouseUp);
   };
 
+  const maxColumnHeight = (currentPageNumber ?? 1) === 1 ? 480 : 540;
+  const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
+  const bottomZoneH = quickAddOpen ? 52 : 36;
+
+  const rawBaseBlockHeight = currentHeight || (
+    cell.blockType === "chart" ? 370 :
+    cell.blockType === "badge-strip" ? 140 :
+    cell.blockType === "insight" ? 110 :
+    cell.blockType === "text" ? 90 :
+    cell.blockType === "divider" ? 32 : 140
+  );
+
+  const rawStackedSum = hasStacked
+    ? cell.stackedCells!.reduce((acc, sc) => {
+        const scH = sc.customHeight || (
+          sc.blockType === "chart" ? 370 :
+          sc.blockType === "badge-strip" ? 140 :
+          sc.blockType === "insight" ? 110 :
+          sc.blockType === "text" ? 90 :
+          sc.blockType === "divider" ? 32 : 140
+        );
+        return acc + scH;
+      }, 0)
+    : 0;
+
+  const stackGapTotal = hasStacked ? cell.stackedCells!.length * 12 : 0;
+  const maxAvailableForCards = Math.max(140, maxColumnHeight - bottomZoneH - stackGapTotal);
+  const totalCardsRawH = rawBaseBlockHeight + rawStackedSum;
+  const cardScale = totalCardsRawH > maxAvailableForCards ? maxAvailableForCards / totalCardsRawH : 1;
+
+  const baseBlockHeight = Math.max(70, Math.floor(rawBaseBlockHeight * cardScale));
+
+  const stackedExtraHeight = hasStacked
+    ? cell.stackedCells!.reduce((acc, sc) => {
+        const rawScH = sc.customHeight || (
+          sc.blockType === "chart" ? 370 :
+          sc.blockType === "badge-strip" ? 140 :
+          sc.blockType === "insight" ? 110 :
+          sc.blockType === "text" ? 90 :
+          sc.blockType === "divider" ? 32 : 140
+        );
+        const scH = Math.max(70, Math.floor(rawScH * cardScale));
+        return acc + scH + 12;
+      }, 0)
+    : 0;
+
+  const rawMinHeight = hasStacked
+    ? baseBlockHeight + stackedExtraHeight + bottomZoneH
+    : (currentHeight ? Math.max(120, currentHeight) + bottomZoneH : (quickAddOpen ? 180 : undefined));
+
+  const effectiveMinHeight = rawMinHeight !== undefined ? Math.min(maxColumnHeight, rawMinHeight) : undefined;
+
+  const maxPrimaryH = Math.max(70, maxColumnHeight - stackedExtraHeight - bottomZoneH);
+
   const handleHeightResizeStart = (e: React.MouseEvent, explicitStartH?: number) => {
     e.stopPropagation();
     e.preventDefault();
@@ -476,7 +532,7 @@ function SortableCell({
 
     const startY = e.clientY;
     const primaryDom = cellDomRef.current?.querySelector(".group\\/primary-block") as HTMLElement | null;
-    const startH = explicitStartH || primaryDom?.offsetHeight || currentHeight || 140;
+    const startH = explicitStartH || primaryDom?.offsetHeight || baseBlockHeight || 140;
     const scrollContainer = cellDomRef.current?.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
     const startScrollTop = scrollContainer?.scrollTop || 0;
 
@@ -484,7 +540,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      const newH = Math.min(maxPrimaryH, Math.max(70, Math.round(startH + deltaY)));
       setResizeHeight(newH);
       if (typeof onHeightChange === "function") {
         onHeightChange(cell.id, rowId, newH);
@@ -499,7 +555,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const finalH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      const finalH = Math.min(maxPrimaryH, Math.max(70, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       if (typeof onHeightChange === "function") {
@@ -526,7 +582,7 @@ function SortableCell({
     const parentWidth = parentRow ? (parentRow.getBoundingClientRect().width / effectiveZoom) : 740;
     const startPercent = currentPercent;
     const primaryDom = cellDomRef.current?.querySelector(".group\\/primary-block") as HTMLElement | null;
-    const startH = primaryDom?.offsetHeight || currentHeight || 140;
+    const startH = primaryDom?.offsetHeight || baseBlockHeight || 140;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const currentScrollLeft = scrollContainer?.scrollLeft || 0;
@@ -539,7 +595,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      const newH = Math.min(maxPrimaryH, Math.max(70, Math.round(startH + deltaY)));
       setResizeHeight(newH);
       if (typeof onHeightChange === "function") {
         onHeightChange(cell.id, rowId, newH);
@@ -562,7 +618,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const finalH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      const finalH = Math.min(maxPrimaryH, Math.max(70, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       let colSpan: 1 | 2 | 3 | 4 = 1;
@@ -594,12 +650,14 @@ function SortableCell({
     const startH = currentScH || 140;
     const scrollContainer = cellDomRef.current?.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
     const startScrollTop = scrollContainer?.scrollTop || 0;
+    const otherStackedH = Math.max(0, stackedExtraHeight - (startH + 12));
+    const maxScH = Math.max(70, maxColumnHeight - baseBlockHeight - otherStackedH - 12 - bottomZoneH);
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
+      const newH = Math.min(maxScH, Math.max(70, Math.round(startH + deltaY)));
       if (typeof onHeightChange === "function") {
         onHeightChange(scId, rowId, newH);
       }
@@ -614,32 +672,35 @@ function SortableCell({
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
+  const handleStackedWidthResizeStart = (e: React.MouseEvent, scId: string, currentScW: number) => {
+    e.stopPropagation();
+    e.preventDefault();
 
-  const baseBlockHeight = currentHeight || (
-    cell.blockType === "chart" ? 370 :
-    cell.blockType === "badge-strip" ? 140 :
-    cell.blockType === "insight" ? 110 :
-    cell.blockType === "text" ? 90 :
-    cell.blockType === "divider" ? 32 : 140
-  );
+    const startX = e.clientX;
+    const parentWidth = cellDomRef.current ? (cellDomRef.current.getBoundingClientRect().width / effectiveZoom) : 250;
+    const startPercent = currentScW || 100;
+    const scrollContainer = cellDomRef.current?.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
+    const startScrollLeft = scrollContainer?.scrollLeft || 0;
 
-  const stackedExtraHeight = hasStacked
-    ? cell.stackedCells!.reduce((acc, sc) => {
-        const scH = sc.customHeight || (
-          sc.blockType === "chart" ? 370 :
-          sc.blockType === "badge-strip" ? 140 :
-          sc.blockType === "insight" ? 110 :
-          sc.blockType === "text" ? 90 :
-          sc.blockType === "divider" ? 32 : 140
-        );
-        return acc + scH + 12; // 12px gap between stacked cards
-      }, 0)
-    : 0;
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const currentScrollLeft = scrollContainer?.scrollLeft || 0;
+      const scrollDeltaX = currentScrollLeft - startScrollLeft;
+      const deltaX = (moveEvent.clientX - startX + scrollDeltaX) / effectiveZoom;
+      const deltaPercent = (deltaX / parentWidth) * 100;
+      const newPercent = Math.min(100, Math.max(25, Math.round(startPercent + deltaPercent)));
+      if (typeof onWidthChange === "function") {
+        onWidthChange(scId, rowId, newPercent);
+      }
+    };
 
-  const effectiveMinHeight = hasStacked
-    ? baseBlockHeight + stackedExtraHeight + (quickAddOpen ? 52 : 36) // includes stacked cards + bottom stack drop zone
-    : (currentHeight ? Math.max(140, currentHeight) + (quickAddOpen ? 52 : 36) : (quickAddOpen ? 190 : undefined));
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -648,7 +709,8 @@ function SortableCell({
     width: widthStyle,
     maxWidth: widthStyle,
     height: undefined,
-    minHeight: effectiveMinHeight ? `${effectiveMinHeight}px` : undefined,
+    maxHeight: `${maxColumnHeight}px`,
+    minHeight: effectiveMinHeight ? `${Math.min(maxColumnHeight, effectiveMinHeight)}px` : undefined,
     flexShrink: 0,
     flexGrow: 0,
     boxSizing: "border-box",
@@ -1029,6 +1091,14 @@ function SortableCell({
           <div className="w-full flex flex-col gap-3">
             {cell.stackedCells.map((sc, sIdx) => {
               const isStackedSelected = selectedCellId === sc.id;
+              const defaultScH = sc.blockType === "chart" ? 370 :
+                sc.blockType === "badge-strip" ? 140 :
+                sc.blockType === "insight" ? 110 :
+                sc.blockType === "text" ? 90 :
+                sc.blockType === "divider" ? 32 : 140;
+              const currentScH = sc.customHeight || defaultScH;
+              const currentScW = sc.customWidth || 100;
+
               return (
                 <div
                   key={sc.id}
@@ -1038,13 +1108,76 @@ function SortableCell({
                       onSelect(sc.id, rowId);
                     }
                   }}
-                  className={`relative group/stacked-block w-full transition-all ${
+                  style={{
+                    width: sc.customWidth ? `${sc.customWidth}%` : "100%",
+                    maxWidth: "100%",
+                    boxSizing: "border-box",
+                  }}
+                  className={`relative group/stacked-block transition-all ${
                     isStackedSelected && !isPreview ? "ring-2 ring-[#8B3DFF] rounded-2xl shadow-lg" : ""
                   }`}
                 >
                   {/* Mini Hover Toolbar for Stacked Item */}
                   {!isPreview && (
-                    <div className="absolute -top-3.5 right-2 z-30 opacity-0 group-hover/stacked-block:opacity-100 transition-opacity flex items-center gap-0.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-1.5 py-0.5 shadow-md text-xs backdrop-blur-sm">
+                    <div className={`absolute -top-3.5 right-2 z-30 ${isStackedSelected ? "opacity-100" : "opacity-0 group-hover/stacked-block:opacity-100"} transition-opacity flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-0.5 shadow-md text-xs backdrop-blur-sm`}>
+                      {/* Width Quick Stepper */}
+                      <div className="flex items-center border-r border-slate-200 dark:border-zinc-700 pr-1.5 mr-0.5 gap-0.5">
+                        <span className="text-[9px] font-mono text-slate-400">W:</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const next = Math.max(25, currentScW - 25);
+                            if (typeof onWidthChange === "function") onWidthChange(sc.id, rowId, next);
+                          }}
+                          className="w-3.5 h-3.5 rounded text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                          title="Decrease width of this stacked card"
+                        >-</button>
+                        <span className="text-[9px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[26px] text-center">
+                          {currentScW}%
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const next = Math.min(100, currentScW + 25);
+                            if (typeof onWidthChange === "function") onWidthChange(sc.id, rowId, next);
+                          }}
+                          className="w-3.5 h-3.5 rounded text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                          title="Increase width of this stacked card"
+                        >+</button>
+                      </div>
+
+                      {/* Height Quick Stepper */}
+                      <div className="flex items-center border-r border-slate-200 dark:border-zinc-700 pr-1.5 mr-0.5 gap-0.5">
+                        <span className="text-[9px] font-mono text-slate-400">H:</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const next = Math.max(70, currentScH - 20);
+                            if (typeof onHeightChange === "function") onHeightChange(sc.id, rowId, next);
+                          }}
+                          className="w-3.5 h-3.5 rounded text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                          title="Decrease height of this stacked card"
+                        >-</button>
+                        <span className="text-[9px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[32px] text-center">
+                          {currentScH}px
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const otherStackedH = Math.max(0, stackedExtraHeight - (currentScH + 12));
+                            const maxScH = Math.max(70, maxColumnHeight - baseBlockHeight - otherStackedH - 12 - bottomZoneH);
+                            const next = Math.min(maxScH, currentScH + 20);
+                            if (typeof onHeightChange === "function") onHeightChange(sc.id, rowId, next);
+                          }}
+                          className="w-3.5 h-3.5 rounded text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                          title="Increase height of this stacked card"
+                        >+</button>
+                      </div>
+
                       {sIdx > 0 && (
                         <button
                           type="button"
@@ -1145,18 +1278,24 @@ function SortableCell({
                     }}
                   />
 
-                  {/* Resize handle for stacked block height */}
+                  {/* Resize handle for stacked block width (right edge) */}
                   {!isPreview && (
                     <div
                       onMouseDown={(e) => {
-                        const scH = sc.customHeight || (
-                          sc.blockType === "chart" ? 370 :
-                          sc.blockType === "badge-strip" ? 140 :
-                          sc.blockType === "insight" ? 110 :
-                          sc.blockType === "text" ? 90 :
-                          sc.blockType === "divider" ? 32 : 140
-                        );
-                        handleStackedHeightResizeStart(e, sc.id, scH);
+                        handleStackedWidthResizeStart(e, sc.id, currentScW);
+                      }}
+                      className="absolute -right-1.5 top-0 bottom-0 w-3 cursor-col-resize z-30 flex items-center justify-center opacity-0 group-hover/stacked-block:opacity-100 transition-opacity"
+                      title="Drag horizontally to adjust width of this stacked block"
+                    >
+                      <div className="w-0.5 h-8 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/stacked-block:bg-[#8B3DFF]/80 transition-colors" />
+                    </div>
+                  )}
+
+                  {/* Resize handle for stacked block height (bottom edge) */}
+                  {!isPreview && (
+                    <div
+                      onMouseDown={(e) => {
+                        handleStackedHeightResizeStart(e, sc.id, currentScH);
                       }}
                       className="absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center opacity-0 group-hover/stacked-block:opacity-100 transition-opacity"
                       title="Drag vertically to adjust height of this stacked block"
@@ -1570,6 +1709,7 @@ function SortableRow({
                 cell={cell}
                 cellIndex={idx}
                 totalCellsInRow={row.cells.length}
+                currentPageNumber={currentPageNumber}
                 isSelected={selectedCellId === cell.id}
                 selectedCellId={selectedCellId}
                 previousCellId={idx > 0 ? row.cells[idx - 1].id : undefined}
@@ -2814,7 +2954,7 @@ export function CanvasStudio({
                       boxSizing: "border-box",
                     }}
                     className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${
-                      editingHeaderValue || editingSectionField || editingFooterValue || activeSelectedCellId ? "overflow-visible" : "overflow-hidden"
+                      editingHeaderValue || editingSectionField || editingFooterValue ? "overflow-visible" : "overflow-hidden"
                     } transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-between`}
                   >
                     {/* Margin Guides (if enabled) */}
@@ -3196,7 +3336,7 @@ export function CanvasStudio({
                         </div>
 
                       {/* Canvas Rows Container for this Page */}
-                      <div className="relative z-10 px-0 pt-3 pb-2 space-y-2 flex-1 min-h-0 overflow-visible">
+                      <div className="relative z-10 px-0 pt-3 pb-2 space-y-2 flex-1 min-h-0 overflow-hidden">
                         {page.rows.length === 0 ? (
                           <div
                             onDragOver={(e) => {
@@ -3326,7 +3466,7 @@ export function CanvasStudio({
                       {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages */}
                       {/* Standard Corporate Footer (Consistent across Page 1, Page 2, and all pages) */}
                       <footer
-                        className="relative z-10 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
+                        className="relative z-20 flex-shrink-0 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
                         style={{ backgroundColor: getPaperToneColor(paperTone) }}
                       >
                         <div className={`min-w-0 ${editingFooterValue === "company" || editingFooterValue === "websites" ? "relative z-50" : "relative z-10"}`}>
