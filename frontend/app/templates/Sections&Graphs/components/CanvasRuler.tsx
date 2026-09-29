@@ -4,11 +4,11 @@ import React, { useState, useMemo } from "react";
 import { Ruler, Maximize2, ShieldCheck } from "lucide-react";
 import { CanvasMarginConfig } from "./CanvasContextRibbon";
 
-export type RulerUnit = "px" | "mm" | "in";
+export type RulerUnit = "px" | "pt" | "mm" | "in";
 
 interface CanvasRulerProps {
-  pageWidth: number;   // default 794
-  pageHeight: number;  // default 1123
+  pageWidth: number;   // default 794 (96 DPI) or 595 (72 DPI)
+  pageHeight: number;  // default 1123 (96 DPI) or 842 (72 DPI)
   marginConfig?: CanvasMarginConfig;
   activeMousePos?: { x: number; y: number } | null;
   selectedBox?: { x: number; y: number; width: number; height: number } | null;
@@ -16,13 +16,6 @@ interface CanvasRulerProps {
   onUnitChange?: (u: RulerUnit) => void;
   isDark?: boolean;
 }
-
-// ─── Metric conversions for standard A4 (794px × 1123px at 96 DPI) ───────────
-// 794px ≈ 210mm (3.780px per mm)
-// 1123px ≈ 297mm (3.781px per mm)
-// 96px = 1 inch
-const PX_PER_MM = 794 / 210; // ~3.781
-const PX_PER_INCH = 96;
 
 export function CanvasRuler({
   pageWidth = 794,
@@ -36,11 +29,15 @@ export function CanvasRuler({
 }: CanvasRulerProps) {
   const [internalUnit, setInternalUnit] = useState<RulerUnit>("px");
   const activeUnit = unit || internalUnit;
+    const isPdf72Dpi = Math.abs(pageWidth - 595) < 10;
+  const pxPerInch = isPdf72Dpi ? 72 : 96;
+  const pxPerMm = pageWidth / 210;
+  const pxPerPt = isPdf72Dpi ? 1 : 96 / 72;
 
   const handleToggleUnit = (e: React.MouseEvent) => {
     e.stopPropagation();
     const nextUnit: RulerUnit =
-      activeUnit === "px" ? "mm" : activeUnit === "mm" ? "in" : "px";
+      activeUnit === "px" ? "pt" : activeUnit === "pt" ? "mm" : activeUnit === "mm" ? "in" : "px";
     if (onUnitChange) {
       onUnitChange(nextUnit);
     } else {
@@ -50,11 +47,14 @@ export function CanvasRuler({
 
   // Convert pixel value to selected unit display string
   const formatValue = (px: number): string => {
+    if (activeUnit === "pt") {
+      return Math.round(px / pxPerPt).toString();
+    }
     if (activeUnit === "mm") {
-      return (px / PX_PER_MM).toFixed(0);
+      return (px / pxPerMm).toFixed(0);
     }
     if (activeUnit === "in") {
-      return (px / PX_PER_INCH).toFixed(1);
+      return (px / pxPerInch).toFixed(1);
     }
     return Math.round(px).toString();
   };
@@ -62,12 +62,27 @@ export function CanvasRuler({
   // Generate tick marks for horizontal ruler (0 to pageWidth)
   const horizontalTicks = useMemo(() => {
     const ticks: Array<{ pos: number; type: "major" | "medium" | "minor"; label?: string }> = [];
-    const step = activeUnit === "mm" ? PX_PER_MM * 10 : activeUnit === "in" ? PX_PER_INCH / 2 : 50;
-    const minorStep = activeUnit === "mm" ? PX_PER_MM * 2 : activeUnit === "in" ? PX_PER_INCH / 8 : 10;
+    const step =
+      activeUnit === "pt"
+        ? pxPerPt * 50
+        : activeUnit === "mm"
+        ? pxPerMm * 10
+        : activeUnit === "in"
+        ? pxPerInch / 2
+        : 50;
+
+    const minorStep =
+      activeUnit === "pt"
+        ? pxPerPt * 10
+        : activeUnit === "mm"
+        ? pxPerMm * 2
+        : activeUnit === "in"
+        ? pxPerInch / 8
+        : 10;
 
     for (let p = 0; p <= pageWidth; p += minorStep) {
       const isMajor = Math.abs(p % step) < 0.5 || p === 0 || Math.abs(p - pageWidth) < 1;
-      const isMedium = !isMajor && (Math.abs(p % (step / 2)) < 0.5);
+      const isMedium = !isMajor && Math.abs(p % (step / 2)) < 0.5;
 
       if (isMajor) {
         ticks.push({
@@ -82,17 +97,32 @@ export function CanvasRuler({
       }
     }
     return ticks;
-  }, [pageWidth, activeUnit]);
+  }, [pageWidth, activeUnit, pxPerPt, pxPerMm, pxPerInch]);
 
   // Generate tick marks for vertical ruler (0 to pageHeight)
   const verticalTicks = useMemo(() => {
     const ticks: Array<{ pos: number; type: "major" | "medium" | "minor"; label?: string }> = [];
-    const step = activeUnit === "mm" ? PX_PER_MM * 10 : activeUnit === "in" ? PX_PER_INCH / 2 : 50;
-    const minorStep = activeUnit === "mm" ? PX_PER_MM * 2 : activeUnit === "in" ? PX_PER_INCH / 8 : 10;
+    const step =
+      activeUnit === "pt"
+        ? pxPerPt * 50
+        : activeUnit === "mm"
+        ? pxPerMm * 10
+        : activeUnit === "in"
+        ? pxPerInch / 2
+        : 50;
+
+    const minorStep =
+      activeUnit === "pt"
+        ? pxPerPt * 10
+        : activeUnit === "mm"
+        ? pxPerMm * 2
+        : activeUnit === "in"
+        ? pxPerInch / 8
+        : 10;
 
     for (let p = 0; p <= pageHeight; p += minorStep) {
       const isMajor = Math.abs(p % step) < 0.5 || p === 0 || Math.abs(p - pageHeight) < 1;
-      const isMedium = !isMajor && (Math.abs(p % (step / 2)) < 0.5);
+      const isMedium = !isMajor && Math.abs(p % (step / 2)) < 0.5;
 
       if (isMajor) {
         ticks.push({
@@ -107,7 +137,7 @@ export function CanvasRuler({
       }
     }
     return ticks;
-  }, [pageHeight, activeUnit]);
+  }, [pageHeight, activeUnit, pxPerPt, pxPerMm, pxPerInch]);
 
   const cornerBg = isDark
     ? "bg-[#0b0e14] border-zinc-800 text-zinc-300"
@@ -127,7 +157,7 @@ export function CanvasRuler({
       <div
         onClick={handleToggleUnit}
         className={`absolute -top-6 -left-8 w-8 h-6 flex items-center justify-center border-t border-l border-r border-b ${cornerBg} rounded-tl-lg font-mono text-[9px] font-bold cursor-pointer select-none hover:bg-[#9D61FF] hover:text-white transition-colors z-30 shadow-xs`}
-        title={`Click to switch ruler unit (Current: ${activeUnit.toUpperCase()})`}
+        title={`Click to switch unit (px [96 DPI: 794×1123] → pt [PDF 72 DPI: 595×842] → mm [210×297] → in). Current: ${activeUnit.toUpperCase()}`}
       >
         <span className="uppercase">{activeUnit}</span>
       </div>
@@ -249,9 +279,15 @@ export function CanvasRuler({
         </svg>
 
         {/* Dimension Pill (Width Tag) */}
-        <div className="absolute right-1 top-1 px-1.5 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] border border-purple-500/30 text-[8px] font-bold font-mono pointer-events-none flex items-center gap-1">
+        <div
+          className="absolute right-1 top-1 px-1.5 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] border border-purple-500/30 text-[8px] font-bold font-mono pointer-events-none flex items-center gap-1 shadow-xs"
+          title={`A4 Width: ${formatValue(pageWidth)}${activeUnit} (794px @ 96DPI = 595pt @ 72DPI PDF = 210mm ISO)`}
+        >
           <span>{formatValue(pageWidth)}{activeUnit}</span>
           <span className="opacity-70 font-normal">W</span>
+          <span className="text-[7.5px] text-slate-400 dark:text-zinc-500 hidden sm:inline">
+            {activeUnit === "pt" ? "• 595pt PDF" : activeUnit === "px" ? "• 794px Web" : "• 210mm"}
+          </span>
         </div>
       </div>
 
@@ -372,7 +408,10 @@ export function CanvasRuler({
         </svg>
 
         {/* Dimension Pill (Height Tag) */}
-        <div className="absolute left-0.5 bottom-1 px-1 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] border border-purple-500/30 text-[7.5px] font-bold font-mono pointer-events-none flex items-center justify-center">
+        <div
+          className="absolute left-0.5 bottom-1 px-1 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] border border-purple-500/30 text-[7.5px] font-bold font-mono pointer-events-none flex items-center justify-center shadow-xs"
+          title={`A4 Height: ${formatValue(pageHeight)}${activeUnit} (1123px @ 96DPI = 842pt @ 72DPI PDF = 297mm ISO)`}
+        >
           <span>{formatValue(pageHeight)}{activeUnit}</span>
         </div>
       </div>

@@ -112,9 +112,12 @@ import {
   getFallbackTitleHtml,
 } from "./DynamicTitleEditor";
 
-// ─── Standard Physical A4 Dimensions at 96 DPI ────────────────────────────────
-export const A4_WIDTH_PX = 794;
-export const A4_HEIGHT_PX = 1123;
+// ─── Standard Physical A4 Dimensions at 96 DPI and 72 DPI (PDF) ───────────────
+export type CanvasPageDpi = "96dpi" | "72dpi";
+export const A4_WIDTH_PX = 794;      // 96 DPI (Standard Windows Screen / Web CSS)
+export const A4_HEIGHT_PX = 1123;    // 96 DPI (Standard Windows Screen / Web CSS)
+export const A4_PDF_WIDTH_PX = 595;  // 72 DPI (Standard PDF Points / Preview)
+export const A4_PDF_HEIGHT_PX = 842; // 72 DPI (Standard PDF Points / Preview)
 
 // ─── Mathematical fluid width formula for flex-wrap row with gap: 16px ────────
 export function getCellWidthStyle(percent: number): string {
