@@ -16,11 +16,8 @@ import { Loader2 } from "lucide-react";
  */
 function CreateSectionStudioContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const librarySections = useAppSelector((state) => state.reportModule.librarySections || []);
-
-  const querySectionId = searchParams.get("id") || searchParams.get("sectionId");
 
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
   const initializedRef = useRef(false);
@@ -29,17 +26,6 @@ function CreateSectionStudioContent() {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    // If an existing section ID was provided, pre-fill and load its canvas data
-    if (querySectionId) {
-      const existing = librarySections.find((s) => s.id === querySectionId);
-      if (existing) {
-        dispatch(setSelectedLibrarySectionId(existing.id));
-        setActiveSectionId(existing.id);
-        return;
-      }
-    }
-
-    // Otherwise, create a new blank section with empty rows and default metadata
     const newId = `sec-custom-${Date.now()}`;
     dispatch(
       createLibrarySection({
@@ -55,7 +41,7 @@ function CreateSectionStudioContent() {
     );
     dispatch(setSelectedLibrarySectionId(newId));
     setActiveSectionId(newId);
-  }, [dispatch, querySectionId, librarySections]);
+  }, [dispatch, librarySections]);
 
   const handleBack = () => {
     dispatch(setSelectedLibrarySectionId(null));

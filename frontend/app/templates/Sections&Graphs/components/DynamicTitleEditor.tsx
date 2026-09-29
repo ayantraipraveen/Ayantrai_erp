@@ -157,7 +157,6 @@ export function DynamicTextEditor({
   const fontBtnRef = useRef<HTMLButtonElement | null>(null);
   const colorBtnRef = useRef<HTMLButtonElement | null>(null);
   const savedOffsetsRef = useRef<{ start: number; end: number } | null>(null);
-
   const [selectedFont, setSelectedFont] = useState<string>("Inter");
   const [fontSize, setFontSize] = useState<number>(defaultFontSize);
   const [activeColor, setActiveColor] = useState<string>("#2563eb");
@@ -222,7 +221,10 @@ export function DynamicTextEditor({
       window.removeEventListener("resize", updatePos);
     };
   }, [colorMenuOpen]);
-
+useEffect(() => {
+  console.log("editor mounted");
+  return () => console.log("editor unmounted");
+}, []);
   // Dismiss portal dropdowns when clicking outside
   useEffect(() => {
     if (!fontMenuOpen && !colorMenuOpen) return;
@@ -287,30 +289,53 @@ export function DynamicTextEditor({
     }
   }, [initialHtml, initialValue]);
 
-  // Auto-commit when clicking completely outside this editor container (ignoring portal dropdown clicks)
+  const isMouseDownInEditorRef = useRef(false);
+
+  // Track if mouse is down inside editor to prevent drag-selection from triggering outside click
   useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target?.closest(".portal-title-dropdown")) {
-        return; // Don't auto-commit if interacting with portal dropdowns
-      }
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        if (editorRef.current) {
-          const html = editorRef.current.innerHTML;
-          const plainText = (editorRef.current.innerText || "").trim();
-          const isActuallyEmpty = !plainText || html === "<br>" || html === "<p><br></p>";
-          onSave(isActuallyEmpty ? "" : (plainText || initialValue), isActuallyEmpty ? "" : html);
-        }
-      }
+    const handleEditorMouseDown = () => {
+      isMouseDownInEditorRef.current = true;
     };
-    const timer = setTimeout(() => {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }, 200);
+    const handleGlobalMouseUp = () => {
+      isMouseDownInEditorRef.current = false;
+    };
+    const ed = editorRef.current;
+    if (ed) {
+      ed.addEventListener("mousedown", handleEditorMouseDown);
+    }
+    window.addEventListener("mouseup", handleGlobalMouseUp);
     return () => {
-      clearTimeout(timer);
-      document.removeEventListener("mousedown", handleOutsideClick);
+      if (ed) {
+        ed.removeEventListener("mousedown", handleEditorMouseDown);
+      }
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
     };
-  }, [initialValue, onSave]);
+  }, []);
+
+const onSaveRef = useRef(onSave);
+useEffect(() => {
+  onSaveRef.current = onSave;
+});
+
+useEffect(() => {
+  const handler = (e: MouseEvent) => {
+    const container = containerRef.current;
+    if (!container) return;
+    if (e.composedPath().includes(container)) return;
+
+    const el = e.target as HTMLElement | null;
+    if (el?.closest(".portal-title-dropdown, .portal-ribbon-popover, .portal-quick-add-panel")) return;
+
+    const ed = editorRef.current;
+    if (!ed) return;
+    const html = ed.innerHTML;
+    const plain = (ed.innerText || "").trim();
+    const empty = !plain || html === "<br>" || html === "<p><br></p>";
+    onSaveRef.current(empty ? "" : plain, empty ? "" : html);
+  };
+  document.addEventListener("mousedown", handler);
+  return () => document.removeEventListener("mousedown", handler);
+}, []);
 
   // Keep savedOffsetsRef synchronized whenever selection changes
   const handleSelectionChange = useCallback(() => {
