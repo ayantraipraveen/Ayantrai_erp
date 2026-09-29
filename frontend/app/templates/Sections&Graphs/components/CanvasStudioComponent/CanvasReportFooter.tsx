@@ -2,16 +2,18 @@
 
 import React from "react";
 import { DynamicTextEditor, renderDynamicText } from "../DynamicTitleEditor";
-import { ReportFooterValues } from "../../utils";
-import { getPaperToneColor } from "../../utils";
+import { ReportFooterValues, getPaperToneColor } from "../../utils";
+
+export type FooterField = "company" | "websites" | "quote";
 
 export interface CanvasReportFooterProps {
   paperTone?: string;
   footerValues: ReportFooterValues;
-  editingFooterValue: "company" | "websites" | "quote" | null;
+  /** Field being edited ON THIS PAGE only (pass null for other pages) */
+  editingFooterValue: FooterField | null;
   activeIsPreview: boolean;
-  onStartEditing: (field: "company" | "websites" | "quote") => void;
-  onSave: (field: "company" | "websites" | "quote", plain: string, html: string) => void;
+  onStartEditing: (field: FooterField) => void;
+  onSave: (field: FooterField, plain: string, html: string) => void;
   onCancel: () => void;
 }
 
@@ -24,18 +26,22 @@ export function CanvasReportFooter({
   onSave,
   onCancel,
 }: CanvasReportFooterProps) {
+  const open = (field: FooterField) => {
+    if (!activeIsPreview) onStartEditing(field);
+  };
+
+  const leftZ =
+    editingFooterValue === "company" || editingFooterValue === "websites"
+      ? "relative z-50"
+      : "relative z-10";
+  const rightZ = editingFooterValue === "quote" ? "relative z-50" : "relative z-10";
+
   return (
     <footer
       className="relative z-20 flex-shrink-0 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
       style={{ backgroundColor: getPaperToneColor(paperTone) }}
     >
-      <div
-        className={`min-w-0 ${
-          editingFooterValue === "company" || editingFooterValue === "websites"
-            ? "relative z-50"
-            : "relative z-10"
-        }`}
-      >
+      <div className={`min-w-0 ${leftZ}`}>
         {editingFooterValue === "company" ? (
           <DynamicTextEditor
             initialValue={footerValues.company}
@@ -50,12 +56,13 @@ export function CanvasReportFooter({
         ) : (
           <p
             className="cursor-text text-sm font-bold text-[#1836a0]"
-            onDoubleClick={() => !activeIsPreview && onStartEditing("company")}
+            onDoubleClick={() => open("company")}
             title="Double-click to format company name (Word style)"
           >
             {renderDynamicText(footerValues.companyHtml, footerValues.company)}
           </p>
         )}
+
         {editingFooterValue === "websites" ? (
           <DynamicTextEditor
             initialValue={footerValues.websites}
@@ -70,7 +77,7 @@ export function CanvasReportFooter({
         ) : (
           <p
             className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
-            onDoubleClick={() => !activeIsPreview && onStartEditing("websites")}
+            onDoubleClick={() => open("websites")}
             title="Double-click to format website links (Word style)"
           >
             {renderDynamicText(footerValues.websitesHtml, footerValues.websites)}
@@ -78,43 +85,30 @@ export function CanvasReportFooter({
         )}
       </div>
 
-      <div className="flex flex-col items-center justify-center">
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-[#1836a0]" />
-          <div className="h-2 w-2 rounded-full bg-[#2454d8]" />
-          <div className="h-2 w-2 rounded-full bg-[#41b2ff]" />
-        </div>
-      </div>
+      <div className="h-[2px] w-full bg-[#1836a0]/60" />
 
-      <div
-        className={`flex flex-col items-end text-right ${
-          editingFooterValue === "quote" ? "relative z-50" : "relative z-10"
-        }`}
-      >
+      <div className={`min-w-0 ${rightZ}`}>
         {editingFooterValue === "quote" ? (
           <DynamicTextEditor
             initialValue={footerValues.quote}
             initialHtml={footerValues.quoteHtml}
-            defaultFontSize={13}
+            defaultFontSize={14}
             multiline={false}
             toolbarPosition="top"
             toolbarAlign="right"
-            className="text-xs font-medium text-[#1836a0]"
+            className="text-right text-sm font-semibold text-[#1836a0]"
             onSave={(plain, html) => onSave("quote", plain, html)}
             onCancel={onCancel}
           />
         ) : (
           <p
-            className="cursor-text text-xs font-medium text-[#1836a0]"
-            onDoubleClick={() => !activeIsPreview && onStartEditing("quote")}
-            title="Double-click to format footer tagline (Word style)"
+            className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
+            onDoubleClick={() => open("quote")}
+            title="Double-click to format safety quote (Word style)"
           >
-            {renderDynamicText(footerValues.quoteHtml, footerValues.quote)}
+            &ldquo;{renderDynamicText(footerValues.quoteHtml, footerValues.quote)}&rdquo;
           </p>
         )}
-        <p className="mt-1 text-[11px] font-medium text-slate-400">
-          Generated automatically via Sitesafe EHS Platform
-        </p>
       </div>
     </footer>
   );

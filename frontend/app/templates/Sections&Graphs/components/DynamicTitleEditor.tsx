@@ -157,6 +157,7 @@ export function DynamicTextEditor({
   const fontBtnRef = useRef<HTMLButtonElement | null>(null);
   const colorBtnRef = useRef<HTMLButtonElement | null>(null);
   const savedOffsetsRef = useRef<{ start: number; end: number } | null>(null);
+
   const [selectedFont, setSelectedFont] = useState<string>("Inter");
   const [fontSize, setFontSize] = useState<number>(defaultFontSize);
   const [activeColor, setActiveColor] = useState<string>("#2563eb");
@@ -221,10 +222,7 @@ export function DynamicTextEditor({
       window.removeEventListener("resize", updatePos);
     };
   }, [colorMenuOpen]);
-useEffect(() => {
-  console.log("editor mounted");
-  return () => console.log("editor unmounted");
-}, []);
+
   // Dismiss portal dropdowns when clicking outside
   useEffect(() => {
     if (!fontMenuOpen && !colorMenuOpen) return;
@@ -312,17 +310,23 @@ useEffect(() => {
     };
   }, []);
 
-const onSaveRef = useRef(onSave);
+  // Auto-commit when clicking completely outside this editor container (ignoring portal dropdown clicks and selection drags)
+ const onSaveRef = useRef(onSave);
+const initialValueRef = useRef(initialValue);
 useEffect(() => {
   onSaveRef.current = onSave;
+  initialValueRef.current = initialValue;
 });
 
 useEffect(() => {
   const handler = (e: MouseEvent) => {
     const container = containerRef.current;
     if (!container) return;
+
+    // inside the editor or toolbar (composedPath is captured at dispatch time)
     if (e.composedPath().includes(container)) return;
 
+    // portaled dropdowns
     const el = e.target as HTMLElement | null;
     if (el?.closest(".portal-title-dropdown, .portal-ribbon-popover, .portal-quick-add-panel")) return;
 
@@ -335,7 +339,7 @@ useEffect(() => {
   };
   document.addEventListener("mousedown", handler);
   return () => document.removeEventListener("mousedown", handler);
-}, []);
+}, []); // subscribes once
 
   // Keep savedOffsetsRef synchronized whenever selection changes
   const handleSelectionChange = useCallback(() => {

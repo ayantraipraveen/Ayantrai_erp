@@ -343,6 +343,11 @@ export function CanvasStudio({
 
   // Section Header Live / Inline Editing State
   const [editingSectionField, setEditingSectionField] = useState<"eyebrow" | "name" | "description" | null>(null);
+  useEffect(() => {
+  if (!editingHeaderValue && !editingFooterValue && !editingSectionField) {
+    setEditingPageIndex(null);
+  }
+}, [editingHeaderValue, editingFooterValue, editingSectionField]);
   const [localSectionEyebrow, setLocalSectionEyebrow] = useState(section.eyebrow);
   const [localSectionName, setLocalSectionName] = useState(section.name);
   const [localSectionDesc, setLocalSectionDesc] = useState(section.description);
@@ -949,6 +954,21 @@ export function CanvasStudio({
           >
             {pages.map((page, pageIdx) => {
               const isEditingHere = editingPageIndex === page.pageIndex;
+              const openHeader = (f: "taglinePrimary" | "taglineSecondary" | "title" | "period") => {
+  if (activeIsPreview) return;
+  setEditingPageIndex(page.pageIndex);
+  setEditingHeaderValue(f);
+};
+const openFooter = (f: "company" | "websites" | "quote") => {
+  if (activeIsPreview) return;
+  setEditingPageIndex(page.pageIndex);
+  setEditingFooterValue(f);
+};
+const openSection = (f: "eyebrow" | "name" | "description") => {
+  if (activeIsPreview) return;
+  setEditingPageIndex(page.pageIndex);
+  setEditingSectionField(f);
+};
               return (
                 <React.Fragment key={`page-${page.pageIndex}`}>
                   {/* Visual Page Break Between Pages on Desk */}
@@ -1034,7 +1054,7 @@ export function CanvasStudio({
                       boxSizing: "border-box",
                     }}
                     className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${
-                      editingHeaderValue || editingSectionField || editingFooterValue ? "overflow-visible" : "overflow-hidden"
+                     (editingHeaderValue || editingSectionField || editingFooterValue) && isEditingHere ? "overflow-visible" : "overflow-hidden"
                     } transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-between`}
                   >
                     {/* Margin Guides (if enabled) */}
@@ -1102,9 +1122,9 @@ export function CanvasStudio({
                                 />
                               </div>
 
-                              <div className={`min-w-0 flex flex-col justify-center ${editingHeaderValue === "taglinePrimary" || editingHeaderValue === "taglineSecondary" ? "relative z-50" : "relative z-10"}`}>
+                              <div className={`min-w-0 flex flex-col justify-center ${(editingHeaderValue === "taglinePrimary" || editingHeaderValue === "taglineSecondary") && isEditingHere ? "relative z-50" : "relative z-10"}`}>
                                <div className="flex flex-col gap-0.5 border-l-2 border-[#2454d8] pl-2.5 px-3 py-2">
-                                 {editingHeaderValue === "taglinePrimary" ? (
+                                 {editingHeaderValue === "taglinePrimary"  && isEditingHere ? (
                                    <DynamicTextEditor
                                      initialValue={headerValues.taglinePrimary}
                                      initialHtml={headerValues.taglinePrimaryHtml}
@@ -1118,14 +1138,13 @@ export function CanvasStudio({
                                  ) : (
                                    <p
                                      className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                                     onClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
-                                     onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
-                                     title="Double-click to format primary report tagline (Word style)"
+                                     
+onDoubleClick={() => openHeader("taglinePrimary")}                                     title="Double-click to format primary report tagline (Word style)"
                                    >
                                      {renderDynamicText(headerValues.taglinePrimaryHtml, headerValues.taglinePrimary)}
                                    </p>
                                  )}
-                                 {editingHeaderValue === "taglineSecondary" ? (
+                                 {editingHeaderValue === "taglineSecondary" && isEditingHere ? (
                                    <DynamicTextEditor
                                      initialValue={headerValues.taglineSecondary}
                                      initialHtml={headerValues.taglineSecondaryHtml}
@@ -1139,8 +1158,7 @@ export function CanvasStudio({
                                  ) : (
                                    <p
                                      className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                                     onClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
-                                     onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
+                                    onDoubleClick={() => openHeader("taglineSecondary")}
                                      title="Double-click to format secondary report tagline (Word style)"
                                    >
                                      {renderDynamicText(headerValues.taglineSecondaryHtml, headerValues.taglineSecondary)}
@@ -1149,9 +1167,9 @@ export function CanvasStudio({
                                 </div>
                               </div>
 
-                              <div className={`min-w-0 flex flex-col justify-center px-2 py-2 ${editingHeaderValue === "title" || editingHeaderValue === "period" ? "relative z-50" : "relative z-10"}`}>
+                              <div className={`min-w-0 flex flex-col justify-center px-2 py-2 ${(editingHeaderValue === "title" || editingHeaderValue === "period") && isEditingHere ? "relative z-50" : "relative z-10"}`}>
                                 <div className="relative">
-                                  {editingHeaderValue === "title" ? (
+                                  {editingHeaderValue === "title" && isEditingHere ? (
                                     <DynamicTextEditor
                                       initialValue={headerValues.title}
                                       initialHtml={headerValues.titleHtml}
@@ -1167,15 +1185,14 @@ export function CanvasStudio({
                                     <p
                                       className="cursor-text pr-5 leading-tight"
                                       style={headerTitleTextStyle}
-                                      onClick={() => !activeIsPreview && setEditingHeaderValue("title")}
-                                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("title")}
+                                      onDoubleClick={() => openHeader("title")}
                                       title="Double-click to format report title (Word style)"
                                     >
                                       {renderDynamicText(headerValues.titleHtml, headerValues.title)}
                                     </p>
                                   )}
                                 </div>
-                                {editingHeaderValue === "period" ? (
+                                {editingHeaderValue === "period" && isEditingHere ? (
                                   <DynamicTextEditor
                                     initialValue={headerValues.period}
                                     initialHtml={headerValues.periodHtml}
@@ -1190,8 +1207,8 @@ export function CanvasStudio({
                                 ) : (
                                   <p
                                     className="mt-0.5 cursor-text text-[11px] font-semibold leading-tight text-[#1836a0]"
-                                    onClick={() => !activeIsPreview && setEditingHeaderValue("period")}
-                                    onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("period")}
+                                   
+                                    onDoubleClick={() => openHeader("period")}
                                     title="Double-click to format report period (Word style)"
                                   >
                                     {renderDynamicText(headerValues.periodHtml, headerValues.period)}
@@ -1209,7 +1226,7 @@ export function CanvasStudio({
 
                           {/* Section-specific Header Bar (Pixel-Perfect Matching Design Target) */}
                           <div
-                            className={`relative ${editingSectionField ? "z-50" : "z-10"} px-0 group/section-header transition-all select-text ${
+                            className={`relative ${editingSectionField && isEditingHere ? "z-50" : "z-10"} px-0 group/section-header transition-all select-text ${
                               section.headerSpacing === "compact"
                                 ? "pt-2 pb-1.5"
                                 : section.headerSpacing === "spacious"
@@ -1218,7 +1235,7 @@ export function CanvasStudio({
                             }`}
                             style={{ backgroundColor: getPaperToneColor(paperTone) }}
                           >
-                            {editingSectionField === "eyebrow" ? (
+                            {editingSectionField === "eyebrow" && isEditingHere ? (
                               <div className="w-full mb-3">
                                 <DynamicTextEditor
                                   initialValue={section.eyebrow}
@@ -1250,11 +1267,7 @@ export function CanvasStudio({
                             ) : (
                               <div className="flex items-center justify-between gap-3 mb-1.5">
                                 <span
-                                  onDoubleClick={() => {
-                                    if (!activeIsPreview) {
-                                      setEditingSectionField("eyebrow");
-                                    }
-                                  }}
+                                  onDoubleClick={() => openSection("eyebrow")}
                                   className="text-[12.5px] font-bold uppercase tracking-[0.15em] font-sans leading-none cursor-pointer transition-colors"
                                   title="Double-click to format eyebrow (Word style)"
                                 >
@@ -1262,7 +1275,7 @@ export function CanvasStudio({
                                 </span>
 
                                 {/* Right Header Controls: Spacing + Watermark + Edit Header Button */}
-                                {!editingSectionField && !activeIsPreview && (
+                                {!isEditingHere  && !activeIsPreview && (
                                   <div className="flex items-center gap-2">
                                     {/* Header Spacing / Height Preset Selector */}
                                     <div className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-0.5 bg-slate-100 dark:bg-zinc-800 rounded-lg p-0.5 text-[10px] font-medium text-slate-500">
@@ -1274,6 +1287,7 @@ export function CanvasStudio({
                                           onClick={() => {
                                             dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));
                                           }}
+                                          
                                           className={`px-1.5 py-0.5 rounded capitalize transition-colors cursor-pointer ${
                                             (section.headerSpacing || "normal") === space
                                               ? "bg-white dark:bg-zinc-700 text-[#8B3DFF] font-bold shadow-xs"
@@ -1311,6 +1325,7 @@ export function CanvasStudio({
                                       onClick={() => {
                                         setLocalSectionName(section.name);
                                         setLocalSectionEyebrow(section.eyebrow);
+                                          setEditingPageIndex(page.pageIndex);   
                                         setLocalSectionDesc(section.description);
                                         setEditingSectionField("name");
                                       }}
@@ -1326,7 +1341,7 @@ export function CanvasStudio({
                             )}
 
                             {/* Main Section Title: Dynamic Word-Style Typography & Color Studio */}
-                            {editingSectionField === "name" ? (
+                            {editingSectionField === "name" && isEditingHere  ? (
                               <DynamicTitleEditor
                                 initialName={section.name}
                                 initialHtml={section.titleHtml || getFallbackTitleHtml(section.name, isDarkPaper)}
@@ -1353,11 +1368,7 @@ export function CanvasStudio({
                               />
                             ) : (
                               <h1
-                                onDoubleClick={() => {
-                                  if (!activeIsPreview) {
-                                    setEditingSectionField("name");
-                                  }
-                                }}
+                               onDoubleClick={() => openSection("name")}
                                 className="text-3xl sm:text-[38px] lg:text-[40px] font-black tracking-[-0.035em] leading-[1.08] cursor-pointer mt-1"
                                 title="Double-click to format title (Word style)"
                               >
@@ -1365,7 +1376,7 @@ export function CanvasStudio({
                               </h1>
                             )}
 
-                            {editingSectionField === "description" ? (
+                            {editingSectionField === "description"  && isEditingHere ? (
                               <DynamicTextEditor
                                 initialValue={section.description}
                                 initialHtml={section.descriptionHtml}
@@ -1395,11 +1406,7 @@ export function CanvasStudio({
                               />
                             ) : section.description || section.descriptionHtml ? (
                               <p
-                                onDoubleClick={() => {
-                                  if (!activeIsPreview) {
-                                    setEditingSectionField("description");
-                                  }
-                                }}
+                               onDoubleClick={() => openSection("description")}
                                 className={`text-[14px] sm:text-[14.5px] mt-2 max-w-4xl leading-relaxed cursor-pointer font-normal ${
                                   isDarkPaper && !sectionTextColor
                                     ? "text-zinc-300"
@@ -1546,12 +1553,12 @@ export function CanvasStudio({
 
                       {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages */}
                       {/* Standard Corporate Footer (Consistent across Page 1, Page 2, and all pages) */}
-                      <footer
+                      {/* <footer
                         className="relative z-20 flex-shrink-0 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
                         style={{ backgroundColor: getPaperToneColor(paperTone) }}
                       >
-                        <div className={`min-w-0 ${editingFooterValue === "company" || editingFooterValue === "websites" ? "relative z-50" : "relative z-10"}`}>
-                          {editingFooterValue === "company" ? (
+                        <div className={`min-w-0 ${((editingFooterValue === "company" || editingFooterValue === "websites") && isEditingHere) ? "relative z-50" : "relative z-10"}`}>
+                          {editingFooterValue === "company" && isEditingHere ? (
                             <DynamicTextEditor
                               initialValue={footerValues.company}
                               initialHtml={footerValues.companyHtml}
@@ -1565,13 +1572,13 @@ export function CanvasStudio({
                           ) : (
                             <p
                               className="cursor-text text-sm font-bold text-[#1836a0]"
-                              onDoubleClick={() => !activeIsPreview && setEditingFooterValue("company")}
+                             onDoubleClick={() => openFooter("company")}
                               title="Double-click to format company name (Word style)"
                             >
                               {renderDynamicText(footerValues.companyHtml, footerValues.company)}
                             </p>
                           )}
-                          {editingFooterValue === "websites" ? (
+                          {editingFooterValue === "websites" && isEditingHere ? (
                             <DynamicTextEditor
                               initialValue={footerValues.websites}
                               initialHtml={footerValues.websitesHtml}
@@ -1585,7 +1592,7 @@ export function CanvasStudio({
                           ) : (
                             <p
                               className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
-                              onDoubleClick={() => !activeIsPreview && setEditingFooterValue("websites")}
+                              onDoubleClick={() => openFooter("websites")}
                               title="Double-click to format website links (Word style)"
                             >
                               {renderDynamicText(footerValues.websitesHtml, footerValues.websites)}
@@ -1595,8 +1602,8 @@ export function CanvasStudio({
 
                         <div className="h-[2px] w-full bg-[#1836a0]/60" />
 
-                        <div className={`min-w-0 ${editingFooterValue === "quote" ? "relative z-50" : "relative z-10"}`}>
-                          {editingFooterValue === "quote" ? (
+                        <div className={`min-w-0 ${editingFooterValue === "quote" && isEditingHere ? "relative z-50" : "relative z-10"}`}>
+                          {editingFooterValue === "quote" && isEditingHere ? (
                             <DynamicTextEditor
                               initialValue={footerValues.quote}
                               initialHtml={footerValues.quoteHtml}
@@ -1611,14 +1618,24 @@ export function CanvasStudio({
                           ) : (
                             <p
                               className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
-                              onDoubleClick={() => !activeIsPreview && setEditingFooterValue("quote")}
+                              onDoubleClick={() => openFooter("quote")}
                               title="Double-click to format safety quote (Word style)"
                             >
                               &ldquo;{renderDynamicText(footerValues.quoteHtml, footerValues.quote)}&rdquo;
                             </p>
                           )}
                         </div>
-                      </footer>
+                      </footer> */}
+
+                      <CanvasReportFooter
+  paperTone={paperTone}
+  footerValues={footerValues}
+  editingFooterValue={isEditingHere ? editingFooterValue : null}
+  activeIsPreview={activeIsPreview}
+  onStartEditing={openFooter}
+  onSave={updateFooterValueWithHtml}
+  onCancel={() => setEditingFooterValue(null)}
+/>
                     </div>
                   </div>
                 </div>
