@@ -65,6 +65,7 @@ import {
   Activity,
   Lightbulb,
   Minus,
+  Ruler,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
@@ -100,6 +101,7 @@ import {
   CanvasMarginConfig,
   getPaperToneColor,
 } from "./CanvasContextRibbon";
+import { CanvasRuler, RulerUnit } from "./CanvasRuler";
 import {
   DynamicTitleEditor,
   DynamicTextEditor,
@@ -780,6 +782,7 @@ function SortableCell({
         setNodeRef(el);
         cellDomRef.current = el;
       }}
+      id={`canvas-cell-${cell.id}`}
       style={style}
       className={`relative group/cell transition-shadow duration-150 flex flex-col ${
         isSelected && !isPreview ? "ring-2 ring-[#8B3DFF] shadow-lg rounded-2xl" : ""
@@ -1971,6 +1974,8 @@ export interface CanvasStudioProps {
   onToggleGrid?: () => void;
   showGuides?: boolean;
   onToggleGuides?: () => void;
+  showRulers?: boolean;
+  onToggleRulers?: () => void;
   zoom?: number;
   setZoom?: (zoom: number | ((prev: number) => number)) => void;
   isPreview?: boolean;
@@ -2061,6 +2066,8 @@ export function CanvasStudio({
   onToggleGrid,
   showGuides = false,
   onToggleGuides,
+  showRulers = true,
+  onToggleRulers,
   zoom = 1,
   setZoom,
   isPreview = false,
@@ -2105,6 +2112,9 @@ export function CanvasStudio({
   const [internalZoom, setInternalZoom] = useState(1);
   const [internalShowGrid, setInternalShowGrid] = useState(true);
   const [internalShowGuides, setInternalShowGuides] = useState(false);
+  const [internalShowRulers, setInternalShowRulers] = useState(true);
+  const [rulerUnit, setRulerUnit] = useState<RulerUnit>("px");
+  const [pageMousePos, setPageMousePos] = useState<Record<number, { x: number; y: number } | null>>({});
   const [internalIsPreview, setInternalIsPreview] = useState(false);
   const [headerValuesBySection, setHeaderValuesBySection] = useState<
     Record<
@@ -2265,6 +2275,7 @@ export function CanvasStudio({
   const activeZoom = zoom !== undefined ? zoom : internalZoom;
   const activeShowGrid = showGrid !== undefined ? showGrid : internalShowGrid;
   const activeShowGuides = showGuides !== undefined ? showGuides : internalShowGuides;
+  const activeShowRulers = showRulers !== undefined ? showRulers : internalShowRulers;
   const activeIsPreview = isPreview !== undefined ? isPreview : internalIsPreview;
 
   const handleSelectCell = useCallback(
@@ -2294,6 +2305,55 @@ export function CanvasStudio({
       setInternalShowGuides((prev) => !prev);
     }
   }, [onToggleGuides]);
+
+  const handleToggleRulers = useCallback(() => {
+    if (typeof onToggleRulers === "function") {
+      onToggleRulers();
+    } else {
+      setInternalShowRulers((prev) => !prev);
+    }
+  }, [onToggleRulers]);
+
+  // Keyboard Shortcut: Shift + R toggles rulers (Canva / Figma standard)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName.toLowerCase();
+      const isInput =
+        activeTag === "input" ||
+        activeTag === "textarea" ||
+        (document.activeElement as HTMLElement)?.isContentEditable;
+      if (isInput) return;
+
+      if (e.shiftKey && e.key.toLowerCase() === "r" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        handleToggleRulers();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleToggleRulers]);
+
+  // Selected box bounds for live ruler highlight band
+  const getSelectedBoxForPage = useCallback(
+    (pageIndex: number) => {
+      if (!activeSelectedCellId) return null;
+      const cellEl = document.getElementById(`canvas-cell-${activeSelectedCellId}`);
+      const pageEl = document.getElementById(`canvas-page-${pageIndex}`);
+      if (!cellEl || !pageEl) return null;
+      const cellRect = cellEl.getBoundingClientRect();
+      const pageRect = pageEl.getBoundingClientRect();
+      if (cellRect.bottom < pageRect.top || cellRect.top > pageRect.bottom) {
+        return null;
+      }
+      return {
+        x: Math.max(0, Math.round((cellRect.left - pageRect.left) / activeZoom)),
+        y: Math.max(0, Math.round((cellRect.top - pageRect.top) / activeZoom)),
+        width: Math.round(cellRect.width / activeZoom),
+        height: Math.round(cellRect.height / activeZoom),
+      };
+    },
+    [activeSelectedCellId, activeZoom]
+  );
 
   const handleTogglePreview = useCallback(() => {
     if (typeof onTogglePreview === "function") {
@@ -2780,8 +2840,10 @@ export function CanvasStudio({
           style={{
             transform: `scale(${activeZoom})`,
             transformOrigin: "top center",
-            width: `${A4_WIDTH_PX}px`,
-            minWidth: `${Math.round(A4_WIDTH_PX * Math.max(1, activeZoom))}px`,
+            width: activeShowRulers && !activeIsPreview ? `${A4_WIDTH_PX + 32}px` : `${A4_WIDTH_PX}px`,
+            minWidth: activeShowRulers && !activeIsPreview
+              ? `${Math.round((A4_WIDTH_PX + 32) * Math.max(1, activeZoom))}px`
+              : `${Math.round(A4_WIDTH_PX * Math.max(1, activeZoom))}px`,
           }}
         >
           <SortableContext
@@ -2794,7 +2856,12 @@ export function CanvasStudio({
                 <React.Fragment key={`page-${page.pageIndex}`}>
                   {/* Visual Page Break Between Pages on Desk */}
                   {pageIdx > 0 && (
-                    <div className="flex items-center gap-4 w-[794px] my-2 text-xs select-none">
+                    <div
+                      className="flex items-center gap-4 w-[794px] my-2 text-xs select-none"
+                      style={{
+                        marginLeft: activeShowRulers && !activeIsPreview ? "32px" : undefined,
+                      }}
+                    >
                       <div className="flex-1 border-t-2 border-dashed border-purple-300 dark:border-purple-900/60" />
                       <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-zinc-800 border-2 border-purple-300 dark:border-purple-700 text-slate-700 dark:text-zinc-200 font-mono font-bold text-[11px] shadow-md">
                         <Layers className="w-4 h-4 text-[#8B3DFF] animate-pulse" />
@@ -2808,9 +2875,53 @@ export function CanvasStudio({
                     </div>
                   )}
 
-                  {/* ── Fixed A4 Artboard Sheet ── */}
+                  {/* ── Page Ruler & Artboard Wrapper ── */}
                   <div
-                    id={`canvas-page-${page.pageIndex}`}
+                    key={`page-ruler-wrapper-${page.pageIndex}`}
+                    className="relative"
+                    style={{
+                      marginTop: activeShowRulers && !activeIsPreview ? "28px" : undefined,
+                      marginLeft: activeShowRulers && !activeIsPreview ? "32px" : undefined,
+                    }}
+                    onMouseMove={(e) => {
+                      if (!activeShowRulers || activeIsPreview) return;
+                      const pageEl = document.getElementById(`canvas-page-${page.pageIndex}`);
+                      if (!pageEl) return;
+                      const rect = pageEl.getBoundingClientRect();
+                      const x = Math.round((e.clientX - rect.left) / activeZoom);
+                      const y = Math.round((e.clientY - rect.top) / activeZoom);
+                      setPageMousePos((prev) => ({
+                        ...prev,
+                        [page.pageIndex]: {
+                          x: Math.max(0, Math.min(A4_WIDTH_PX, x)),
+                          y: Math.max(0, Math.min(A4_HEIGHT_PX, y)),
+                        },
+                      }));
+                    }}
+                    onMouseLeave={() => {
+                      setPageMousePos((prev) => ({
+                        ...prev,
+                        [page.pageIndex]: null,
+                      }));
+                    }}
+                  >
+                    {/* ── Precision Figma/Canva Style Canvas Ruler Overlay ── */}
+                    {activeShowRulers && !activeIsPreview && (
+                      <CanvasRuler
+                        pageWidth={A4_WIDTH_PX}
+                        pageHeight={A4_HEIGHT_PX}
+                        marginConfig={marginConfig}
+                        activeMousePos={pageMousePos[page.pageIndex] || null}
+                        selectedBox={getSelectedBoxForPage(page.pageIndex)}
+                        unit={rulerUnit}
+                        onUnitChange={(u) => setRulerUnit(u)}
+                        isDark={isDarkPaper}
+                      />
+                    )}
+
+                    {/* ── Fixed A4 Artboard Sheet ── */}
+                    <div
+                      id={`canvas-page-${page.pageIndex}`}
                     style={{
                       ...customPaperStyle,
                       borderRadius: `${marginConfig.radius}px`,
@@ -3461,7 +3572,8 @@ export function CanvasStudio({
                       )}
                     </div>
                   </div>
-                </React.Fragment>
+                </div>
+              </React.Fragment>
               );
             })}
           </SortableContext>
@@ -3567,6 +3679,18 @@ export function CanvasStudio({
           title="Toggle Margin Guides"
         >
           <Square className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Dimensions & Position Rulers Toggle */}
+        <button
+          type="button"
+          onClick={handleToggleRulers}
+          className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
+            activeShowRulers ? "text-[#8B3DFF] bg-purple-500/15" : "text-slate-400 hover:text-slate-700"
+          }`}
+          title="Toggle Dimensions & Position Rulers (Shift+R) — 794×1123px"
+        >
+          <Ruler className="w-3.5 h-3.5" />
         </button>
 
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-1" />

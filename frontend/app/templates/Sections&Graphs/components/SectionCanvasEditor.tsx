@@ -111,6 +111,7 @@ export default function SectionCanvasEditor({
   const [sectionTextColor, setSectionTextColor] = useState<string | undefined>(undefined);
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
+  const [showRulers, setShowRulers] = useState(true);
   const [zoom, setZoom] = useState(1);
   const [isPreview, setIsPreview] = useState(false);
   const [marginConfig, setMarginConfig] = useState<CanvasMarginConfig>(DEFAULT_CANVAS_MARGIN);
@@ -782,6 +783,13 @@ export default function SectionCanvasEditor({
         handleDuplicateActive();
         return;
       }
+
+      // Shift+R toggles canvas dimension rulers
+      if (e.shiftKey && e.key.toLowerCase() === "r" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setShowRulers((prev) => !prev);
+        return;
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -943,6 +951,8 @@ export default function SectionCanvasEditor({
         onToggleGrid={() => setShowGrid(!showGrid)}
         showGuides={showGuides}
         onToggleGuides={() => setShowGuides(!showGuides)}
+        showRulers={showRulers}
+        onToggleRulers={() => setShowRulers(!showRulers)}
         isPreview={isPreview}
         onTogglePreview={() => setIsPreview(!isPreview)}
         onUpdateCellStyle={handleUpdateCellStyle}
@@ -996,6 +1006,8 @@ export default function SectionCanvasEditor({
           onToggleGrid={() => setShowGrid(!showGrid)}
           showGuides={showGuides}
           onToggleGuides={() => setShowGuides(!showGuides)}
+          showRulers={showRulers}
+          onToggleRulers={() => setShowRulers(!showRulers)}
           zoom={zoom}
           setZoom={setZoom}
           isPreview={isPreview}
