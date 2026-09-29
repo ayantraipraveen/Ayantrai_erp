@@ -7,8 +7,8 @@ import { CanvasMarginConfig } from "./CanvasContextRibbon";
 export type RulerUnit = "px" | "pt" | "mm" | "in";
 
 interface CanvasRulerProps {
-  pageWidth: number;   // default 794 (96 DPI) or 595 (72 DPI)
-  pageHeight: number;  // default 1123 (96 DPI) or 842 (72 DPI)
+  pageWidth: number;   // Standard ISO PDF A4: 595px (595 pt)
+  pageHeight: number;  // Standard ISO PDF A4: 842px (842 pt)
   marginConfig?: CanvasMarginConfig;
   activeMousePos?: { x: number; y: number } | null;
   selectedBox?: { x: number; y: number; width: number; height: number } | null;
@@ -157,7 +157,7 @@ export function CanvasRuler({
       <div
         onClick={handleToggleUnit}
         className={`absolute -top-6 -left-8 w-8 h-6 flex items-center justify-center border-t border-l border-r border-b ${cornerBg} rounded-tl-lg font-mono text-[9px] font-bold cursor-pointer select-none hover:bg-[#9D61FF] hover:text-white transition-colors z-30 shadow-xs`}
-        title={`Click to switch unit (px [96 DPI: 794×1123] → pt [PDF 72 DPI: 595×842] → mm [210×297] → in). Current: ${activeUnit.toUpperCase()}`}
+        title={`Click to switch unit (px [Standard PDF: 595×842] → pt → mm [210×297] → in). Current: ${activeUnit.toUpperCase()}`}
       >
         <span className="uppercase">{activeUnit}</span>
       </div>

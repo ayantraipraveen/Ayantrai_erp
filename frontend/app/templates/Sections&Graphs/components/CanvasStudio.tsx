@@ -112,12 +112,9 @@ import {
   getFallbackTitleHtml,
 } from "./DynamicTitleEditor";
 
-// ─── Standard Physical A4 Dimensions at 96 DPI and 72 DPI (PDF) ───────────────
-export type CanvasPageDpi = "96dpi" | "72dpi";
-export const A4_WIDTH_PX = 794;      // 96 DPI (Standard Windows Screen / Web CSS)
-export const A4_HEIGHT_PX = 1123;    // 96 DPI (Standard Windows Screen / Web CSS)
-export const A4_PDF_WIDTH_PX = 595;  // 72 DPI (Standard PDF Points / Preview)
-export const A4_PDF_HEIGHT_PX = 842; // 72 DPI (Standard PDF Points / Preview)
+// ─── Standard ISO A4 PDF Dimensions (595 × 842 px / pt) ──────────────────────
+export const A4_WIDTH_PX = 595;      // Standard ISO PDF A4 Width (595 px / pt)
+export const A4_HEIGHT_PX = 842;     // Standard ISO PDF A4 Height (842 px / pt)
 
 // ─── Mathematical fluid width formula for flex-wrap row with gap: 16px ────────
 export function getCellWidthStyle(percent: number): string {
@@ -222,22 +219,21 @@ export function partitionCanvasPages(
 ): PagePartition[] {
   const page1MarginY = (marginConfig?.top ?? 24) + (marginConfig?.bottom ?? 24);
 
-  // Exact physical A4 sheet height: 1123px at 96 DPI, or 842px at 72 DPI PDF
-  const heightScale = sheetHeight / A4_HEIGHT_PX;
+  // Exact physical A4 sheet height: 842px (Standard ISO PDF Page)
   const capPage1Single = Math.round(
-    Math.max(400 * heightScale, Math.min(680 * heightScale, sheetHeight - page1MarginY - 130 * heightScale - 90 * heightScale - 92 * heightScale - 42 - 35))
+    Math.max(380, Math.min(540, sheetHeight - page1MarginY - 110 - 75 - 70 - 35))
   );
   
   const capPage1Multi = Math.round(
-    Math.max(450 * heightScale, Math.min(700 * heightScale, sheetHeight - page1MarginY - 130 * heightScale - 90 * heightScale - 32 - 42 - 35))
+    Math.max(400, Math.min(560, sheetHeight - page1MarginY - 110 - 75 - 28 - 35))
   );
 
   const capMiddlePage = Math.round(
-    Math.max(500 * heightScale, Math.min(860 * heightScale, sheetHeight - 40 - 64 * heightScale - 32 - 42 - 30))
+    Math.max(480, Math.min(680, sheetHeight - 40 - 52 - 28 - 28))
   );
 
   const capLastPage = Math.round(
-    Math.max(480 * heightScale, Math.min(800 * heightScale, sheetHeight - 40 - 64 * heightScale - 92 * heightScale - 42 - 30))
+    Math.max(450, Math.min(640, sheetHeight - 40 - 52 - 70 - 28))
   );
 
   if (rows.length === 0) {
@@ -1984,8 +1980,6 @@ export interface CanvasStudioProps {
   onToggleGuides?: () => void;
   showRulers?: boolean;
   onToggleRulers?: () => void;
-  pageDpi?: CanvasPageDpi;
-  onPageDpiChange?: (dpi: CanvasPageDpi) => void;
   zoom?: number;
   setZoom?: (zoom: number | ((prev: number) => number)) => void;
   isPreview?: boolean;
@@ -2078,8 +2072,6 @@ export function CanvasStudio({
   onToggleGuides,
   showRulers = true,
   onToggleRulers,
-  pageDpi = "96dpi",
-  onPageDpiChange,
   zoom = 1,
   setZoom,
   isPreview = false,
@@ -2098,12 +2090,10 @@ export function CanvasStudio({
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
 
-  const [internalPageDpi, setInternalPageDpi] = useState<CanvasPageDpi>("96dpi");
-  const activePageDpi = pageDpi !== undefined ? pageDpi : internalPageDpi;
-  const activePageWidth = activePageDpi === "72dpi" ? A4_PDF_WIDTH_PX : A4_WIDTH_PX;
-  const activePageHeight = activePageDpi === "72dpi" ? A4_PDF_HEIGHT_PX : A4_HEIGHT_PX;
+  const activePageWidth = A4_WIDTH_PX;
+  const activePageHeight = A4_HEIGHT_PX;
 
-  // Multi-page layout engine: partitions rows across authentic A4 sheets (calibrated for current DPI sheet height)
+  // Multi-page layout engine: partitions rows across authentic A4 sheets (calibrated for standard 842px sheet height)
   const pages = useMemo(() => {
     return partitionCanvasPages(rows, marginConfig, pageNumber, activePageHeight);
   }, [rows, marginConfig, pageNumber, activePageHeight]);
@@ -2330,18 +2320,6 @@ export function CanvasStudio({
       setInternalShowRulers((prev) => !prev);
     }
   }, [onToggleRulers]);
-
-  const handleTogglePageDpi = useCallback(
-    (newDpi?: CanvasPageDpi) => {
-      const next = newDpi || (activePageDpi === "96dpi" ? "72dpi" : "96dpi");
-      if (typeof onPageDpiChange === "function") {
-        onPageDpiChange(next);
-      } else {
-        setInternalPageDpi(next);
-      }
-    },
-    [activePageDpi, onPageDpiChange]
-  );
 
   // Keyboard Shortcut: Shift + R toggles rulers (Canva / Figma standard)
   useEffect(() => {
@@ -2900,7 +2878,7 @@ export function CanvasStudio({
                         <span>Page {page.pageNumber} of {pages.length}</span>
                         <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
                         <span className="text-slate-500 dark:text-zinc-400 font-medium">
-                          {activePageDpi === "72dpi" ? "PDF A4 (595 × 842 pt)" : "Web A4 (794 × 1123 px)"}
+                          Standard PDF A4 (595 × 842 px)
                         </span>
                       </div>
                       <div className="flex-1 border-t-2 border-dashed border-purple-300 dark:border-purple-900/60" />
@@ -3020,37 +2998,37 @@ export function CanvasStudio({
                         <div>
                           {/* Fixed Sitesafe Report Header */}
                           <div
-                            className="relative z-30 min-h-[160px] border-b border-slate-200/80 overflow-visible"
+                            className="relative z-30 min-h-[110px] border-b border-slate-200/80 overflow-visible"
                             style={{ backgroundColor: paperTone === "dark" ? "#0f172a" : undefined }}
                           >
-                            <div className="relative grid min-h-[160px] grid-cols-[minmax(0,1fr)_minmax(0,1.75fr)_minmax(0,0.9fr)_90px] items-stretch gap-0 px-0 py-0 overflow-visible">
-                              <div className="flex min-w-0 flex-col justify-center px-3 py-1">
+                            <div className="relative grid min-h-[110px] grid-cols-[minmax(0,105px)_minmax(0,1.5fr)_minmax(0,1.2fr)_65px] items-stretch gap-0 px-0 py-0 overflow-visible">
+                              <div className="flex min-w-0 flex-col justify-center px-2 py-1">
                                 <Image
                                   src="/sitesafe-header-logo.svg"
                                   alt="Sitesafe by AyantrAI"
                                   width={1254}
                                   height={1254}
-                                  className="h-[150px] w-[150px] object-contain object-left"
+                                  className="h-[95px] w-[95px] object-contain object-left"
                                   priority
                                 />
                               </div>
 
                               <div className={`min-w-0 flex flex-col justify-center ${editingHeaderValue === "taglinePrimary" || editingHeaderValue === "taglineSecondary" ? "relative z-50" : "relative z-10"}`}>
-                               <div className="flex flex-col gap-1 border-l-2 border-[#2454d8] pl-4  px-6 py-5">
+                               <div className="flex flex-col gap-0.5 border-l-2 border-[#2454d8] pl-2.5 px-3 py-2">
                                  {editingHeaderValue === "taglinePrimary" ? (
                                    <DynamicTextEditor
                                      initialValue={headerValues.taglinePrimary}
                                      initialHtml={headerValues.taglinePrimaryHtml}
-                                     defaultFontSize={17}
+                                     defaultFontSize={13}
                                      multiline={false}
                                      toolbarPosition="top"
-                                     className="text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                     className="text-[13px] font-semibold italic leading-tight text-[#2454d8]"
                                      onSave={(plain, html) => updateHeaderValueWithHtml("taglinePrimary", plain, html)}
                                      onCancel={() => setEditingHeaderValue(null)}
                                    />
                                  ) : (
                                    <p
-                                     className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                     className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
                                      onClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
                                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglinePrimary")}
                                      title="Double-click to format primary report tagline (Word style)"
@@ -3062,16 +3040,16 @@ export function CanvasStudio({
                                    <DynamicTextEditor
                                      initialValue={headerValues.taglineSecondary}
                                      initialHtml={headerValues.taglineSecondaryHtml}
-                                     defaultFontSize={17}
+                                     defaultFontSize={13}
                                      multiline={false}
                                      toolbarPosition="bottom"
-                                     className="text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                     className="text-[13px] font-semibold italic leading-tight text-[#2454d8]"
                                      onSave={(plain, html) => updateHeaderValueWithHtml("taglineSecondary", plain, html)}
                                      onCancel={() => setEditingHeaderValue(null)}
                                    />
                                  ) : (
                                    <p
-                                     className="cursor-text text-[17px] font-semibold italic leading-tight text-[#2454d8]"
+                                     className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
                                      onClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
                                      onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("taglineSecondary")}
                                      title="Double-click to format secondary report tagline (Word style)"
@@ -3082,23 +3060,23 @@ export function CanvasStudio({
                                 </div>
                               </div>
 
-                              <div className={`min-w-0 flex flex-col justify-center px-2 py-5 ${editingHeaderValue === "title" || editingHeaderValue === "period" ? "relative z-50" : "relative z-10"}`}>
+                              <div className={`min-w-0 flex flex-col justify-center px-2 py-2 ${editingHeaderValue === "title" || editingHeaderValue === "period" ? "relative z-50" : "relative z-10"}`}>
                                 <div className="relative">
                                   {editingHeaderValue === "title" ? (
                                     <DynamicTextEditor
                                       initialValue={headerValues.title}
                                       initialHtml={headerValues.titleHtml}
-                                      defaultFontSize={headerTitleFormat.fontSize || 30}
+                                      defaultFontSize={headerTitleFormat.fontSize || 22}
                                       multiline={false}
                                       toolbarPosition="top"
                                       toolbarAlign="right"
-                                      className="text-2xl sm:text-3xl font-black leading-tight"
+                                      className="text-lg sm:text-xl font-black leading-tight"
                                       onSave={(plain, html) => updateHeaderValueWithHtml("title", plain, html)}
                                       onCancel={() => setEditingHeaderValue(null)}
                                     />
                                   ) : (
                                     <p
-                                      className="cursor-text pr-7 leading-tight"
+                                      className="cursor-text pr-5 leading-tight"
                                       style={headerTitleTextStyle}
                                       onClick={() => !activeIsPreview && setEditingHeaderValue("title")}
                                       onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("title")}
@@ -3112,17 +3090,17 @@ export function CanvasStudio({
                                   <DynamicTextEditor
                                     initialValue={headerValues.period}
                                     initialHtml={headerValues.periodHtml}
-                                    defaultFontSize={12}
+                                    defaultFontSize={11}
                                     multiline={false}
                                     toolbarPosition="bottom"
                                     toolbarAlign="right"
-                                    className="mt-1 text-[12px] font-semibold leading-tight text-[#1836a0]"
+                                    className="mt-0.5 text-[11px] font-semibold leading-tight text-[#1836a0]"
                                     onSave={(plain, html) => updateHeaderValueWithHtml("period", plain, html)}
                                     onCancel={() => setEditingHeaderValue(null)}
                                   />
                                 ) : (
                                   <p
-                                    className="mt-1 cursor-text text-[12px] font-semibold leading-tight text-[#1836a0]"
+                                    className="mt-0.5 cursor-text text-[11px] font-semibold leading-tight text-[#1836a0]"
                                     onClick={() => !activeIsPreview && setEditingHeaderValue("period")}
                                     onDoubleClick={() => !activeIsPreview && setEditingHeaderValue("period")}
                                     title="Double-click to format report period (Word style)"
@@ -3130,12 +3108,12 @@ export function CanvasStudio({
                                     {renderDynamicText(headerValues.periodHtml, headerValues.period)}
                                   </p>
                                 )}
-                                <div className="mt-2 h-1 w-14 rounded-full bg-[#2454d8]" />
+                                <div className="mt-1 h-0.5 w-10 rounded-full bg-[#2454d8]" />
                               </div>
                               {/* Page Badge - flush right, full height */}
                               <div className="flex flex-col items-center justify-center border-l-2 border-[#2454d8] bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
-                                <span className="text-[10px] font-semibold">Page</span>
-                                <span className="text-[25px] font-black leading-none">{String(page.pageNumber).padStart(2, "0")}</span>
+                                <span className="text-[9px] font-semibold">Page</span>
+                                <span className="text-[20px] font-black leading-none">{String(page.pageNumber).padStart(2, "0")}</span>
                               </div>
                             </div>
                           </div>
@@ -3725,17 +3703,13 @@ export function CanvasStudio({
           <Ruler className="w-3.5 h-3.5" />
         </button>
 
-        {/* Page Size / DPI Standard Switcher */}
-        <button
-          type="button"
-          onClick={() => handleTogglePageDpi()}
-          className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold text-purple-600 dark:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 cursor-pointer transition-colors"
-          title={`Switch A4 Standard: 96 DPI Web (794×1123px) ↔ 72 DPI PDF (595×842px). Currently: ${
-            activePageDpi === "72dpi" ? "72 DPI (PDF 595×842)" : "96 DPI (Web 794×1123)"
-          }`}
+        {/* Fixed Standard PDF Page Indicator */}
+        <div
+          className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold text-purple-600 dark:text-purple-300 bg-purple-500/10 border border-purple-500/20 select-none"
+          title="Fixed Standard ISO PDF Page (595 × 842 px)"
         >
-          {activePageDpi === "72dpi" ? "PDF 595×842" : "Web 794×1123"}
-        </button>
+          PDF 595×842
+        </div>
 
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-1" />
 
