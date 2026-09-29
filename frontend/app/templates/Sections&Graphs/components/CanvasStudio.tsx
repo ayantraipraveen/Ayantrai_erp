@@ -1900,7 +1900,6 @@ export function CanvasStudio({
   >({});
   const [headerTitleFormatsBySection, setHeaderTitleFormatsBySection] = useState<Record<string, HeaderTitleFormat>>({});
   const [editingHeaderValue, setEditingHeaderValue] = useState<"taglinePrimary" | "taglineSecondary" | "title" | "period" | null>(null);
-  const [isHeaderTitleFormatOpen, setIsHeaderTitleFormatOpen] = useState(false);
   const [footerValuesBySection, setFooterValuesBySection] = useState<
     Record<
       string,
