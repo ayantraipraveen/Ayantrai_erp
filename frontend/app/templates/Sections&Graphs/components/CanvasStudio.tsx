@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
   DndContext,
@@ -394,7 +395,72 @@ function SortableCell({
   const [resizeHeight, setResizeHeight] = useState<number | undefined>(initialHeight);
   const [isDragOverBottom, setIsDragOverBottom] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [portalPos, setPortalPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const cellDomRef = useRef<HTMLDivElement | null>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    };
+  }, []);
+
+  const updatePortalPos = useCallback(() => {
+    if (!cellDomRef.current) return;
+    const rect = cellDomRef.current.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > window.innerHeight) {
+      setPortalPos(null);
+      return;
+    }
+    setPortalPos({
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isSelected && !isHovered && !quickAddOpen) {
+      setPortalPos(null);
+      return;
+    }
+    updatePortalPos();
+    const handler = () => updatePortalPos();
+    window.addEventListener("scroll", handler, true);
+    window.addEventListener("resize", handler);
+    return () => {
+      window.removeEventListener("scroll", handler, true);
+      window.removeEventListener("resize", handler);
+    };
+  }, [isSelected, isHovered, quickAddOpen, updatePortalPos]);
+
+  useEffect(() => {
+    if (!quickAddOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest(".portal-quick-add-panel") || target?.closest(".portal-stack-trigger-btn") || cellDomRef.current?.contains(target)) {
+        return;
+      }
+      setQuickAddOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [quickAddOpen]);
+
+  const handleCellMouseEnter = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setIsHovered(true);
+  };
+
+  const handleCellMouseLeave = () => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(false);
+    }, 180);
+  };
 
   useEffect(() => {
     setResizePercent(cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : defaultWidthForCount));
@@ -473,7 +539,7 @@ function SortableCell({
 
   const maxColumnHeight = (currentPageNumber ?? 1) === 1 ? 480 : 540;
   const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
-  const bottomZoneH = quickAddOpen ? 52 : 36;
+  const bottomZoneH = 0; // Rendered in React portal, takes zero internal cell layout height
 
   const rawBaseBlockHeight = currentHeight || (
     cell.blockType === "chart" ? 370 :
@@ -497,7 +563,7 @@ function SortableCell({
     : 0;
 
   const stackGapTotal = hasStacked ? cell.stackedCells!.length * 12 : 0;
-  const maxAvailableForCards = Math.max(140, maxColumnHeight - bottomZoneH - stackGapTotal);
+  const maxAvailableForCards = Math.max(140, maxColumnHeight - stackGapTotal);
   const totalCardsRawH = rawBaseBlockHeight + rawStackedSum;
   const cardScale = totalCardsRawH > maxAvailableForCards ? maxAvailableForCards / totalCardsRawH : 1;
 
@@ -518,12 +584,12 @@ function SortableCell({
     : 0;
 
   const rawMinHeight = hasStacked
-    ? baseBlockHeight + stackedExtraHeight + bottomZoneH
-    : (currentHeight ? Math.max(120, currentHeight) + bottomZoneH : (quickAddOpen ? 180 : undefined));
+    ? baseBlockHeight + stackedExtraHeight
+    : (currentHeight ? Math.max(120, currentHeight) : undefined);
 
   const effectiveMinHeight = rawMinHeight !== undefined ? Math.min(maxColumnHeight, rawMinHeight) : undefined;
 
-  const maxPrimaryH = Math.max(70, maxColumnHeight - stackedExtraHeight - bottomZoneH);
+  const maxPrimaryH = Math.max(70, maxColumnHeight - stackedExtraHeight);
 
   const handleHeightResizeStart = (e: React.MouseEvent, explicitStartH?: number) => {
     e.stopPropagation();
@@ -727,6 +793,8 @@ function SortableCell({
       className={`relative group/cell overflow-visible flex flex-col ${
         isSelected && !isPreview ? "outline outline-2 outline-[#8B3DFF] rounded-2xl" : ""
       }`}
+      onMouseEnter={handleCellMouseEnter}
+      onMouseLeave={handleCellMouseLeave}
       onClick={(e) => {
         e.stopPropagation();
         if (!isPreview && typeof onSelect === "function") {
@@ -1309,18 +1377,75 @@ function SortableCell({
           </div>
         )}
 
-        {/* Canva-style Bottom Edge Drop Zone & Inline Quick-Add Slot */}
+        {/* Canva-style Bottom Edge Drop Target (active during drag) */}
         {!isPreview && !isSelfDragging && (
-          quickAddOpen && !isStackDropOver && !isDragOverBottom ? (
+          <div
+            ref={setStackDropRef}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              e.dataTransfer.dropEffect = "copy";
+              if (!isDragOverBottom) setIsDragOverBottom(true);
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                setIsDragOverBottom(false);
+              }
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsDragOverBottom(false);
+              try {
+                const raw = e.dataTransfer.getData("application/json");
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                if (typeof onDropToStack === "function") {
+                  onDropToStack(cell.id, data);
+                }
+              } catch (err) {
+                console.error("Drop to stack error:", err);
+              }
+            }}
+            className={`w-full transition-all duration-150 ${
+              isStackDropOver || isDragOverBottom
+                ? "h-8 my-1 bg-purple-500/20 border-2 border-dashed border-[#8B3DFF] rounded-lg flex items-center justify-center text-[#8B3DFF] text-[10px] font-bold"
+                : isOtherDragging
+                ? "h-3 my-0.5 border-t-2 border-dashed border-purple-300 dark:border-purple-700/60"
+                : "h-0 overflow-hidden"
+            }`}
+          >
+            {(isStackDropOver || isDragOverBottom) && (
+              <span className="flex items-center gap-1">
+                <Plus className="w-3 h-3" /> Drop to stack here
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── React Portal: Floating "+ Stack below" Button & Quick-Add Menu ── */}
+      {mounted && typeof document !== "undefined" && portalPos && !isPreview && !isDragging && (isSelected || isHovered || quickAddOpen) &&
+        createPortal(
+          quickAddOpen ? (
             <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full p-1.5 bg-white dark:bg-zinc-900 border-2 border-purple-400 dark:border-purple-600 rounded-xl shadow-lg flex flex-wrap items-center justify-between gap-1.5 animate-in fade-in zoom-in-95 duration-100 z-30"
+              onMouseEnter={handleCellMouseEnter}
+              onMouseLeave={handleCellMouseLeave}
+              style={{
+                position: "fixed",
+                top: portalPos.top,
+                left: portalPos.left + portalPos.width / 2,
+                transform: "translateX(-50%)",
+                zIndex: 9999,
+              }}
+              className="portal-quick-add-panel p-1.5 bg-white/98 dark:bg-zinc-900/98 backdrop-blur-md border-2 border-[#8B3DFF] rounded-2xl shadow-2xl flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-150 select-none whitespace-nowrap"
             >
               <div className="flex items-center gap-1 pl-1">
                 <Plus className="w-3 h-3 text-[#8B3DFF]" />
                 <span className="text-[10px] font-bold text-[#8B3DFF] font-mono uppercase tracking-wider">Stack:</span>
               </div>
-              <div className="flex flex-wrap items-center gap-1">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => {
@@ -1410,70 +1535,38 @@ function SortableCell({
                   e.stopPropagation();
                   setQuickAddOpen(false);
                 }}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer ml-auto transition-colors"
-                title="Cancel"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer ml-1 transition-colors"
+                title="Close"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : (
-            <div
-              ref={setStackDropRef}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                e.dataTransfer.dropEffect = "copy";
-                if (!isDragOverBottom) setIsDragOverBottom(true);
-              }}
-              onDragLeave={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                  setIsDragOverBottom(false);
-                }
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsDragOverBottom(false);
-                try {
-                  const raw = e.dataTransfer.getData("application/json");
-                  if (!raw) return;
-                  const data = JSON.parse(raw);
-                  if (typeof onDropToStack === "function") {
-                    onDropToStack(cell.id, data);
-                  }
-                } catch (err) {
-                  console.error("Drop to stack error:", err);
-                }
-              }}
+            <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setQuickAddOpen(true);
               }}
-              className={`w-full h-7 flex items-center justify-center rounded-lg cursor-pointer select-none transition-colors duration-150 ${
-                isStackDropOver || isDragOverBottom
-                  ? "bg-purple-500/20 border-2 border-dashed border-[#8B3DFF] text-[#8B3DFF] text-[10px] font-bold"
-                  : isOtherDragging
-                  ? "bg-purple-50/60 dark:bg-purple-950/30 border border-dashed border-purple-300 dark:border-purple-700 text-purple-500 text-[10px]"
-                  : isSelected
-                  ? "border border-dashed border-purple-300/60 dark:border-purple-800/60 text-purple-500/80 dark:text-purple-400/80 text-[10px]"
-                  : "opacity-0 group-hover/cell:opacity-100 border border-dashed border-slate-300/70 dark:border-zinc-700/70 text-slate-400 text-[10px]"
-              }`}
-              title="Drop card or click to stack another block directly below in this column"
+              onMouseEnter={handleCellMouseEnter}
+              onMouseLeave={handleCellMouseLeave}
+              style={{
+                position: "fixed",
+                top: portalPos.top,
+                left: portalPos.left + portalPos.width / 2,
+                transform: "translateX(-50%)",
+                zIndex: 9999,
+              }}
+              className="portal-stack-trigger-btn flex items-center gap-1 px-3 py-1 bg-white/95 dark:bg-zinc-900/95 border border-dashed border-[#8B3DFF]/70 hover:border-[#8B3DFF] text-[#8B3DFF] hover:bg-[#8B3DFF]/10 text-[11px] font-semibold rounded-full shadow-lg backdrop-blur-md cursor-pointer transition-all duration-150 animate-in fade-in zoom-in-95 hover:scale-105 active:scale-95"
+              title="Click to stack another block directly below in this column"
             >
-              <div className="flex items-center gap-1">
-                <Plus className="w-3 h-3" />
-                <span>
-                  {isStackDropOver || isDragOverBottom
-                    ? "Drop to stack here"
-                    : isOtherDragging
-                    ? "Drop to stack"
-                    : "Stack below"}
-                </span>
-              </div>
-            </div>
-          )
-        )}
-      </div>
+              <Plus className="w-3 h-3 text-[#8B3DFF]" />
+              <span>Stack below</span>
+            </button>
+          ),
+          document.body
+        )
+      }
     </div>
   );
 }
