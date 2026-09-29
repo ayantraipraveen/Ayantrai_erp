@@ -565,6 +565,7 @@ export function CanvasContextRibbon({
           {/* ── Font Family Dropdown ── */}
           <div className="relative">
             <button
+              ref={fontBtnRef}
               type="button"
               onClick={() => {
                 setFontMenuOpen(!fontMenuOpen);
@@ -580,8 +581,12 @@ export function CanvasContextRibbon({
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
 
-            {fontMenuOpen && (
-              <div className="absolute top-9 left-0 w-44 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl p-1.5 z-50 space-y-1 animate-fadeIn">
+            <RibbonPortalPopover
+              anchorEl={fontBtnRef.current}
+              isOpen={fontMenuOpen}
+              onClose={() => setFontMenuOpen(false)}
+            >
+              <div className="w-44 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl p-1.5 space-y-1 animate-fadeIn select-none">
                 <div className="px-2 py-1 text-[10px] font-mono uppercase text-slate-400 font-bold">Typography</div>
                 {FONT_OPTIONS.map((f) => (
                   <button
@@ -602,7 +607,7 @@ export function CanvasContextRibbon({
                   </button>
                 ))}
               </div>
-            )}
+            </RibbonPortalPopover>
           </div>
 
           {/* ── Text Align Controls ── */}
@@ -648,6 +653,7 @@ export function CanvasContextRibbon({
           {/* ── Text Color Swatches Dropdown ── */}
           <div className="relative">
             <button
+              ref={colorBtnRef}
               type="button"
               onClick={() => {
                 setColorMenuOpen(!colorMenuOpen);
@@ -666,7 +672,11 @@ export function CanvasContextRibbon({
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
 
-            {colorMenuOpen && (
+            <RibbonPortalPopover
+              anchorEl={colorBtnRef.current}
+              isOpen={colorMenuOpen}
+              onClose={() => setColorMenuOpen(false)}
+            >
               <TextColorPopover
                 currentColor={currentStyle.textColor || "#0f172a"}
                 onSelectColor={(col) => {
@@ -678,12 +688,13 @@ export function CanvasContextRibbon({
                 onClose={() => setColorMenuOpen(false)}
                 title="Block Text Color"
               />
-            )}
+            </RibbonPortalPopover>
           </div>
 
           {/* ── Card Background (Bg) Presets Dropdown ── */}
           <div className="relative">
             <button
+              ref={bgBtnRef}
               type="button"
               onClick={() => {
                 setBgMenuOpen(!bgMenuOpen);
@@ -699,7 +710,11 @@ export function CanvasContextRibbon({
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
 
-            {bgMenuOpen && (
+            <RibbonPortalPopover
+              anchorEl={bgBtnRef.current}
+              isOpen={bgMenuOpen}
+              onClose={() => setBgMenuOpen(false)}
+            >
               <CardBgPopover
                 currentBg={currentStyle.cardBg}
                 onSelectBg={(bg) => {
@@ -710,12 +725,13 @@ export function CanvasContextRibbon({
                 }}
                 onClose={() => setBgMenuOpen(false)}
               />
-            )}
+            </RibbonPortalPopover>
           </div>
 
           {/* ── Card Border Presets Dropdown ── */}
           <div className="relative">
             <button
+              ref={borderBtnRef}
               type="button"
               onClick={() => {
                 setBorderMenuOpen(!borderMenuOpen);
@@ -732,7 +748,11 @@ export function CanvasContextRibbon({
               <ChevronDown className="w-3 h-3 opacity-60" />
             </button>
 
-            {borderMenuOpen && (
+            <RibbonPortalPopover
+              anchorEl={borderBtnRef.current}
+              isOpen={borderMenuOpen}
+              onClose={() => setBorderMenuOpen(false)}
+            >
               <CardBorderPopover
                 currentBorderColor={currentStyle.borderColor}
                 currentBorderStyle={currentStyle.borderStyle}
@@ -755,7 +775,7 @@ export function CanvasContextRibbon({
                 }}
                 onClose={() => setBorderMenuOpen(false)}
               />
-            )}
+            </RibbonPortalPopover>
           </div>
 
           {/* ── Selected Card Background Opacity ── */}
@@ -832,6 +852,7 @@ export function CanvasContextRibbon({
         <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
           {/* Watermark Quick Access */}
           <button
+            ref={cellWatermarkBtnRef}
             type="button"
             onClick={() => {
               setWatermarkMenuOpen(!watermarkMenuOpen);
@@ -891,7 +912,12 @@ export function CanvasContextRibbon({
         </div>
 
         {/* ── Watermark Popover Modal ── */}
-        {watermarkMenuOpen && (
+        <RibbonPortalPopover
+          anchorEl={cellWatermarkBtnRef.current}
+          isOpen={watermarkMenuOpen}
+          onClose={() => setWatermarkMenuOpen(false)}
+          align="right"
+        >
           <WatermarkPopover
             uploadedWatermarks={uploadedWatermarks}
             activeWatermarkId={activeWatermarkId}
@@ -902,7 +928,7 @@ export function CanvasContextRibbon({
             onUpdateConfig={onUpdateWatermarkConfig}
             onClose={() => setWatermarkMenuOpen(false)}
           />
-        )}
+        </RibbonPortalPopover>
       </div>
     );
   }
@@ -1002,6 +1028,7 @@ export function CanvasContextRibbon({
 
           {/* Custom Color Selector Button */}
           <button
+            ref={paperColorBtnRef}
             type="button"
             onClick={() => {
               setPaperColorMenuOpen(!paperColorMenuOpen);
@@ -1022,13 +1049,17 @@ export function CanvasContextRibbon({
             <ChevronDown className="w-2.5 h-2.5 opacity-60" />
           </button>
 
-          {paperColorMenuOpen && (
+          <RibbonPortalPopover
+            anchorEl={paperColorBtnRef.current}
+            isOpen={paperColorMenuOpen}
+            onClose={() => setPaperColorMenuOpen(false)}
+          >
             <PaperColorPopover
               paperTone={paperTone}
               onSetPaperTone={onSetPaperTone}
               onClose={() => setPaperColorMenuOpen(false)}
             />
-          )}
+          </RibbonPortalPopover>
         </div>
 
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
@@ -1037,6 +1068,7 @@ export function CanvasContextRibbon({
         <div className="relative flex shrink-0 items-center gap-1 whitespace-nowrap">
           <span className="text-[10px] uppercase font-bold text-slate-400 hidden sm:inline mr-1">Text:</span>
           <button
+            ref={sectionTextColorBtnRef}
             type="button"
             onClick={() => {
               setSectionTextColorMenuOpen(!sectionTextColorMenuOpen);
@@ -1058,7 +1090,11 @@ export function CanvasContextRibbon({
             <ChevronDown className="w-2.5 h-2.5 opacity-60" />
           </button>
 
-          {sectionTextColorMenuOpen && (
+          <RibbonPortalPopover
+            anchorEl={sectionTextColorBtnRef.current}
+            isOpen={sectionTextColorMenuOpen}
+            onClose={() => setSectionTextColorMenuOpen(false)}
+          >
             <TextColorPopover
               currentColor={sectionTextColor || "#0f172a"}
               onSelectColor={(col) => onSetSectionTextColor && onSetSectionTextColor(col)}
@@ -1066,7 +1102,7 @@ export function CanvasContextRibbon({
               onClose={() => setSectionTextColorMenuOpen(false)}
               title="Section Text Color"
             />
-          )}
+          </RibbonPortalPopover>
         </div>
 
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
@@ -1074,6 +1110,7 @@ export function CanvasContextRibbon({
         {/* Watermark Selector & Stamp Button */}
         <div className="relative shrink-0">
           <button
+            ref={watermarkBtnRef}
             type="button"
             onClick={() => {
               setWatermarkMenuOpen(!watermarkMenuOpen);
@@ -1090,7 +1127,11 @@ export function CanvasContextRibbon({
             <ChevronDown className="w-3 h-3 opacity-60" />
           </button>
 
-          {watermarkMenuOpen && (
+          <RibbonPortalPopover
+            anchorEl={watermarkBtnRef.current}
+            isOpen={watermarkMenuOpen}
+            onClose={() => setWatermarkMenuOpen(false)}
+          >
             <WatermarkPopover
               uploadedWatermarks={uploadedWatermarks}
               activeWatermarkId={activeWatermarkId}
@@ -1101,7 +1142,7 @@ export function CanvasContextRibbon({
               onUpdateConfig={onUpdateWatermarkConfig}
               onClose={() => setWatermarkMenuOpen(false)}
             />
-          )}
+          </RibbonPortalPopover>
         </div>
 
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
@@ -1123,6 +1164,7 @@ export function CanvasContextRibbon({
           {/* Margins Adjust & Popover */}
           <div className="relative shrink-0">
             <button
+              ref={marginBtnRef}
               type="button"
               onClick={() => {
                 setMarginMenuOpen(!marginMenuOpen);
@@ -1142,7 +1184,12 @@ export function CanvasContextRibbon({
               <ChevronDown className="w-2.5 h-2.5 opacity-60" />
             </button>
 
-            {marginMenuOpen && (
+            <RibbonPortalPopover
+              anchorEl={marginBtnRef.current}
+              isOpen={marginMenuOpen}
+              onClose={() => setMarginMenuOpen(false)}
+              align="right"
+            >
               <MarginPopover
                 marginConfig={marginConfig}
                 onUpdateMarginConfig={onUpdateMarginConfig}
@@ -1150,7 +1197,7 @@ export function CanvasContextRibbon({
                 onToggleGuides={onToggleGuides}
                 onClose={() => setMarginMenuOpen(false)}
               />
-            )}
+            </RibbonPortalPopover>
           </div>
 
           {/* Dimensions & Position Rulers Toggle Button */}
