@@ -432,7 +432,7 @@ export function CanvasStudio({
   }, [onTogglePreview]);
 
   const zoomIn = () => {
-    const next = Math.min(1.25, activeZoom + 0.1);
+    const next = Math.min(2.5, activeZoom + 0.1);
     if (typeof setZoom === "function") setZoom(next);
     else setInternalZoom(next);
   };

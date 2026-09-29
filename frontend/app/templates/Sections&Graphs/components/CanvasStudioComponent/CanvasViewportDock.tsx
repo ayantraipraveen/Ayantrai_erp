@@ -104,7 +104,7 @@ export function CanvasViewportDock({
       <button
         type="button"
         onClick={onZoomIn}
-        disabled={activeZoom >= 1.25}
+        disabled={activeZoom >= 2.5}
         className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white disabled:opacity-30 cursor-pointer"
         title="Zoom In"
       >
