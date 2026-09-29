@@ -5,16 +5,18 @@ import Image from "next/image";
 import { DynamicTextEditor, renderDynamicText } from "../DynamicTitleEditor";
 import { ReportHeaderValues, HeaderTitleFormat } from "../../utils";
 
+export type HeaderField = "taglinePrimary" | "taglineSecondary" | "title" | "period";
+
 export interface CanvasReportHeaderProps {
   pageNumber: number;
   paperTone?: string;
   headerValues: ReportHeaderValues;
   headerTitleFormat: HeaderTitleFormat;
   headerTitleTextStyle: React.CSSProperties;
-  editingHeaderValue: "taglinePrimary" | "taglineSecondary" | "title" | "period" | null;
+  editingHeaderValue: HeaderField | null;
   activeIsPreview: boolean;
-  onStartEditing: (field: "taglinePrimary" | "taglineSecondary" | "title" | "period") => void;
-  onSave: (field: "taglinePrimary" | "taglineSecondary" | "title" | "period", plain: string, html: string) => void;
+  onStartEditing: (field: HeaderField) => void;
+  onSave: (field: HeaderField, plain: string, html: string) => void;
   onCancel: () => void;
 }
 
@@ -30,6 +32,20 @@ export function CanvasReportHeader({
   onSave,
   onCancel,
 }: CanvasReportHeaderProps) {
+  const open = (field: HeaderField) => {
+    if (!activeIsPreview) onStartEditing(field);
+  };
+
+  const taglineZ =
+    editingHeaderValue === "taglinePrimary" || editingHeaderValue === "taglineSecondary"
+      ? "relative z-50"
+      : "relative z-10";
+
+  const titleZ =
+    editingHeaderValue === "title" || editingHeaderValue === "period"
+      ? "relative z-50"
+      : "relative z-10";
+
   return (
     <div
       className="relative z-30 min-h-[110px] border-b border-slate-200/80 overflow-visible"
@@ -47,13 +63,7 @@ export function CanvasReportHeader({
           />
         </div>
 
-        <div
-          className={`min-w-0 flex flex-col justify-center ${
-            editingHeaderValue === "taglinePrimary" || editingHeaderValue === "taglineSecondary"
-              ? "relative z-50"
-              : "relative z-10"
-          }`}
-        >
+        <div className={`min-w-0 flex flex-col justify-center ${taglineZ}`}>
           <div className="flex flex-col gap-0.5 border-l-2 border-[#2454d8] pl-2.5 px-3 py-2">
             {editingHeaderValue === "taglinePrimary" ? (
               <DynamicTextEditor
@@ -69,8 +79,7 @@ export function CanvasReportHeader({
             ) : (
               <p
                 className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                onClick={() => !activeIsPreview && onStartEditing("taglinePrimary")}
-                onDoubleClick={() => !activeIsPreview && onStartEditing("taglinePrimary")}
+                onDoubleClick={() => open("taglinePrimary")}
                 title="Double-click to format primary report tagline (Word style)"
               >
                 {renderDynamicText(headerValues.taglinePrimaryHtml, headerValues.taglinePrimary)}
@@ -90,8 +99,7 @@ export function CanvasReportHeader({
             ) : (
               <p
                 className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                onClick={() => !activeIsPreview && onStartEditing("taglineSecondary")}
-                onDoubleClick={() => !activeIsPreview && onStartEditing("taglineSecondary")}
+                onDoubleClick={() => open("taglineSecondary")}
                 title="Double-click to format secondary report tagline (Word style)"
               >
                 {renderDynamicText(headerValues.taglineSecondaryHtml, headerValues.taglineSecondary)}
@@ -100,13 +108,7 @@ export function CanvasReportHeader({
           </div>
         </div>
 
-        <div
-          className={`min-w-0 flex flex-col justify-center px-2 py-2 ${
-            editingHeaderValue === "title" || editingHeaderValue === "period"
-              ? "relative z-50"
-              : "relative z-10"
-          }`}
-        >
+        <div className={`min-w-0 flex flex-col justify-center px-2 py-2 ${titleZ}`}>
           <div className="relative">
             {editingHeaderValue === "title" ? (
               <DynamicTextEditor
@@ -124,8 +126,7 @@ export function CanvasReportHeader({
               <p
                 className="cursor-text pr-5 leading-tight"
                 style={headerTitleTextStyle}
-                onClick={() => !activeIsPreview && onStartEditing("title")}
-                onDoubleClick={() => !activeIsPreview && onStartEditing("title")}
+                onDoubleClick={() => open("title")}
                 title="Double-click to format report title (Word style)"
               >
                 {renderDynamicText(headerValues.titleHtml, headerValues.title)}
@@ -147,8 +148,7 @@ export function CanvasReportHeader({
           ) : (
             <p
               className="mt-0.5 cursor-text text-[11px] font-semibold leading-tight text-[#1836a0]"
-              onClick={() => !activeIsPreview && onStartEditing("period")}
-              onDoubleClick={() => !activeIsPreview && onStartEditing("period")}
+              onDoubleClick={() => open("period")}
               title="Double-click to format report period (Word style)"
             >
               {renderDynamicText(headerValues.periodHtml, headerValues.period)}

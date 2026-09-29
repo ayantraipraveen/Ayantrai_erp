@@ -2,7 +2,6 @@
 
 import React, { useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import {
   DndContext,
   DragEndEvent,
@@ -28,30 +27,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  Plus,
-  Trash2,
-  Copy,
-  Edit2,
-  Check,
-  GripVertical,
-  ChevronDown,
-  ChevronUp,
-  X,
-  Move,
-  Maximize2,
-  Minimize2,
-  ZoomIn,
-  ZoomOut,
-  RotateCcw,
-  Eye,
-  Grid,
-  Square,
-  Layers,
-  Stamp,
- 
-  Ruler,
-} from "lucide-react";
+import { Layers } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
   CanvasCell,
@@ -77,15 +53,6 @@ import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 import { SidebarAddBlockEvent } from "./CanvasSidebar";
 import { CanvasRuler } from "./CanvasRuler";
-import {
-  DynamicTitleEditor,
-  DynamicTextEditor,
-  renderDynamicTitle,
-  renderDynamicEyebrow,
-  renderDynamicText,
-  getFallbackEyebrowHtml,
-  getFallbackTitleHtml,
-} from "./DynamicTitleEditor";
 
 import {
   A4_WIDTH_PX,
@@ -1106,321 +1073,51 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                       {/* Top Header (Standard across Page 1, Page 2, and all pages) */}
                       <div>
                           {/* Fixed Sitesafe Report Header */}
-                          <div
-                            className="relative z-30 min-h-[110px] border-b border-slate-200/80 overflow-visible"
-                            style={{ backgroundColor: paperTone === "dark" ? "#0f172a" : undefined }}
-                          >
-                            <div className="relative grid min-h-[110px] grid-cols-[minmax(0,105px)_minmax(0,1.5fr)_minmax(0,1.2fr)_65px] items-stretch gap-0 px-0 py-0 overflow-visible">
-                              <div className="flex min-w-0 flex-col justify-center px-2 py-1">
-                                <Image
-                                  src="/sitesafe-header-logo.svg"
-                                  alt="Sitesafe by AyantrAI"
-                                  width={1254}
-                                  height={1254}
-                                  className="h-[95px] w-[95px] object-contain object-left"
-                                  priority
-                                />
-                              </div>
+                        <CanvasReportHeader
+                          pageNumber={page.pageNumber}
+                          paperTone={paperTone}
+                          headerValues={headerValues}
+                          headerTitleFormat={headerTitleFormat}
+                          headerTitleTextStyle={headerTitleTextStyle}
+                          editingHeaderValue={isEditingHere ? editingHeaderValue : null}
+                          activeIsPreview={activeIsPreview}
+                          onStartEditing={openHeader}
+                          onSave={updateHeaderValueWithHtml}
+                          onCancel={() => setEditingHeaderValue(null)}
+                        />
 
-                              <div className={`min-w-0 flex flex-col justify-center ${(editingHeaderValue === "taglinePrimary" || editingHeaderValue === "taglineSecondary") && isEditingHere ? "relative z-50" : "relative z-10"}`}>
-                               <div className="flex flex-col gap-0.5 border-l-2 border-[#2454d8] pl-2.5 px-3 py-2">
-                                 {editingHeaderValue === "taglinePrimary"  && isEditingHere ? (
-                                   <DynamicTextEditor
-                                     initialValue={headerValues.taglinePrimary}
-                                     initialHtml={headerValues.taglinePrimaryHtml}
-                                     defaultFontSize={13}
-                                     multiline={false}
-                                     toolbarPosition="top"
-                                     className="text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                                     onSave={(plain, html) => updateHeaderValueWithHtml("taglinePrimary", plain, html)}
-                                     onCancel={() => setEditingHeaderValue(null)}
-                                   />
-                                 ) : (
-                                   <p
-                                     className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                                     
-onDoubleClick={() => openHeader("taglinePrimary")}                                     title="Double-click to format primary report tagline (Word style)"
-                                   >
-                                     {renderDynamicText(headerValues.taglinePrimaryHtml, headerValues.taglinePrimary)}
-                                   </p>
-                                 )}
-                                 {editingHeaderValue === "taglineSecondary" && isEditingHere ? (
-                                   <DynamicTextEditor
-                                     initialValue={headerValues.taglineSecondary}
-                                     initialHtml={headerValues.taglineSecondaryHtml}
-                                     defaultFontSize={13}
-                                     multiline={false}
-                                     toolbarPosition="bottom"
-                                     className="text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                                     onSave={(plain, html) => updateHeaderValueWithHtml("taglineSecondary", plain, html)}
-                                     onCancel={() => setEditingHeaderValue(null)}
-                                   />
-                                 ) : (
-                                   <p
-                                     className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                                    onDoubleClick={() => openHeader("taglineSecondary")}
-                                     title="Double-click to format secondary report tagline (Word style)"
-                                   >
-                                     {renderDynamicText(headerValues.taglineSecondaryHtml, headerValues.taglineSecondary)}
-                                   </p>
-                                 )}
-                                </div>
-                              </div>
-
-                              <div className={`min-w-0 flex flex-col justify-center px-2 py-2 ${(editingHeaderValue === "title" || editingHeaderValue === "period") && isEditingHere ? "relative z-50" : "relative z-10"}`}>
-                                <div className="relative">
-                                  {editingHeaderValue === "title" && isEditingHere ? (
-                                    <DynamicTextEditor
-                                      initialValue={headerValues.title}
-                                      initialHtml={headerValues.titleHtml}
-                                      defaultFontSize={headerTitleFormat.fontSize || 22}
-                                      multiline={false}
-                                      toolbarPosition="top"
-                                      toolbarAlign="right"
-                                      className="text-lg sm:text-xl font-black leading-tight"
-                                      onSave={(plain, html) => updateHeaderValueWithHtml("title", plain, html)}
-                                      onCancel={() => setEditingHeaderValue(null)}
-                                    />
-                                  ) : (
-                                    <p
-                                      className="cursor-text pr-5 leading-tight"
-                                      style={headerTitleTextStyle}
-                                      onDoubleClick={() => openHeader("title")}
-                                      title="Double-click to format report title (Word style)"
-                                    >
-                                      {renderDynamicText(headerValues.titleHtml, headerValues.title)}
-                                    </p>
-                                  )}
-                                </div>
-                                {editingHeaderValue === "period" && isEditingHere ? (
-                                  <DynamicTextEditor
-                                    initialValue={headerValues.period}
-                                    initialHtml={headerValues.periodHtml}
-                                    defaultFontSize={11}
-                                    multiline={false}
-                                    toolbarPosition="bottom"
-                                    toolbarAlign="right"
-                                    className="mt-0.5 text-[11px] font-semibold leading-tight text-[#1836a0]"
-                                    onSave={(plain, html) => updateHeaderValueWithHtml("period", plain, html)}
-                                    onCancel={() => setEditingHeaderValue(null)}
-                                  />
-                                ) : (
-                                  <p
-                                    className="mt-0.5 cursor-text text-[11px] font-semibold leading-tight text-[#1836a0]"
-                                   
-                                    onDoubleClick={() => openHeader("period")}
-                                    title="Double-click to format report period (Word style)"
-                                  >
-                                    {renderDynamicText(headerValues.periodHtml, headerValues.period)}
-                                  </p>
-                                )}
-                                <div className="mt-1 h-0.5 w-10 rounded-full bg-[#2454d8]" />
-                              </div>
-                              {/* Page Badge - flush right, full height */}
-                              <div className="flex flex-col items-center justify-center border-l-2 border-[#2454d8] bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
-                                <span className="text-[9px] font-semibold">Page</span>
-                                <span className="text-[20px] font-black leading-none">{String(page.pageNumber).padStart(2, "0")}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Section-specific Header Bar (Pixel-Perfect Matching Design Target) */}
-                          <div
-                            className={`relative ${editingSectionField && isEditingHere ? "z-50" : "z-10"} px-0 group/section-header transition-all select-text ${
-                              section.headerSpacing === "compact"
-                                ? "pt-2 pb-1.5"
-                                : section.headerSpacing === "spacious"
-                                ? "pt-7 pb-6"
-                                : "pt-4 pb-3.5"
-                            }`}
-                            style={{ backgroundColor: getPaperToneColor(paperTone) }}
-                          >
-                            {editingSectionField === "eyebrow" && isEditingHere ? (
-                              <div className="w-full mb-3">
-                                <DynamicTextEditor
-                                  initialValue={section.eyebrow}
-                                  initialHtml={section.eyebrowHtml || getFallbackEyebrowHtml(section.eyebrow, isDarkPaper)}
-                                  isDarkPaper={isDarkPaper}
-                                  defaultFontSize={12.5}
-                                  multiline={false}
-                                  className="text-[12.5px] font-bold uppercase tracking-[0.15em]"
-                                  placeholder="Section eyebrow..."
-                                  onSave={(newVal, newHtml) => {
-                                    dispatch(
-                                      updateLibrarySection({
-                                        id: section.id,
-                                        eyebrow: newVal,
-                                        eyebrowHtml: newHtml,
-                                        changes: {
-                                          eyebrow: newVal,
-                                          eyebrowHtml: newHtml,
-                                        },
-                                      })
-                                    );
-                                    setLocalSectionEyebrow(newVal);
-                                    setEditingSectionField(null);
-                                    dispatch(showGlobalToast({ message: "Eyebrow updated!", type: "success" }));
-                                  }}
-                                  onCancel={() => setEditingSectionField(null)}
-                                />
-                              </div>
-                            ) : (
-                              <div className="flex items-center justify-between gap-3 mb-1.5">
-                                <span
-                                  onDoubleClick={() => openSection("eyebrow")}
-                                  className="text-[12.5px] font-bold uppercase tracking-[0.15em] font-sans leading-none cursor-pointer transition-colors"
-                                  title="Double-click to format eyebrow (Word style)"
-                                >
-                                  {renderDynamicEyebrow(section.eyebrowHtml, section.eyebrow, sectionTextColor, isDarkPaper)}
-                                </span>
-
-                                {/* Right Header Controls: Spacing + Watermark + Edit Header Button */}
-                                {!isEditingHere  && !activeIsPreview && (
-                                  <div className="flex items-center gap-2">
-                                    {/* Header Spacing / Height Preset Selector */}
-                                    <div className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-0.5 bg-slate-100 dark:bg-zinc-800 rounded-lg p-0.5 text-[10px] font-medium text-slate-500">
-                                      <span className="px-1 text-[9px] text-slate-400 font-mono">Pad:</span>
-                                      {(["compact", "normal", "spacious"] as const).map((space) => (
-                                        <button
-                                          key={space}
-                                          type="button"
-                                          onClick={() => {
-                                            dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));
-                                          }}
-                                          
-                                          className={`px-1.5 py-0.5 rounded capitalize transition-colors cursor-pointer ${
-                                            (section.headerSpacing || "normal") === space
-                                              ? "bg-white dark:bg-zinc-700 text-[#8B3DFF] font-bold shadow-xs"
-                                              : "hover:text-slate-900 dark:hover:text-white"
-                                          }`}
-                                          title={`Set header vertical padding to ${space}`}
-                                        >
-                                          {space}
-                                        </button>
-                                      ))}
-                                    </div>
-
-                                    {activeWatermark && (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setIsWatermarkSelected(!isWatermarkSelected);
-                                        }}
-                                        className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
-                                          isWatermarkSelected
-                                            ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
-                                            : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
-                                        }`}
-                                        title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
-                                      >
-                                        <Stamp className="w-2.5 h-2.5" />
-                                        <span>{activeWatermark.name}</span>
-                                        <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
-                                      </button>
-                                    )}
-
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setLocalSectionName(section.name);
-                                        setLocalSectionEyebrow(section.eyebrow);
-                                          setEditingPageIndex(page.pageIndex);   
-                                        setLocalSectionDesc(section.description);
-                                        setEditingSectionField("name");
-                                      }}
-                                      className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-[#2563eb] px-2 py-0.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
-                                      title="Edit Section Header"
-                                    >
-                                      <Edit2 className="w-3 h-3" />
-                                      <span className="hidden sm:inline">Edit Header</span>
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Main Section Title: Dynamic Word-Style Typography & Color Studio */}
-                            {editingSectionField === "name" && isEditingHere  ? (
-                              <DynamicTitleEditor
-                                initialName={section.name}
-                                initialHtml={section.titleHtml || getFallbackTitleHtml(section.name, isDarkPaper)}
-                                isDarkPaper={isDarkPaper}
-                                paperTone={paperTone}
-                                toolbarPosition="bottom"
-                                onSave={(newName, newHtml) => {
-                                  dispatch(
-                                    updateLibrarySection({
-                                      id: section.id,
-                                      name: newName,
-                                      titleHtml: newHtml,
-                                      changes: {
-                                        name: newName,
-                                        titleHtml: newHtml,
-                                      },
-                                    })
-                                  );
-                                  setLocalSectionName(newName);
-                                  setEditingSectionField(null);
-                                  dispatch(showGlobalToast({ message: "Title updated!", type: "success" }));
-                                }}
-                                onCancel={() => setEditingSectionField(null)}
-                              />
-                            ) : (
-                              <h1
-                               onDoubleClick={() => openSection("name")}
-                                className="text-3xl sm:text-[38px] lg:text-[40px] font-black tracking-[-0.035em] leading-[1.08] cursor-pointer mt-1"
-                                title="Double-click to format title (Word style)"
-                              >
-                                {renderDynamicTitle(section.titleHtml, section.name, sectionTextColor, isDarkPaper)}
-                              </h1>
-                            )}
-
-                            {editingSectionField === "description"  && isEditingHere ? (
-                              <DynamicTextEditor
-                                initialValue={section.description}
-                                initialHtml={section.descriptionHtml}
-                                isDarkPaper={isDarkPaper}
-                                defaultFontSize={14}
-                                multiline={true}
-                                toolbarPosition="bottom"
-                                className="text-[14px] sm:text-[14.5px] leading-relaxed font-normal min-h-[50px]"
-                                placeholder="Section description..."
-                                onSave={(newVal, newHtml) => {
-                                  dispatch(
-                                    updateLibrarySection({
-                                      id: section.id,
-                                      description: newVal,
-                                      descriptionHtml: newHtml,
-                                      changes: {
-                                        description: newVal,
-                                        descriptionHtml: newHtml,
-                                      },
-                                    })
-                                  );
-                                  setLocalSectionDesc(newVal);
-                                  setEditingSectionField(null);
-                                  dispatch(showGlobalToast({ message: "Description updated!", type: "success" }));
-                                }}
-                                onCancel={() => setEditingSectionField(null)}
-                              />
-                            ) : section.description || section.descriptionHtml ? (
-                              <p
-                               onDoubleClick={() => openSection("description")}
-                                className={`text-[14px] sm:text-[14.5px] mt-2 max-w-4xl leading-relaxed cursor-pointer font-normal ${
-                                  isDarkPaper && !sectionTextColor
-                                    ? "text-zinc-300"
-                                    : !sectionTextColor
-                                    ? "text-[#4b556b]"
-                                    : ""
-                                }`}
-                                style={sectionTextColor ? { color: sectionTextColor, opacity: 0.9 } : undefined}
-                                title="Double-click to format description (Word style)"
-                              >
-                                {renderDynamicText(section.descriptionHtml, section.description, sectionTextColor)}
-                              </p>
-                            ) : null}
-                          </div>
+                        {/* Section-specific Header Bar */}
+                        <CanvasSectionHeader
+                          section={section}
+                          paperTone={paperTone}
+                          isDarkPaper={isDarkPaper}
+                          sectionTextColor={sectionTextColor}
+                          editingSectionField={isEditingHere ? editingSectionField : null}
+                          activeIsPreview={activeIsPreview}
+                          activeWatermark={activeWatermark}
+                          isWatermarkSelected={isWatermarkSelected}
+                          wmScale={wmScale}
+                          onStartEditing={openSection}
+                          onFinishEditing={() => setEditingSectionField(null)}
+                          onUpdateSection={(patch) => {
+                            dispatch(
+                              updateLibrarySection({
+                                id: section.id,
+                                ...patch,
+                                changes: patch,
+                              })
+                            );
+                            if (patch.name !== undefined) setLocalSectionName(patch.name);
+                            if (patch.eyebrow !== undefined) setLocalSectionEyebrow(patch.eyebrow);
+                            if (patch.description !== undefined) setLocalSectionDesc(patch.description);
+                            dispatch(showGlobalToast({ message: "Section updated!", type: "success" }));
+                          }}
+                          onUpdateSpacing={(space) => {
+                            dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));
+                          }}
+                          onToggleWatermarkSelect={() => setIsWatermarkSelected(!isWatermarkSelected)}
+                        />
+                      
                         </div>
 
                       {/* Canvas Rows Container for this Page */}
@@ -1552,81 +1249,6 @@ onDoubleClick={() => openHeader("taglinePrimary")}                              
                       </div>
 
                       {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages */}
-                      {/* Standard Corporate Footer (Consistent across Page 1, Page 2, and all pages) */}
-                      {/* <footer
-                        className="relative z-20 flex-shrink-0 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
-                        style={{ backgroundColor: getPaperToneColor(paperTone) }}
-                      >
-                        <div className={`min-w-0 ${((editingFooterValue === "company" || editingFooterValue === "websites") && isEditingHere) ? "relative z-50" : "relative z-10"}`}>
-                          {editingFooterValue === "company" && isEditingHere ? (
-                            <DynamicTextEditor
-                              initialValue={footerValues.company}
-                              initialHtml={footerValues.companyHtml}
-                              defaultFontSize={14}
-                              multiline={false}
-                              toolbarPosition="top"
-                              className="text-sm font-bold text-[#1836a0]"
-                              onSave={(plain, html) => updateFooterValueWithHtml("company", plain, html)}
-                              onCancel={() => setEditingFooterValue(null)}
-                            />
-                          ) : (
-                            <p
-                              className="cursor-text text-sm font-bold text-[#1836a0]"
-                             onDoubleClick={() => openFooter("company")}
-                              title="Double-click to format company name (Word style)"
-                            >
-                              {renderDynamicText(footerValues.companyHtml, footerValues.company)}
-                            </p>
-                          )}
-                          {editingFooterValue === "websites" && isEditingHere ? (
-                            <DynamicTextEditor
-                              initialValue={footerValues.websites}
-                              initialHtml={footerValues.websitesHtml}
-                              defaultFontSize={12}
-                              multiline={false}
-                              toolbarPosition="top"
-                              className="mt-1 text-xs font-semibold text-[#1836a0]"
-                              onSave={(plain, html) => updateFooterValueWithHtml("websites", plain, html)}
-                              onCancel={() => setEditingFooterValue(null)}
-                            />
-                          ) : (
-                            <p
-                              className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
-                              onDoubleClick={() => openFooter("websites")}
-                              title="Double-click to format website links (Word style)"
-                            >
-                              {renderDynamicText(footerValues.websitesHtml, footerValues.websites)}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="h-[2px] w-full bg-[#1836a0]/60" />
-
-                        <div className={`min-w-0 ${editingFooterValue === "quote" && isEditingHere ? "relative z-50" : "relative z-10"}`}>
-                          {editingFooterValue === "quote" && isEditingHere ? (
-                            <DynamicTextEditor
-                              initialValue={footerValues.quote}
-                              initialHtml={footerValues.quoteHtml}
-                              defaultFontSize={14}
-                              multiline={false}
-                              toolbarPosition="top"
-                              toolbarAlign="right"
-                              className="text-right text-sm font-semibold text-[#1836a0]"
-                              onSave={(plain, html) => updateFooterValueWithHtml("quote", plain, html)}
-                              onCancel={() => setEditingFooterValue(null)}
-                            />
-                          ) : (
-                            <p
-                              className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
-                              onDoubleClick={() => openFooter("quote")}
-                              title="Double-click to format safety quote (Word style)"
-                            >
-                              &ldquo;{renderDynamicText(footerValues.quoteHtml, footerValues.quote)}&rdquo;
-                            </p>
-                          )}
-                        </div>
-                      </footer> */}
-
                       <CanvasReportFooter
   paperTone={paperTone}
   footerValues={footerValues}
@@ -1647,138 +1269,27 @@ onDoubleClick={() => openHeader("taglinePrimary")}                              
       </div>
 
       {/* ── Floating Viewport Dock (Bottom Center/Right) ── */}
-      <div className="fixed bottom-4 right-8 z-40 flex items-center gap-1.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-2xl px-3 py-1.5 shadow-2xl backdrop-blur-md select-none text-xs">
-        {/* Page Navigator when multi-page */}
-        {pages.length > 1 && (
-          <>
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-xl px-2 py-0.5 font-mono text-[11px] font-bold text-slate-700 dark:text-zinc-200">
-              <button
-                type="button"
-                onClick={() => {
-                  const prev = Math.max(0, activeViewPageIndex - 1);
-                  setActiveViewPageIndex(prev);
-                  document.getElementById(`canvas-page-${prev}`)?.scrollIntoView({ behavior: "smooth" });
-                }}
-                disabled={activeViewPageIndex === 0}
-                className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
-                title="Previous Page"
-              >
-                <ChevronUp className="w-3.5 h-3.5" />
-              </button>
-              <span className="px-1 text-[#8B3DFF]">
-                Page {activeViewPageIndex + 1} / {pages.length}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = Math.min(pages.length - 1, activeViewPageIndex + 1);
-                  setActiveViewPageIndex(next);
-                  document.getElementById(`canvas-page-${next}`)?.scrollIntoView({ behavior: "smooth" });
-                }}
-                disabled={activeViewPageIndex === pages.length - 1}
-                className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
-                title="Next Page"
-              >
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-1" />
-          </>
-        )}
+      <CanvasViewportDock
+        pagesCount={pages.length}
+        activeViewPageIndex={activeViewPageIndex}
+        onNavigatePage={(targetIdx) => {
+          setActiveViewPageIndex(targetIdx);
+          document.getElementById(`canvas-page-${targetIdx}`)?.scrollIntoView({ behavior: "smooth" });
+        }}
+        activeZoom={activeZoom}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+        onResetZoom={resetZoom}
+        activeShowGrid={activeShowGrid}
+        onToggleGrid={handleToggleGrid}
+        activeShowGuides={activeShowGuides}
+        onToggleGuides={handleToggleGuides}
+        activeShowRulers={activeShowRulers}
+        onToggleRulers={handleToggleRulers}
+        activeIsPreview={activeIsPreview}
+        onTogglePreview={handleTogglePreview}
+      />
 
-        {/* Zoom Out */}
-        <button
-          type="button"
-          onClick={zoomOut}
-          disabled={activeZoom <= 0.5}
-          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white disabled:opacity-30 cursor-pointer"
-          title="Zoom Out"
-        >
-          <ZoomOut className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Zoom Percentage Label */}
-        <button
-          type="button"
-          onClick={resetZoom}
-          className="px-2 py-0.5 rounded-md font-mono text-[11px] font-bold text-slate-700 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer"
-          title="Reset Zoom to 100%"
-        >
-          {Math.round(activeZoom * 100)}%
-        </button>
-
-        {/* Zoom In */}
-        <button
-          type="button"
-          onClick={zoomIn}
-          disabled={activeZoom >= 1.25}
-          className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-white disabled:opacity-30 cursor-pointer"
-          title="Zoom In"
-        >
-          <ZoomIn className="w-3.5 h-3.5" />
-        </button>
-
-        <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-1" />
-
-        {/* Grid Toggle */}
-        <button
-          type="button"
-          onClick={handleToggleGrid}
-          className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
-            activeShowGrid ? "text-[#8B3DFF] bg-purple-500/15" : "text-slate-400 hover:text-slate-700"
-          }`}
-          title="Toggle Background Grid"
-        >
-          <Grid className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Margin Guides Toggle */}
-        <button
-          type="button"
-          onClick={handleToggleGuides}
-          className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
-            activeShowGuides ? "text-[#8B3DFF] bg-purple-500/15" : "text-slate-400 hover:text-slate-700"
-          }`}
-          title="Toggle Margin Guides"
-        >
-          <Square className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Dimensions & Position Rulers Toggle */}
-        <button
-          type="button"
-          onClick={handleToggleRulers}
-          className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
-            activeShowRulers ? "text-[#8B3DFF] bg-purple-500/15" : "text-slate-400 hover:text-slate-700"
-          }`}
-          title="Toggle Dimensions & Position Rulers (Shift+R)"
-        >
-          <Ruler className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Fixed Standard PDF Page Indicator */}
-        <div
-          className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold text-purple-600 dark:text-purple-300 bg-purple-500/10 border border-purple-500/20 select-none"
-          title="Fixed Standard ISO PDF Page (595 × 842 px)"
-        >
-          PDF 595×842
-        </div>
-
-        <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-1" />
-
-        {/* Preview Button */}
-        <button
-          type="button"
-          onClick={handleTogglePreview}
-          className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
-            activeIsPreview ? "bg-[#8B3DFF] text-white shadow-sm" : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
-          }`}
-          title="Toggle Clean Preview Mode"
-        >
-          <Eye className="w-3.5 h-3.5" />
-          <span>{activeIsPreview ? "Exit" : "Preview"}</span>
-        </button>
-      </div>
 
       {/* ── 3D Elevated Drag Overlay ── */}
       <DragOverlay dropAnimation={{ duration: 150, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
