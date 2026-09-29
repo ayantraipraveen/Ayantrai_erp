@@ -40,7 +40,7 @@ import {
   ChevronDown,
   Ruler,
 } from "lucide-react";
-import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
+import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 
 export interface CanvasContextRibbonProps {
   selectedCell: CanvasCell | null;
@@ -83,50 +83,16 @@ export interface CanvasContextRibbonProps {
   onUpdateWatermarkConfig?: (config: Partial<WatermarkStampConfig>) => void;
 }
 
-export interface CanvasMarginConfig {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
-  radius: number;
-}
+import {
+  CanvasMarginConfig,
+  DEFAULT_CANVAS_MARGIN,
+  COLOR_RAMP_DOTS,
+  FONT_OPTIONS,
+  CARD_BG_PRESETS,
+} from "../utils";
 
-export const DEFAULT_CANVAS_MARGIN: CanvasMarginConfig = {
-  top: 24,
-  right: 24,
-  bottom: 24,
-  left: 24,
-  radius: 24,
-};
-
-const COLOR_RAMP_DOTS: { id: PaletteRamp; bg: string; label: string }[] = [
-  { id: "blue",    bg: "bg-blue-500",    label: "Blue" },
-  { id: "green",   bg: "bg-emerald-500", label: "Green" },
-  { id: "purple",  bg: "bg-purple-500",  label: "Purple" },
-  { id: "amber",   bg: "bg-amber-500",   label: "Amber" },
-  { id: "cyan",    bg: "bg-cyan-500",    label: "Cyan" },
-  { id: "red",     bg: "bg-rose-500",    label: "Rose" },
-  { id: "slate",   bg: "bg-slate-500",   label: "Slate" },
-];
-
-const FONT_OPTIONS: { id: "sans" | "serif" | "mono" | "rounded"; label: string; previewClass: string }[] = [
-  { id: "sans",    label: "Inter Sans",       previewClass: "font-sans" },
-  { id: "serif",   label: "Merriweather Serif", previewClass: "font-serif" },
-  { id: "mono",    label: "JetBrains Mono",   previewClass: "font-mono" },
-  { id: "rounded", label: "Outfit Modern",    previewClass: "font-sans tracking-wide" },
-];
-
-export const CARD_BG_PRESETS: { id: string; label: string; color: string; border: string; darkBg: string }[] = [
-  { id: "white",    label: "Pure White",  color: "#ffffff", border: "#e2e8f0", darkBg: "#0c1017" },
-  { id: "slate",    label: "Crisp Slate", color: "#f8fafc", border: "#cbd5e1", darkBg: "#1e293b" },
-  { id: "glass",    label: "Frosted Glass", color: "rgba(255,255,255,0.7)", border: "rgba(255,255,255,0.5)", darkBg: "rgba(20,25,35,0.7)" },
-  { id: "purple",   label: "Soft Purple", color: "#f5f3ff", border: "#ddd6fe", darkBg: "#2e1065" },
-  { id: "indigo",   label: "Soft Indigo", color: "#eef2ff", border: "#c7d2fe", darkBg: "#1e1b4b" },
-  { id: "emerald",  label: "Soft Mint",   color: "#ecfdf5", border: "#a7f3d0", darkBg: "#064e3b" },
-  { id: "amber",    label: "Soft Amber",  color: "#fffbeb", border: "#fde68a", darkBg: "#78350f" },
-  { id: "rose",     label: "Soft Rose",   color: "#fff1f2", border: "#fecdd3", darkBg: "#881337" },
-  { id: "dark",     label: "Midnight",    color: "#0f172a", border: "#334155", darkBg: "#0f172a" },
-];
+export type { CanvasMarginConfig };
+export { DEFAULT_CANVAS_MARGIN, CARD_BG_PRESETS };
 
 export const CARD_BORDER_PRESETS: { id: string; label: string; color: string }[] = [
   { id: "none",        label: "None",         color: "transparent" },

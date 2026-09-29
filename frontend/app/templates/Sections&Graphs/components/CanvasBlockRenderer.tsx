@@ -36,29 +36,13 @@ import {
 import { DynamicTextEditor, renderDynamicText } from "./DynamicTitleEditor";
 import { PALETTE_RAMPS } from "./constants/chartTypes";
 import ChartRenderer from "./ChartRenderer";
-import { CARD_BG_PRESETS } from "./CanvasContextRibbon";
+import {
+  CARD_BG_PRESETS,
+  BADGE_COLOR_PALETTES,
+  BADGE_COLOR_MAP,
+} from "../utils";
 
-// ── Badge color & icon maps ───────────────────────────────────────────────────
-export const BADGE_COLOR_PALETTES = [
-  { id: "blue", label: "Blue", bg: "bg-blue-500/10", border: "border-blue-400/30", text: "text-blue-600 dark:text-blue-300", dot: "bg-blue-500" },
-  { id: "green", label: "Green", bg: "bg-emerald-500/10", border: "border-emerald-400/30", text: "text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
-  { id: "purple", label: "Purple", bg: "bg-purple-500/10", border: "border-purple-400/30", text: "text-purple-600 dark:text-purple-300", dot: "bg-purple-500" },
-  { id: "amber", label: "Amber", bg: "bg-amber-500/10", border: "border-amber-400/30", text: "text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
-  { id: "rose", label: "Rose", bg: "bg-rose-500/10", border: "border-rose-400/30", text: "text-rose-600 dark:text-rose-300", dot: "bg-rose-500" },
-  { id: "cyan", label: "Cyan", bg: "bg-cyan-500/10", border: "border-cyan-400/30", text: "text-cyan-600 dark:text-cyan-300", dot: "bg-cyan-500" },
-] as const;
-
-const BADGE_COLOR_MAP: Record<
-  string,
-  { bg: string; border: string; text: string; dot: string }
-> = {
-  blue:   { bg: "bg-blue-500/10",    border: "border-blue-400/30",    text: "text-blue-600 dark:text-blue-300",       dot: "bg-blue-500" },
-  green:  { bg: "bg-emerald-500/10", border: "border-emerald-400/30", text: "text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
-  purple: { bg: "bg-purple-500/10",  border: "border-purple-400/30",  text: "text-purple-600 dark:text-purple-300",   dot: "bg-purple-500" },
-  amber:  { bg: "bg-amber-500/10",   border: "border-amber-400/30",   text: "text-amber-600 dark:text-amber-300",     dot: "bg-amber-500" },
-  rose:   { bg: "bg-rose-500/10",    border: "border-rose-400/30",    text: "text-rose-600 dark:text-rose-300",       dot: "bg-rose-500" },
-  cyan:   { bg: "bg-cyan-500/10",    border: "border-cyan-400/30",    text: "text-cyan-600 dark:text-cyan-300",       dot: "bg-cyan-500" },
-};
+export { BADGE_COLOR_PALETTES };
 
 export const BADGE_AVAILABLE_ICONS = [
   { id: "Users", label: "Users", icon: Users },

@@ -12,6 +12,7 @@ import {
 import { ChartEditorPanel } from "../components";
 import Link from "next/link";
 import { ArrowLeft, BarChart2 } from "lucide-react";
+import { DEFAULT_CHART_COLORS } from "./utils";
 
 /**
  * Dedicated Full-Page Route for Telemetry Chart Studio (/templates/Sections&Graphs/charts).
@@ -27,8 +28,8 @@ export default function SectionsGraphsChartsPage() {
   const [chartTitle, setChartTitle] = useState("");
   const [chartType, setChartType] = useState<GraphType>("bar");
   const [chartDesc, setChartDesc] = useState("");
-  const [chartColor, setChartColor] = useState("#9D61FF");
-  const [chartColors, setChartColors] = useState<string[]>(["#9D61FF"]);
+  const [chartColor, setChartColor] = useState(DEFAULT_CHART_COLORS[0]);
+  const [chartColors, setChartColors] = useState<string[]>([DEFAULT_CHART_COLORS[0]]);
   const [gridRows, setGridRows] = useState(4);
   const [gridCols, setGridCols] = useState(7);
 

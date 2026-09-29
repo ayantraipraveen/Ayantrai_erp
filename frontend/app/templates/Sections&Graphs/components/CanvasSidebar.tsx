@@ -41,7 +41,7 @@ import {
   ChartTypeOption,
 } from "./constants/chartTypes";
 import ChartRenderer from "./ChartRenderer";
-import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
+import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 
 export interface SidebarAddBlockEvent {
   blockType: CanvasBlockType;

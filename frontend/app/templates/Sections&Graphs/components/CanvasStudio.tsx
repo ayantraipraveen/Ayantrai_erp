@@ -94,14 +94,9 @@ import {
   showGlobalToast,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
-import { UploadedSvgWatermark, WatermarkStampConfig } from "./watermarkStorage";
+import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 import { SidebarAddBlockEvent } from "./CanvasSidebar";
-import {
-  DEFAULT_CANVAS_MARGIN,
-  CanvasMarginConfig,
-  getPaperToneColor,
-} from "./CanvasContextRibbon";
-import { CanvasRuler, RulerUnit } from "./CanvasRuler";
+import { CanvasRuler } from "./CanvasRuler";
 import {
   DynamicTitleEditor,
   DynamicTextEditor,
@@ -112,217 +107,32 @@ import {
   getFallbackTitleHtml,
 } from "./DynamicTitleEditor";
 
-// ─── Standard ISO A4 PDF Dimensions (595 × 842 px / pt) ──────────────────────
-export const A4_WIDTH_PX = 595;      // Standard ISO PDF A4 Width (595 px / pt)
-export const A4_HEIGHT_PX = 842;     // Standard ISO PDF A4 Height (842 px / pt)
+import {
+  A4_WIDTH_PX,
+  A4_HEIGHT_PX,
+  getCellWidthStyle,
+  estimateRowHeight,
+  PagePartition,
+  partitionCanvasPages,
+  renderDualToneEyebrow,
+  renderDualToneTitle,
+  isColorDark,
+  getPaperToneColor,
+  DEFAULT_CANVAS_MARGIN,
+  CanvasMarginConfig,
+  RulerUnit,
+} from "../utils";
 
-// ─── Mathematical fluid width formula for flex-wrap row with gap: 16px ────────
-export function getCellWidthStyle(percent: number): string {
-  const p = Math.max(15, Math.min(100, Math.round(percent)));
-  if (p >= 100) return "100%";
-  const gapSub = (16 * (100 - p)) / 100;
-  return `calc(${p}% - ${gapSub.toFixed(1)}px)`;
-}
-
-// ─── Predictive Row Height Estimation (Calibrated for Standard 1123px A4) ──────
-export function estimateRowHeight(row: CanvasRow): number {
-  if (!row.cells || row.cells.length === 0) return 80;
-
-  // Track flex-wrap line progression based on cumulative customWidth percentages
-  let currentLineWidth = 0;
-  let currentLineMaxHeight = 0;
-  let totalCalculatedHeight = 0;
-
-  for (const cell of row.cells) {
-    let h = cell.customHeight || 90;
-    if (!cell.customHeight) {
-      switch (cell.blockType) {
-        case "chart":
-          // Chart card: 40px padding + 32px header + 260px chart area + description + margins
-          h = cell.chart?.description ? 395 : 370;
-          break;
-        case "metric-card":
-          h = 135;
-          break;
-        case "badge-strip": {
-          const w = cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : 100);
-          h = w <= 55 ? 220 : 140;
-          break;
-        }
-        case "insight":
-          h = 110;
-          break;
-        case "text": {
-          const lines = (cell.textBlock?.content || "").split("\n").length;
-          h = Math.max(90, 60 + lines * 20);
-          break;
-        }
-        case "divider":
-          h = 32;
-          break;
-        default:
-          h = 100;
-      }
-    }
-
-    // Account for stacked cells in this column
-    if (cell.stackedCells && cell.stackedCells.length > 0) {
-      for (const sc of cell.stackedCells) {
-        let scH = sc.customHeight || 90;
-        if (!sc.customHeight) {
-          switch (sc.blockType) {
-            case "chart": scH = 370; break;
-            case "metric-card": scH = 135; break;
-            case "badge-strip": scH = 140; break;
-            case "insight": scH = 110; break;
-            case "text": scH = 90; break;
-            default: scH = 90;
-          }
-        }
-        h += scH + 12; // 12px gap between stacked blocks
-      }
-    }
-
-    const cellWidth = cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : 100);
-
-    // If flex-wrap wraps into a new line (exceeds 105% allowing for slight margin rounding)
-    if (currentLineWidth + cellWidth > 105 && currentLineWidth > 0) {
-      totalCalculatedHeight += currentLineMaxHeight + 12; // 12px flex line gap
-      currentLineWidth = cellWidth;
-      currentLineMaxHeight = h;
-    } else {
-      currentLineWidth += cellWidth;
-      if (h > currentLineMaxHeight) currentLineMaxHeight = h;
-    }
-  }
-
-  totalCalculatedHeight += currentLineMaxHeight;
-  return totalCalculatedHeight + 16; // 16px row margins & drop zone
-}
-
-// ─── Multi-Page Partitioning Algorithm (Standard A4 1123px Limit) ─────────────
-export interface PagePartition {
-  pageIndex: number;
-  pageNumber: number;
-  rows: CanvasRow[];
-  isFirstPage: boolean;
-  isLastPage: boolean;
-  usedHeight: number;
-  maxCapacity: number;
-}
-
-export function partitionCanvasPages(
-  rows: CanvasRow[],
-  marginConfig: CanvasMarginConfig = DEFAULT_CANVAS_MARGIN,
-  startPageNumber: number = 1,
-  sheetHeight: number = A4_HEIGHT_PX
-): PagePartition[] {
-  const page1MarginY = (marginConfig?.top ?? 24) + (marginConfig?.bottom ?? 24);
-
-  // Exact physical A4 sheet height: 842px (Standard ISO PDF Page)
-  const capPage1Single = Math.round(
-    Math.max(380, Math.min(540, sheetHeight - page1MarginY - 110 - 75 - 70 - 35))
-  );
-  
-  const capPage1Multi = Math.round(
-    Math.max(400, Math.min(560, sheetHeight - page1MarginY - 110 - 75 - 28 - 35))
-  );
-
-  const capMiddlePage = Math.round(
-    Math.max(480, Math.min(680, sheetHeight - 40 - 52 - 28 - 28))
-  );
-
-  const capLastPage = Math.round(
-    Math.max(450, Math.min(640, sheetHeight - 40 - 52 - 70 - 28))
-  );
-
-  if (rows.length === 0) {
-    return [
-      {
-        pageIndex: 0,
-        pageNumber: startPageNumber,
-        rows: [],
-        isFirstPage: true,
-        isLastPage: true,
-        usedHeight: 0,
-        maxCapacity: capPage1Single,
-      },
-    ];
-  }
-
-  const rowHeights = rows.map((r) => estimateRowHeight(r));
-  const totalRowHeight = rowHeights.reduce((a, b) => a + b, 0);
-
-  // Check if everything fits on a single page with footer and without forced page break
-  const hasForcedPageBreak = rows.some((r, i) => i > 0 && r.pageBreakBefore);
-  if (!hasForcedPageBreak && totalRowHeight <= capPage1Single) {
-    return [
-      {
-        pageIndex: 0,
-        pageNumber: startPageNumber,
-        rows: [...rows],
-        isFirstPage: true,
-        isLastPage: true,
-        usedHeight: totalRowHeight,
-        maxCapacity: capPage1Single,
-      },
-    ];
-  }
-
-  // Multi-page distribution
-  const pages: PagePartition[] = [];
-  let currentPageRows: CanvasRow[] = [];
-  let currentUsedHeight = 0;
-  let currentPageIndex = 0;
-
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    const rHeight = rowHeights[i];
-    const isFirstPage = currentPageIndex === 0;
-    const currentLimit = isFirstPage ? capPage1Multi : capMiddlePage;
-    const isForcedBreak = i > 0 && Boolean(row.pageBreakBefore);
-
-    if (
-      currentPageRows.length > 0 &&
-      (isForcedBreak || currentUsedHeight + rHeight > currentLimit)
-    ) {
-      pages.push({
-        pageIndex: currentPageIndex,
-        pageNumber: startPageNumber + currentPageIndex,
-        rows: currentPageRows,
-        isFirstPage: currentPageIndex === 0,
-        isLastPage: false,
-        usedHeight: currentUsedHeight,
-        maxCapacity: currentLimit,
-      });
-
-      currentPageIndex++;
-      currentPageRows = [row];
-      currentUsedHeight = rHeight;
-    } else {
-      currentPageRows.push(row);
-      currentUsedHeight += rHeight;
-    }
-  }
-
-  if (currentPageRows.length > 0 || pages.length === 0) {
-    pages.push({
-      pageIndex: currentPageIndex,
-      pageNumber: startPageNumber + currentPageIndex,
-      rows: currentPageRows,
-      isFirstPage: currentPageIndex === 0,
-      isLastPage: true,
-      usedHeight: currentUsedHeight,
-      maxCapacity: currentPageIndex === 0 ? capPage1Single : capLastPage,
-    });
-  }
-
-  if (pages.length > 0) {
-    pages[pages.length - 1].isLastPage = true;
-  }
-
-  return pages;
-}
+export {
+  A4_WIDTH_PX,
+  A4_HEIGHT_PX,
+  getCellWidthStyle,
+  estimateRowHeight,
+  partitionCanvasPages,
+  renderDualToneEyebrow,
+  renderDualToneTitle,
+};
+export type { PagePartition };
 
 
 // ─── Drop Insertion Zone (Between Rows) ───────────────────────────────────────
@@ -1532,7 +1342,7 @@ function SortableRow({
           <Layers className="w-3.5 h-3.5 text-[#8B3DFF] flex-shrink-0 animate-pulse" />
           <span className="font-bold uppercase tracking-wider">AUTO PAGE BREAK APPLIED</span>
           <span className="text-purple-300 dark:text-purple-700">&bull;</span>
-          <span className="text-slate-600 dark:text-zinc-300 font-sans font-medium">Standard A4 Height Limit (1123px) &bull; Moved to Page {currentPageNumber}</span>
+          <span className="text-slate-600 dark:text-zinc-300 font-sans font-medium">Standard PDF Page Limit (842px) &bull; Moved to Page {currentPageNumber}</span>
           <div className="flex-1 border-t border-dashed border-purple-300 dark:border-purple-700/60" />
         </div>
       )}
@@ -1996,57 +1806,7 @@ export interface CanvasStudioProps {
   onReorderStacked?: (rowId: string, parentCellId: string, direction: "up" | "down", index: number) => void;
 }
 
-// ─── Dual-Tone Typography Helpers (Matching Design Target) ────────────────────
-export function renderDualToneEyebrow(eyebrow: string, sectionTextColor?: string, isDarkPaper?: boolean) {
-  if (sectionTextColor) {
-    return <span style={{ color: sectionTextColor }}>{eyebrow}</span>;
-  }
-  const trimmed = (eyebrow || "").trim();
-  if (!trimmed) return null;
-  const parts = trimmed.split(/\s+/);
-  if (parts.length <= 1) {
-    return <span className={isDarkPaper ? "text-sky-400" : "text-[#0d2562] dark:text-sky-400"}>{trimmed}</span>;
-  }
-  const firstPart = parts.slice(0, -1).join(" ");
-  const lastWord = parts[parts.length - 1];
-  return (
-    <>
-      <span className={isDarkPaper ? "text-blue-300" : "text-[#0d2562] dark:text-blue-300"}>{firstPart}</span>{" "}
-      <span className={isDarkPaper ? "text-sky-400" : "text-[#2563eb] dark:text-sky-400"}>{lastWord}</span>
-    </>
-  );
-}
 
-export function renderDualToneTitle(name: string, sectionTextColor?: string, isDarkPaper?: boolean) {
-  if (sectionTextColor) {
-    return <span style={{ color: sectionTextColor }}>{name}</span>;
-  }
-  const trimmed = (name || "").trim();
-  if (!trimmed) return null;
-  const parts = trimmed.split(/\s+/);
-  if (parts.length <= 1) {
-    return <span className={isDarkPaper ? "text-white" : "text-[#050a1a] dark:text-white"}>{trimmed}</span>;
-  }
-  const mainPart = parts.slice(0, -1).join(" ");
-  const accentWord = parts[parts.length - 1];
-  return (
-    <>
-      <span className={isDarkPaper ? "text-white" : "text-[#050a1a] dark:text-white"}>{mainPart}</span>{" "}
-      <span className={isDarkPaper ? "text-sky-400" : "text-[#2563eb] dark:text-sky-400"}>{accentWord}</span>
-    </>
-  );
-}
-
-function isColorDark(hexOrColor?: string): boolean {
-  if (!hexOrColor) return false;
-  if (hexOrColor === "dark") return true;
-  if (!hexOrColor.startsWith("#") || hexOrColor.length < 7) return false;
-  const r = parseInt(hexOrColor.slice(1, 3), 16);
-  const g = parseInt(hexOrColor.slice(3, 5), 16);
-  const b = parseInt(hexOrColor.slice(5, 7), 16);
-  const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  return luma < 135;
-}
 
 export function CanvasStudio({
   section,
@@ -2993,9 +2753,8 @@ export function CanvasStudio({
                         boxSizing: "border-box",
                       }}
                     >
-                      {/* Top Header */}
-                      {page.isFirstPage ? (
-                        <div>
+                      {/* Top Header (Standard across Page 1, Page 2, and all pages) */}
+                      <div>
                           {/* Fixed Sitesafe Report Header */}
                           <div
                             className="relative z-30 min-h-[110px] border-b border-slate-200/80 overflow-visible"
@@ -3325,48 +3084,6 @@ export function CanvasStudio({
                             ) : null}
                           </div>
                         </div>
-                      ) : (
-                        /* Continuation Page Header */
-                        <div
-                          className="relative z-10 min-h-[56px] border-b border-slate-200/80 dark:border-zinc-800/60 overflow-hidden flex items-center justify-between px-6 py-2.5 mb-2"
-                          style={{ backgroundColor: getPaperToneColor(paperTone) }}
-                        >
-                          <div className="flex items-center gap-4">
-                            <Image
-                              src="/sitesafe-header-logo.svg"
-                              alt="Sitesafe by AyantrAI"
-                              width={140}
-                              height={38}
-                              className="h-[34px] w-[110px] object-contain object-left"
-                              priority
-                            />
-                            <div className="h-6 w-px bg-[#2454d8]/40" />
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold uppercase tracking-[0.14em] font-sans">
-                                  {renderDynamicEyebrow(section.eyebrowHtml, section.eyebrow, sectionTextColor, isDarkPaper)} &bull; CONTINUATION
-                                </span>
-                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20">
-                                  A4 Split (1123px)
-                                </span>
-                              </div>
-                              <div className="text-xs font-black tracking-tight truncate max-w-[300px]">
-                                {renderDynamicTitle(section.titleHtml, section.name, sectionTextColor, isDarkPaper)}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="relative flex items-center gap-4">
-                            <span className="hidden max-w-[220px] truncate sm:inline" style={headerTitleTextStyle}>
-                              {renderDynamicText(headerValues.titleHtml, headerValues.title)}
-                            </span>
-                            <div className="-my-2.5 -mr-6 h-[56px] w-[68px] flex flex-col items-center justify-center bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
-                              <span className="text-[9px] font-semibold">Page</span>
-                              <span className="text-[20px] font-black leading-none">{String(page.pageNumber).padStart(2, "0")}</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
 
                       {/* Canvas Rows Container for this Page */}
                       <div className="relative z-10 px-0 pt-3 pb-2 space-y-2 flex-1 min-h-0 overflow-visible">
@@ -3396,13 +3113,13 @@ export function CanvasStudio({
                           </div>
                         ) : (
                           <div className="space-y-3.5">
-                            {/* Drop zone at the top of the report */}
-                            {page.isFirstPage && !activeIsPreview && (
+                            {/* Drop zone at the top of this page */}
+                            {!activeIsPreview && page.rows.length > 0 && (
                               <DropInsertZone
-                                insertIndex={0}
+                                insertIndex={Math.max(0, rows.findIndex((r) => r.id === page.rows[0]?.id))}
                                 onAddRow={handleInsertRowAtIndex}
                                 onDropBlock={onDropBlock}
-                                label="Drop to insert at top of report"
+                                label={page.isFirstPage ? "Drop to insert at top of report" : `Drop to insert at top of Page ${page.pageNumber}`}
                               />
                             )}
 
@@ -3497,89 +3214,80 @@ export function CanvasStudio({
                       </div>
 
                       {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages */}
-                      {page.isLastPage ? (
-                        <footer
-                          className="relative z-10 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
-                          style={{ backgroundColor: getPaperToneColor(paperTone) }}
-                        >
-                          <div className={`min-w-0 ${editingFooterValue === "company" || editingFooterValue === "websites" ? "relative z-50" : "relative z-10"}`}>
-                            {editingFooterValue === "company" ? (
-                              <DynamicTextEditor
-                                initialValue={footerValues.company}
-                                initialHtml={footerValues.companyHtml}
-                                defaultFontSize={14}
-                                multiline={false}
-                                toolbarPosition="top"
-                                className="text-sm font-bold text-[#1836a0]"
-                                onSave={(plain, html) => updateFooterValueWithHtml("company", plain, html)}
-                                onCancel={() => setEditingFooterValue(null)}
-                              />
-                            ) : (
-                              <p
-                                className="cursor-text text-sm font-bold text-[#1836a0]"
-                                onDoubleClick={() => !activeIsPreview && setEditingFooterValue("company")}
-                                title="Double-click to format company name (Word style)"
-                              >
-                                {renderDynamicText(footerValues.companyHtml, footerValues.company)}
-                              </p>
-                            )}
-                            {editingFooterValue === "websites" ? (
-                              <DynamicTextEditor
-                                initialValue={footerValues.websites}
-                                initialHtml={footerValues.websitesHtml}
-                                defaultFontSize={12}
-                                multiline={false}
-                                toolbarPosition="top"
-                                className="mt-1 text-xs font-semibold text-[#1836a0]"
-                                onSave={(plain, html) => updateFooterValueWithHtml("websites", plain, html)}
-                                onCancel={() => setEditingFooterValue(null)}
-                              />
-                            ) : (
-                              <p
-                                className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
-                                onDoubleClick={() => !activeIsPreview && setEditingFooterValue("websites")}
-                                title="Double-click to format website links (Word style)"
-                              >
-                                {renderDynamicText(footerValues.websitesHtml, footerValues.websites)}
-                              </p>
-                            )}
-                          </div>
+                      {/* Standard Corporate Footer (Consistent across Page 1, Page 2, and all pages) */}
+                      <footer
+                        className="relative z-10 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
+                        style={{ backgroundColor: getPaperToneColor(paperTone) }}
+                      >
+                        <div className={`min-w-0 ${editingFooterValue === "company" || editingFooterValue === "websites" ? "relative z-50" : "relative z-10"}`}>
+                          {editingFooterValue === "company" ? (
+                            <DynamicTextEditor
+                              initialValue={footerValues.company}
+                              initialHtml={footerValues.companyHtml}
+                              defaultFontSize={14}
+                              multiline={false}
+                              toolbarPosition="top"
+                              className="text-sm font-bold text-[#1836a0]"
+                              onSave={(plain, html) => updateFooterValueWithHtml("company", plain, html)}
+                              onCancel={() => setEditingFooterValue(null)}
+                            />
+                          ) : (
+                            <p
+                              className="cursor-text text-sm font-bold text-[#1836a0]"
+                              onDoubleClick={() => !activeIsPreview && setEditingFooterValue("company")}
+                              title="Double-click to format company name (Word style)"
+                            >
+                              {renderDynamicText(footerValues.companyHtml, footerValues.company)}
+                            </p>
+                          )}
+                          {editingFooterValue === "websites" ? (
+                            <DynamicTextEditor
+                              initialValue={footerValues.websites}
+                              initialHtml={footerValues.websitesHtml}
+                              defaultFontSize={12}
+                              multiline={false}
+                              toolbarPosition="top"
+                              className="mt-1 text-xs font-semibold text-[#1836a0]"
+                              onSave={(plain, html) => updateFooterValueWithHtml("websites", plain, html)}
+                              onCancel={() => setEditingFooterValue(null)}
+                            />
+                          ) : (
+                            <p
+                              className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
+                              onDoubleClick={() => !activeIsPreview && setEditingFooterValue("websites")}
+                              title="Double-click to format website links (Word style)"
+                            >
+                              {renderDynamicText(footerValues.websitesHtml, footerValues.websites)}
+                            </p>
+                          )}
+                        </div>
 
-                          <div className="h-[2px] w-full bg-[#1836a0]/60" />
+                        <div className="h-[2px] w-full bg-[#1836a0]/60" />
 
-                          <div className={`min-w-0 ${editingFooterValue === "quote" ? "relative z-50" : "relative z-10"}`}>
-                            {editingFooterValue === "quote" ? (
-                              <DynamicTextEditor
-                                initialValue={footerValues.quote}
-                                initialHtml={footerValues.quoteHtml}
-                                defaultFontSize={14}
-                                multiline={false}
-                                toolbarPosition="top"
-                                toolbarAlign="right"
-                                className="text-right text-sm font-semibold text-[#1836a0]"
-                                onSave={(plain, html) => updateFooterValueWithHtml("quote", plain, html)}
-                                onCancel={() => setEditingFooterValue(null)}
-                              />
-                            ) : (
-                              <p
-                                className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
-                                onDoubleClick={() => !activeIsPreview && setEditingFooterValue("quote")}
-                                title="Double-click to format safety quote (Word style)"
-                              >
-                                &ldquo;{renderDynamicText(footerValues.quoteHtml, footerValues.quote)}&rdquo;
-                              </p>
-                            )}
-                          </div>
-                        </footer>
-                      ) : (
-                        <footer
-                          className="relative z-10 mt-auto flex items-center justify-between border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-2 pb-1 text-[11px] text-slate-400 font-mono"
-                          style={{ backgroundColor: getPaperToneColor(paperTone) }}
-                        >
-                          <span className="font-semibold text-[#1836a0] dark:text-sky-400">Sitesafe&trade; by AyantrAI Private Limited</span>
-                          <span>Page {page.pageNumber} of {pages.length}</span>
-                        </footer>
-                      )}
+                        <div className={`min-w-0 ${editingFooterValue === "quote" ? "relative z-50" : "relative z-10"}`}>
+                          {editingFooterValue === "quote" ? (
+                            <DynamicTextEditor
+                              initialValue={footerValues.quote}
+                              initialHtml={footerValues.quoteHtml}
+                              defaultFontSize={14}
+                              multiline={false}
+                              toolbarPosition="top"
+                              toolbarAlign="right"
+                              className="text-right text-sm font-semibold text-[#1836a0]"
+                              onSave={(plain, html) => updateFooterValueWithHtml("quote", plain, html)}
+                              onCancel={() => setEditingFooterValue(null)}
+                            />
+                          ) : (
+                            <p
+                              className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
+                              onDoubleClick={() => !activeIsPreview && setEditingFooterValue("quote")}
+                              title="Double-click to format safety quote (Word style)"
+                            >
+                              &ldquo;{renderDynamicText(footerValues.quoteHtml, footerValues.quote)}&rdquo;
+                            </p>
+                          )}
+                        </div>
+                      </footer>
                     </div>
                   </div>
                 </div>
@@ -3611,9 +3319,6 @@ export function CanvasStudio({
               </button>
               <span className="px-1 text-[#8B3DFF]">
                 Page {activeViewPageIndex + 1} / {pages.length}
-              </span>
-              <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500 pl-1 border-l border-slate-200 dark:border-zinc-700">
-                A4 (1123px)
               </span>
               <button
                 type="button"

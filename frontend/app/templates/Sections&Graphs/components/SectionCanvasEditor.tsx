@@ -52,7 +52,7 @@ import {
   UploadedSvgWatermark,
   WatermarkStampConfig,
   DEFAULT_WATERMARK_CONFIG,
-} from "./watermarkStorage";
+} from "../watermark/utils";
 import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
 import { CanvasStudio } from "./CanvasStudio";
 import {

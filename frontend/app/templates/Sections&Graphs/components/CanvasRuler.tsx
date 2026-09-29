@@ -2,9 +2,14 @@
 
 import React, { useState, useMemo } from "react";
 import { Ruler, Maximize2, ShieldCheck } from "lucide-react";
-import { CanvasMarginConfig } from "./CanvasContextRibbon";
+import {
+  CanvasMarginConfig,
+  RulerUnit,
+  getUnitConversionFactors,
+  formatRulerValue,
+} from "../utils";
 
-export type RulerUnit = "px" | "pt" | "mm" | "in";
+export type { RulerUnit };
 
 interface CanvasRulerProps {
   pageWidth: number;   // Standard ISO PDF A4: 595px (595 pt)
@@ -29,10 +34,9 @@ export function CanvasRuler({
 }: CanvasRulerProps) {
   const [internalUnit, setInternalUnit] = useState<RulerUnit>("px");
   const activeUnit = unit || internalUnit;
-  const isPdf72Dpi = Math.abs(pageWidth - 595) < 10;
-  const pxPerInch = isPdf72Dpi ? 72 : 96;
-  const pxPerMm = pageWidth / 210;
-  const pxPerPt = isPdf72Dpi ? 1 : 96 / 72;
+
+  const factors = useMemo(() => getUnitConversionFactors(pageWidth), [pageWidth]);
+  const { pxPerPt, pxPerMm, pxPerInch } = factors;
 
   const handleToggleUnit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -46,18 +50,7 @@ export function CanvasRuler({
   };
 
   // Convert pixel value to selected unit display string
-  const formatValue = (px: number): string => {
-    if (activeUnit === "pt") {
-      return Math.round(px / pxPerPt).toString();
-    }
-    if (activeUnit === "mm") {
-      return (px / pxPerMm).toFixed(0);
-    }
-    if (activeUnit === "in") {
-      return (px / pxPerInch).toFixed(1);
-    }
-    return Math.round(px).toString();
-  };
+  const formatValue = (px: number): string => formatRulerValue(px, activeUnit, factors);
 
   // Generate tick marks for horizontal ruler (0 to pageWidth)
   const horizontalTicks = useMemo(() => {
