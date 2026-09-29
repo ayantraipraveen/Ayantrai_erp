@@ -18,8 +18,8 @@ interface CanvasRulerProps {
 }
 
 export function CanvasRuler({
-  pageWidth = 794,
-  pageHeight = 1123,
+  pageWidth = 595,
+  pageHeight = 842,
   marginConfig,
   activeMousePos,
   selectedBox,
@@ -29,7 +29,7 @@ export function CanvasRuler({
 }: CanvasRulerProps) {
   const [internalUnit, setInternalUnit] = useState<RulerUnit>("px");
   const activeUnit = unit || internalUnit;
-    const isPdf72Dpi = Math.abs(pageWidth - 595) < 10;
+  const isPdf72Dpi = Math.abs(pageWidth - 595) < 10;
   const pxPerInch = isPdf72Dpi ? 72 : 96;
   const pxPerMm = pageWidth / 210;
   const pxPerPt = isPdf72Dpi ? 1 : 96 / 72;

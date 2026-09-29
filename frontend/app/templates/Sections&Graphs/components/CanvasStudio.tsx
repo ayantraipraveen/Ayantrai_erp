@@ -2331,6 +2331,18 @@ export function CanvasStudio({
     }
   }, [onToggleRulers]);
 
+  const handleTogglePageDpi = useCallback(
+    (newDpi?: CanvasPageDpi) => {
+      const next = newDpi || (activePageDpi === "96dpi" ? "72dpi" : "96dpi");
+      if (typeof onPageDpiChange === "function") {
+        onPageDpiChange(next);
+      } else {
+        setInternalPageDpi(next);
+      }
+    },
+    [activePageDpi, onPageDpiChange]
+  );
+
   // Keyboard Shortcut: Shift + R toggles rulers (Canva / Figma standard)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -2857,10 +2869,10 @@ export function CanvasStudio({
           style={{
             transform: `scale(${activeZoom})`,
             transformOrigin: "top center",
-            width: activeShowRulers && !activeIsPreview ? `${A4_WIDTH_PX + 32}px` : `${A4_WIDTH_PX}px`,
+            width: activeShowRulers && !activeIsPreview ? `${activePageWidth + 32}px` : `${activePageWidth}px`,
             minWidth: activeShowRulers && !activeIsPreview
-              ? `${Math.round((A4_WIDTH_PX + 32) * Math.max(1, activeZoom))}px`
-              : `${Math.round(A4_WIDTH_PX * Math.max(1, activeZoom))}px`,
+              ? `${Math.round((activePageWidth + 32) * Math.max(1, activeZoom))}px`
+              : `${Math.round(activePageWidth * Math.max(1, activeZoom))}px`,
           }}
         >
           <SortableContext
@@ -2874,8 +2886,9 @@ export function CanvasStudio({
                   {/* Visual Page Break Between Pages on Desk */}
                   {pageIdx > 0 && (
                     <div
-                      className="flex items-center gap-4 w-[794px] my-2 text-xs select-none"
+                      className="flex items-center gap-4 my-2 text-xs select-none"
                       style={{
+                        width: `${activePageWidth}px`,
                         marginLeft: activeShowRulers && !activeIsPreview ? "32px" : undefined,
                       }}
                     >
@@ -2886,7 +2899,9 @@ export function CanvasStudio({
                         <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
                         <span>Page {page.pageNumber} of {pages.length}</span>
                         <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
-                        <span className="text-slate-500 dark:text-zinc-400 font-medium">Standard A4 (794 &times; 1123 px)</span>
+                        <span className="text-slate-500 dark:text-zinc-400 font-medium">
+                          {activePageDpi === "72dpi" ? "PDF A4 (595 × 842 pt)" : "Web A4 (794 × 1123 px)"}
+                        </span>
                       </div>
                       <div className="flex-1 border-t-2 border-dashed border-purple-300 dark:border-purple-900/60" />
                     </div>
@@ -2910,8 +2925,8 @@ export function CanvasStudio({
                       setPageMousePos((prev) => ({
                         ...prev,
                         [page.pageIndex]: {
-                          x: Math.max(0, Math.min(A4_WIDTH_PX, x)),
-                          y: Math.max(0, Math.min(A4_HEIGHT_PX, y)),
+                          x: Math.max(0, Math.min(activePageWidth, x)),
+                          y: Math.max(0, Math.min(activePageHeight, y)),
                         },
                       }));
                     }}
@@ -2925,8 +2940,8 @@ export function CanvasStudio({
                     {/* ── Precision Figma/Canva Style Canvas Ruler Overlay ── */}
                     {activeShowRulers && !activeIsPreview && (
                       <CanvasRuler
-                        pageWidth={A4_WIDTH_PX}
-                        pageHeight={A4_HEIGHT_PX}
+                        pageWidth={activePageWidth}
+                        pageHeight={activePageHeight}
                         marginConfig={marginConfig}
                         activeMousePos={pageMousePos[page.pageIndex] || null}
                         selectedBox={getSelectedBoxForPage(page.pageIndex)}
@@ -2942,12 +2957,12 @@ export function CanvasStudio({
                     style={{
                       ...customPaperStyle,
                       borderRadius: `${marginConfig.radius}px`,
-                      width: `${A4_WIDTH_PX}px`,
-                      minWidth: `${A4_WIDTH_PX}px`,
-                      maxWidth: `${A4_WIDTH_PX}px`,
-                      height: `${A4_HEIGHT_PX}px`,
-                      minHeight: `${A4_HEIGHT_PX}px`,
-                      maxHeight: `${A4_HEIGHT_PX}px`,
+                      width: `${activePageWidth}px`,
+                      minWidth: `${activePageWidth}px`,
+                      maxWidth: `${activePageWidth}px`,
+                      height: `${activePageHeight}px`,
+                      minHeight: `${activePageHeight}px`,
+                      maxHeight: `${activePageHeight}px`,
                       boxSizing: "border-box",
                     }}
                     className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${
@@ -3705,9 +3720,21 @@ export function CanvasStudio({
           className={`p-1.5 rounded-lg cursor-pointer transition-colors ${
             activeShowRulers ? "text-[#8B3DFF] bg-purple-500/15" : "text-slate-400 hover:text-slate-700"
           }`}
-          title="Toggle Dimensions & Position Rulers (Shift+R) — 794×1123px"
+          title="Toggle Dimensions & Position Rulers (Shift+R)"
         >
           <Ruler className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Page Size / DPI Standard Switcher */}
+        <button
+          type="button"
+          onClick={() => handleTogglePageDpi()}
+          className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold text-purple-600 dark:text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 cursor-pointer transition-colors"
+          title={`Switch A4 Standard: 96 DPI Web (794×1123px) ↔ 72 DPI PDF (595×842px). Currently: ${
+            activePageDpi === "72dpi" ? "72 DPI (PDF 595×842)" : "96 DPI (Web 794×1123)"
+          }`}
+        >
+          {activePageDpi === "72dpi" ? "PDF 595×842" : "Web 794×1123"}
         </button>
 
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-1" />

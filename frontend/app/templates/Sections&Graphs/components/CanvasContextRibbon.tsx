@@ -982,12 +982,12 @@ export function CanvasContextRibbon({
                   ? "bg-purple-500/15 text-[#9D61FF] border-purple-400/40 shadow-xs"
                   : "border-slate-200 dark:border-zinc-700/80 text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
               }`}
-              title="Toggle Dimensions & Position Rulers (Shift+R) — 794×1123px"
+              title="Toggle Dimensions & Position Rulers (Shift+R) — Standard PDF Page (595×842px)"
             >
               <Ruler className="w-3 h-3 text-[#9D61FF]" />
               <span className="hidden sm:inline">Rulers</span>
               <span className="text-[9px] font-mono text-slate-400 dark:text-zinc-500 hidden md:inline">
-                {showRulers ? "794×1123" : "Off"}
+                {showRulers ? "595×842" : "Off"}
               </span>
             </button>
           )}
