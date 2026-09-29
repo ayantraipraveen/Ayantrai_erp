@@ -217,23 +217,28 @@ export interface PagePartition {
 export function partitionCanvasPages(
   rows: CanvasRow[],
   marginConfig: CanvasMarginConfig = DEFAULT_CANVAS_MARGIN,
-  startPageNumber: number = 1
+  startPageNumber: number = 1,
+  sheetHeight: number = A4_HEIGHT_PX
 ): PagePartition[] {
   const page1MarginY = (marginConfig?.top ?? 24) + (marginConfig?.bottom ?? 24);
 
-  // Exact physical A4 sheet height: 1123px at standard 96 DPI
-  // Safe capacities strictly calibrated to standard A4 height to prevent clipping:
-  // Page 1 (Single-page report): Header (130px) + Section Title Bar (~90px) + Margins (~48px) + Full Footer (~92px) + Controls (~42px) + Buffer (~35px)
-  const capPage1Single = Math.max(500, Math.min(680, A4_HEIGHT_PX - page1MarginY - 130 - 90 - 92 - 42 - 35));
+  // Exact physical A4 sheet height: 1123px at 96 DPI, or 842px at 72 DPI PDF
+  const heightScale = sheetHeight / A4_HEIGHT_PX;
+  const capPage1Single = Math.round(
+    Math.max(400 * heightScale, Math.min(680 * heightScale, sheetHeight - page1MarginY - 130 * heightScale - 90 * heightScale - 92 * heightScale - 42 - 35))
+  );
   
-  // Page 1 (Multi-page report): Header (130px) + Section Title Bar (~90px) + Margins (~48px) + Running Footer (~32px) + Controls (~42px) + Buffer (~35px)
-  const capPage1Multi = Math.max(550, Math.min(700, A4_HEIGHT_PX - page1MarginY - 130 - 90 - 32 - 42 - 35));
+  const capPage1Multi = Math.round(
+    Math.max(450 * heightScale, Math.min(700 * heightScale, sheetHeight - page1MarginY - 130 * heightScale - 90 * heightScale - 32 - 42 - 35))
+  );
 
-  // Continuation Pages (Middle): Compact Header (~64px) + Margins (~40px) + Running Footer (~32px) + Controls (~42px) + Buffer (~30px)
-  const capMiddlePage = Math.max(650, Math.min(860, A4_HEIGHT_PX - 40 - 64 - 32 - 42 - 30));
+  const capMiddlePage = Math.round(
+    Math.max(500 * heightScale, Math.min(860 * heightScale, sheetHeight - 40 - 64 * heightScale - 32 - 42 - 30))
+  );
 
-  // Last Page (Multi-page report): Compact Header (~64px) + Margins (~40px) + Full Footer (~92px) + Controls (~42px) + Buffer (~30px)
-  const capLastPage = Math.max(600, Math.min(800, A4_HEIGHT_PX - 40 - 64 - 92 - 42 - 30));
+  const capLastPage = Math.round(
+    Math.max(480 * heightScale, Math.min(800 * heightScale, sheetHeight - 40 - 64 * heightScale - 92 * heightScale - 42 - 30))
+  );
 
   if (rows.length === 0) {
     return [
@@ -1979,6 +1984,8 @@ export interface CanvasStudioProps {
   onToggleGuides?: () => void;
   showRulers?: boolean;
   onToggleRulers?: () => void;
+  pageDpi?: CanvasPageDpi;
+  onPageDpiChange?: (dpi: CanvasPageDpi) => void;
   zoom?: number;
   setZoom?: (zoom: number | ((prev: number) => number)) => void;
   isPreview?: boolean;
@@ -2071,6 +2078,8 @@ export function CanvasStudio({
   onToggleGuides,
   showRulers = true,
   onToggleRulers,
+  pageDpi = "96dpi",
+  onPageDpiChange,
   zoom = 1,
   setZoom,
   isPreview = false,
@@ -2089,10 +2098,15 @@ export function CanvasStudio({
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
 
-  // Multi-page layout engine: partitions rows across authentic A4 sheets
+  const [internalPageDpi, setInternalPageDpi] = useState<CanvasPageDpi>("96dpi");
+  const activePageDpi = pageDpi !== undefined ? pageDpi : internalPageDpi;
+  const activePageWidth = activePageDpi === "72dpi" ? A4_PDF_WIDTH_PX : A4_WIDTH_PX;
+  const activePageHeight = activePageDpi === "72dpi" ? A4_PDF_HEIGHT_PX : A4_HEIGHT_PX;
+
+  // Multi-page layout engine: partitions rows across authentic A4 sheets (calibrated for current DPI sheet height)
   const pages = useMemo(() => {
-    return partitionCanvasPages(rows, marginConfig, pageNumber);
-  }, [rows, marginConfig, pageNumber]);
+    return partitionCanvasPages(rows, marginConfig, pageNumber, activePageHeight);
+  }, [rows, marginConfig, pageNumber, activePageHeight]);
 
   const [activeViewPageIndex, setActiveViewPageIndex] = useState<number>(0);
   const prevPagesLengthRef = useRef(pages.length);
