@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   ArrowLeft,
-  Save,
   AlertCircle,
   Edit2,
   Eye,
+  Save,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -55,11 +55,8 @@ import {
 } from "../watermark/utils";
 import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
 import { CanvasStudio } from "./CanvasStudio";
-import {
-  CanvasContextRibbon,
-  CanvasMarginConfig,
-  DEFAULT_CANVAS_MARGIN,
-} from "./CanvasContextRibbon";
+import { CanvasContextRibbon } from "./CanvasContextRibbon";
+import { CanvasMarginConfig, DEFAULT_CANVAS_MARGIN } from "../utils";
 import ChartEditorPanel from "./ChartEditorPanel";
 import {
   EditSectionHeaderModal,
