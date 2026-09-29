@@ -31,7 +31,10 @@ export default function SectionsGraphsPage() {
           />
         ) : (
           <SectionListView
-            onSelectSection={(id) => dispatch(setSelectedLibrarySectionId(id))}
+            onSelectSection={(id) => {
+              dispatch(setSelectedLibrarySectionId(id));
+              router.push(`/templates/Sections&Graphs/edit?id=${id}`);
+            }}
             onBackToTemplates={() => router.push("/templates")}
           />
         )}

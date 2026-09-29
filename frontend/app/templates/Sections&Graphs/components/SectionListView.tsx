@@ -39,6 +39,7 @@ import {
 } from "@/lib/redux/slices/reportModuleSlice";
 import { Tooltip } from "@/app/Component";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface SectionListViewProps {
   onSelectSection: (sectionId: string) => void;
@@ -52,6 +53,7 @@ type FilterType = "all" | "core" | "custom";
  * Displays all reusable report sections and attached telemetry charts independent of templates.
  */
 export default function SectionListView({ onSelectSection, onBackToTemplates }: SectionListViewProps) {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const librarySections = useAppSelector((state) => state.reportModule.librarySections || []);
   const watermarks = useAppSelector((state) => state.reportModule.watermarks || []);
@@ -422,7 +424,10 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                       {/* Open Visual Canvas Editor */}
                       <button
                         type="button"
-                        onClick={() => onSelectSection(sec.id)}
+                        onClick={() => {
+                          onSelectSection(sec.id);
+                          router.push(`/templates/Sections&Graphs/edit?id=${sec.id}`);
+                        }}
                         className="h-8 px-3 rounded-xl bg-[#9D61FF] hover:bg-[#8845fc] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
