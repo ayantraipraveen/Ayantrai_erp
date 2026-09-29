@@ -599,8 +599,8 @@ function SortableCell({
       }}
       id={`canvas-cell-${cell.id}`}
       style={style}
-      className={`relative group/cell transition-shadow duration-150 flex flex-col ${
-        isSelected && !isPreview ? "ring-2 ring-[#8B3DFF] shadow-lg rounded-2xl" : ""
+      className={`relative group/cell overflow-visible flex flex-col ${
+        isSelected && !isPreview ? "outline outline-2 outline-[#8B3DFF] rounded-2xl" : ""
       }`}
       onClick={(e) => {
         e.stopPropagation();
@@ -634,16 +634,16 @@ function SortableCell({
         </div>
       )}
 
-      {/* Resize handle (right edge for width) */}
+      {/* Resize handle (right edge for width) — fixed size, opacity-only on hover */}
       {!isPreview && (
         <div
           onMouseDown={handleResizeStart}
-          className={`absolute right-0 top-0 bottom-0 w-3 cursor-col-resize z-30 flex items-center justify-center transition-all group/handle ${
+          className={`absolute right-0 top-0 bottom-0 w-2.5 cursor-col-resize z-30 flex items-center justify-center transition-opacity ${
             isResizing ? "opacity-100" : "opacity-0 group-hover/cell:opacity-100"
           }`}
           title="Drag horizontally to adjust width freely"
         >
-          <div className="w-1 h-8 rounded-full bg-slate-400 dark:bg-zinc-600 group-hover/handle:bg-[#8B3DFF] group-hover/handle:w-1.5 group-hover/handle:h-12 transition-all shadow-xs" />
+          <div className="w-0.5 h-8 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/cell:bg-[#8B3DFF]/80 transition-colors" />
         </div>
       )}
 
@@ -668,7 +668,7 @@ function SortableCell({
         </div>
       )}
 
-      {/* Quick Add Column Beside Button (+) */}
+      {/* Quick Add Column Beside Button (+) — absolute, does NOT affect layout flow */}
       {!isPreview && !activeDragCellId && typeof onAddBlockBeside === "function" && (
         <button
           type="button"
@@ -676,36 +676,36 @@ function SortableCell({
             e.stopPropagation();
             onAddBlockBeside(rowId, (cellIndex ?? 0) + 1, "text");
           }}
-          className="absolute -right-2.5 top-1/2 -translate-y-1/2 z-35 w-5 h-5 rounded-full bg-white dark:bg-zinc-800 border border-purple-300 dark:border-purple-700 text-[#8B3DFF] hover:bg-[#8B3DFF] hover:text-white flex items-center justify-center text-[11px] font-black shadow-md transition-all opacity-0 group-hover/cell:opacity-100 cursor-pointer"
+          className="absolute -right-2 top-1/2 -translate-y-1/2 z-35 w-4 h-4 rounded-full bg-white dark:bg-zinc-800 border border-purple-300 dark:border-purple-700 text-[#8B3DFF] hover:bg-[#8B3DFF] hover:text-white flex items-center justify-center shadow-md transition-colors opacity-0 group-hover/cell:opacity-100 cursor-pointer pointer-events-auto"
           title="Add a new column block beside this card in this row"
         >
-          <Plus className="w-3 h-3" />
+          <Plus className="w-2.5 h-2.5" />
         </button>
       )}
 
-      {/* Resize handle (bottom edge for height) */}
+      {/* Resize handle (bottom edge for height) — fixed size, opacity-only */}
       {!isPreview && (
         <div
           onMouseDown={handleHeightResizeStart}
-          className={`absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center transition-all group/bhandle ${
+          className={`absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center transition-opacity ${
             isHeightResizing ? "opacity-100" : "opacity-0 group-hover/cell:opacity-100"
           }`}
-          title="Drag vertically to adjust height freely (80px - 800px)"
+          title="Drag vertically to adjust height freely"
         >
-          <div className="h-1 w-12 rounded-full bg-slate-400 dark:bg-zinc-600 group-hover/bhandle:bg-[#8B3DFF] group-hover/bhandle:h-1.5 group-hover/bhandle:w-20 transition-all shadow-xs" />
+          <div className="h-0.5 w-10 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/cell:bg-[#8B3DFF]/80 transition-colors" />
         </div>
       )}
 
-      {/* Resize handle (bottom-right corner for simultaneous width & height) */}
+      {/* Resize handle (bottom-right corner) — fixed size, opacity-only */}
       {!isPreview && (
         <div
           onMouseDown={handleCornerResizeStart}
-          className={`absolute -right-1.5 -bottom-1.5 w-4 h-4 cursor-se-resize z-30 flex items-center justify-center transition-all group/chandle ${
+          className={`absolute -right-1.5 -bottom-1.5 w-4 h-4 cursor-se-resize z-30 flex items-center justify-center transition-opacity ${
             isResizing || isHeightResizing ? "opacity-100" : "opacity-0 group-hover/cell:opacity-100"
           }`}
           title="Drag corner to adjust width & height simultaneously"
         >
-          <div className="w-2.5 h-2.5 rounded-full border-2 border-white dark:border-zinc-900 bg-slate-400 dark:bg-zinc-500 group-hover/chandle:bg-[#8B3DFF] group-hover/chandle:scale-125 transition-all shadow-xs" />
+          <div className="w-2 h-2 rounded-full border-2 border-white dark:border-zinc-900 bg-slate-400/80 dark:bg-zinc-500 group-hover/cell:bg-[#8B3DFF] transition-colors" />
         </div>
       )}
 
@@ -1073,7 +1073,7 @@ function SortableCell({
           </div>
         )}
 
-        {/* Canva-style Bottom Edge Drop Zone & In-Card Stack Button */}
+        {/* Canva-style Bottom Edge Drop Zone — FIXED HEIGHT, no layout-shifting padding changes */}
         {!isPreview && !isSelfDragging && (
           <div
             ref={setStackDropRef}
@@ -1107,35 +1107,35 @@ function SortableCell({
               e.stopPropagation();
               setQuickAddOpen((prev) => !prev);
             }}
-            className={`w-full transition-all duration-150 flex items-center justify-center rounded-xl cursor-pointer select-none ${
+            className={`w-full h-7 flex items-center justify-center rounded-lg cursor-pointer select-none transition-colors duration-150 ${
               isStackDropOver || isDragOverBottom
-                ? "py-3 bg-purple-500/25 border-2 border-dashed border-[#8B3DFF] text-[#8B3DFF] text-xs font-bold shadow-lg scale-101 animate-pulse"
+                ? "bg-purple-500/20 border-2 border-dashed border-[#8B3DFF] text-[#8B3DFF] text-[10px] font-bold"
                 : isOtherDragging
-                ? "py-2 bg-purple-50/70 dark:bg-purple-950/40 border border-dashed border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 text-[10px] font-semibold"
+                ? "bg-purple-50/60 dark:bg-purple-950/30 border border-dashed border-purple-300 dark:border-purple-700 text-purple-500 text-[10px]"
                 : isSelected
-                ? "py-1.5 border border-dashed border-purple-300/80 dark:border-purple-800/80 hover:bg-purple-50/60 dark:hover:bg-purple-950/30 text-purple-600 dark:text-purple-400 text-[10px] font-medium"
-                : "py-1 opacity-0 group-hover/cell:opacity-100 hover:py-1.5 border border-dashed border-slate-300 dark:border-zinc-700 hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 text-slate-500 hover:text-purple-600 text-[10px] font-medium"
+                ? "border border-dashed border-purple-300/60 dark:border-purple-800/60 text-purple-500/80 dark:text-purple-400/80 text-[10px]"
+                : "opacity-0 group-hover/cell:opacity-100 border border-dashed border-slate-300/70 dark:border-zinc-700/70 text-slate-400 text-[10px]"
             }`}
             title="Drop card or click to stack another block directly below in this column"
           >
-            <div className="flex items-center gap-1.5">
-              <Plus className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1">
+              <Plus className="w-3 h-3" />
               <span>
                 {isStackDropOver || isDragOverBottom
-                  ? "Drop here to stack into this column"
+                  ? "Drop to stack here"
                   : isOtherDragging
-                  ? "Drop to stack below"
-                  : "Stack block below"}
+                  ? "Drop to stack"
+                  : "Stack below"}
               </span>
             </div>
           </div>
         )}
 
-        {/* Quick Add Menu Popup (Canva-Style In-Place Block Adder) */}
+        {/* Quick Add Menu Popup — absolutely positioned so it doesn't shift layout */}
         {quickAddOpen && !isPreview && (
           <div
             onClick={(e) => e.stopPropagation()}
-            className="p-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-xl flex items-center gap-1.5 z-40 text-xs animate-scaleUp"
+            className="absolute bottom-9 left-0 right-0 z-50 p-1.5 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl shadow-xl flex items-center gap-1.5 text-xs animate-in fade-in slide-in-from-bottom-1 duration-100"
           >
             <button
               type="button"
@@ -1319,8 +1319,8 @@ function SortableRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative group/row transition-all duration-150 ${
-        isRowSelected && !isPreview ? "ring-1 ring-purple-300/40 rounded-2xl" : ""
+      className={`relative group/row overflow-visible transition-colors duration-100 ${
+        isRowSelected && !isPreview ? "ring-1 ring-purple-300/30 rounded-2xl" : ""
       }`}
       onClick={() => {
         if (!isPreview && typeof onSelectCell === "function") {
@@ -1348,9 +1348,9 @@ function SortableRow({
         </div>
       )}
 
-      {/* Row Control Strip */}
+      {/* Row Control Strip — uses pointer-events-none wrapper to prevent layout interference */}
       {!isPreview && (
-        <div className="absolute -top-3.5 right-2 opacity-0 group-hover/row:opacity-100 transition-opacity z-30 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-1.5 py-0.5 shadow-sm text-[10px] text-slate-500 backdrop-blur-sm">
+        <div className="absolute -top-3 right-1 opacity-0 group-hover/row:opacity-100 transition-opacity z-30 flex items-center gap-0.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-md px-1 py-0.5 shadow-sm text-[9px] text-slate-500 backdrop-blur-sm">
           <div
             {...attributes}
             {...listeners}
@@ -1430,7 +1430,7 @@ function SortableRow({
               console.error("Row drop error:", err);
             }
           }}
-          className={`canvas-row-cells flex flex-wrap gap-4 items-stretch min-h-[60px] transition-all rounded-2xl ${
+          className={`canvas-row-cells flex flex-wrap gap-3 items-stretch min-h-[60px] transition-colors duration-100 rounded-2xl ${
             isDragOverRow && !isPreview
               ? "ring-2 ring-[#9D61FF] bg-[#9D61FF]/10 p-2 shadow-md"
               : ""
