@@ -167,7 +167,7 @@ function MetricCardBlock({
 
   return (
     <div
-      className={`w-full h-full rounded-2xl border p-4 transition-all duration-200 select-none ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} shadow-sm ${editingField ? "relative z-50" : "relative z-10"}`}
+      className={`w-full h-full rounded-2xl border p-4 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} shadow-sm ${editingField ? "relative z-50" : "relative z-10"}`}
     >
       {/* Label (inline editable on double click) */}
       <div className="text-[11px] font-semibold text-slate-600 dark:text-zinc-400 line-clamp-2 leading-snug mb-2">
@@ -393,7 +393,7 @@ function InsightBlock({
           handleStartEditing();
         }
       }}
-      className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 flex items-start gap-3.5 shadow-sm"
+      className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 flex items-start gap-3.5 shadow-sm overflow-hidden"
       style={{
         borderRadius: dynamicBorderRadius,
         boxShadow: dynamicBoxShadow,
@@ -598,7 +598,7 @@ function TextBlock({
       ) : (
         <div
           title={!isPreview ? "Click to format text block (Word style)" : undefined}
-          className="w-full h-full min-h-[60px] flex-1 select-text leading-relaxed text-sm text-slate-800 dark:text-zinc-200"
+          className="w-full h-full min-h-[60px] flex-1 select-text leading-relaxed text-sm text-slate-800 dark:text-zinc-200 overflow-y-auto"
           dangerouslySetInnerHTML={{
             __html: isContentEmpty
               ? "<p class='text-sm text-slate-400 italic'>Empty text block — double click to type content.</p>"

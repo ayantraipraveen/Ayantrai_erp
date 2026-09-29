@@ -493,6 +493,7 @@ interface SortableCellProps {
   onDropToStack?: (targetCellId: string, data: any) => void;
   activeDragCellId?: string | null;
   onAddBlockBeside?: (rowId: string, cellIndex: number, blockType: CanvasBlockType) => void;
+  zoom?: number;
 }
 
 function SortableCell({
@@ -527,6 +528,7 @@ function SortableCell({
   onDropToStack,
   activeDragCellId,
   onAddBlockBeside,
+  zoom = 1,
 }: SortableCellProps) {
   const isFirstInRow = cellIndex === 0;
   const isLastInRow = typeof totalCellsInRow === "number" && totalCellsInRow > 1 && cellIndex === totalCellsInRow - 1;
@@ -596,18 +598,25 @@ function SortableCell({
   const currentHeight = isHeightResizing ? resizeHeight : cell.customHeight;
   const widthStyle = getCellWidthStyle(currentPercent);
 
+  const effectiveZoom = zoom > 0 ? zoom : 1;
+
   const handleResizeStart = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setIsResizing(true);
 
     const startX = e.clientX;
-    const parentRow = cellDomRef.current?.closest(".canvas-row-cells");
-    const parentWidth = parentRow ? parentRow.getBoundingClientRect().width : 740;
+    const parentRow = cellDomRef.current?.closest(".canvas-row-cells") as HTMLElement | null;
+    const scrollContainer = cellDomRef.current?.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
+    const startScrollLeft = scrollContainer?.scrollLeft || 0;
+    // Parent width in unscaled CSS space
+    const parentWidth = parentRow ? (parentRow.getBoundingClientRect().width / effectiveZoom) : 740;
     const startPercent = currentPercent;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX;
+      const currentScrollLeft = scrollContainer?.scrollLeft || 0;
+      const scrollDeltaX = currentScrollLeft - startScrollLeft;
+      const deltaX = (moveEvent.clientX - startX + scrollDeltaX) / effectiveZoom;
       const deltaPercent = (deltaX / parentWidth) * 100;
       const newPercent = Math.min(100, Math.max(15, Math.round(startPercent + deltaPercent)));
       setResizePercent(newPercent);
@@ -618,7 +627,9 @@ function SortableCell({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
 
-      const deltaX = upEvent.clientX - startX;
+      const currentScrollLeft = scrollContainer?.scrollLeft || 0;
+      const scrollDeltaX = currentScrollLeft - startScrollLeft;
+      const deltaX = (upEvent.clientX - startX + scrollDeltaX) / effectiveZoom;
       const deltaPercent = (deltaX / parentWidth) * 100;
       const finalPercent = Math.min(100, Math.max(15, Math.round(startPercent + deltaPercent)));
       setResizePercent(finalPercent);
@@ -647,11 +658,16 @@ function SortableCell({
     setIsHeightResizing(true);
 
     const startY = e.clientY;
-    const startH = cellDomRef.current?.getBoundingClientRect().height || currentHeight || 300;
+    // Use offsetHeight (unscaled CSS layout height) to prevent jumping when zoomed or auto
+    const startH = cellDomRef.current?.offsetHeight || currentHeight || 300;
+    const scrollContainer = cellDomRef.current?.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
+    const startScrollTop = scrollContainer?.scrollTop || 0;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaY = moveEvent.clientY - startY;
-      const newH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      const currentScrollTop = scrollContainer?.scrollTop || 0;
+      const scrollDeltaY = currentScrollTop - startScrollTop;
+      const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
+      const newH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
       setResizeHeight(newH);
     };
 
@@ -660,8 +676,10 @@ function SortableCell({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
 
-      const deltaY = upEvent.clientY - startY;
-      const finalH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      const currentScrollTop = scrollContainer?.scrollTop || 0;
+      const scrollDeltaY = currentScrollTop - startScrollTop;
+      const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
+      const finalH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       if (typeof onHeightChange === "function") {
@@ -681,19 +699,26 @@ function SortableCell({
 
     const startX = e.clientX;
     const startY = e.clientY;
-    const parentRow = cellDomRef.current?.closest(".canvas-row-cells");
-    const parentWidth = parentRow ? parentRow.getBoundingClientRect().width : 740;
+    const parentRow = cellDomRef.current?.closest(".canvas-row-cells") as HTMLElement | null;
+    const scrollContainer = cellDomRef.current?.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
+    const startScrollLeft = scrollContainer?.scrollLeft || 0;
+    const startScrollTop = scrollContainer?.scrollTop || 0;
+    const parentWidth = parentRow ? (parentRow.getBoundingClientRect().width / effectiveZoom) : 740;
     const startPercent = currentPercent;
-    const startH = cellDomRef.current?.getBoundingClientRect().height || currentHeight || 300;
+    const startH = cellDomRef.current?.offsetHeight || currentHeight || 300;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX;
+      const currentScrollLeft = scrollContainer?.scrollLeft || 0;
+      const scrollDeltaX = currentScrollLeft - startScrollLeft;
+      const deltaX = (moveEvent.clientX - startX + scrollDeltaX) / effectiveZoom;
       const deltaPercent = (deltaX / parentWidth) * 100;
       const newPercent = Math.min(100, Math.max(15, Math.round(startPercent + deltaPercent)));
       setResizePercent(newPercent);
 
-      const deltaY = moveEvent.clientY - startY;
-      const newH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      const currentScrollTop = scrollContainer?.scrollTop || 0;
+      const scrollDeltaY = currentScrollTop - startScrollTop;
+      const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
+      const newH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
       setResizeHeight(newH);
     };
 
@@ -703,13 +728,17 @@ function SortableCell({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
 
-      const deltaX = upEvent.clientX - startX;
+      const currentScrollLeft = scrollContainer?.scrollLeft || 0;
+      const scrollDeltaX = currentScrollLeft - startScrollLeft;
+      const deltaX = (upEvent.clientX - startX + scrollDeltaX) / effectiveZoom;
       const deltaPercent = (deltaX / parentWidth) * 100;
       const finalPercent = Math.min(100, Math.max(15, Math.round(startPercent + deltaPercent)));
       setResizePercent(finalPercent);
 
-      const deltaY = upEvent.clientY - startY;
-      const finalH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
+      const currentScrollTop = scrollContainer?.scrollTop || 0;
+      const scrollDeltaY = currentScrollTop - startScrollTop;
+      const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
+      const finalH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       let colSpan: 1 | 2 | 3 | 4 = 1;
@@ -1414,6 +1443,7 @@ interface SortableRowProps {
   onReorderStacked?: (rowId: string, parentCellId: string, direction: "up" | "down", index: number) => void;
   activeDragCellId?: string | null;
   onAddBlockBeside?: (rowId: string, cellIndex: number, blockType: CanvasBlockType) => void;
+  zoom?: number;
 }
 
 function SortableRow({
@@ -1447,6 +1477,7 @@ function SortableRow({
   onReorderStacked,
   activeDragCellId,
   onAddBlockBeside,
+  zoom = 1,
 }: SortableRowProps) {
   const [isDragOverRow, setIsDragOverRow] = useState(false);
   const {
@@ -1615,6 +1646,7 @@ function SortableRow({
                 selectedCellId={selectedCellId}
                 previousCellId={idx > 0 ? row.cells[idx - 1].id : undefined}
                 isPreview={isPreview}
+                zoom={zoom}
                 onSelect={(cellId, rId) => {
                   if (typeof onSelectCell === "function") {
                     onSelectCell(cellId, rId);
@@ -2731,7 +2763,7 @@ export function CanvasStudio({
     >
       {/* ── Infinite Studio Blueprint Desk ── */}
       <div
-        className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-6 sm:p-10 flex flex-col items-center select-none bg-[#f1f4f9] dark:bg-[#06080d]"
+        className="relative flex-1 min-h-0 overflow-auto p-6 sm:p-10 flex flex-col items-center select-none bg-[#f1f4f9] dark:bg-[#06080d]"
         style={
           activeShowGrid
             ? {
@@ -2749,6 +2781,7 @@ export function CanvasStudio({
             transform: `scale(${activeZoom})`,
             transformOrigin: "top center",
             width: `${A4_WIDTH_PX}px`,
+            minWidth: `${Math.round(A4_WIDTH_PX * Math.max(1, activeZoom))}px`,
           }}
         >
           <SortableContext
@@ -3265,6 +3298,7 @@ export function CanvasStudio({
                                     isPreview={activeIsPreview}
                                     isAutoBreakFirstRow={isAutoBreakFirstRow}
                                     currentPageNumber={page.pageNumber}
+                                    zoom={activeZoom}
                                     onSelectCell={handleSelectCell}
                                     onEditCell={onEditCell}
                                     onDuplicateCell={handleDuplicateCell}
