@@ -703,26 +703,32 @@ export const sectionsStudioReducers = {
       state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
-        rowId: string;
+        rowId?: string;
+        fromRowId?: string;
+        toRowId?: string;
         sourceCellId: string;
         targetCellId: string;
       }>
     ) => {
-      const { sectionId, rowId, sourceCellId, targetCellId } = action.payload;
-      if (sourceCellId === targetCellId) return;
+      const { sectionId, sourceCellId, targetCellId } = action.payload;
+      const fromRowId = action.payload.fromRowId || action.payload.rowId;
+      const toRowId = action.payload.toRowId || action.payload.rowId;
+      if (!fromRowId || !toRowId || sourceCellId === targetCellId) return;
 
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
-      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      if (!row) return;
+      if (!sec || !sec.canvasRows) return;
+      const fromRow = sec.canvasRows.find((r: CanvasRow) => r.id === fromRowId);
+      const toRow = sec.canvasRows.find((r: CanvasRow) => r.id === toRowId);
+      if (!fromRow || !toRow) return;
 
-      // Extract source cell
+      // Extract source cell from fromRow
       let sourceCell: CanvasCell | null = null;
-      const sourceIdx = row.cells.findIndex((c) => c.id === sourceCellId);
+      const sourceIdx = fromRow.cells.findIndex((c) => c.id === sourceCellId);
       if (sourceIdx !== -1) {
-        sourceCell = row.cells.splice(sourceIdx, 1)[0];
-        autoBalanceRowCells(row);
+        sourceCell = fromRow.cells.splice(sourceIdx, 1)[0];
+        autoBalanceRowCells(fromRow);
       } else {
-        for (const topCell of row.cells) {
+        for (const topCell of fromRow.cells) {
           if (topCell.stackedCells) {
             const sIdx = topCell.stackedCells.findIndex((c) => c.id === sourceCellId);
             if (sIdx !== -1) {
@@ -735,8 +741,12 @@ export const sectionsStudioReducers = {
 
       if (!sourceCell) return;
 
-      // Insert into target's stack
-      const targetTop = row.cells.find((c) => c.id === targetCellId);
+      // Clear cell customWidth so it naturally occupies full width of its column
+      sourceCell.customWidth = undefined;
+      sourceCell.colSpan = 1;
+
+      // Insert into target's stack in toRow
+      const targetTop = toRow.cells.find((c) => c.id === targetCellId);
       if (targetTop) {
         if (!targetTop.stackedCells) targetTop.stackedCells = [];
         targetTop.stackedCells.push(sourceCell);
@@ -744,7 +754,7 @@ export const sectionsStudioReducers = {
         return;
       }
 
-      for (const topCell of row.cells) {
+      for (const topCell of toRow.cells) {
         if (topCell.stackedCells) {
           const tIdx = topCell.stackedCells.findIndex((c) => c.id === targetCellId);
           if (tIdx !== -1) {

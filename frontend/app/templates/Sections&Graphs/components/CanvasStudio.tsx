@@ -16,6 +16,7 @@ import {
   rectIntersection,
   DragOverlay,
   UniqueIdentifier,
+  useDroppable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -63,6 +64,7 @@ import {
   ArrowDown,
   Activity,
   Lightbulb,
+  Minus,
 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
@@ -84,6 +86,7 @@ import {
   reorderCanvasRows,
   duplicateCanvasCell,
   deleteCanvasCell,
+  moveCellToStackBelow,
   updateCellColSpan,
   updateCellWidth,
   updateCellHeight,
@@ -488,6 +491,8 @@ interface SortableCellProps {
   onUnstackCell?: (cellId: string) => void;
   onReorderStacked?: (parentCellId: string, direction: "up" | "down", index: number) => void;
   onDropToStack?: (targetCellId: string, data: any) => void;
+  activeDragCellId?: string | null;
+  onAddBlockBeside?: (rowId: string, cellIndex: number, blockType: CanvasBlockType) => void;
 }
 
 function SortableCell({
@@ -520,6 +525,8 @@ function SortableCell({
   onUnstackCell,
   onReorderStacked,
   onDropToStack,
+  activeDragCellId,
+  onAddBlockBeside,
 }: SortableCellProps) {
   const isFirstInRow = cellIndex === 0;
   const isLastInRow = typeof totalCellsInRow === "number" && totalCellsInRow > 1 && cellIndex === totalCellsInRow - 1;
@@ -539,6 +546,21 @@ function SortableCell({
     transition,
     isDragging,
   } = useSortable({ id: cell.id, data: { rowId, cell }, disabled: isPreview });
+
+  const isSelfDragging = Boolean(activeDragCellId && activeDragCellId === cell.id);
+  const isOtherDragging = Boolean(activeDragCellId && activeDragCellId !== cell.id);
+
+  const { setNodeRef: setStackDropRef, isOver: isStackDropOver } = useDroppable({
+    id: `stack-drop-${cell.id}`,
+    data: { isStackDrop: true, targetCellId: cell.id, rowId },
+    disabled: isPreview || isSelfDragging,
+  });
+
+  const { setNodeRef: setBesideDropRef, isOver: isBesideDropOver } = useDroppable({
+    id: `beside-drop-${cell.id}`,
+    data: { isBesideDrop: true, targetCellId: cell.id, rowId, cellIndex },
+    disabled: isPreview || isSelfDragging,
+  });
 
   const defaultWidthForCount = totalCellsInRow && totalCellsInRow > 0
     ? totalCellsInRow === 1 ? 100 : totalCellsInRow === 2 ? 50 : totalCellsInRow === 3 ? 33.3 : 25
@@ -778,6 +800,42 @@ function SortableCell({
         </div>
       )}
 
+      {/* Beside Droppable Zone on Right Edge (Canva Column Beside Target) */}
+      {!isPreview && !isSelfDragging && (
+        <div
+          ref={setBesideDropRef}
+          className={`absolute right-0 top-0 bottom-0 transition-all z-35 flex items-center justify-center ${
+            isBesideDropOver
+              ? "w-8 -right-4 bg-purple-500/25 border-2 border-dashed border-[#8B3DFF] rounded-r-2xl pointer-events-auto"
+              : isOtherDragging
+              ? "w-4 -right-2 border-r-2 border-dashed border-purple-300 dark:border-purple-700/60 pointer-events-auto"
+              : "w-3 pointer-events-none"
+          }`}
+          title="Drop here to place beside as column"
+        >
+          {isBesideDropOver && (
+            <div className="bg-[#8B3DFF] text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-md whitespace-nowrap rotate-90 flex items-center gap-0.5 animate-pulse pointer-events-none">
+              <Plus className="w-2.5 h-2.5" /> Beside
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick Add Column Beside Button (+) */}
+      {!isPreview && !activeDragCellId && typeof onAddBlockBeside === "function" && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddBlockBeside(rowId, (cellIndex ?? 0) + 1, "text");
+          }}
+          className="absolute -right-2.5 top-1/2 -translate-y-1/2 z-35 w-5 h-5 rounded-full bg-white dark:bg-zinc-800 border border-purple-300 dark:border-purple-700 text-[#8B3DFF] hover:bg-[#8B3DFF] hover:text-white flex items-center justify-center text-[11px] font-black shadow-md transition-all opacity-0 group-hover/cell:opacity-100 cursor-pointer"
+          title="Add a new column block beside this card in this row"
+        >
+          <Plus className="w-3 h-3" />
+        </button>
+      )}
+
       {/* Resize handle (bottom edge for height) */}
       {!isPreview && (
         <div
@@ -980,10 +1038,10 @@ function SortableCell({
                   onMoveToStackBelow(cell.id, previousCellId);
                 }
               }}
-              className="px-2 py-0.5 rounded text-[10px] font-bold text-[#8B3DFF] bg-[#8B3DFF]/10 hover:bg-[#8B3DFF]/20 border border-purple-300 dark:border-purple-800 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
-              title="Move under card to the left to stack tightly in one column (Canva Stack)"
+              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-[#8B3DFF] hover:bg-[#7828E0] transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+              title="Combine into a single vertical column under the card to its left (Canva Stack)"
             >
-              <CornerDownLeft className="w-3 h-3" />
+              <CornerDownLeft className="w-3.5 h-3.5" />
               <span>Stack under left card</span>
             </button>
           )}
@@ -995,13 +1053,15 @@ function SortableCell({
               e.stopPropagation();
               setQuickAddOpen((prev) => !prev);
             }}
-            className={`p-1 transition-colors cursor-pointer rounded flex items-center gap-1 text-[10px] font-bold ${
-              quickAddOpen ? "bg-[#8B3DFF] text-white" : "text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-[#8B3DFF]/10"
+            className={`px-2 py-1 transition-all cursor-pointer rounded-lg flex items-center gap-1 text-[10px] font-bold ${
+              quickAddOpen
+                ? "bg-[#8B3DFF] text-white shadow-xs"
+                : "text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
             }`}
             title="Stack another block directly below this card (Canva Stack)"
           >
             <Plus className="w-3 h-3" />
-            <span className="hidden sm:inline">Stack</span>
+            <span>+ Stack</span>
           </button>
         </div>
       )}
@@ -1166,9 +1226,10 @@ function SortableCell({
           </div>
         )}
 
-        {/* Canva-style Bottom Edge Drop Zone / Hover Stacking Target */}
-        {!isPreview && (
+        {/* Canva-style Bottom Edge Drop Zone & In-Card Stack Button */}
+        {!isPreview && !isSelfDragging && (
           <div
+            ref={setStackDropRef}
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -1199,16 +1260,26 @@ function SortableCell({
               e.stopPropagation();
               setQuickAddOpen((prev) => !prev);
             }}
-            className={`w-full transition-all flex items-center justify-center rounded-xl cursor-pointer ${
-              isDragOverBottom
-                ? "py-2.5 bg-purple-500/20 border-2 border-dashed border-[#8B3DFF] text-[#8B3DFF] text-xs font-bold shadow-md animate-pulse"
-                : "h-2.5 -my-1 opacity-0 hover:opacity-100 hover:h-6 hover:bg-purple-500/10 hover:border hover:border-dashed hover:border-purple-400 text-purple-600 text-[10px] font-semibold"
+            className={`w-full transition-all duration-150 flex items-center justify-center rounded-xl cursor-pointer select-none ${
+              isStackDropOver || isDragOverBottom
+                ? "py-3 bg-purple-500/25 border-2 border-dashed border-[#8B3DFF] text-[#8B3DFF] text-xs font-bold shadow-lg scale-101 animate-pulse"
+                : isOtherDragging
+                ? "py-2 bg-purple-50/70 dark:bg-purple-950/40 border border-dashed border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 text-[10px] font-semibold"
+                : isSelected
+                ? "py-1.5 border border-dashed border-purple-300/80 dark:border-purple-800/80 hover:bg-purple-50/60 dark:hover:bg-purple-950/30 text-purple-600 dark:text-purple-400 text-[10px] font-medium"
+                : "py-1 opacity-0 group-hover/cell:opacity-100 hover:py-1.5 border border-dashed border-slate-300 dark:border-zinc-700 hover:border-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-950/20 text-slate-500 hover:text-purple-600 text-[10px] font-medium"
             }`}
-            title="Click or drop block here to stack directly below (Canva Column)"
+            title="Drop card or click to stack another block directly below in this column"
           >
-            <div className="flex items-center gap-1">
-              <Plus className="w-3 h-3" />
-              <span>Drop or click to stack below</span>
+            <div className="flex items-center gap-1.5">
+              <Plus className="w-3.5 h-3.5" />
+              <span>
+                {isStackDropOver || isDragOverBottom
+                  ? "Drop here to stack into this column"
+                  : isOtherDragging
+                  ? "Drop to stack below"
+                  : "Stack block below"}
+              </span>
             </div>
           </div>
         )}
@@ -1282,6 +1353,23 @@ function SortableCell({
             </button>
             <button
               type="button"
+              onClick={() => {
+                const ts = Date.now();
+                if (typeof onStackCellBelow === "function") {
+                  onStackCellBelow({
+                    id: `cell-div-${ts}`,
+                    colSpan: cell.colSpan || 1,
+                    blockType: "divider",
+                  });
+                }
+                setQuickAddOpen(false);
+              }}
+              className="px-2.5 py-1 rounded-xl bg-slate-500/10 hover:bg-slate-500/20 text-slate-600 dark:text-zinc-300 font-semibold text-[11px] cursor-pointer flex items-center gap-1"
+            >
+              <Minus className="w-3 h-3" /> Divider
+            </button>
+            <button
+              type="button"
               onClick={() => setQuickAddOpen(false)}
               className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 cursor-pointer ml-auto"
             >
@@ -1324,6 +1412,8 @@ interface SortableRowProps {
   onStackCellBelow?: (rowId: string, targetCellId: string, cell: CanvasCell) => void;
   onUnstackCell?: (rowId: string, cellId: string) => void;
   onReorderStacked?: (rowId: string, parentCellId: string, direction: "up" | "down", index: number) => void;
+  activeDragCellId?: string | null;
+  onAddBlockBeside?: (rowId: string, cellIndex: number, blockType: CanvasBlockType) => void;
 }
 
 function SortableRow({
@@ -1355,6 +1445,8 @@ function SortableRow({
   onStackCellBelow,
   onUnstackCell,
   onReorderStacked,
+  activeDragCellId,
+  onAddBlockBeside,
 }: SortableRowProps) {
   const [isDragOverRow, setIsDragOverRow] = useState(false);
   const {
@@ -1568,6 +1660,8 @@ function SortableRow({
                     onMoveCellToStackBelow(data.cell.id, targetCellId, row.id);
                   }
                 }}
+                activeDragCellId={activeDragCellId}
+                onAddBlockBeside={onAddBlockBeside}
               />
             ))
           )}
@@ -2203,12 +2297,39 @@ export function CanvasStudio({
   // Active dragged block overlay
   const [activeDragCell, setActiveDragCell] = useState<CanvasCell | null>(null);
 
-  // Custom collision detection
+  // Custom collision detection prioritizing directional droppable zones
   const customCollisionDetection = useCallback((args: any) => {
     const pointerCollisions = pointerWithin(args);
-    if (pointerCollisions.length > 0) return pointerCollisions;
+    if (pointerCollisions.length > 0) {
+      // Prioritize explicit directional drop zones (stacking bottom or beside edge)
+      const stackCollision = pointerCollisions.find((c: any) =>
+        String(c.id).startsWith("stack-drop-")
+      );
+      if (stackCollision) {
+        return [stackCollision, ...pointerCollisions.filter((c: any) => c.id !== stackCollision.id)];
+      }
+
+      const besideCollision = pointerCollisions.find((c: any) =>
+        String(c.id).startsWith("beside-drop-")
+      );
+      if (besideCollision) {
+        return [besideCollision, ...pointerCollisions.filter((c: any) => c.id !== besideCollision.id)];
+      }
+
+      return pointerCollisions;
+    }
+
     const rectCollisions = rectIntersection(args);
-    if (rectCollisions.length > 0) return rectCollisions;
+    if (rectCollisions.length > 0) {
+      const stackCollision = rectCollisions.find((c: any) =>
+        String(c.id).startsWith("stack-drop-")
+      );
+      if (stackCollision) {
+        return [stackCollision, ...rectCollisions.filter((c: any) => c.id !== stackCollision.id)];
+      }
+      return rectCollisions;
+    }
+
     return closestCenter(args);
   }, []);
 
@@ -2290,6 +2411,46 @@ export function CanvasStudio({
     [dispatch, section.id, handleSelectCell]
   );
 
+  const handleAddBlockBeside = useCallback(
+    (rowId: string, cellIndex: number, blockType: CanvasBlockType = "text") => {
+      const ts = Date.now();
+      let newCell: CanvasCell;
+      if (blockType === "metric-card") {
+        newCell = {
+          id: `cell-mc-${ts}`,
+          colSpan: 1,
+          blockType: "metric-card",
+          metricCard: {
+            id: `mc-${ts}`,
+            label: "New KPI Indicator",
+            value: "96.5%",
+            tintColor: "blue",
+            trendDirection: "up",
+            trendValue: "+1.8%",
+          },
+        };
+      } else if (blockType === "insight") {
+        newCell = {
+          id: `cell-ki-${ts}`,
+          colSpan: 1,
+          blockType: "insight",
+          insight: { id: `ki-${ts}`, text: "Supervisory insight note." },
+        };
+      } else {
+        newCell = {
+          id: `cell-tb-${ts}`,
+          colSpan: 1,
+          blockType: "text",
+          textBlock: { id: `tb-${ts}`, content: "" },
+        };
+      }
+      dispatch(addCellToRow({ sectionId: section.id, rowId, cell: newCell, insertAtIndex: cellIndex }));
+      handleSelectCell(newCell.id, rowId);
+      dispatch(showGlobalToast({ message: "Added new column beside!", type: "success" }));
+    },
+    [dispatch, section.id, handleSelectCell]
+  );
+
   // Drag Handlers
   const handleDragStart = (e: DragStartEvent) => {
     const data = e.active.data.current;
@@ -2303,8 +2464,78 @@ export function CanvasStudio({
 
     const activeData = active.data.current;
     const overData = over.data.current;
+    const activeId = String(active.id);
+    const overId = String(over.id);
 
-    // Row reordering
+    // 1. Stack drop (dragged block dropped onto bottom stack-drop zone)
+    if (overData?.isStackDrop || overId.startsWith("stack-drop-")) {
+      const targetCellId = (overData?.targetCellId as string) || overId.replace("stack-drop-", "");
+      const toRowId = (overData?.rowId as string) || (activeData?.rowId as string);
+      const fromRowId = (activeData?.rowId as string) || toRowId;
+
+      if (activeId !== targetCellId && toRowId) {
+        dispatch(
+          moveCellToStackBelow({
+            sectionId: section.id,
+            fromRowId,
+            toRowId,
+            sourceCellId: activeId,
+            targetCellId,
+          })
+        );
+        handleSelectCell(activeId, toRowId);
+        dispatch(
+          showGlobalToast({
+            message: "Stacked card directly underneath into column!",
+            type: "success",
+          })
+        );
+      }
+      return;
+    }
+
+    // 2. Beside drop (dragged block dropped onto right edge beside-drop zone)
+    if (overData?.isBesideDrop || overId.startsWith("beside-drop-")) {
+      const targetCellId = (overData?.targetCellId as string) || overId.replace("beside-drop-", "");
+      const toRowId = (overData?.rowId as string) || (activeData?.rowId as string);
+      const fromRowId = (activeData?.rowId as string) || toRowId;
+
+      if (activeId !== targetCellId && toRowId) {
+        const toRow = rows.find((r) => r.id === toRowId);
+        if (toRow) {
+          const targetIndex = toRow.cells.findIndex((c) => c.id === targetCellId);
+          const insertIdx = targetIndex !== -1 ? targetIndex + 1 : toRow.cells.length;
+
+          if (fromRowId === toRowId) {
+            const oldIndex = toRow.cells.findIndex((c) => c.id === activeId);
+            if (oldIndex !== -1 && oldIndex !== insertIdx) {
+              const newCells = arrayMove(toRow.cells, oldIndex, oldIndex < insertIdx ? insertIdx - 1 : insertIdx);
+              dispatch(reorderCellsInRow({ sectionId: section.id, rowId: toRowId, cells: newCells }));
+            }
+          } else if (fromRowId) {
+            dispatch(
+              moveCellBetweenRows({
+                sectionId: section.id,
+                fromRowId,
+                toRowId,
+                cellId: activeId,
+                toIndex: insertIdx,
+              })
+            );
+          }
+          handleSelectCell(activeId, toRowId);
+          dispatch(
+            showGlobalToast({
+              message: "Placed card beside in row!",
+              type: "success",
+            })
+          );
+        }
+      }
+      return;
+    }
+
+    // 3. Row reordering
     if (activeData?.isRow) {
       const oldIndex = rows.findIndex((r) => r.id === active.id);
       const newIndex = rows.findIndex((r) => r.id === over.id);
@@ -2315,7 +2546,7 @@ export function CanvasStudio({
       return;
     }
 
-    // Cell reordering inside same row or cross-row
+    // 4. Cell reordering inside same row or cross-row
     if (activeData?.cell && activeData?.rowId) {
       const fromRowId = activeData.rowId;
       const cellId = String(active.id);
@@ -3055,6 +3286,8 @@ export function CanvasStudio({
                                     onStackCellBelow={onStackCellBelow}
                                     onUnstackCell={onUnstackCell}
                                     onReorderStacked={onReorderStacked}
+                                    activeDragCellId={activeDragCell?.id || null}
+                                    onAddBlockBeside={handleAddBlockBeside}
                                   />
                                   {/* Drop zone below this row */}
                                   {!activeIsPreview && (
