@@ -709,9 +709,9 @@ function SortableCell({
         </div>
       )}
 
-      {/* Floating cell action bar */}
+      {/* Floating cell action bar — inside artboard, overlays card top */}
       {!isPreview && !isCellEditing && (isSelected || isResizing || isHeightResizing) && (
-        <div className={`absolute -top-11 ${toolbarPlacementClass} z-40 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 shadow-xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap`}>
+        <div className={`absolute top-0 ${toolbarPlacementClass} z-40 flex items-center gap-0.5 bg-white/97 dark:bg-zinc-900/97 border border-slate-200 dark:border-zinc-800 rounded-b-xl px-1.5 py-0.5 shadow-lg backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap`}>
           <div
             {...attributes}
             {...listeners}
@@ -893,14 +893,13 @@ function SortableCell({
             </button>
           )}
 
-          {/* Quick Add Block Below (Canva Stack) */}
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               setQuickAddOpen((prev) => !prev);
             }}
-            className={`px-2 py-1 transition-all cursor-pointer rounded-lg flex items-center gap-1 text-[10px] font-bold ${
+            className={`px-1.5 py-1 transition-all cursor-pointer rounded-lg flex items-center gap-1 text-[10px] font-bold ${
               quickAddOpen
                 ? "bg-[#8B3DFF] text-white shadow-xs"
                 : "text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
@@ -908,7 +907,7 @@ function SortableCell({
             title="Stack another block directly below this card (Canva Stack)"
           >
             <Plus className="w-3 h-3" />
-            <span>+ Stack</span>
+            <span className="hidden sm:inline">Stack</span>
           </button>
         </div>
       )}
