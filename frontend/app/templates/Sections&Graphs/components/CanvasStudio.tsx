@@ -469,14 +469,14 @@ function SortableCell({
     window.addEventListener("mouseup", handleMouseUp);
   };
 
-  const handleHeightResizeStart = (e: React.MouseEvent) => {
+  const handleHeightResizeStart = (e: React.MouseEvent, explicitStartH?: number) => {
     e.stopPropagation();
     e.preventDefault();
     setIsHeightResizing(true);
 
     const startY = e.clientY;
-    // Use offsetHeight (unscaled CSS layout height) to prevent jumping when zoomed or auto
-    const startH = cellDomRef.current?.offsetHeight || currentHeight || 300;
+    const primaryDom = cellDomRef.current?.querySelector(".group\\/primary-block") as HTMLElement | null;
+    const startH = explicitStartH || primaryDom?.offsetHeight || currentHeight || 140;
     const scrollContainer = cellDomRef.current?.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
     const startScrollTop = scrollContainer?.scrollTop || 0;
 
@@ -484,8 +484,11 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(680, Math.max(140, Math.round(startH + deltaY)));
+      const newH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
       setResizeHeight(newH);
+      if (typeof onHeightChange === "function") {
+        onHeightChange(cell.id, rowId, newH);
+      }
     };
 
     const handleMouseUp = (upEvent: MouseEvent) => {
@@ -496,7 +499,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const finalH = Math.min(680, Math.max(140, Math.round(startH + deltaY)));
+      const finalH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       if (typeof onHeightChange === "function") {
@@ -522,7 +525,8 @@ function SortableCell({
     const startScrollTop = scrollContainer?.scrollTop || 0;
     const parentWidth = parentRow ? (parentRow.getBoundingClientRect().width / effectiveZoom) : 740;
     const startPercent = currentPercent;
-    const startH = cellDomRef.current?.offsetHeight || currentHeight || 300;
+    const primaryDom = cellDomRef.current?.querySelector(".group\\/primary-block") as HTMLElement | null;
+    const startH = primaryDom?.offsetHeight || currentHeight || 140;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const currentScrollLeft = scrollContainer?.scrollLeft || 0;
@@ -535,8 +539,11 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(680, Math.max(140, Math.round(startH + deltaY)));
+      const newH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
       setResizeHeight(newH);
+      if (typeof onHeightChange === "function") {
+        onHeightChange(cell.id, rowId, newH);
+      }
     };
 
     const handleMouseUp = (upEvent: MouseEvent) => {
@@ -555,7 +562,7 @@ function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const finalH = Math.min(680, Math.max(140, Math.round(startH + deltaY)));
+      const finalH = Math.min(800, Math.max(80, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       let colSpan: 1 | 2 | 3 | 4 = 1;
@@ -739,8 +746,8 @@ function SortableCell({
         </button>
       )}
 
-      {/* Resize handle (bottom edge for height) — fixed size, opacity-only */}
-      {!isPreview && (
+      {/* Resize handle (bottom edge for height) — fixed size, opacity-only, shown when no stacked blocks */}
+      {!isPreview && !hasStacked && (
         <div
           onMouseDown={handleHeightResizeStart}
           className={`absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center transition-opacity ${
@@ -752,8 +759,8 @@ function SortableCell({
         </div>
       )}
 
-      {/* Resize handle (bottom-right corner) — fixed size, opacity-only */}
-      {!isPreview && (
+      {/* Resize handle (bottom-right corner) — fixed size, opacity-only, shown when no stacked blocks */}
+      {!isPreview && !hasStacked && (
         <div
           onMouseDown={handleCornerResizeStart}
           className={`absolute -right-1.5 -bottom-1.5 w-4 h-4 cursor-se-resize z-30 flex items-center justify-center transition-opacity ${
@@ -865,7 +872,7 @@ function SortableCell({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const newH = Math.max(140, (currentHeight || 300) - 25);
+                const newH = Math.max(80, (currentHeight || baseBlockHeight) - 25);
                 setResizeHeight(newH);
                 if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
               }}
@@ -878,7 +885,7 @@ function SortableCell({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                const newH = Math.min(800, (currentHeight || 300) + 25);
+                const newH = Math.min(800, (currentHeight || baseBlockHeight) + 25);
                 setResizeHeight(newH);
                 if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
               }}
@@ -1000,6 +1007,21 @@ function SortableCell({
               if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, cell.id, badgeId);
             }}
           />
+
+          {/* Resize handle for primary block height */}
+          {!isPreview && (
+            <div
+              onMouseDown={(e) => {
+                const primaryDom = cellDomRef.current?.querySelector(".group\\/primary-block") as HTMLElement | null;
+                const startH = primaryDom?.offsetHeight || cell.customHeight || baseBlockHeight || 140;
+                handleHeightResizeStart(e, startH);
+              }}
+              className="absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center opacity-0 group-hover/primary-block:opacity-100 transition-opacity"
+              title="Drag vertically to adjust height of this card"
+            >
+              <div className="h-0.5 w-8 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/primary-block:bg-[#8B3DFF]/80 transition-colors" />
+            </div>
+          )}
         </div>
 
         {/* Stacked Blocks underneath (Canva Column Stack) */}
