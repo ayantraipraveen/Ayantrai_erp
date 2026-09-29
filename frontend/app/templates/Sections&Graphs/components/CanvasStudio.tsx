@@ -579,6 +579,34 @@ function SortableCell({
     window.addEventListener("mouseup", handleMouseUp);
   };
 
+  const handleStackedHeightResizeStart = (e: React.MouseEvent, scId: string, currentScH: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const startY = e.clientY;
+    const startH = currentScH || 140;
+    const scrollContainer = cellDomRef.current?.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
+    const startScrollTop = scrollContainer?.scrollTop || 0;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const currentScrollTop = scrollContainer?.scrollTop || 0;
+      const scrollDeltaY = currentScrollTop - startScrollTop;
+      const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
+      const newH = Math.min(680, Math.max(80, Math.round(startH + deltaY)));
+      if (typeof onHeightChange === "function") {
+        onHeightChange(scId, rowId, newH);
+      }
+    };
+
+    const handleMouseUp = () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+  };
+
   const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
 
   const baseBlockHeight = currentHeight || (
@@ -604,7 +632,7 @@ function SortableCell({
 
   const effectiveMinHeight = hasStacked
     ? baseBlockHeight + stackedExtraHeight + (quickAddOpen ? 52 : 36) // includes stacked cards + bottom stack drop zone
-    : (currentHeight ? Math.max(140, currentHeight) + (quickAddOpen ? 52 : 0) : (quickAddOpen ? 190 : undefined));
+    : (currentHeight ? Math.max(140, currentHeight) + (quickAddOpen ? 52 : 36) : (quickAddOpen ? 190 : undefined));
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -612,7 +640,7 @@ function SortableCell({
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
     maxWidth: widthStyle,
-    height: hasStacked || quickAddOpen ? undefined : (currentHeight ? `${Math.max(140, currentHeight)}px` : undefined),
+    height: undefined,
     minHeight: effectiveMinHeight ? `${effectiveMinHeight}px` : undefined,
     flexShrink: 0,
     flexGrow: 0,
@@ -943,7 +971,7 @@ function SortableCell({
       {/* Render the actual cell content block and vertically stacked blocks */}
       <div className="w-full flex-1 flex flex-col gap-3 min-h-fit">
         {/* Primary Block */}
-        <div className={`w-full ${hasStacked ? "flex-shrink-0" : "flex-1"} flex flex-col relative group/primary-block`}>
+        <div className="w-full flex-none flex flex-col relative group/primary-block">
           <CanvasBlockRenderer
             cell={cell}
             isSelected={isSelected}
@@ -1094,6 +1122,26 @@ function SortableCell({
                       if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, sc.id, badgeId);
                     }}
                   />
+
+                  {/* Resize handle for stacked block height */}
+                  {!isPreview && (
+                    <div
+                      onMouseDown={(e) => {
+                        const scH = sc.customHeight || (
+                          sc.blockType === "chart" ? 370 :
+                          sc.blockType === "badge-strip" ? 140 :
+                          sc.blockType === "insight" ? 110 :
+                          sc.blockType === "text" ? 90 :
+                          sc.blockType === "divider" ? 32 : 140
+                        );
+                        handleStackedHeightResizeStart(e, sc.id, scH);
+                      }}
+                      className="absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center opacity-0 group-hover/stacked-block:opacity-100 transition-opacity"
+                      title="Drag vertically to adjust height of this stacked block"
+                    >
+                      <div className="h-0.5 w-8 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/stacked-block:bg-[#8B3DFF]/80 transition-colors" />
+                    </div>
+                  )}
                 </div>
               );
             })}

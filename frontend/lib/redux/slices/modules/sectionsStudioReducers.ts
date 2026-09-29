@@ -850,11 +850,13 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, colSpan, customWidth } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell) {
-        cell.colSpan = colSpan;
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
+        const target = found.parentCell || found.cell;
+        target.colSpan = colSpan;
         if (customWidth !== undefined) {
-          cell.customWidth = customWidth;
+          target.customWidth = customWidth;
         }
         if (sec) sec.updatedAt = "Just now";
       }
@@ -873,16 +875,18 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, customWidth } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell) {
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
+        const target = found.parentCell || found.cell;
         const clamped = Math.max(15, Math.min(100, Math.round(customWidth)));
-        cell.customWidth = clamped;
-        cell.colSpan = (clamped <= 30 ? 1 : clamped <= 55 ? 2 : clamped <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
+        target.customWidth = clamped;
+        target.colSpan = (clamped <= 30 ? 1 : clamped <= 55 ? 2 : clamped <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
         if (sec) sec.updatedAt = "Just now";
       }
     },
 
-    /** Update a cell's height to any arbitrary pixel value (90px to 800px) or undefined for Auto */
+    /** Update a cell's height to any arbitrary pixel value (80px to 800px) or undefined for Auto */
     updateCellHeight: (
       state: ReportModuleState,
       action: PayloadAction<{
@@ -895,12 +899,13 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, customHeight } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell) {
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
         if (typeof customHeight === "number") {
-          cell.customHeight = Math.max(80, Math.min(800, Math.round(customHeight)));
+          found.cell.customHeight = Math.max(80, Math.min(800, Math.round(customHeight)));
         } else {
-          cell.customHeight = undefined;
+          found.cell.customHeight = undefined;
         }
         if (sec) sec.updatedAt = "Just now";
       }
@@ -919,9 +924,10 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, style } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell) {
-        cell.style = { ...(cell.style || {}), ...style };
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
+        found.cell.style = { ...(found.cell.style || {}), ...style };
         if (sec) sec.updatedAt = "Just now";
       }
     },
@@ -939,9 +945,10 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, content } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell && cell.textBlock) {
-        cell.textBlock.content = content;
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found && found.cell.textBlock) {
+        found.cell.textBlock.content = content;
         if (sec) sec.updatedAt = "Just now";
       }
     },
@@ -959,9 +966,10 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, badgeStrip } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell) {
-        cell.badgeStrip = badgeStrip;
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
+        found.cell.badgeStrip = badgeStrip;
         if (sec) sec.updatedAt = "Just now";
       }
     },
@@ -980,9 +988,10 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, badgeId, badge } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell && cell.badgeStrip) {
-        const item = cell.badgeStrip.badges.find((b: CanvasBadgeItem) => b.id === badgeId);
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found && found.cell.badgeStrip) {
+        const item = found.cell.badgeStrip.badges.find((b: CanvasBadgeItem) => b.id === badgeId);
         if (item) {
           Object.assign(item, badge);
           if (sec) sec.updatedAt = "Just now";
@@ -1003,11 +1012,12 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, badge } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell && cell.badgeStrip) {
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found && found.cell.badgeStrip) {
         const ts = Date.now();
         const colors: Array<"blue" | "green" | "purple" | "amber" | "rose" | "cyan"> = ["blue", "green", "purple", "amber", "rose", "cyan"];
-        const chosenColor = colors[cell.badgeStrip.badges.length % colors.length];
+        const chosenColor = colors[found.cell.badgeStrip.badges.length % colors.length];
         const newBadge: CanvasBadgeItem = badge || {
           id: `badge-${ts}`,
           label: "New Indicator",
@@ -1015,7 +1025,7 @@ export const sectionsStudioReducers = {
           color: chosenColor,
           icon: "Shield",
         };
-        cell.badgeStrip.badges.push(newBadge);
+        found.cell.badgeStrip.badges.push(newBadge);
         if (sec) sec.updatedAt = "Just now";
       }
     },
@@ -1033,9 +1043,10 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, badgeId } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell && cell.badgeStrip) {
-        cell.badgeStrip.badges = cell.badgeStrip.badges.filter((b) => b.id !== badgeId);
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found && found.cell.badgeStrip) {
+        found.cell.badgeStrip.badges = found.cell.badgeStrip.badges.filter((b) => b.id !== badgeId);
         if (sec) sec.updatedAt = "Just now";
       }
     },
@@ -1053,9 +1064,10 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, card } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell) {
-        cell.metricCard = card;
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
+        found.cell.metricCard = card;
         if (sec) sec.updatedAt = "Just now";
       }
     },
@@ -1073,9 +1085,10 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, chart } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell) {
-        cell.chart = chart;
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
+        found.cell.chart = chart;
         if (sec) sec.updatedAt = "Just now";
       }
     },
@@ -1093,9 +1106,10 @@ export const sectionsStudioReducers = {
       const { sectionId, rowId, cellId, insight } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
-      const cell = row?.cells.find((c: CanvasCell) => c.id === cellId);
-      if (cell) {
-        cell.insight = insight;
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
+        found.cell.insight = insight;
         if (sec) sec.updatedAt = "Just now";
       }
     },

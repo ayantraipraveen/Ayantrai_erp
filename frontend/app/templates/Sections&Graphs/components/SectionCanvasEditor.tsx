@@ -230,7 +230,13 @@ export default function SectionCanvasEditor({
         if (cell.id === selectedCellId) return cell;
         if (cell.stackedCells && cell.stackedCells.length > 0) {
           const sc = cell.stackedCells.find((s) => s.id === selectedCellId);
-          if (sc) return sc;
+          if (sc) {
+            return {
+              ...sc,
+              customWidth: cell.customWidth,
+              colSpan: cell.colSpan,
+            };
+          }
         }
       }
     }

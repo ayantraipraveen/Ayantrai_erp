@@ -151,6 +151,7 @@ function MetricCardBlock({
 
   return (
     <div
+      style={cell.customHeight ? { height: `${cell.customHeight}px`, minHeight: `${cell.customHeight}px` } : undefined}
       className={`w-full h-full min-h-[140px] rounded-2xl border p-4 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} shadow-sm ${editingField ? "relative z-50" : "relative z-10"}`}
     >
       {/* Label (inline editable on double click) */}
@@ -1306,6 +1307,10 @@ export function CanvasBlockRenderer({
 
   const renderedInner = renderInner();
   const cardStyles: React.CSSProperties = {};
+  if (cell.customHeight) {
+    cardStyles.height = `${cell.customHeight}px`;
+    cardStyles.minHeight = `${cell.customHeight}px`;
+  }
   if (backgroundColor) cardStyles.backgroundColor = backgroundColor;
   if (styleProps.borderColor) cardStyles.borderColor = styleProps.borderColor;
   if (styleProps.borderWidth) cardStyles.borderWidth = styleProps.borderWidth;
