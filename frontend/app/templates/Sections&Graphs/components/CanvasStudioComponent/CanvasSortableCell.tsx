@@ -60,13 +60,6 @@ export function SortableCell({
 }: SortableCellProps) {
   const isFirstInRow = cellIndex === 0;
   const isLastInRow = typeof totalCellsInRow === "number" && totalCellsInRow > 1 && cellIndex === totalCellsInRow - 1;
-  const toolbarPlacementClass = isFirstInRow
-    ? "left-0"
-    : isLastInRow
-    ? "right-0"
-    : (cell.customWidth ?? (cell.colSpan * 25)) <= 35
-    ? "left-0"
-    : "right-0";
 
   const {
     attributes,
@@ -107,7 +100,9 @@ export function SortableCell({
   const [isHovered, setIsHovered] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [portalPos, setPortalPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [toolbarPortalPos, setToolbarPortalPos] = useState<{ top: number; left: number } | null>(null);
   const cellDomRef = useRef<HTMLDivElement | null>(null);
+  const toolbarDomRef = useRef<HTMLDivElement | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -205,6 +200,69 @@ export function SortableCell({
   const widthStyle = getCellWidthStyle(currentPercent);
 
   const effectiveZoom = zoom > 0 ? zoom : 1;
+
+  const showTopToolbar = !isPreview && !isCellEditing && !isDragging && (isSelected || isResizing || isHeightResizing);
+
+  const updateToolbarPortalPos = useCallback(() => {
+    if (!cellDomRef.current) {
+      setToolbarPortalPos(null);
+      return;
+    }
+    const rect = cellDomRef.current.getBoundingClientRect();
+    if (rect.bottom < 40 || rect.top > window.innerHeight) {
+      setToolbarPortalPos(null);
+      return;
+    }
+
+    const toolbarWidth = toolbarDomRef.current?.offsetWidth || 580;
+    const toolbarHeight = toolbarDomRef.current?.offsetHeight || 36;
+
+    let idealLeft = isLastInRow ? (rect.right - toolbarWidth) : rect.left;
+    const clampedLeft = Math.max(16, Math.min(window.innerWidth - toolbarWidth - 16, idealLeft));
+
+    const fitsAbove = rect.top - toolbarHeight - 8 >= 80;
+    const targetTop = fitsAbove ? rect.top - toolbarHeight - 8 : rect.bottom + 8;
+
+    setToolbarPortalPos({
+      top: Math.round(targetTop),
+      left: Math.round(clampedLeft),
+    });
+  }, [isLastInRow]);
+
+  useEffect(() => {
+    if (!showTopToolbar) {
+      setToolbarPortalPos(null);
+      return;
+    }
+    updateToolbarPortalPos();
+    const handler = () => updateToolbarPortalPos();
+    window.addEventListener("scroll", handler, true);
+    window.addEventListener("resize", handler);
+    return () => {
+      window.removeEventListener("scroll", handler, true);
+      window.removeEventListener("resize", handler);
+    };
+  }, [showTopToolbar, updateToolbarPortalPos]);
+
+  useEffect(() => {
+    if (showTopToolbar && toolbarDomRef.current && cellDomRef.current) {
+      const actualWidth = toolbarDomRef.current.offsetWidth;
+      const rect = cellDomRef.current.getBoundingClientRect();
+      const idealLeft = isLastInRow ? (rect.right - actualWidth) : rect.left;
+      const clampedLeft = Math.max(16, Math.min(window.innerWidth - actualWidth - 16, idealLeft));
+      setToolbarPortalPos((prev) => {
+        if (!prev) return null;
+        if (prev.left === Math.round(clampedLeft)) return prev;
+        return { ...prev, left: Math.round(clampedLeft) };
+      });
+    }
+  }, [showTopToolbar, isLastInRow]);
+
+  useEffect(() => {
+    if (showTopToolbar) {
+      updateToolbarPortalPos();
+    }
+  }, [showTopToolbar, currentPercent, currentHeight, effectiveZoom, updateToolbarPortalPos]);
 
   const handleResizeStart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -661,215 +719,6 @@ export function SortableCell({
           title="Drag corner to adjust width & height simultaneously"
         >
           <div className="w-2 h-2 rounded-full border-2 border-white dark:border-zinc-900 bg-slate-400/80 dark:bg-zinc-500 group-hover/cell:bg-[#8B3DFF] transition-colors" />
-        </div>
-      )}
-
-      {/* Floating cell action bar — positioned above card with clean elevation */}
-      {!isPreview && !isCellEditing && (isSelected || isResizing || isHeightResizing) && (
-        <div className={`absolute bottom-full mb-2.5 ${toolbarPlacementClass} z-40 flex items-center gap-0.5 bg-white/97 dark:bg-zinc-900/97 border border-slate-200 dark:border-zinc-800 rounded-xl px-1.5 py-0.5 shadow-lg backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap`}>
-          <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing p-1 -ml-0.5 text-slate-400 hover:text-[#8B3DFF] rounded flex items-center"
-            title="Drag to move card anywhere across canvas"
-          >
-            <GripVertical className="w-3.5 h-3.5" />
-          </div>
-
-          <div className="flex items-center gap-1 font-mono text-[11px] text-purple-600 dark:text-purple-400 font-bold px-1">
-            <span>{Math.round(currentPercent)}%</span>
-          </div>
-
-          <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-zinc-800 pl-1">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                const autoW = defaultWidthForCount;
-                setResizePercent(autoW);
-                const span = autoW >= 85 ? 4 : autoW >= 60 ? 3 : autoW >= 38 ? 2 : 1;
-                if (typeof onColSpanChange === "function") onColSpanChange(cell.id, rowId, span);
-                if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, autoW);
-              }}
-              className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-[#8B3DFF] hover:bg-[#8B3DFF]/10 transition-colors cursor-pointer"
-              title={`Auto-balance width to fit standard A4 row (${defaultWidthForCount}%)`}
-            >
-              Auto
-            </button>
-            {[25, 33, 50, 75, 100].map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setResizePercent(preset);
-                  const span = preset >= 85 ? 4 : preset >= 60 ? 3 : preset >= 38 ? 2 : 1;
-                  if (typeof onColSpanChange === "function") onColSpanChange(cell.id, rowId, span);
-                  if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, preset);
-                }}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
-                  Math.abs(currentPercent - preset) <= 3
-                    ? "bg-[#8B3DFF] text-white font-bold"
-                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
-                }`}
-              >
-                {preset}%
-              </button>
-            ))}
-          </div>
-
-          {/* Height Presets & Steppers */}
-          <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-zinc-800 pl-1.5">
-            <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold font-mono pr-0.5">H:</span>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setResizeHeight(undefined);
-                if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, undefined);
-              }}
-              className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
-                !currentHeight
-                  ? "bg-[#8B3DFF] text-white font-bold"
-                  : "text-[#8B3DFF] hover:bg-[#8B3DFF]/10 font-bold"
-              }`}
-              title="Auto height (fits content naturally)"
-            >
-              Auto
-            </button>
-            {[
-              { label: "S", h: 200 },
-              { label: "M", h: 300 },
-              { label: "L", h: 400 },
-            ].map((preset) => {
-              const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
-              const targetH = Math.min(currentAllowed, preset.h);
-              return (
-                <button
-                  key={preset.label}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setResizeHeight(targetH);
-                    if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, targetH);
-                  }}
-                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
-                    currentHeight && Math.abs(currentHeight - targetH) <= 15
-                      ? "bg-[#8B3DFF] text-white font-bold"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
-                  }`}
-                  title={`Set height to ${preset.label} (${targetH}px)`}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                const newH = Math.max(70, (currentHeight || baseBlockHeight) - 25);
-                setResizeHeight(newH);
-                if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
-              }}
-              className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-              title="Decrease height by 25px"
-            >
-              -
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
-                const targetH = (currentHeight || baseBlockHeight) + 25;
-                const newH = Math.min(currentAllowed, targetH);
-                setResizeHeight(newH);
-                if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
-              }}
-              className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-              title="Increase height by 25px"
-            >
-              +
-            </button>
-          </div>
-
-          <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (cell.blockType === "text" || cell.blockType === "insight") {
-                setIsCellEditing(true);
-              } else if (typeof onEdit === "function") {
-                onEdit(cell, rowId);
-              }
-            }}
-            className="p-1 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer rounded"
-            title="Edit block properties"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (typeof onDuplicate === "function") onDuplicate(cell.id, rowId);
-            }}
-            className="p-1 text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer rounded"
-            title="Duplicate block (Ctrl+D)"
-          >
-            <Copy className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (typeof onDelete === "function") onDelete(cell.id, rowId);
-            }}
-            className="p-1 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer rounded"
-            title="Delete block (Del)"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-
-          {/* Quick 1-click Stack under left card (Canva Stack) */}
-          {cellIndex !== undefined && cellIndex > 0 && previousCellId && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (typeof onMoveToStackBelow === "function") {
-                  onMoveToStackBelow(cell.id, previousCellId);
-                }
-              }}
-              className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-[#8B3DFF] hover:bg-[#7828E0] transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
-              title="Combine into a single vertical column under the card to its left (Canva Stack)"
-            >
-              <CornerDownLeft className="w-3.5 h-3.5" />
-              <span>Stack under left card</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setQuickAddOpen((prev) => !prev);
-            }}
-            className={`px-1.5 py-1 transition-all cursor-pointer rounded-lg flex items-center gap-1 text-[10px] font-bold ${
-              quickAddOpen
-                ? "bg-[#8B3DFF] text-white shadow-xs"
-                : "text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
-            }`}
-            title="Stack another block directly below this card (Canva Stack)"
-          >
-            <Plus className="w-3 h-3" />
-            <span className="hidden sm:inline">Stack</span>
-          </button>
         </div>
       )}
 
@@ -1331,6 +1180,229 @@ export function SortableCell({
               <span>Stack below</span>
             </button>
           ),
+          document.body
+        )
+      }
+
+      {/* ── React Portal: Floating Cell Action Bar (Width, Height, Drag, Stack, Actions) ── */}
+      {mounted && typeof document !== "undefined" && toolbarPortalPos && showTopToolbar &&
+        createPortal(
+          <div
+            ref={toolbarDomRef}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              position: "fixed",
+              top: `${toolbarPortalPos.top}px`,
+              left: `${toolbarPortalPos.left}px`,
+              zIndex: 9999,
+            }}
+            className="portal-cell-action-bar flex items-center gap-0.5 bg-white/98 dark:bg-zinc-900/98 border border-slate-200 dark:border-zinc-800 rounded-xl px-1.5 py-0.5 shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap animate-in fade-in duration-100"
+          >
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 -ml-0.5 text-slate-400 hover:text-[#8B3DFF] rounded flex items-center"
+              title="Drag to move card anywhere across canvas"
+            >
+              <GripVertical className="w-3.5 h-3.5" />
+            </div>
+
+            <div className="flex items-center gap-1 font-mono text-[11px] text-purple-600 dark:text-purple-400 font-bold px-1">
+              <span>{Math.round(currentPercent)}%</span>
+            </div>
+
+            <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-zinc-800 pl-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const autoW = defaultWidthForCount;
+                  setResizePercent(autoW);
+                  const span = autoW >= 85 ? 4 : autoW >= 60 ? 3 : autoW >= 38 ? 2 : 1;
+                  if (typeof onColSpanChange === "function") onColSpanChange(cell.id, rowId, span);
+                  if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, autoW);
+                }}
+                className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold text-[#8B3DFF] hover:bg-[#8B3DFF]/10 transition-colors cursor-pointer"
+                title={`Auto-balance width to fit standard A4 row (${defaultWidthForCount}%)`}
+              >
+                Auto
+              </button>
+              {[25, 33, 50, 75, 100].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setResizePercent(preset);
+                    const span = preset >= 85 ? 4 : preset >= 60 ? 3 : preset >= 38 ? 2 : 1;
+                    if (typeof onColSpanChange === "function") onColSpanChange(cell.id, rowId, span);
+                    if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, preset);
+                  }}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                    Math.abs(currentPercent - preset) <= 3
+                      ? "bg-[#8B3DFF] text-white font-bold"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
+                  }`}
+                >
+                  {preset}%
+                </button>
+              ))}
+            </div>
+
+            {/* Height Presets & Steppers */}
+            <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-zinc-800 pl-1.5">
+              <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-semibold font-mono pr-0.5">H:</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setResizeHeight(undefined);
+                  if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, undefined);
+                }}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                  !currentHeight
+                    ? "bg-[#8B3DFF] text-white font-bold"
+                    : "text-[#8B3DFF] hover:bg-[#8B3DFF]/10 font-bold"
+                }`}
+                title="Auto height (fits content naturally)"
+              >
+                Auto
+              </button>
+              {[
+                { label: "S", h: 200 },
+                { label: "M", h: 300 },
+                { label: "L", h: 400 },
+              ].map((preset) => {
+                const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
+                const targetH = Math.min(currentAllowed, preset.h);
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setResizeHeight(targetH);
+                      if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, targetH);
+                    }}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                      currentHeight && Math.abs(currentHeight - targetH) <= 15
+                        ? "bg-[#8B3DFF] text-white font-bold"
+                        : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
+                    }`}
+                    title={`Set height to ${preset.label} (${targetH}px)`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const newH = Math.max(70, (currentHeight || baseBlockHeight) - 25);
+                  setResizeHeight(newH);
+                  if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
+                }}
+                className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                title="Decrease height by 25px"
+              >
+                -
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
+                  const targetH = (currentHeight || baseBlockHeight) + 25;
+                  const newH = Math.min(currentAllowed, targetH);
+                  setResizeHeight(newH);
+                  if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
+                }}
+                className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                title="Increase height by 25px"
+              >
+                +
+              </button>
+            </div>
+
+            <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (cell.blockType === "text" || cell.blockType === "insight") {
+                  setIsCellEditing(true);
+                } else if (typeof onEdit === "function") {
+                  onEdit(cell, rowId);
+                }
+              }}
+              className="p-1 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer rounded"
+              title="Edit block properties"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (typeof onDuplicate === "function") onDuplicate(cell.id, rowId);
+              }}
+              className="p-1 text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer rounded"
+              title="Duplicate block (Ctrl+D)"
+            >
+              <Copy className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (typeof onDelete === "function") onDelete(cell.id, rowId);
+              }}
+              className="p-1 text-slate-500 hover:text-rose-500 transition-colors cursor-pointer rounded"
+              title="Delete block (Del)"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Quick 1-click Stack under left card (Canva Stack) */}
+            {cellIndex !== undefined && cellIndex > 0 && previousCellId && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (typeof onMoveToStackBelow === "function") {
+                    onMoveToStackBelow(cell.id, previousCellId);
+                  }
+                }}
+                className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-[#8B3DFF] hover:bg-[#7828E0] transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                title="Combine into a single vertical column under the card to its left (Canva Stack)"
+              >
+                <CornerDownLeft className="w-3.5 h-3.5" />
+                <span>Stack under left card</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setQuickAddOpen((prev) => !prev);
+              }}
+              className={`px-1.5 py-1 transition-all cursor-pointer rounded-lg flex items-center gap-1 text-[10px] font-bold ${
+                quickAddOpen
+                  ? "bg-[#8B3DFF] text-white shadow-xs"
+                  : "text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
+              }`}
+              title="Stack another block directly below this card (Canva Stack)"
+            >
+              <Plus className="w-3 h-3" />
+              <span className="hidden sm:inline">Stack</span>
+            </button>
+          </div>,
           document.body
         )
       }
