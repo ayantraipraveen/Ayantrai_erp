@@ -761,9 +761,9 @@ export function SortableCell({
         <div
           style={{
             maxHeight: `${maxPrimaryH}px`,
-            height: !hasStacked && typeof currentHeight === "number" ? `${currentHeight}px` : undefined,
+            height: typeof currentHeight === "number" ? `${currentHeight}px` : undefined,
           }}
-          className={`w-full ${hasStacked ? "flex-1 min-h-0" : "flex-none"} flex flex-col relative group/primary-block overflow-visible`}
+          className={`w-full ${hasStacked && typeof currentHeight !== "number" ? "flex-1 min-h-0" : "flex-none"} flex flex-col relative group/primary-block overflow-visible`}
         >
           <CanvasBlockRenderer
             cell={currentHeight !== cell.customHeight ? { ...cell, customHeight: currentHeight } : cell}
