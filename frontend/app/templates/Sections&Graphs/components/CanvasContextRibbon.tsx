@@ -7,6 +7,9 @@ import {
   GraphType,
   CanvasCell,
   CanvasCellStyle,
+  CanvasRow,
+  CanvasRowStyle,
+  CanvasSectionStyle,
   LibraryMetricCard,
   LibraryChartCard,
 } from "@/lib/redux/slices/reportModuleSlice";
@@ -42,6 +45,7 @@ import {
   Ruler,
   Undo2,
   Redo2,
+  FileSpreadsheet,
 } from "lucide-react";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 
@@ -78,6 +82,16 @@ export interface CanvasContextRibbonProps {
   // Printable page margins and corner radius
   marginConfig?: CanvasMarginConfig;
   onUpdateMarginConfig?: (config: Partial<CanvasMarginConfig>) => void;
+
+  // Section Spacing & Appearance Management
+  sectionStyle?: CanvasSectionStyle;
+  onUpdateSectionStyle?: (style: Partial<CanvasSectionStyle>) => void;
+
+  // Active Row & Row Styling Management
+  activeRow?: CanvasRow | null;
+  onUpdateRowStyle?: (rowId: string, style: Partial<CanvasRowStyle>) => void;
+  onRemoveRow?: (rowId: string) => void;
+  onTogglePageBreak?: (rowId: string) => void;
 
   // Font, Color & Background Management
   onUpdateCellStyle?: (style: Partial<CanvasCellStyle>) => void;

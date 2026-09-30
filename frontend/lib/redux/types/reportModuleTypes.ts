@@ -395,6 +395,8 @@ export interface CanvasRowStyle {
   margin?: number; // uniform row margin in px
   marginTop?: number;
   marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
   borderWidth?: number; // border width in px
   borderColor?: string; // hex, preset or transparent
   borderStyle?: "solid" | "dashed" | "dotted" | "none";
@@ -420,6 +422,8 @@ export interface CanvasSectionStyle {
   margin?: number; // uniform section margin in px
   marginTop?: number;
   marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
   borderWidth?: number; // border width in px
   borderColor?: string; // hex, preset or transparent
   borderStyle?: "solid" | "dashed" | "dotted" | "none";

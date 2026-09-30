@@ -36,8 +36,14 @@ import {
   updateCellColSpan,
   updateCellHeight,
   updateCellStyleInCell,
+  updateRowStyle,
+  updateSectionStyle,
+  removeCanvasRow,
+  toggleRowPageBreak,
   setSectionWatermark,
   CanvasCellStyle,
+  CanvasRowStyle,
+  CanvasSectionStyle,
   duplicateCanvasCell,
   deleteCanvasCell,
   stackCellBelow,
@@ -243,6 +249,27 @@ export default function SectionCanvasEditor({
     }
     return null;
   }, [selectedCellId, section?.canvasRows]);
+
+  const activeRow = useMemo(() => {
+    if (!selectedRowId || !section?.canvasRows) return null;
+    return section.canvasRows.find((r) => r.id === selectedRowId) || null;
+  }, [selectedRowId, section?.canvasRows]);
+
+  // Sync marginConfig from persistent sectionStyle when section loads
+  useEffect(() => {
+    if (section?.sectionStyle) {
+      setMarginConfig({
+        top: section.sectionStyle.marginTop ?? section.sectionStyle.margin ?? DEFAULT_CANVAS_MARGIN.top,
+        bottom: section.sectionStyle.marginBottom ?? section.sectionStyle.margin ?? DEFAULT_CANVAS_MARGIN.bottom,
+        left: section.sectionStyle.marginLeft ?? section.sectionStyle.margin ?? DEFAULT_CANVAS_MARGIN.left,
+        right: section.sectionStyle.marginRight ?? section.sectionStyle.margin ?? DEFAULT_CANVAS_MARGIN.right,
+        radius:
+          typeof section.sectionStyle.borderRadius === "number"
+            ? section.sectionStyle.borderRadius
+            : DEFAULT_CANVAS_MARGIN.radius,
+      });
+    }
+  }, [section?.id]);
 
   // ── Modals State ────────────────────────────────────────────────────────────
   const [editHeaderOpen, setEditHeaderOpen] = useState(false);
@@ -775,9 +802,87 @@ export default function SectionCanvasEditor({
     [dispatch, sectionId]
   );
 
-  const handleUpdateMarginConfig = useCallback((patch: Partial<CanvasMarginConfig>) => {
-    setMarginConfig((current) => ({ ...current, ...patch }));
-  }, []);
+  const handleUpdateMarginConfig = useCallback(
+    (patch: Partial<CanvasMarginConfig>) => {
+      setMarginConfig((current) => {
+        const next = { ...current, ...patch };
+        if (section?.id) {
+          dispatch(
+            updateSectionStyle({
+              sectionId: section.id,
+              style: {
+                marginTop: next.top,
+                marginRight: next.right,
+                marginBottom: next.bottom,
+                marginLeft: next.left,
+                margin:
+                  next.top === next.bottom && next.top === next.left && next.top === next.right
+                    ? next.top
+                    : undefined,
+                borderRadius: next.radius,
+              },
+            })
+          );
+        }
+        return next;
+      });
+    },
+    [dispatch, section?.id]
+  );
+
+  const handleUpdateSectionStyle = useCallback(
+    (patch: Partial<CanvasSectionStyle>) => {
+      if (!section?.id) return;
+      dispatch(updateSectionStyle({ sectionId: section.id, style: patch }));
+      if (
+        patch.marginTop !== undefined ||
+        patch.marginRight !== undefined ||
+        patch.marginBottom !== undefined ||
+        patch.marginLeft !== undefined ||
+        patch.borderRadius !== undefined
+      ) {
+        setMarginConfig((curr) => ({
+          ...curr,
+          top: patch.marginTop ?? patch.margin ?? curr.top,
+          right: patch.marginRight ?? patch.margin ?? curr.right,
+          bottom: patch.marginBottom ?? patch.margin ?? curr.bottom,
+          left: patch.marginLeft ?? patch.margin ?? curr.left,
+          radius: typeof patch.borderRadius === "number" ? patch.borderRadius : curr.radius,
+        }));
+      }
+    },
+    [dispatch, section?.id]
+  );
+
+  const handleUpdateRowStyle = useCallback(
+    (rowId: string, patch: Partial<CanvasRowStyle>) => {
+      if (!section?.id) return;
+      dispatch(updateRowStyle({ sectionId: section.id, rowId, style: patch }));
+    },
+    [dispatch, section?.id]
+  );
+
+  const handleRemoveRow = useCallback(
+    (rowId: string) => {
+      if (!section?.id) return;
+      dispatch(removeCanvasRow({ sectionId: section.id, rowId }));
+      if (selectedRowId === rowId) {
+        setSelectedRowId(null);
+        setSelectedCellId(null);
+      }
+      dispatch(showGlobalToast({ message: "Row deleted", type: "info" }));
+    },
+    [dispatch, section?.id, selectedRowId]
+  );
+
+  const handleTogglePageBreak = useCallback(
+    (rowId: string) => {
+      if (!section?.id) return;
+      dispatch(toggleRowPageBreak({ sectionId: section.id, rowId }));
+      dispatch(showGlobalToast({ message: "Row page break updated", type: "info" }));
+    },
+    [dispatch, section?.id]
+  );
 
   const handleDuplicateActive = useCallback(() => {
     if (!selectedRowId || !selectedCellId) return;
