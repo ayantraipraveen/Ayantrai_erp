@@ -395,18 +395,40 @@ export function SortableCell({
 
   const rawBaseBlockHeight = currentHeight || getDefaultBlockHeight(cell.blockType);
 
-  const rawStackedSum = hasStacked
-    ? cell.stackedCells!.reduce((sum: number, sc: any) => sum + (sc.customHeight || getDefaultBlockHeight(sc.blockType)), 0)
-    : 0;
+  // Groups stacked cells into flex-wrap rows by width and returns total height
+  const calcWrappedStackedH = (cells: any[]): { contentH: number; numRows: number } => {
+    if (!cells?.length) return { contentH: 0, numRows: 0 };
+    const rowMaxHeights: number[] = [];
+    let rowW = 0;
+    let rowMaxH = 0;
+    for (const sc of cells) {
+      const w = sc.customWidth || 100;
+      const h = sc.customHeight || getDefaultBlockHeight(sc.blockType);
+      if (rowW + w > 100 && rowW > 0) {
+        rowMaxHeights.push(rowMaxH);
+        rowW = w;
+        rowMaxH = h;
+      } else {
+        rowW += w;
+        rowMaxH = Math.max(rowMaxH, h);
+      }
+    }
+    rowMaxHeights.push(rowMaxH);
+    const contentH = rowMaxHeights.reduce((t, h) => t + h, 0);
+    return { contentH, numRows: rowMaxHeights.length };
+  };
 
-  const stackGapTotal = hasStacked ? cell.stackedCells!.length * 12 : 0;
+  const stackedWrap = hasStacked ? calcWrappedStackedH(cell.stackedCells!) : { contentH: 0, numRows: 0 };
+  const rawStackedSum = stackedWrap.contentH;
+  // Gap between stacked rows (12px each) + 4px outer gap between primary and first stacked row
+  const stackGapTotal = hasStacked ? Math.max(0, stackedWrap.numRows - 1) * 12 + 4 : 0;
   const maxAvailableForCards = Math.max(140, maxColumnHeight - stackGapTotal);
   const totalCardsRawH = rawBaseBlockHeight + rawStackedSum;
   const cardScale = totalCardsRawH > maxAvailableForCards ? maxAvailableForCards / totalCardsRawH : 1;
 
   const baseBlockHeight = Math.max(MIN_BLOCK_H, Math.floor(rawBaseBlockHeight * cardScale));
 
-  const stackedExtraHeight = hasStacked ? rawStackedSum + cell.stackedCells!.length * 12 : 0;
+  const stackedExtraHeight = hasStacked ? rawStackedSum + stackGapTotal : 0;
 
   const rawMinHeight = hasStacked
     ? baseBlockHeight + stackedExtraHeight
@@ -776,7 +798,7 @@ export function SortableCell({
 
         {/* Stacked Blocks underneath (Canva Column Stack) */}
         {cell.stackedCells && cell.stackedCells.length > 0 && (
-          <div className="w-full flex flex-col gap-3">
+          <div className="w-full flex flex-row flex-wrap gap-3">
             {cell.stackedCells.map((sc: any, sIdx: number) => {
               const isStackedSelected = selectedCellId === sc.id;
               const currentScW = sc.customWidth || 100;

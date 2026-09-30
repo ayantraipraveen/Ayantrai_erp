@@ -50,12 +50,29 @@ export function estimateRowHeight(row: CanvasRow): number {
     // Use stored height if available, otherwise use accurate block-type default
     let h = cell.customHeight || getDefaultBlockHeight(cell.blockType);
 
-    // Account for stacked cells in this column
+    // Account for stacked cells — group into flex-wrap rows by width, same as renderer
     if (cell.stackedCells && cell.stackedCells.length > 0) {
+      const rowMaxHeights: number[] = [];
+      let rowW = 0;
+      let rowMaxH = 0;
       for (const sc of cell.stackedCells) {
+        const w = sc.customWidth || 100;
         const scH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
-        h += scH + 12; // 12px gap between stacked blocks
+        if (rowW + w > 100 && rowW > 0) {
+          rowMaxHeights.push(rowMaxH);
+          rowW = w;
+          rowMaxH = scH;
+        } else {
+          rowW += w;
+          rowMaxH = Math.max(rowMaxH, scH);
+        }
       }
+      rowMaxHeights.push(rowMaxH);
+      // sum of row heights + inter-row gaps (12px) + outer gap between primary and stacked (4px)
+      const stackedH = rowMaxHeights.reduce((t, rh) => t + rh, 0)
+        + Math.max(0, rowMaxHeights.length - 1) * 12
+        + 4;
+      h += stackedH;
     }
 
     const cellWidth = cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : 100);
