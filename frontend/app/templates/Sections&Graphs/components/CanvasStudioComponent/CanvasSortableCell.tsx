@@ -739,7 +739,7 @@ export function SortableCell({
       )}
 
       {/* Render the actual cell content block and vertically stacked blocks */}
-      <div className="w-full flex-1 flex flex-col gap-3 min-h-fit">
+      <div className="w-full flex-1 flex flex-col gap-1 min-h-fit">
         {/* Primary Block */}
         <div
           style={{ maxHeight: `${maxPrimaryH}px` }}

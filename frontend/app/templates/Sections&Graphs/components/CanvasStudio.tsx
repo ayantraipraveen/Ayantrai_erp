@@ -88,6 +88,8 @@ export function CanvasStudio({
   onAddBadgeToStripInCell,
   onDeleteBadgeFromStripInCell,
   onHeightChange,
+  onUpdateRowStyle,
+  onUpdateSectionStyle,
   paperTone = "white",
   marginConfig = DEFAULT_CANVAS_MARGIN,
   pageNumber = 1,
@@ -1237,7 +1239,20 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                         </div>
 
                       {/* Canvas Rows Container for this Page */}
-                      <div className="relative z-10 px-0 pt-3 pb-1.5 space-y-2 flex-1 min-h-0 overflow-visible">
+                      <div
+                        className="relative z-10 space-y-2 flex-1 min-h-0 overflow-visible transition-all duration-150"
+                        style={{
+                          paddingTop: section.sectionStyle?.paddingTop !== undefined ? `${section.sectionStyle.paddingTop}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "12px",
+                          paddingBottom: section.sectionStyle?.paddingBottom !== undefined ? `${section.sectionStyle.paddingBottom}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "6px",
+                          paddingLeft: section.sectionStyle?.paddingLeft !== undefined ? `${section.sectionStyle.paddingLeft}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
+                          paddingRight: section.sectionStyle?.paddingRight !== undefined ? `${section.sectionStyle.paddingRight}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
+                          backgroundColor: section.sectionStyle?.backgroundColor,
+                          borderRadius: section.sectionStyle?.borderRadius !== undefined ? (typeof section.sectionStyle.borderRadius === "number" ? `${section.sectionStyle.borderRadius}px` : section.sectionStyle.borderRadius) : undefined,
+                          borderWidth: section.sectionStyle?.borderWidth !== undefined ? `${section.sectionStyle.borderWidth}px` : undefined,
+                          borderColor: section.sectionStyle?.borderColor,
+                          borderStyle: section.sectionStyle?.borderStyle || (section.sectionStyle?.borderWidth ? "solid" : undefined),
+                        }}
+                      >
                         {page.rows.length === 0 ? (
                           <div
                             onDragOver={(e) => {
@@ -1302,6 +1317,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                                     onDeleteBadge={onDeleteBadgeFromStripInCell}
                                     onRemoveRow={handleRemoveRow}
                                     onTogglePageBreak={handleTogglePageBreak}
+                                    onUpdateRowStyle={onUpdateRowStyle}
                                     onDropBlock={onDropBlock}
                                     onMoveCellToStackBelow={onMoveCellToStackBelow}
                                     onStackCellBelow={onStackCellBelow}

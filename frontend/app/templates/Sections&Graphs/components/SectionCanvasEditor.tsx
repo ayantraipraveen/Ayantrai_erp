@@ -1172,6 +1172,12 @@ export default function SectionCanvasEditor({
         onUpdateMarginConfig={handleUpdateMarginConfig}
         sectionTextColor={sectionTextColor}
         onSetSectionTextColor={setSectionTextColor}
+        sectionStyle={section?.sectionStyle}
+        onUpdateSectionStyle={handleUpdateSectionStyle}
+        activeRow={activeRow}
+        onUpdateRowStyle={handleUpdateRowStyle}
+        onRemoveRow={handleRemoveRow}
+        onTogglePageBreak={handleTogglePageBreak}
         showGrid={showGrid}
         onToggleGrid={() => setShowGrid(!showGrid)}
         showGuides={showGuides}
@@ -1227,6 +1233,8 @@ export default function SectionCanvasEditor({
           onAddBadgeToStripInCell={handleAddBadgeToStripInCell}
           onDeleteBadgeFromStripInCell={handleDeleteBadgeFromStripInCell}
           onHeightChange={handleCellHeightChange}
+          onUpdateRowStyle={handleUpdateRowStyle}
+          onUpdateSectionStyle={handleUpdateSectionStyle}
           paperTone={paperTone}
           marginConfig={marginConfig}
           pageNumber={Math.max(1, librarySections.findIndex((item) => item.id === sectionId) + 1)}

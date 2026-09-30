@@ -40,12 +40,15 @@ import {
   Stamp,
   Check,
   RotateCw,
+  RotateCcw,
   ExternalLink,
   ChevronDown,
   Ruler,
   Undo2,
   Redo2,
   FileSpreadsheet,
+  Layers,
+  X,
 } from "lucide-react";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 
@@ -304,6 +307,12 @@ export function CanvasContextRibbon({
   canRedo = false,
   marginConfig = DEFAULT_CANVAS_MARGIN,
   onUpdateMarginConfig,
+  sectionStyle,
+  onUpdateSectionStyle,
+  activeRow,
+  onUpdateRowStyle,
+  onRemoveRow,
+  onTogglePageBreak,
   onUpdateCellStyle,
   uploadedWatermarks = [],
   activeWatermarkId,
@@ -320,6 +329,7 @@ export function CanvasContextRibbon({
   const [paperColorMenuOpen, setPaperColorMenuOpen] = useState(false);
   const [sectionTextColorMenuOpen, setSectionTextColorMenuOpen] = useState(false);
   const [marginMenuOpen, setMarginMenuOpen] = useState(false);
+  const [rowBorderMenuOpen, setRowBorderMenuOpen] = useState(false);
 
   // Button refs for anchor alignment
   const fontBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -331,6 +341,7 @@ export function CanvasContextRibbon({
   const watermarkBtnRef = useRef<HTMLButtonElement | null>(null);
   const cellWatermarkBtnRef = useRef<HTMLButtonElement | null>(null);
   const marginBtnRef = useRef<HTMLButtonElement | null>(null);
+  const rowBorderBtnRef = useRef<HTMLButtonElement | null>(null);
 
   // Close menus when clicking outside
   const ribbonRef = useRef<HTMLDivElement | null>(null);
@@ -344,6 +355,7 @@ export function CanvasContextRibbon({
       setPaperColorMenuOpen(false);
       setSectionTextColorMenuOpen(false);
       setMarginMenuOpen(false);
+      setRowBorderMenuOpen(false);
     };
 
     const handlePointerDownOutside = (e: PointerEvent) => {
@@ -943,6 +955,244 @@ export function CanvasContextRibbon({
             onClose={() => setWatermarkMenuOpen(false)}
           />
         </RibbonPortalPopover>
+      </div>
+    );
+  }
+
+  // ── Render Row Context Ribbon (When a row is active & no cell is selected) ─
+  if (selectedRowId && activeRow) {
+    const rowStyle = activeRow.style || {};
+    const colGap = rowStyle.columnGap ?? 12;
+    const rowGap = rowStyle.rowGap ?? 12;
+    const rowPadding = rowStyle.padding ?? rowStyle.paddingTop ?? 0;
+    const rowMargin = rowStyle.marginTop ?? rowStyle.margin ?? 0;
+
+    return (
+      <div
+        ref={ribbonRef}
+        className="relative h-11 flex-shrink-0 flex items-center justify-between gap-2 px-3 sm:px-4 bg-slate-50/95 dark:bg-[#090d14]/95 border-b border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md overflow-x-auto no-scrollbar select-none animate-fadeIn z-40"
+      >
+        <div className="flex items-center gap-1.5 flex-nowrap shrink-0">
+          {/* Undo / Redo controls */}
+          {onUndo && (
+            <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-zinc-800 pr-1.5 mr-0.5">
+              <button
+                type="button"
+                onClick={onUndo}
+                disabled={!canUndo}
+                className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                  canUndo
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+                    : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+                }`}
+                title="Undo (Ctrl+Z)"
+              >
+                <Undo2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={onRedo}
+                disabled={!canRedo}
+                className={`h-7 w-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer ${
+                  canRedo
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+                    : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+                }`}
+                title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
+              >
+                <Redo2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Row Identifier Badge */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/25 text-[#8B3DFF]">
+            <Sliders className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-bold font-mono uppercase tracking-wider">Row Layout</span>
+            <span className="text-[10px] opacity-75 font-mono">({activeRow.cells.length} blocks)</span>
+          </div>
+
+          <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
+
+          {/* Column Gap Control */}
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 h-7">
+            <span className="text-[10px] font-bold text-slate-400">Col Gap:</span>
+            <button
+              type="button"
+              onClick={() => onUpdateRowStyle?.(activeRow.id, { columnGap: Math.max(0, colGap - 4) })}
+              className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+              title="Decrease column gap"
+            >
+              -
+            </button>
+            <span className="text-[10px] font-mono font-bold text-slate-800 dark:text-zinc-200 min-w-[32px] text-center">
+              {colGap}px
+            </span>
+            <button
+              type="button"
+              onClick={() => onUpdateRowStyle?.(activeRow.id, { columnGap: Math.min(48, colGap + 4) })}
+              className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+              title="Increase column gap"
+            >
+              +
+            </button>
+            <div className="flex items-center gap-0.5 border-l border-slate-200 dark:border-zinc-800 pl-1 ml-0.5">
+              {[0, 8, 12, 16, 24].map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => onUpdateRowStyle?.(activeRow.id, { columnGap: g })}
+                  className={`px-1 py-0.5 rounded text-[9px] font-mono font-bold cursor-pointer transition-all ${
+                    colGap === g ? "bg-[#8B3DFF] text-white" : "text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Row Gap Control */}
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 h-7">
+            <span className="text-[10px] font-bold text-slate-400">Row Gap:</span>
+            <button
+              type="button"
+              onClick={() => onUpdateRowStyle?.(activeRow.id, { rowGap: Math.max(0, rowGap - 4) })}
+              className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+              title="Decrease row gap"
+            >
+              -
+            </button>
+            <span className="text-[10px] font-mono font-bold text-slate-800 dark:text-zinc-200 min-w-[32px] text-center">
+              {rowGap}px
+            </span>
+            <button
+              type="button"
+              onClick={() => onUpdateRowStyle?.(activeRow.id, { rowGap: Math.min(48, rowGap + 4) })}
+              className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+              title="Increase row gap"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Row Padding Control */}
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 h-7">
+            <span className="text-[10px] font-bold text-slate-400">Padding:</span>
+            <button
+              type="button"
+              onClick={() => {
+                const next = Math.max(0, rowPadding - 4);
+                onUpdateRowStyle?.(activeRow.id, { padding: next, paddingTop: next, paddingBottom: next, paddingLeft: next, paddingRight: next });
+              }}
+              className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+              title="Decrease row padding"
+            >
+              -
+            </button>
+            <span className="text-[10px] font-mono font-bold text-slate-800 dark:text-zinc-200 min-w-[32px] text-center">
+              {rowPadding}px
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const next = Math.min(48, rowPadding + 4);
+                onUpdateRowStyle?.(activeRow.id, { padding: next, paddingTop: next, paddingBottom: next, paddingLeft: next, paddingRight: next });
+              }}
+              className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+              title="Increase row padding"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Row Margin Control */}
+          <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-1 h-7">
+            <span className="text-[10px] font-bold text-slate-400">Margin:</span>
+            <button
+              type="button"
+              onClick={() => {
+                const next = Math.max(0, rowMargin - 4);
+                onUpdateRowStyle?.(activeRow.id, { margin: next, marginTop: next, marginBottom: next });
+              }}
+              className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+              title="Decrease row margin"
+            >
+              -
+            </button>
+            <span className="text-[10px] font-mono font-bold text-slate-800 dark:text-zinc-200 min-w-[32px] text-center">
+              {rowMargin}px
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const next = Math.min(32, rowMargin + 4);
+                onUpdateRowStyle?.(activeRow.id, { margin: next, marginTop: next, marginBottom: next });
+              }}
+              className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer"
+              title="Increase row margin"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Row Appearance Button */}
+          <div className="relative">
+            <button
+              ref={rowBorderBtnRef}
+              type="button"
+              onClick={() => setRowBorderMenuOpen(!rowBorderMenuOpen)}
+              className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-purple-400 bg-white dark:bg-zinc-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-slate-700 dark:text-zinc-200"
+              title="Row Background & Borders"
+            >
+              <Palette className="w-3.5 h-3.5 text-[#8B3DFF]" />
+              <span>Row Style</span>
+              <ChevronDown className="w-3 h-3 opacity-60" />
+            </button>
+
+            <RibbonPortalPopover
+              anchorEl={rowBorderBtnRef.current}
+              isOpen={rowBorderMenuOpen}
+              onClose={() => setRowBorderMenuOpen(false)}
+            >
+              <RowAppearancePopover
+                rowStyle={rowStyle}
+                onUpdateRowStyle={(patch) => onUpdateRowStyle?.(activeRow.id, patch)}
+                onClose={() => setRowBorderMenuOpen(false)}
+              />
+            </RibbonPortalPopover>
+          </div>
+
+          {/* Page Break Toggle */}
+          {onTogglePageBreak && (
+            <button
+              type="button"
+              onClick={() => onTogglePageBreak(activeRow.id)}
+              className={`h-7 px-2.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                activeRow.pageBreakBefore
+                  ? "border-purple-500 bg-purple-500/15 text-[#8B3DFF] font-bold"
+                  : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+              }`}
+              title="Start this row on a new page (Page Break)"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>Page Break</span>
+            </button>
+          )}
+
+          {/* Delete Row */}
+          {onRemoveRow && (
+            <button
+              type="button"
+              onClick={() => onRemoveRow(activeRow.id)}
+              className="h-7 px-2 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-500 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              title="Delete this row"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Row</span>
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -1677,10 +1927,138 @@ function WatermarkPopover({
   );
 }
 
-// ── Printable Margins Popover Panel ───────────────────────────────────────────
+interface RowAppearancePopoverProps {
+  rowStyle?: CanvasRowStyle;
+  onUpdateRowStyle: (patch: Partial<CanvasRowStyle>) => void;
+  onClose: () => void;
+}
+
+function RowAppearancePopover({
+  rowStyle = {},
+  onUpdateRowStyle,
+  onClose,
+}: RowAppearancePopoverProps) {
+  return (
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="w-72 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-3.5 space-y-3.5 animate-fadeIn text-slate-800 dark:text-zinc-200"
+    >
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-purple-500/10 text-[#8B3DFF] flex items-center justify-center font-bold">
+            <Palette className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white">Row Appearance</h4>
+            <p className="text-[10px] text-slate-400">Background, borders & radius</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Row Background Tones */}
+      <div className="space-y-1.5">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          Row Background Tone
+        </div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { label: "None", val: undefined },
+            { label: "Subtle Slate", val: "#f8fafc" },
+            { label: "Glass Frost", val: "rgba(255,255,255,0.75)" },
+            { label: "Purple Mist", val: "#faf5ff" },
+            { label: "Midnight Dark", val: "#0f172a" },
+          ].map((bg) => (
+            <button
+              key={bg.label}
+              type="button"
+              onClick={() => onUpdateRowStyle({ backgroundColor: bg.val })}
+              className={`h-9 rounded-lg border text-[10px] font-bold p-1 transition-all cursor-pointer ${
+                rowStyle.backgroundColor === bg.val
+                  ? "border-[#8B3DFF] ring-2 ring-purple-500/30"
+                  : "border-slate-200 dark:border-zinc-800 hover:border-slate-300"
+              }`}
+              style={{ backgroundColor: bg.val || "transparent" }}
+            >
+              <span className={bg.val === "#0f172a" ? "text-white" : "text-slate-700 dark:text-zinc-200"}>
+                {bg.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Border Style */}
+      <div className="space-y-1.5 border-t border-slate-100 dark:border-zinc-800/80 pt-2">
+        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          Border Line Style
+        </div>
+        <div className="grid grid-cols-4 gap-1">
+          {(["none", "solid", "dashed", "dotted"] as const).map((st) => (
+            <button
+              key={st}
+              type="button"
+              onClick={() =>
+                onUpdateRowStyle({
+                  borderStyle: st,
+                  borderWidth: st === "none" ? 0 : rowStyle.borderWidth || 1,
+                  borderColor: st === "none" ? "transparent" : rowStyle.borderColor || "#e2e8f0",
+                })
+              }
+              className={`py-1 rounded-lg text-[10px] font-bold capitalize border transition-all cursor-pointer ${
+                (rowStyle.borderStyle || (rowStyle.borderWidth ? "solid" : "none")) === st
+                  ? "border-[#8B3DFF] bg-purple-500/10 text-[#8B3DFF]"
+                  : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400"
+              }`}
+            >
+              {st}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Border Radius */}
+      <div className="space-y-1.5 border-t border-slate-100 dark:border-zinc-800/80 pt-2">
+        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+          <span>Corner Radius</span>
+          <span className="text-[#8B3DFF]">
+            {typeof rowStyle.borderRadius === "number" ? `${rowStyle.borderRadius}px` : rowStyle.borderRadius || "16px"}
+          </span>
+        </div>
+        <div className="grid grid-cols-5 gap-1">
+          {[0, 8, 12, 16, 24].map((rad) => (
+            <button
+              key={rad}
+              type="button"
+              onClick={() => onUpdateRowStyle({ borderRadius: rad })}
+              className={`py-1 rounded-md text-[10px] font-mono font-bold border transition-colors cursor-pointer ${
+                rowStyle.borderRadius === rad
+                  ? "border-[#8B3DFF] bg-purple-500/10 text-[#8B3DFF]"
+                  : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100"
+              }`}
+            >
+              {rad}px
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={onClose}
+        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+      >
+        Apply & Close
+      </button>
+    </div>
+  );
+}
+
+// ── Printable Margins & Section Padding Popover Panel ─────────────────────────
 interface MarginPopoverProps {
   marginConfig: CanvasMarginConfig;
   onUpdateMarginConfig?: (config: Partial<CanvasMarginConfig>) => void;
+  sectionStyle?: CanvasSectionStyle;
+  onUpdateSectionStyle?: (style: Partial<CanvasSectionStyle>) => void;
   showGuides: boolean;
   onToggleGuides: () => void;
   onClose: () => void;
@@ -1689,10 +2067,14 @@ interface MarginPopoverProps {
 function MarginPopover({
   marginConfig,
   onUpdateMarginConfig,
+  sectionStyle,
+  onUpdateSectionStyle,
   showGuides,
   onToggleGuides,
   onClose,
 }: MarginPopoverProps) {
+  const [activeTab, setActiveTab] = useState<"margins" | "padding">("margins");
+
   const presets = [
     { value: 12, label: "Narrow", description: "Compact content area" },
     { value: 24, label: "Normal", description: "Balanced page spacing" },
@@ -1710,97 +2092,235 @@ function MarginPopover({
     onUpdateMarginConfig?.({ [axis]: nextValue });
   };
 
+  const secPadTop = sectionStyle?.paddingTop ?? sectionStyle?.padding ?? 12;
+  const secPadBottom = sectionStyle?.paddingBottom ?? sectionStyle?.padding ?? 6;
+  const secPadLeft = sectionStyle?.paddingLeft ?? sectionStyle?.padding ?? 0;
+  const secPadRight = sectionStyle?.paddingRight ?? sectionStyle?.padding ?? 0;
+
   return (
-    <div className="absolute top-8 left-0 w-80 max-h-[min(520px,calc(100dvh-17rem))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-3 z-[60] space-y-3 animate-fadeIn">
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="absolute top-8 left-0 w-80 max-h-[min(540px,calc(100dvh-15rem))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-3.5 z-[60] space-y-3 animate-fadeIn text-slate-800 dark:text-zinc-200"
+    >
       <div className="border-b border-slate-100 dark:border-zinc-800/80 pb-2">
-        <h4 className="text-xs font-bold text-slate-900 dark:text-white">Printable Margins</h4>
-        <p className="text-[10px] text-slate-400">Set each page axis and the artboard corner radius</p>
+        <h4 className="text-xs font-bold text-slate-900 dark:text-white">Page Margins & Section Padding</h4>
+        <p className="text-[10px] text-slate-400">Configure printable boundaries & content rows area</p>
       </div>
 
-      <div className="space-y-1.5">
-        {presets.map((preset) => {
-          const selected = isPresetSelected(preset.value);
-          return (
-            <button
-              key={preset.value}
-              type="button"
-              onClick={() => onUpdateMarginConfig?.({ top: preset.value, right: preset.value, bottom: preset.value, left: preset.value })}
-              className={`w-full rounded-lg border px-2.5 py-2 text-left flex items-center justify-between transition-colors cursor-pointer ${
-                selected
-                  ? "border-[#8B3DFF] bg-purple-500/10 text-[#8B3DFF]"
-                  : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300"
-              }`}
-            >
-              <span>
-                <span className="block text-xs font-bold">{preset.label}</span>
-                <span className="block text-[10px] opacity-70">{preset.description}</span>
-              </span>
-              <span className="text-[10px] font-mono">{preset.value}px</span>
-            </button>
-          );
-        })}
+      {/* Tabs */}
+      <div className="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 p-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab("margins")}
+          className={`py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            activeTab === "margins"
+              ? "bg-[#8B3DFF] text-white shadow-xs"
+              : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          Page Margins
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("padding")}
+          className={`py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            activeTab === "padding"
+              ? "bg-[#8B3DFF] text-white shadow-xs"
+              : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+          }`}
+        >
+          Section Padding
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-t border-slate-100 dark:border-zinc-800/80 pt-2">
-        {(["top", "right", "bottom", "left"] as const).map((axis) => (
-          <label key={axis} className="space-y-1">
-            <span className="block text-[10px] font-mono font-bold uppercase text-slate-400">{axis}</span>
-            <div className="relative">
-              <input
-                type="number"
-                min={0}
-                max={120}
-                value={marginConfig[axis]}
-                onChange={(event) => updateAxis(axis, event.target.value)}
-                className="w-full rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-2 py-1.5 pr-7 text-xs font-mono font-bold text-slate-800 dark:text-zinc-200 outline-none focus:border-[#8B3DFF]"
-              />
-              <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">px</span>
+      {activeTab === "margins" ? (
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            {presets.map((preset) => {
+              const selected = isPresetSelected(preset.value);
+              return (
+                <button
+                  key={preset.value}
+                  type="button"
+                  onClick={() => onUpdateMarginConfig?.({ top: preset.value, right: preset.value, bottom: preset.value, left: preset.value })}
+                  className={`w-full rounded-lg border px-2.5 py-2 text-left flex items-center justify-between transition-colors cursor-pointer ${
+                    selected
+                      ? "border-[#8B3DFF] bg-purple-500/10 text-[#8B3DFF]"
+                      : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300"
+                  }`}
+                >
+                  <span>
+                    <span className="block text-xs font-bold">{preset.label}</span>
+                    <span className="block text-[10px] opacity-70">{preset.description}</span>
+                  </span>
+                  <span className="text-[10px] font-mono">{preset.value}px</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 border-t border-slate-100 dark:border-zinc-800/80 pt-2">
+            {(["top", "right", "bottom", "left"] as const).map((axis) => (
+              <label key={axis} className="space-y-1">
+                <span className="block text-[10px] font-mono font-bold uppercase text-slate-400">{axis}</span>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={0}
+                    max={120}
+                    value={marginConfig[axis]}
+                    onChange={(event) => updateAxis(axis, event.target.value)}
+                    className="w-full rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-2 py-1.5 pr-7 text-xs font-mono font-bold text-slate-800 dark:text-zinc-200 outline-none focus:border-[#8B3DFF]"
+                  />
+                  <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">px</span>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          <div className="border-t border-slate-100 dark:border-zinc-800/80 pt-2">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-mono font-bold uppercase text-slate-400">Sheet Corner radius</span>
+              <span className="text-[10px] font-mono font-bold text-[#8B3DFF]">{marginConfig.radius}px</span>
             </div>
+            <input
+              type="range"
+              min={0}
+              max={48}
+              step={1}
+              value={marginConfig.radius}
+              onChange={(event) => onUpdateMarginConfig?.({ radius: Number(event.target.value) })}
+              className="w-full accent-[#8B3DFF] cursor-pointer"
+            />
+            <div className="grid grid-cols-5 gap-1 mt-1.5">
+              {[0, 8, 16, 24, 32].map((radius) => (
+                <button
+                  key={radius}
+                  type="button"
+                  onClick={() => onUpdateMarginConfig?.({ radius })}
+                  className={`rounded-md border py-1 text-[10px] font-mono font-bold cursor-pointer ${
+                    marginConfig.radius === radius
+                      ? "border-[#8B3DFF] bg-purple-500/10 text-[#8B3DFF]"
+                      : "border-slate-200 dark:border-zinc-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                  }`}
+                >
+                  {radius}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="flex items-center justify-between border-t border-slate-100 dark:border-zinc-800/80 pt-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer">
+            Show margin guides
+            <input
+              type="checkbox"
+              checked={showGuides}
+              onChange={onToggleGuides}
+              className="accent-[#8B3DFF] cursor-pointer"
+            />
           </label>
-        ))}
-      </div>
-
-      <div className="border-t border-slate-100 dark:border-zinc-800/80 pt-2">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] font-mono font-bold uppercase text-slate-400">Corner radius</span>
-          <span className="text-[10px] font-mono font-bold text-[#8B3DFF]">{marginConfig.radius}px</span>
         </div>
-        <input
-          type="range"
-          min={0}
-          max={48}
-          step={1}
-          value={marginConfig.radius}
-          onChange={(event) => onUpdateMarginConfig?.({ radius: Number(event.target.value) })}
-          className="w-full accent-[#8B3DFF] cursor-pointer"
-        />
-        <div className="grid grid-cols-5 gap-1 mt-1.5">
-          {[0, 8, 16, 24, 32].map((radius) => (
-            <button
-              key={radius}
-              type="button"
-              onClick={() => onUpdateMarginConfig?.({ radius })}
-              className={`rounded-md border py-1 text-[10px] font-mono font-bold cursor-pointer ${
-                marginConfig.radius === radius
-                  ? "border-[#8B3DFF] bg-purple-500/10 text-[#8B3DFF]"
-                  : "border-slate-200 dark:border-zinc-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              }`}
-            >
-              {radius}
-            </button>
-          ))}
-        </div>
-      </div>
+      ) : (
+        <div className="space-y-3">
+          {/* Section Padding Presets */}
+          <div className="space-y-1.5">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+              Content Area Padding Presets
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                { label: "None", top: 0, bottom: 0, left: 0, right: 0 },
+                { label: "Compact", top: 6, bottom: 4, left: 0, right: 0 },
+                { label: "Default", top: 12, bottom: 6, left: 0, right: 0 },
+                { label: "Spacious", top: 20, bottom: 12, left: 8, right: 8 },
+              ].map((p) => {
+                const isSelected = secPadTop === p.top && secPadBottom === p.bottom && secPadLeft === p.left && secPadRight === p.right;
+                return (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() =>
+                      onUpdateSectionStyle?.({
+                        paddingTop: p.top,
+                        paddingBottom: p.bottom,
+                        paddingLeft: p.left,
+                        paddingRight: p.right,
+                      })
+                    }
+                    className={`p-2 rounded-lg border text-left text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? "border-[#8B3DFF] bg-purple-500/10 text-[#8B3DFF]"
+                        : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300"
+                    }`}
+                  >
+                    <span className="block">{p.label}</span>
+                    <span className="block text-[10px] text-slate-400 font-normal">
+                      T:{p.top} B:{p.bottom} L/R:{p.left}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-      <label className="flex items-center justify-between border-t border-slate-100 dark:border-zinc-800/80 pt-2 text-xs font-semibold text-slate-700 dark:text-zinc-300 cursor-pointer">
-        Show margin guides
-        <input
-          type="checkbox"
-          checked={showGuides}
-          onChange={onToggleGuides}
-          className="accent-[#8B3DFF] cursor-pointer"
-        />
-      </label>
+          {/* Individual Axis Steppers */}
+          <div className="grid grid-cols-2 gap-2 border-t border-slate-100 dark:border-zinc-800/80 pt-2">
+            {[
+              { label: "Top Padding", key: "paddingTop" as const, val: secPadTop },
+              { label: "Bottom Padding", key: "paddingBottom" as const, val: secPadBottom },
+              { label: "Left Padding", key: "paddingLeft" as const, val: secPadLeft },
+              { label: "Right Padding", key: "paddingRight" as const, val: secPadRight },
+            ].map((ax) => (
+              <label key={ax.key} className="space-y-1">
+                <span className="block text-[10px] font-mono font-bold uppercase text-slate-400">{ax.label}</span>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={0}
+                    max={64}
+                    value={ax.val}
+                    onChange={(e) => onUpdateSectionStyle?.({ [ax.key]: Math.max(0, Math.min(64, Number(e.target.value) || 0)) })}
+                    className="w-full rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 px-2 py-1.5 pr-7 text-xs font-mono font-bold text-slate-800 dark:text-zinc-200 outline-none focus:border-[#8B3DFF]"
+                  />
+                  <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">px</span>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {/* Section Frame & Appearance */}
+          <div className="space-y-1.5 border-t border-slate-100 dark:border-zinc-800/80 pt-2">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
+              Section Background Tone
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {[
+                { label: "None", val: undefined },
+                { label: "Subtle Slate", val: "#f8fafc" },
+                { label: "Glass Frost", val: "rgba(255,255,255,0.75)" },
+                { label: "Purple Mist", val: "#faf5ff" },
+                { label: "Midnight Dark", val: "#0f172a" },
+              ].map((bg) => (
+                <button
+                  key={bg.label}
+                  type="button"
+                  onClick={() => onUpdateSectionStyle?.({ backgroundColor: bg.val })}
+                  className={`h-9 rounded-lg border text-[10px] font-bold p-1 transition-all cursor-pointer ${
+                    sectionStyle?.backgroundColor === bg.val
+                      ? "border-[#8B3DFF] ring-2 ring-purple-500/30"
+                      : "border-slate-200 dark:border-zinc-800 hover:border-slate-300"
+                  }`}
+                  style={{ backgroundColor: bg.val || "transparent" }}
+                >
+                  <span className={bg.val === "#0f172a" ? "text-white" : "text-slate-700 dark:text-zinc-200"}>
+                    {bg.label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <button
         type="button"
