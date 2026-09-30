@@ -47,35 +47,8 @@ export function estimateRowHeight(row: CanvasRow): number {
   let totalCalculatedHeight = 0;
 
   for (const cell of row.cells) {
-    let h = cell.customHeight || 90;
-    if (!cell.customHeight) {
-      switch (cell.blockType) {
-        case "chart":
-          h = cell.chart?.description ? 395 : 370;
-          break;
-        case "metric-card":
-          h = 135;
-          break;
-        case "badge-strip": {
-          const w = cell.customWidth ?? (cell.colSpan ? cell.colSpan * 25 : 100);
-          h = w <= 55 ? 220 : 140;
-          break;
-        }
-        case "insight":
-          h = 110;
-          break;
-        case "text": {
-          const lines = (cell.textBlock?.content || "").split("\n").length;
-          h = Math.max(90, 60 + lines * 20);
-          break;
-        }
-        case "divider":
-          h = 32;
-          break;
-        default:
-          h = 100;
-      }
-    }
+    // Use stored height if available, otherwise use accurate block-type default
+    let h = cell.customHeight || getDefaultBlockHeight(cell.blockType);
 
     // Account for stacked cells in this column
     if (cell.stackedCells && cell.stackedCells.length > 0) {

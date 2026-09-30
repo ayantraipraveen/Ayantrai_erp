@@ -604,7 +604,7 @@ export function SortableCell({
     width: widthStyle,
     maxWidth: widthStyle,
     height: typeof currentHeight === "number"
-      ? `${currentHeight + (hasStacked ? stackedExtraHeight : 0)}px`
+      ? `${Math.min(maxColumnHeight, currentHeight + (hasStacked ? stackedExtraHeight : 0))}px`
       : undefined,
     maxHeight: `${maxColumnHeight}px`,
     minHeight: effectiveMinHeight ? `${Math.min(maxColumnHeight, effectiveMinHeight)}px` : undefined,
