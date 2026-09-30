@@ -371,12 +371,6 @@ function InsightBlock({
 
   return (
     <div
-      onClick={(e) => {
-        if (!isPreview && !activeEditing) {
-          e.stopPropagation();
-          handleStartEditing();
-        }
-      }}
       className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 flex items-start gap-3.5 shadow-sm overflow-hidden"
       style={{
         borderRadius: dynamicBorderRadius,
@@ -413,7 +407,7 @@ function InsightBlock({
               e.stopPropagation();
               handleStartEditing();
             }}
-            title={!isPreview ? "Click to format observation (Word style)" : undefined}
+            title={!isPreview ? "Double-click to format observation (Word style)" : undefined}
             className={`text-xs text-slate-700 dark:text-zinc-300 leading-relaxed select-text ${!isPreview ? "hover:bg-purple-500/5 rounded p-0.5 cursor-text transition-colors" : ""}`}
             dangerouslySetInnerHTML={{ __html: insight.text }}
           />
@@ -533,12 +527,6 @@ function TextBlock({
 
   return (
     <div
-      onClick={(e) => {
-        if (!isPreview && !activeEditing) {
-          e.stopPropagation();
-          handleStartEditing();
-        }
-      }}
       onDoubleClick={(e) => {
         if (!isPreview && !activeEditing) {
           e.stopPropagation();
@@ -581,7 +569,12 @@ function TextBlock({
         />
       ) : (
         <div
-          title={!isPreview ? "Click to format text block (Word style)" : undefined}
+          title={!isPreview ? "Double-click to format text block (Word style)" : undefined}
+          onDoubleClick={(e) => {
+            if (isPreview) return;
+            e.stopPropagation();
+            handleStartEditing();
+          }}
           className="w-full h-full min-h-[60px] flex-1 select-text leading-relaxed text-sm text-slate-800 dark:text-zinc-200 overflow-y-auto"
           dangerouslySetInnerHTML={{
             __html: isContentEmpty

@@ -207,7 +207,7 @@ export function SortableCell({
 
   const effectiveZoom = zoom > 0 ? zoom : 1;
 
-  const showTopToolbar = !isPreview && !isDragging && (isSelected || isResizing || isHeightResizing);
+  const showTopToolbar = !isPreview && !isDragging && !isCellEditing && (isSelected || isResizing || isHeightResizing);
 
   const updateToolbarPortalPos = useCallback(() => {
     if (!cellDomRef.current) {

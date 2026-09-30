@@ -169,6 +169,115 @@ export function DynamicTextEditor({
   const [detectedPlacement, setDetectedPlacement] = useState<"top" | "bottom">("top");
   const [detectedAlign, setDetectedAlign] = useState<"left" | "right">("left");
 
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
+  const [toolbarCoords, setToolbarCoords] = useState<{ top: number; left: number } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const updateToolbarCoords = useCallback(() => {
+    const target = editorRef.current || containerRef.current;
+    if (!target) {
+      setToolbarCoords(null);
+      return;
+    }
+    const rect = target.getBoundingClientRect();
+    if (rect.bottom < 40 || rect.top > window.innerHeight) {
+      setToolbarCoords(null);
+      return;
+    }
+
+    const toolbarW = toolbarRef.current?.offsetWidth || 480;
+    const toolbarH = toolbarRef.current?.offsetHeight || 42;
+
+    const preferBottom = toolbarPosition === "bottom";
+    const preferTop = toolbarPosition === "top";
+
+    let targetTop: number;
+    if (preferBottom) {
+      targetTop = rect.bottom + 8;
+      if (targetTop + toolbarH > window.innerHeight - 16 && rect.top - toolbarH - 8 >= 72) {
+        targetTop = rect.top - toolbarH - 8;
+      }
+    } else if (preferTop) {
+      targetTop = rect.top - toolbarH - 8;
+      if (targetTop < 72) {
+        targetTop = rect.bottom + 8;
+      }
+    } else {
+      // Auto: prefer top if space >= 72, else bottom
+      if (rect.top - toolbarH - 8 >= 72) {
+        targetTop = rect.top - toolbarH - 8;
+      } else {
+        targetTop = rect.bottom + 8;
+      }
+    }
+
+    // Clamp vertically so toolbar never goes outside viewport
+    const maxAllowedTop = window.innerHeight - toolbarH - 16;
+    if (targetTop > maxAllowedTop) {
+      targetTop = Math.max(72, maxAllowedTop);
+    }
+    if (targetTop < 72) {
+      targetTop = 72;
+    }
+
+    // Horizontally: align based on toolbarAlign or available width
+    let targetLeft = rect.left;
+    if (toolbarAlign === "right") {
+      targetLeft = rect.right - toolbarW;
+    } else if (toolbarAlign === "center") {
+      targetLeft = rect.left + rect.width / 2 - toolbarW / 2;
+    }
+
+    if (targetLeft + toolbarW > window.innerWidth - 16) {
+      targetLeft = window.innerWidth - toolbarW - 16;
+    }
+    if (targetLeft < 16) {
+      targetLeft = 16;
+    }
+
+    setToolbarCoords({
+      top: Math.round(targetTop),
+      left: Math.round(targetLeft),
+    });
+  }, [toolbarPosition, toolbarAlign]);
+
+  useEffect(() => {
+    updateToolbarCoords();
+    const handleReposition = () => updateToolbarCoords();
+    window.addEventListener("scroll", handleReposition, true);
+    window.addEventListener("resize", handleReposition);
+    return () => {
+      window.removeEventListener("scroll", handleReposition, true);
+      window.removeEventListener("resize", handleReposition);
+    };
+  }, [updateToolbarCoords]);
+
+  useEffect(() => {
+    if (toolbarCoords && toolbarRef.current) {
+      const actualW = toolbarRef.current.offsetWidth;
+      const target = editorRef.current || containerRef.current;
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      let targetLeft = rect.left;
+      if (toolbarAlign === "right") {
+        targetLeft = rect.right - actualW;
+      } else if (toolbarAlign === "center") {
+        targetLeft = rect.left + rect.width / 2 - actualW / 2;
+      }
+      if (targetLeft + actualW > window.innerWidth - 16) {
+        targetLeft = window.innerWidth - actualW - 16;
+      }
+      if (targetLeft < 16) targetLeft = 16;
+      if (Math.round(targetLeft) !== toolbarCoords.left) {
+        setToolbarCoords((prev) => (prev ? { ...prev, left: Math.round(targetLeft) } : null));
+      }
+    }
+  }, [toolbarCoords?.top, toolbarAlign]);
+
   // Track coordinates for Font Family dropdown portal
   useEffect(() => {
     if (!fontMenuOpen || !fontBtnRef.current) return;
@@ -328,7 +437,7 @@ useEffect(() => {
 
     // portaled dropdowns and portaled toolbar
     const el = e.target as HTMLElement | null;
-    if (el?.closest(".portal-title-dropdown, .portal-title-toolbar, .portal-ribbon-popover, .portal-quick-add-panel")) return;
+    if (toolbarRef.current?.contains(el) || el?.closest(".portal-title-dropdown, .portal-title-toolbar, .portal-ribbon-popover, .portal-quick-add-panel")) return;
 
     const ed = editorRef.current;
     if (!ed) return;
@@ -543,21 +652,24 @@ useEffect(() => {
 
   return (
     <div ref={containerRef} className={`relative select-text w-full ${multiline ? "h-full flex flex-col min-h-0 flex-1" : ""}`}>
-      {/* ── Floating Word Formatting Toolbar (Absolute overlay: Zero Layout Shift) ── */}
-      <div
-        className={`absolute z-50 flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 text-xs select-none w-max max-w-[92vw] whitespace-nowrap shrink-0 transition-all duration-150 ${
-          effectivePlacement === "bottom" ? "top-full mt-2" : "bottom-full mb-2"
-        } ${
-          effectiveAlign === "right"
-            ? "right-0"
-            : effectiveAlign === "center"
-            ? "left-1/2 -translate-x-1/2"
-            : "left-0"
-        }`}
-        style={{
-          boxShadow: "0 14px 34px -4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06)",
-        }}
-      >
+      {/* ── Floating Word Formatting Toolbar (React Portal: Zero Layout Shift, Zero Clipping) ── */}
+      {mounted && typeof document !== "undefined" && toolbarCoords &&
+        createPortal(
+          <div
+            ref={toolbarRef}
+            onMouseDown={(e) => {
+              // Prevent losing focus / selection inside contentEditable
+              e.stopPropagation();
+            }}
+            className="portal-title-toolbar flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/98 dark:bg-zinc-900/98 text-xs select-none w-max max-w-[96vw] whitespace-nowrap shrink-0 transition-all duration-100 shadow-2xl backdrop-blur-md"
+            style={{
+              position: "fixed",
+              top: `${toolbarCoords.top}px`,
+              left: `${toolbarCoords.left}px`,
+              zIndex: 99999,
+              boxShadow: "0 14px 34px -4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06)",
+            }}
+          >
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Font Family Dropdown */}
           <div className="relative shrink-0">
@@ -851,7 +963,10 @@ useEffect(() => {
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
+    )
+  }
 
       {/* ── The Single Editable Text Input ── */}
       <div
