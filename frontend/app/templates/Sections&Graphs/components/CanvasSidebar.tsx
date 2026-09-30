@@ -946,7 +946,15 @@ export function CanvasSidebar({
               </span>
             </div>
             <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded font-bold">
-              25 Charts
+              {selectedCategory === "charts"
+                ? "25 Charts"
+                : selectedCategory === "text"
+                ? "11 Bullets"
+                : selectedCategory === "metrics"
+                ? "2 Metrics"
+                : selectedCategory === "watermarks"
+                ? "6 Stamps"
+                : "All Elements"}
             </span>
           </div>
 
@@ -963,21 +971,32 @@ export function CanvasSidebar({
           </div>
 
           {/* Categories */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
-            {(["all", "charts", "metrics", "text", "watermarks"] as const).map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`h-6.5 px-2 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer ${
-                  selectedCategory === cat
-                    ? "bg-[#9D61FF] text-white shadow-sm"
-                    : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 hover:text-slate-800 dark:hover:text-white"
-                }`}
-              >
-                {cat === "charts" ? "Charts" : cat === "watermarks" ? "Stamps" : cat === "text" ? "Bullets & Text" : cat}
-              </button>
-            ))}
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
+            {(["all", "charts", "metrics", "text", "watermarks"] as const).map((cat) => {
+              const label =
+                cat === "charts"
+                  ? "Charts"
+                  : cat === "watermarks"
+                  ? "Stamps"
+                  : cat === "text"
+                  ? "Bullets"
+                  : cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  title={cat === "text" ? "Key Bullets, Insights & Takeaways" : undefined}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`h-7 px-2.5 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
+                    selectedCategory === cat
+                      ? "bg-[#9D61FF] text-white shadow-sm"
+                      : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -1356,6 +1375,12 @@ export function CanvasSidebar({
               {selectedCategory === "all" && (
                 <div className="px-1 text-[10px] font-mono uppercase font-bold text-slate-400">
                   Standard Elements
+                </div>
+              )}
+              {selectedCategory === "text" && (
+                <div className="px-1 text-[10px] font-mono uppercase font-bold text-purple-600 dark:text-purple-400 flex items-center justify-between">
+                  <span>Key Bullets & Takeaways</span>
+                  <span className="text-[9px] font-normal text-slate-400">11 Styles</span>
                 </div>
               )}
               <div className="space-y-2.5">
