@@ -130,12 +130,12 @@ export default function ChartEditorPanel({
     editingChart?.dataPoints && editingChart.dataPoints.length > 0
       ? editingChart.dataPoints
       : [
-          { id: "p1", label: "Zone A", value: 92, secondaryValue: 85 },
-          { id: "p2", label: "Zone B", value: 88, secondaryValue: 80 },
-          { id: "p3", label: "Zone C", value: 96, secondaryValue: 90 },
-          { id: "p4", label: "Zone D", value: 78, secondaryValue: 75 },
-          { id: "p5", label: "Zone E", value: 84, secondaryValue: 82 },
-        ]
+        { id: "p1", label: "Zone A", value: 92, secondaryValue: 85 },
+        { id: "p2", label: "Zone B", value: 88, secondaryValue: 80 },
+        { id: "p3", label: "Zone C", value: 96, secondaryValue: 90 },
+        { id: "p4", label: "Zone D", value: 78, secondaryValue: 75 },
+        { id: "p5", label: "Zone E", value: 84, secondaryValue: 82 },
+      ]
   );
   const currentDataPoints = chartDataPoints !== undefined ? chartDataPoints : internalDataPoints;
   const changeDataPoints = setChartDataPoints || setInternalDataPoints;
@@ -422,11 +422,10 @@ export default function ChartEditorPanel({
             <button
               type="button"
               onClick={() => setActiveTab("type")}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer ${
-                activeTab === "type"
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer ${activeTab === "type"
                   ? "border-[#9D61FF] text-[#9D61FF] bg-purple-50/40 dark:bg-purple-950/20 shadow-2xs"
                   : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
-              }`}
+                }`}
             >
               <Activity className="w-3.5 h-3.5" />
               <span>Type & Style</span>
@@ -435,11 +434,10 @@ export default function ChartEditorPanel({
             <button
               type="button"
               onClick={() => setActiveTab("data")}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer ${
-                activeTab === "data"
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer ${activeTab === "data"
                   ? "border-[#9D61FF] text-[#9D61FF] bg-purple-50/40 dark:bg-purple-950/20 shadow-2xs"
                   : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
-              }`}
+                }`}
             >
               <TableProperties className="w-3.5 h-3.5" />
               <span>Data & Values</span>
@@ -451,11 +449,10 @@ export default function ChartEditorPanel({
             <button
               type="button"
               onClick={() => setActiveTab("axis")}
-              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer ${
-                activeTab === "axis"
+              className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer ${activeTab === "axis"
                   ? "border-[#9D61FF] text-[#9D61FF] bg-purple-50/40 dark:bg-purple-950/20 shadow-2xs"
                   : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
-              }`}
+                }`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>Axis & Display</span>
@@ -486,11 +483,10 @@ export default function ChartEditorPanel({
                           setChartType(t.id);
                           setActiveSeriesIndex(0);
                         }}
-                        className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
-                          isSelected
+                        className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${isSelected
                             ? "border-[#9D61FF] bg-[#9D61FF]/15 text-[#9D61FF] font-bold shadow-[0_0_14px_rgba(157,97,255,0.25)] scale-[1.02]"
                             : "border-slate-200/80 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 text-slate-600 dark:text-zinc-400 hover:border-[#9D61FF]/50 hover:text-[#9D61FF] hover:bg-purple-500/5"
-                        }`}
+                          }`}
                       >
                         <Icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                         <span className="text-[9px] sm:text-[10px] text-center leading-tight font-medium">
@@ -623,13 +619,12 @@ export default function ChartEditorPanel({
                                         parseFloat(e.target.value) || 0
                                       )
                                     }
-                                    className={`w-full py-1 text-center text-xs font-mono font-bold rounded-md border transition-all focus:outline-none focus:ring-1 focus:ring-[#9D61FF] ${
-                                      isHigh
+                                    className={`w-full py-1 text-center text-xs font-mono font-bold rounded-md border transition-all focus:outline-none focus:ring-1 focus:ring-[#9D61FF] ${isHigh
                                         ? "bg-purple-500/15 text-[#9D61FF] dark:text-[#a78bfa] border-purple-500/30"
                                         : isMed
-                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                                        : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                                    }`}
+                                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                          : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                      }`}
                                   />
                                 );
                               })}
@@ -730,17 +725,16 @@ export default function ChartEditorPanel({
                               key={st}
                               type="button"
                               onClick={() => handleUpdateGaugeStatus(st)}
-                              className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
-                                isSel
+                              className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${isSel
                                   ? st === "Optimal"
                                     ? "bg-emerald-500/15 text-emerald-600 border-emerald-500 shadow-2xs"
                                     : st === "Normal"
-                                    ? "bg-blue-500/15 text-blue-600 border-blue-500 shadow-2xs"
-                                    : st === "Warning"
-                                    ? "bg-amber-500/15 text-amber-600 border-amber-500 shadow-2xs"
-                                    : "bg-rose-500/15 text-rose-600 border-rose-500 shadow-2xs"
+                                      ? "bg-blue-500/15 text-blue-600 border-blue-500 shadow-2xs"
+                                      : st === "Warning"
+                                        ? "bg-amber-500/15 text-amber-600 border-amber-500 shadow-2xs"
+                                        : "bg-rose-500/15 text-rose-600 border-rose-500 shadow-2xs"
                                   : "border-slate-200 dark:border-zinc-800 text-slate-500 hover:border-slate-300"
-                              }`}
+                                }`}
                             >
                               {st}
                             </button>
@@ -880,11 +874,10 @@ export default function ChartEditorPanel({
                                 <button
                                   type="button"
                                   onClick={() => handleUpdateKpi(idx, "trendDirection", "up")}
-                                  className={`p-1 rounded-lg border cursor-pointer ${
-                                    kpi.trendDirection !== "down"
+                                  className={`p-1 rounded-lg border cursor-pointer ${kpi.trendDirection !== "down"
                                       ? "bg-emerald-500/15 border-emerald-500 text-emerald-600"
                                       : "border-slate-200 dark:border-zinc-800 text-slate-400"
-                                  }`}
+                                    }`}
                                   title="Trending Up"
                                 >
                                   <ArrowUp className="w-3.5 h-3.5" />
@@ -892,11 +885,10 @@ export default function ChartEditorPanel({
                                 <button
                                   type="button"
                                   onClick={() => handleUpdateKpi(idx, "trendDirection", "down")}
-                                  className={`p-1 rounded-lg border cursor-pointer ${
-                                    kpi.trendDirection === "down"
+                                  className={`p-1 rounded-lg border cursor-pointer ${kpi.trendDirection === "down"
                                       ? "bg-rose-500/15 border-rose-500 text-rose-600"
                                       : "border-slate-200 dark:border-zinc-800 text-slate-400"
-                                  }`}
+                                    }`}
                                   title="Trending Down"
                                 >
                                   <ArrowDown className="w-3.5 h-3.5" />
@@ -1220,75 +1212,180 @@ export default function ChartEditorPanel({
                   </div>
                 )}
 
-                {/* 7. TWO-SEGMENT COMPARISON EDITOR */}
-                {editorMode === "two-segment" && (
-                  <div className="space-y-3">
-                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 shadow-2xs">
+                {/* 7. TWO-SEGMENT COMPARISON EDITOR — Dynamic Segments */}
+                {editorMode === "two-segment" && (() => {
+                  const totalPct = currentDataPoints.reduce((s, p) => s + (p.value || 0), 0);
+                  const SEGMENT_COLORS = [
+                    "#10B981", "#9D61FF", "#3B82F6", "#F59E0B", "#F43F5E",
+                    "#06B6D4", "#8B5CF6", "#EC4899", "#14B8A6", "#EF4444",
+                  ];
+
+                  const handleAddSegment = () => {
+                    const nextIdx = currentDataPoints.length;
+                    const defaultVal = Math.max(0, Math.round((100 - totalPct) / 2));
+                    const newSeg: import("@/lib/redux/slices/reportModuleSlice").ChartDataPoint = {
+                      id: `seg_${Date.now()}`,
+                      label: `Segment ${nextIdx + 1}`,
+                      value: defaultVal,
+                      secondaryValue: 100,
+                      color: SEGMENT_COLORS[nextIdx % SEGMENT_COLORS.length],
+                    };
+                    changeDataPoints([...currentDataPoints, newSeg]);
+                  };
+
+                  const handleBalanceAll = () => {
+                    const n = currentDataPoints.length;
+                    if (n === 0) return;
+                    const each = Math.round(100 / n);
+                    const updated = currentDataPoints.map((p, i) => ({
+                      ...p,
+                      value: i === n - 1 ? 100 - each * (n - 1) : each,
+                    }));
+                    changeDataPoints(updated);
+                  };
+
+                  return (
+                    <div className="space-y-3">
+                      {/* Header */}
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700 dark:text-zinc-200">
-                          Dual Segment Breakdown
+                        <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                          <Layers className="w-3.5 h-3.5 text-[#9D61FF]" />
+                          Segments ({currentDataPoints.length})
                         </span>
-                        <button
-                          type="button"
-                          onClick={handleBalanceTwoSegment}
-                          className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 hover:bg-purple-500/20 cursor-pointer"
-                        >
-                          Balance to 100%
-                        </button>
-                      </div>
-
-                      {/* Segment 1 */}
-                      <div className="p-2.5 rounded-xl border border-purple-200/60 dark:border-purple-900/40 bg-purple-50/20 dark:bg-purple-950/10 space-y-1.5">
-                        <span className="text-[10px] font-bold text-[#9D61FF] uppercase">
-                          Segment 1 (Primary)
-                        </span>
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="text"
-                            value={currentDataPoints[0]?.label || "Operational"}
-                            onChange={(e) => handleUpdatePoint(0, "label", e.target.value)}
-                            placeholder="Segment 1 Label"
-                            className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-medium"
-                          />
-                          <input
-                            type="number"
-                            value={currentDataPoints[0]?.value ?? 85}
-                            onChange={(e) =>
-                              handleUpdatePoint(0, "value", parseFloat(e.target.value) || 0)
-                            }
-                            placeholder="Value"
-                            className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-mono font-bold text-[#9D61FF] text-center"
-                          />
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={handleBalanceAll}
+                            className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 hover:bg-purple-500/20 cursor-pointer"
+                          >
+                            Balance to 100%
+                          </button>
                         </div>
                       </div>
 
-                      {/* Segment 2 */}
-                      <div className="p-2.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50 space-y-1.5">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase">
-                          Segment 2 (Secondary)
-                        </span>
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="text"
-                            value={currentDataPoints[1]?.label || "Maintenance"}
-                            onChange={(e) => handleUpdatePoint(1, "label", e.target.value)}
-                            placeholder="Segment 2 Label"
-                            className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-medium"
-                          />
-                          <input
-                            type="number"
-                            value={currentDataPoints[1]?.value ?? 15}
-                            onChange={(e) =>
-                              handleUpdatePoint(1, "value", parseFloat(e.target.value) || 0)
-                            }
-                            placeholder="Value"
-                            className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-mono font-bold text-slate-500 text-center"
-                          />
+                      {/* Segment List */}
+                      <div className="space-y-2">
+                        {currentDataPoints.map((pt, idx) => {
+                          const pct = Math.round(pt.value || 0);
+                          const segColor = pt.color || SEGMENT_COLORS[idx % SEGMENT_COLORS.length];
+                          const isFirst = idx === 0;
+
+                          return (
+                            <div
+                              key={pt.id || idx}
+                              className="p-2.5 rounded-xl border bg-white dark:bg-zinc-900 shadow-2xs space-y-2 transition-colors hover:border-[#9D61FF]/30"
+                              style={{ borderColor: `${segColor}40` }}
+                            >
+                              {/* Row 1: colour · label · value · delete */}
+                              <div className="grid grid-cols-12 gap-2 items-center">
+                                {/* Colour swatch */}
+                                <div className="col-span-1 flex items-center justify-center">
+                                  <div
+                                    className="w-4 h-4 rounded-full border-2 border-white dark:border-zinc-800 shadow cursor-pointer ring-2 ring-offset-1"
+                                    style={{ backgroundColor: segColor, "--tw-ring-color": segColor } as React.CSSProperties} title="Segment colour"
+                                  />
+                                </div>
+                                {/* Label */}
+                                <div className="col-span-6">
+                                  <input
+                                    type="text"
+                                    value={pt.label}
+                                    onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                                    placeholder={`Segment ${idx + 1}`}
+                                    className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
+                                  />
+                                </div>
+                                {/* Value (0-100) */}
+                                <div className="col-span-3">
+                                  <input
+                                    type="number"
+                                    value={pct}
+                                    min={0}
+                                    max={100}
+                                    onChange={(e) =>
+                                      handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
+                                    }
+                                    className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-center focus:outline-none focus:border-[#9D61FF]"
+                                    style={{ color: segColor }}
+                                  />
+                                </div>
+                                {/* Delete */}
+                                <div className="col-span-2 flex items-center justify-end gap-1">
+                                  <span className="text-[9px] font-mono text-slate-400">{pct}%</span>
+                                  <button
+                                    type="button"
+                                    disabled={currentDataPoints.length <= 1}
+                                    onClick={() => handleDeletePoint(idx)}
+                                    className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Row 2: colour picker pills */}
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase mr-1">Colour:</span>
+                                {SEGMENT_COLORS.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => handleUpdatePoint(idx, "color", c)}
+                                    className="w-4 h-4 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer"
+                                    style={{
+                                      backgroundColor: c,
+                                      borderColor: pt.color === c ? "white" : "transparent",
+                                      boxShadow: pt.color === c ? `0 0 0 1.5px ${c}` : "none",
+                                    }}
+                                  />
+                                ))}
+                              </div>
+
+                              {/* Row 3: visual fill bar */}
+                              <div className="h-1.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                                <div
+                                  style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: segColor }}
+                                  className="h-full rounded-full transition-all"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Total bar */}
+                      <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total</span>
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-24 bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div
+                              style={{ width: `${Math.min(totalPct, 100)}%` }}
+                              className={`h-full rounded-full transition-all ${totalPct > 100 ? "bg-rose-500" : totalPct === 100 ? "bg-emerald-500" : "bg-[#9D61FF]"
+                                }`}
+                            />
+                          </div>
+                          <span
+                            className={`text-[11px] font-mono font-bold ${totalPct > 100 ? "text-rose-500" : totalPct === 100 ? "text-emerald-500" : "text-[#9D61FF]"
+                              }`}
+                          >
+                            {totalPct}%
+                          </span>
                         </div>
                       </div>
+
+                      {/* Add segment */}
+                      <button
+                        type="button"
+                        onClick={handleAddSegment}
+                        className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Segment</span>
+                      </button>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
+
 
                 {/* 8. DONUT & PIE EDITOR */}
                 {editorMode === "donut" && (
@@ -1754,11 +1851,10 @@ export default function ChartEditorPanel({
                                   handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
                                 }
                                 placeholder="e.g. +20 or -15"
-                                className={`w-full px-2 py-1 text-xs rounded-lg border bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-center focus:outline-none focus:border-[#9D61FF] ${
-                                  isNeg
+                                className={`w-full px-2 py-1 text-xs rounded-lg border bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-center focus:outline-none focus:border-[#9D61FF] ${isNeg
                                     ? "border-rose-400 text-rose-500"
                                     : "border-emerald-400 text-emerald-600"
-                                }`}
+                                  }`}
                               />
                             </div>
                             <div className="col-span-3">
@@ -1815,96 +1911,96 @@ export default function ChartEditorPanel({
                   "sparkline",
                   "waterfall",
                 ].includes(editorMode) && (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
-                      <span className="col-span-1 text-center">#</span>
-                      <span className="col-span-5">
-                        {editorMode === "radar"
-                          ? "Audit Dimension"
-                          : editorMode === "treemap"
-                          ? "Category / Hazard"
-                          : "Label / Category"}
-                      </span>
-                      <span className="col-span-3 text-center">
-                        {editorMode === "waterfall" ? "Net Change" : "Value"}
-                      </span>
-                      <span className="col-span-2 text-center">
-                        {editorMode === "radar" ? "Target" : "Benchmark"}
-                      </span>
-                      <span className="col-span-1 text-center"></span>
-                    </div>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                        <span className="col-span-1 text-center">#</span>
+                        <span className="col-span-5">
+                          {editorMode === "radar"
+                            ? "Audit Dimension"
+                            : editorMode === "treemap"
+                              ? "Category / Hazard"
+                              : "Label / Category"}
+                        </span>
+                        <span className="col-span-3 text-center">
+                          {editorMode === "waterfall" ? "Net Change" : "Value"}
+                        </span>
+                        <span className="col-span-2 text-center">
+                          {editorMode === "radar" ? "Target" : "Benchmark"}
+                        </span>
+                        <span className="col-span-1 text-center"></span>
+                      </div>
 
-                    <div className="space-y-1.5">
-                      {currentDataPoints.map((pt, idx) => (
-                        <div
-                          key={pt.id || idx}
-                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
-                        >
-                          <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
-                            {idx + 1}
-                          </span>
-                          <div className="col-span-5">
-                            <input
-                              type="text"
-                              value={pt.label}
-                              onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
-                              placeholder="Label"
-                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
-                            />
+                      <div className="space-y-1.5">
+                        {currentDataPoints.map((pt, idx) => (
+                          <div
+                            key={pt.id || idx}
+                            className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                          >
+                            <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
+                              {idx + 1}
+                            </span>
+                            <div className="col-span-5">
+                              <input
+                                type="text"
+                                value={pt.label}
+                                onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                                placeholder="Label"
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <input
+                                type="number"
+                                value={pt.value}
+                                onChange={(e) =>
+                                  handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
+                                }
+                                placeholder="0"
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-[#9D61FF] dark:text-[#a78bfa] text-center focus:outline-none focus:border-[#9D61FF]"
+                              />
+                            </div>
+                            <div className="col-span-2">
+                              <input
+                                type="number"
+                                value={pt.secondaryValue ?? ""}
+                                onChange={(e) =>
+                                  handleUpdatePoint(
+                                    idx,
+                                    "secondaryValue",
+                                    e.target.value === ""
+                                      ? undefined
+                                      : parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                placeholder="Opt."
+                                className="w-full px-1.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-slate-500 text-center focus:outline-none focus:border-[#9D61FF]"
+                              />
+                            </div>
+                            <div className="col-span-1 flex items-center justify-center">
+                              <button
+                                type="button"
+                                disabled={currentDataPoints.length <= 1}
+                                onClick={() => handleDeletePoint(idx)}
+                                className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors disabled:opacity-30 cursor-pointer"
+                                title="Delete row"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
-                          <div className="col-span-3">
-                            <input
-                              type="number"
-                              value={pt.value}
-                              onChange={(e) =>
-                                handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
-                              }
-                              placeholder="0"
-                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-[#9D61FF] dark:text-[#a78bfa] text-center focus:outline-none focus:border-[#9D61FF]"
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <input
-                              type="number"
-                              value={pt.secondaryValue ?? ""}
-                              onChange={(e) =>
-                                handleUpdatePoint(
-                                  idx,
-                                  "secondaryValue",
-                                  e.target.value === ""
-                                    ? undefined
-                                    : parseFloat(e.target.value) || 0
-                                )
-                              }
-                              placeholder="Opt."
-                              className="w-full px-1.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-slate-500 text-center focus:outline-none focus:border-[#9D61FF]"
-                            />
-                          </div>
-                          <div className="col-span-1 flex items-center justify-center">
-                            <button
-                              type="button"
-                              disabled={currentDataPoints.length <= 1}
-                              onClick={() => handleDeletePoint(idx)}
-                              className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors disabled:opacity-30 cursor-pointer"
-                              title="Delete row"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
 
-                    <button
-                      type="button"
-                      onClick={handleAddPoint}
-                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Data Point</span>
-                    </button>
-                  </div>
-                )}
+                      <button
+                        type="button"
+                        onClick={handleAddPoint}
+                        className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Data Point</span>
+                      </button>
+                    </div>
+                  )}
               </div>
 
               {/* Data Summary Stats */}
@@ -2020,11 +2116,10 @@ export default function ChartEditorPanel({
                         onClick={() =>
                           changeYAxis({ ...currentYAxis, unit: u === "None" ? "" : u })
                         }
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-colors cursor-pointer ${
-                          (currentYAxis.unit || "") === (u === "None" ? "" : u)
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-colors cursor-pointer ${(currentYAxis.unit || "") === (u === "None" ? "" : u)
                             ? "border-[#9D61FF] bg-[#9D61FF]/10 text-[#9D61FF]"
                             : "border-slate-200 dark:border-zinc-800 text-slate-500 hover:border-slate-300 dark:hover:border-zinc-700"
-                        }`}
+                          }`}
                       >
                         {u}
                       </button>
@@ -2158,11 +2253,10 @@ export default function ChartEditorPanel({
                         key={s.id}
                         type="button"
                         onClick={() => setActiveSeriesIndex(idx)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer border ${
-                          isSelected
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer border ${isSelected
                             ? "bg-purple-50 dark:bg-purple-950/40 border-[#9D61FF] text-[#9D61FF] font-bold shadow-2xs"
                             : "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-medium hover:border-slate-300 dark:hover:border-zinc-700"
-                        }`}
+                          }`}
                       >
                         <span
                           className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-black/15 shadow-2xs"
@@ -2223,11 +2317,10 @@ export default function ChartEditorPanel({
                           key={num}
                           type="button"
                           onClick={() => handleUpdateRows(num)}
-                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                            currentRows === num
+                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${currentRows === num
                               ? "bg-[#9D61FF] text-white shadow-2xs scale-105"
                               : "bg-white dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-purple-300"
-                          }`}
+                            }`}
                         >
                           {num}
                         </button>
@@ -2302,11 +2395,10 @@ export default function ChartEditorPanel({
                           key={num}
                           type="button"
                           onClick={() => handleUpdateCols(num)}
-                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                            currentCols === num
+                          className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${currentCols === num
                               ? "bg-[#9D61FF] text-white shadow-2xs scale-105"
                               : "bg-white dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-purple-300"
-                          }`}
+                            }`}
                         >
                           {num}
                         </button>
