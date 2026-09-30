@@ -9,6 +9,7 @@ import {
   LibrarySection,
   LibraryMetricCard,
   LibraryKeyInsightItem,
+  LibraryChartCard,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 import { SidebarAddBlockEvent } from "../components/CanvasSidebar";
@@ -41,6 +42,7 @@ export interface SortableCellProps {
   onWidthChange?: (cellId: string, rowId: string, customWidth: number) => void;
   onHeightChange?: (cellId: string, rowId: string, customHeight?: number) => void;
   onUpdateMetricCard?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
+  onUpdateChart?: (rowId: string, cellId: string, chart: LibraryChartCard) => void;
   onUpdateInsight?: (rowId: string, cellId: string, textOrInsight: string | LibraryKeyInsightItem) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
   onUpdateBadgeStrip?: (rowId: string, cellId: string, strip: CanvasBadgeStrip) => void;
@@ -77,6 +79,7 @@ export interface SortableRowProps {
   onWidthChange?: (cellId: string, rowId: string, customWidth: number) => void;
   onHeightChange?: (cellId: string, rowId: string, customHeight?: number) => void;
   onUpdateMetricCard?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
+  onUpdateChart?: (rowId: string, cellId: string, chart: LibraryChartCard) => void;
   onUpdateInsight?: (rowId: string, cellId: string, textOrInsight: string | LibraryKeyInsightItem) => void;
   onUpdateTextBlock?: (rowId: string, cellId: string, content: string) => void;
   onUpdateBadgeStrip?: (rowId: string, cellId: string, strip: CanvasBadgeStrip) => void;
@@ -103,6 +106,7 @@ export interface CanvasStudioProps {
   onSelectCell?: (cellId: string | null, rowId: string | null) => void;
   onEditCell: (cell: CanvasCell, rowId: string) => void;
   onUpdateMetricCardInCell?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
+  onUpdateChartInCell?: (rowId: string, cellId: string, chart: LibraryChartCard) => void;
   onUpdateInsightInCell?: (rowId: string, cellId: string, textOrInsight: string | LibraryKeyInsightItem) => void;
   onUpdateTextBlockInCell?: (rowId: string, cellId: string, content: string) => void;
   onUpdateBadgeStripInCell?: (rowId: string, cellId: string, strip: CanvasBadgeStrip) => void;

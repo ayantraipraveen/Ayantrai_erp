@@ -21,6 +21,7 @@ import {
   Copy,
   Trash2,
   Sliders,
+  SlidersHorizontal,
   Eye,
   Grid,
   Square,
@@ -988,11 +989,11 @@ export function CanvasContextRibbon({
                 <button
                   type="button"
                   onClick={onOpenChartEditor}
-                  className="h-7 px-2.5 rounded-lg border border-purple-300 dark:border-purple-800/80 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                  title="Open Deep Telemetry Configurator"
+                  className="h-7 px-2.5 rounded-lg border border-purple-300 dark:border-purple-800/80 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  title="Configure Chart Type, Data Points, Axis & Units"
                 >
-                  <Sliders className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Config</span>
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Edit Data & Axis</span>
                 </button>
               )}
             </>

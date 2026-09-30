@@ -81,6 +81,7 @@ export function CanvasStudio({
   onSelectCell,
   onEditCell,
   onUpdateMetricCardInCell,
+  onUpdateChartInCell,
   onUpdateInsightInCell,
   onUpdateTextBlockInCell,
   onUpdateBadgeStripInCell,
@@ -1309,6 +1310,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                                     onWidthChange={handleWidthChange}
                                     onHeightChange={handleHeightChange}
                                     onUpdateMetricCard={onUpdateMetricCardInCell}
+                                    onUpdateChart={onUpdateChartInCell}
                                     onUpdateInsight={onUpdateInsightInCell}
                                     onUpdateTextBlock={onUpdateTextBlockInCell}
                                     onUpdateBadgeStrip={onUpdateBadgeStripInCell}
@@ -1358,6 +1360,9 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                                 />
                               );
                             })()} */}
+
+
+                            
                             {page.isLastPage && (
                               <button
                                 type="button"

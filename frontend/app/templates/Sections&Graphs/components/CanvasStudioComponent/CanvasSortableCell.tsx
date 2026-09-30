@@ -38,6 +38,7 @@ export function SortableCell({
   onWidthChange,
   onHeightChange,
   onUpdateMetricCard,
+  onUpdateChart,
   onUpdateInsight,
   onUpdateTextBlock,
   onUpdateBadgeStrip,
@@ -776,6 +777,10 @@ export function SortableCell({
             onUpdateMetricCard={(card) => {
               if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, cell.id, card);
             }}
+            onUpdateChart={(chart) => {
+              if (typeof onUpdateChart === "function") onUpdateChart(rowId, cell.id, chart);
+            }}
+            onOpenChartEditor={() => onEdit(cell, rowId)}
             onUpdateInsight={(textOrInsight) => {
               if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, cell.id, textOrInsight);
             }}
@@ -969,6 +974,10 @@ export function SortableCell({
                       onUpdateMetricCard={(card) => {
                         if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, sc.id, card);
                       }}
+                      onUpdateChart={(chart) => {
+                        if (typeof onUpdateChart === "function") onUpdateChart(rowId, sc.id, chart);
+                      }}
+                      onOpenChartEditor={() => onEdit(sc, rowId)}
                       onUpdateInsight={(textOrInsight) => {
                         if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, sc.id, textOrInsight);
                       }}

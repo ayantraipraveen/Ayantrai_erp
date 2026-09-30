@@ -53,6 +53,9 @@ import {
   showGlobalToast,
   setChartEditorFullscreen,
   setSectionCanvasRows,
+  ChartDataPoint,
+  ChartAxisConfig,
+  ChartCustomizationOptions,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasSidebar, SidebarAddBlockEvent } from "./CanvasSidebar";
 import {
@@ -335,6 +338,14 @@ export default function SectionCanvasEditor({
   const [chartColors, setChartColors] = useState<string[]>([]);
   const [gridRows, setGridRows] = useState(4);
   const [gridCols, setGridCols] = useState(7);
+  const [chartDataPoints, setChartDataPoints] = useState<ChartDataPoint[]>([]);
+  const [chartXAxis, setChartXAxis] = useState<ChartAxisConfig>({});
+  const [chartYAxis, setChartYAxis] = useState<ChartAxisConfig>({});
+  const [chartOptions, setChartOptions] = useState<ChartCustomizationOptions>({
+    showValues: true,
+    showGridLines: true,
+    showLegend: true,
+  });
 
   const handleCloseChartEditor = () => {
     setChartModalOpen(false);
@@ -360,6 +371,10 @@ export default function SectionCanvasEditor({
           colors: finalColors,
           gridRows: chartType === "heatmap" || chartType === "table" ? gridRows : undefined,
           gridCols: chartType === "heatmap" || chartType === "table" ? gridCols : undefined,
+          dataPoints: chartDataPoints && chartDataPoints.length > 0 ? chartDataPoints : undefined,
+          xAxis: Object.keys(chartXAxis).length > 0 ? chartXAxis : undefined,
+          yAxis: Object.keys(chartYAxis).length > 0 ? chartYAxis : undefined,
+          options: chartOptions,
         },
       })
     );
@@ -652,6 +667,10 @@ export default function SectionCanvasEditor({
             setChartColors(cell.chart.colors || []);
             setGridRows(cell.chart.gridRows || 4);
             setGridCols(cell.chart.gridCols || 7);
+            setChartDataPoints(cell.chart.dataPoints || []);
+            setChartXAxis(cell.chart.xAxis || {});
+            setChartYAxis(cell.chart.yAxis || {});
+            setChartOptions(cell.chart.options || { showValues: true, showGridLines: true, showLegend: true });
             setChartModalOpen(true);
             dispatch(setChartEditorFullscreen(true));
           }
@@ -1023,6 +1042,14 @@ export default function SectionCanvasEditor({
         setGridRows={setGridRows}
         gridCols={gridCols}
         setGridCols={setGridCols}
+        chartDataPoints={chartDataPoints}
+        setChartDataPoints={setChartDataPoints}
+        chartXAxis={chartXAxis}
+        setChartXAxis={setChartXAxis}
+        chartYAxis={chartYAxis}
+        setChartYAxis={setChartYAxis}
+        chartOptions={chartOptions}
+        setChartOptions={setChartOptions}
         onSave={handleSaveChart}
         onClose={handleCloseChartEditor}
       />
@@ -1239,6 +1266,9 @@ export default function SectionCanvasEditor({
           }}
           onEditCell={handleEditCell}
           onUpdateMetricCardInCell={handleUpdateMetricCardInCell}
+          onUpdateChartInCell={(rowId, cellId, chart) =>
+            dispatch(updateChartInCell({ sectionId, rowId, cellId, chart }))
+          }
           onUpdateInsightInCell={handleUpdateInsightInCell}
           onUpdateTextBlockInCell={handleUpdateTextBlockInCell}
           onUpdateBadgeStripInCell={handleUpdateBadgeStripInCell}

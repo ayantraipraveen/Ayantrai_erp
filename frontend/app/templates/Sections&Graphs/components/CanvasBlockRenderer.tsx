@@ -31,6 +31,7 @@ import {
   HardHat,
   CheckSquare,
   ListChecks,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
   CanvasCell,
@@ -40,6 +41,7 @@ import {
   LibraryKeyInsightItem,
   KeyInsightBulletItem,
   KeyInsightVariant,
+  LibraryChartCard,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { DynamicTextEditor, renderDynamicText } from "./DynamicTitleEditor";
 import { PALETTE_RAMPS } from "./constants/chartTypes";
@@ -104,6 +106,8 @@ interface BlockRendererProps {
   isForceEditing?: boolean;
   onEditingChange?: (isEditing: boolean) => void;
   onUpdateMetricCard?: (card: LibraryMetricCard) => void;
+  onUpdateChart?: (chart: LibraryChartCard) => void;
+  onOpenChartEditor?: () => void;
   onUpdateInsight?: (textOrInsight: string | LibraryKeyInsightItem) => void;
   onUpdateTextBlock?: (content: string) => void;
   onUpdateBadgeStrip?: (strip: CanvasBadgeStrip) => void;
@@ -261,27 +265,94 @@ function MetricCardBlock({
   );
 }
 
-function ChartBlock({ cell }: { cell: CanvasCell }) {
+function ChartBlock({
+  cell,
+  isPreview,
+  onOpenChartEditor,
+  onUpdateChart,
+}: {
+  cell: CanvasCell;
+  isPreview?: boolean;
+  onOpenChartEditor?: () => void;
+  onUpdateChart?: (chart: LibraryChartCard) => void;
+}) {
   const chart = cell.chart;
   if (!chart) return null;
   const customHeight = cell.customHeight;
   const chartAreaHeight = customHeight ? Math.max(90, customHeight - (chart.description ? 130 : 95)) : undefined;
 
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [localTitle, setLocalTitle] = useState(chart.title);
+
+  useEffect(() => {
+    setLocalTitle(chart.title);
+  }, [chart.title]);
+
+  const handleTitleCommit = () => {
+    setIsEditingTitle(false);
+    if (localTitle.trim() && localTitle !== chart.title && onUpdateChart) {
+      onUpdateChart({ ...chart, title: localTitle.trim() });
+    }
+  };
+
   return (
     <div
       style={customHeight ? { height: `${customHeight}px`, maxHeight: "100%" } : { maxHeight: "100%" }}
-      className={`w-full max-h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden ${
+      className={`relative group/chart w-full max-h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden ${
         customHeight ? "space-y-1.5" : "space-y-3"
       }`}
     >
       <div className="flex items-start justify-between gap-3 flex-shrink-0">
-        <div className="min-w-0">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate">{chart.title}</h3>
+        <div className="min-w-0 flex-1">
+          {isEditingTitle && !isPreview ? (
+            <input
+              type="text"
+              autoFocus
+              value={localTitle}
+              onChange={(e) => setLocalTitle(e.target.value)}
+              onBlur={handleTitleCommit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleTitleCommit();
+                if (e.key === "Escape") {
+                  setLocalTitle(chart.title);
+                  setIsEditingTitle(false);
+                }
+              }}
+              className="text-sm font-bold text-slate-900 dark:text-white bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full"
+            />
+          ) : (
+            <h3
+              onDoubleClick={() => !isPreview && setIsEditingTitle(true)}
+              title={!isPreview ? "Double click to rename chart" : undefined}
+              className={`text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate ${
+                !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
+              }`}
+            >
+              {chart.title}
+            </h3>
+          )}
           <div className="text-[10px] font-mono text-slate-400 mt-0.5 truncate">{chart.dataSourceField}</div>
         </div>
-        <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-md bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 font-bold flex-shrink-0">
-          {chart.chartType.toUpperCase()}
-        </span>
+
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {!isPreview && onOpenChartEditor && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenChartEditor();
+              }}
+              className="opacity-0 group-hover/chart:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#9D61FF] text-white hover:bg-purple-600 shadow-2xs cursor-pointer"
+              title="Configure Chart, Data Points & Axis"
+            >
+              <SlidersHorizontal className="w-3 h-3" />
+              <span>Edit Data</span>
+            </button>
+          )}
+          <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-md bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 font-bold flex-shrink-0">
+            {chart.chartType.toUpperCase()}
+          </span>
+        </div>
       </div>
       <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden py-1">
         <ChartRenderer
@@ -1986,6 +2057,8 @@ export function CanvasBlockRenderer({
   isForceEditing,
   onEditingChange,
   onUpdateMetricCard,
+  onUpdateChart,
+  onOpenChartEditor,
   onUpdateInsight,
   onUpdateTextBlock,
   onUpdateBadgeStrip,
@@ -2007,7 +2080,14 @@ export function CanvasBlockRenderer({
           />
         );
       case "chart":
-        return <ChartBlock cell={cell} />;
+        return (
+          <ChartBlock
+            cell={cell}
+            isPreview={isPreview}
+            onOpenChartEditor={onOpenChartEditor}
+            onUpdateChart={onUpdateChart}
+          />
+        );
       case "insight":
         return (
           <InsightBlock
