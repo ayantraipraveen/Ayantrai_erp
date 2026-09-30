@@ -1321,8 +1321,12 @@ export function CanvasBlockRenderer({
   const cardStyles: React.CSSProperties = {
     maxHeight: "100%",
   };
-  if (cell.customHeight) {
+  if (typeof cell.customHeight === "number") {
     cardStyles.height = `${cell.customHeight}px`;
+    if (cell.customHeight < 32) {
+      cardStyles.paddingTop = Math.max(0, Math.floor(cell.customHeight / 2));
+      cardStyles.paddingBottom = Math.max(0, Math.floor(cell.customHeight / 2));
+    }
   }
   if (backgroundColor) cardStyles.backgroundColor = backgroundColor;
   if (styleProps.borderColor) cardStyles.borderColor = styleProps.borderColor;

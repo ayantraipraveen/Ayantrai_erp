@@ -287,9 +287,45 @@ export interface LibraryChartCard {
   gridCols?: number;
 }
 
+export type KeyInsightVariant =
+  | "single"
+  | "columns-numbered"
+  | "columns-titled"
+  | "vertical-takeaways"
+  | "narrative-summary"
+  | "split-quote"
+  | "quote-card"
+  | "risk-factors"
+  | "bullet-observations"
+  | "priority-actions"
+  | "vision-banner";
+
+export interface KeyInsightBulletItem {
+  id: string;
+  num?: number;
+  color?: string; // "green" | "blue" | "purple" | "orange" | "red" | "amber" | "emerald" | "sky"
+  title?: string;
+  text: string;
+  subItems?: string[];
+}
+
 export interface LibraryKeyInsightItem {
   id: string;
   text: string;
+  variant?: KeyInsightVariant;
+  title?: string;
+  badgeNumber?: number;
+  items?: KeyInsightBulletItem[];
+  quote?: {
+    text: string;
+    author?: string;
+  };
+  banner?: {
+    headline: string;
+    subtitle: string;
+    pills?: string[];
+    tagline?: string;
+  };
 }
 
 // ── Canvas Row / Cell Types (Canva-like Section Editor) ──────────────────────
