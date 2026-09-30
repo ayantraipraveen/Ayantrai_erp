@@ -275,6 +275,39 @@ export interface LibraryMetricCard {
   icon?: string;
 }
 
+export interface ChartDataPoint {
+  id?: string;
+  label: string;
+  value: number;
+  secondaryValue?: number;
+  color?: string;
+}
+
+export interface ChartAxisConfig {
+  title?: string;
+  labels?: string[];
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+  showGridLines?: boolean;
+}
+
+export interface ChartSeriesConfig {
+  id: string;
+  name: string;
+  color?: string;
+  data: number[];
+}
+
+export interface ChartCustomizationOptions {
+  showValues?: boolean;
+  showLegend?: boolean;
+  legendPosition?: "top" | "bottom" | "right";
+  smoothCurve?: boolean;
+  showGridLines?: boolean;
+}
+
 export interface LibraryChartCard {
   id: string;
   title: string;
@@ -285,6 +318,12 @@ export interface LibraryChartCard {
   colors?: string[];
   gridRows?: number;
   gridCols?: number;
+  // Dynamic Chart Values & Axis Configuration
+  dataPoints?: ChartDataPoint[];
+  xAxis?: ChartAxisConfig;
+  yAxis?: ChartAxisConfig;
+  series?: ChartSeriesConfig[];
+  options?: ChartCustomizationOptions;
 }
 
 export type KeyInsightVariant =

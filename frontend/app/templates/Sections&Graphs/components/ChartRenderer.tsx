@@ -34,9 +34,119 @@ export default function ChartRenderer({
   const effectiveRows = gridRows ?? chart.gridRows;
   const effectiveCols = gridCols ?? chart.gridCols;
 
+  interface ResolvedChartData {
+    categories: string[];
+    values: number[];
+    secondaryValues?: number[];
+    pointColors?: string[];
+    yMin: number;
+    yMax: number;
+    unit: string;
+    xAxisTitle?: string;
+    yAxisTitle?: string;
+    showValues: boolean;
+    showGridLines: boolean;
+    showLegend: boolean;
+    hasCustomData: boolean;
+  }
+
+  const resolveChartData = (
+    palette: string[],
+    fallbackCategories: string[],
+    fallbackValues: number[],
+    fallbackYMax = 100,
+    fallbackUnit = "%"
+  ): ResolvedChartData => {
+    const hasPoints = Boolean(chart.dataPoints && chart.dataPoints.length > 0);
+    const hasSeries = Boolean(chart.series && chart.series.length > 0);
+    const hasCustomData = hasPoints || hasSeries;
+
+    let categories = fallbackCategories;
+    let values = fallbackValues;
+    let secondaryValues: number[] | undefined = undefined;
+    let pointColors: string[] | undefined = undefined;
+
+    if (hasPoints && chart.dataPoints) {
+      categories = chart.dataPoints.map((p, i) => p.label || `Item ${i + 1}`);
+      values = chart.dataPoints.map((p) => p.value ?? 0);
+      if (chart.dataPoints.some((p) => p.secondaryValue !== undefined)) {
+        secondaryValues = chart.dataPoints.map((p) => p.secondaryValue ?? 0);
+      }
+      if (chart.dataPoints.some((p) => p.color)) {
+        pointColors = chart.dataPoints.map((p, i) => p.color || palette[i % palette.length]);
+      }
+    } else if (hasSeries && chart.series) {
+      if (chart.xAxis?.labels && chart.xAxis.labels.length > 0) {
+        categories = chart.xAxis.labels;
+      }
+      values = chart.series[0]?.data || fallbackValues;
+      if (chart.series.length > 1) {
+        secondaryValues = chart.series[1]?.data;
+      }
+    } else if (chart.xAxis?.labels && chart.xAxis.labels.length > 0) {
+      categories = chart.xAxis.labels;
+    }
+
+    const rawMax = Math.max(
+      ...values,
+      ...(secondaryValues || []),
+      hasCustomData ? 1 : fallbackYMax
+    );
+    const rawMin = Math.min(
+      ...values,
+      ...(secondaryValues || [0]),
+      0
+    );
+
+    const yMin = chart.yAxis?.min !== undefined ? chart.yAxis.min : rawMin < 0 ? Math.floor(rawMin * 1.1) : 0;
+    const yMax = chart.yAxis?.max !== undefined
+      ? chart.yAxis.max
+      : hasCustomData
+      ? Math.max(10, Math.ceil(rawMax * 1.15))
+      : fallbackYMax;
+
+    const unit = chart.yAxis?.unit !== undefined ? chart.yAxis.unit : fallbackUnit;
+    const showValues = chart.options?.showValues ?? true;
+    const showGridLines = chart.options?.showGridLines ?? chart.yAxis?.showGridLines ?? true;
+    const showLegend = chart.options?.showLegend ?? Boolean(secondaryValues !== undefined || (chart.series && chart.series.length > 1));
+
+    return {
+      categories,
+      values,
+      secondaryValues,
+      pointColors,
+      yMin,
+      yMax,
+      unit,
+      xAxisTitle: chart.xAxis?.title,
+      yAxisTitle: chart.yAxis?.title,
+      showValues,
+      showGridLines,
+      showLegend,
+      hasCustomData,
+    };
+  };
+
   const renderChart = () => {
     switch (chart.chartType) {
-    case "line":
+    case "line": {
+      const d = resolveChartData(chartColors, ["08:00", "12:00", "16:00", "20:00", "24:00"], [88, 94, 96, 99, 100], 100, "%");
+      const n = d.categories.length;
+      const yRange = (d.yMax - d.yMin) || 1;
+      const points = d.values.map((v, i) => {
+        const cx = 45 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+        const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
+        const cy = 108 - norm * 96;
+        return { cx, cy, val: v, label: d.categories[i] };
+      });
+      const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
+      const areaD = `${pathD} L ${points[points.length - 1].cx.toFixed(1)} 108 L ${points[0].cx.toFixed(1)} 108 Z`;
+
+      const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
+        y: 108 - r * 96,
+        label: `${Math.round(d.yMin + r * yRange)}${d.unit}`,
+      }));
+
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
@@ -51,110 +161,123 @@ export default function ChartRenderer({
             {/* X-axis */}
             <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y grid + labels */}
-            {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
+            {yTicks.map((g, i) => (
               <g key={i}>
-                <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                {d.showGridLines && (
+                  <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                )}
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.label}</text>
               </g>
             ))}
             {/* X ticks */}
-            {[{ x: 90, l: "08:00" }, { x: 170, l: "12:00" }, { x: 250, l: "16:00" }, { x: 330, l: "20:00" }, { x: 405, l: "24:00" }].map((t, i) => (
+            {points.map((p, i) => (
               <g key={i}>
-                <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
+                <line x1={p.cx} y1="108" x2={p.cx} y2="112" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={p.cx} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{p.label}</text>
               </g>
             ))}
             {/* Area fill */}
-            <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14 L 405 108 L 45 108 Z" fill={`url(#grad-${chart.id})`} />
+            <path d={areaD} fill={`url(#grad-${chart.id})`} />
             {/* Line */}
-            <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14" fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
+            <path d={pathD} fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
             {/* Points */}
-            {[
-              { cx: 45, cy: 95, val: "88" },
-              { cx: 130, cy: 50, val: "94" },
-              { cx: 220, cy: 46, val: "96" },
-              { cx: 310, cy: 24, val: "99" },
-              { cx: 405, cy: 14, val: "100" },
-            ].map((pt, i) => (
+            {points.map((pt, i) => (
               <g key={i}>
                 <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
-                <text x={pt.cx} y={pt.cy - 6} fontSize="7.5" fontWeight="bold" textAnchor="middle" fill={c0}>{pt.val}</text>
+                {d.showValues && (
+                  <text x={pt.cx} y={pt.cy - 6} fontSize="7.5" fontWeight="bold" textAnchor="middle" fill={c0}>
+                    {pt.val}{d.unit}
+                  </text>
+                )}
               </g>
             ))}
+            {d.xAxisTitle && (
+              <text x="225" y="134" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45" fontStyle="italic">{d.xAxisTitle}</text>
+            )}
           </svg>
         </div>
       );
+    }
 
     case "donut":
-    case "pie":
+    case "pie": {
       const isPie = chart.chartType === "pie";
+      const d = resolveChartData(
+        [c0, c1, c2, c3, c4],
+        ["Smart Helmets", "Vest Hubs", "Grounding Boots"],
+        [55, 30, 15],
+        100,
+        "%"
+      );
+      const sum = d.values.reduce((acc, curr) => acc + curr, 0) || 1;
+      const circumference = isPie ? 157 : 238; // 2 * PI * r
+      const radius = isPie ? 25 : 38;
+      const strokeW = isPie ? 50 : 15;
+
+      let accumulatedOffset = 0;
+      const segments = d.values.map((val, i) => {
+        const pct = val / sum;
+        const length = pct * circumference;
+        const offset = -accumulatedOffset;
+        accumulatedOffset += length;
+        const segmentColor = d.pointColors?.[i] || [c0, c1, c2, c3, c4][i % 5];
+        return {
+          val,
+          pct: Math.round(pct * 100),
+          label: d.categories[i] || `Segment ${i + 1}`,
+          color: segmentColor,
+          dasharray: `${length.toFixed(1)} ${(circumference - length).toFixed(1)}`,
+          dashoffset: offset.toFixed(1),
+        };
+      });
+
+      const primaryVal = d.values[0] ?? 0;
+      const primaryPct = Math.round((primaryVal / sum) * 100);
+
       return (
         <div className="w-full h-full min-h-[260px] max-h-[520px] flex items-center justify-center gap-8 sm:gap-14 py-2">
           <div className="relative w-44 h-44 sm:w-56 sm:h-56 flex items-center justify-center flex-shrink-0">
             <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 overflow-visible">
-              {/* Segment 1 */}
-              <circle
-                cx="50"
-                cy="50"
-                r={isPie ? "25" : "38"}
-                fill="transparent"
-                stroke={c0}
-                strokeWidth={isPie ? "50" : "15"}
-                strokeDasharray={isPie ? "86 157" : "131 238"}
-                strokeDashoffset="0"
-              />
-              {/* Segment 2 */}
-              <circle
-                cx="50"
-                cy="50"
-                r={isPie ? "25" : "38"}
-                fill="transparent"
-                stroke={c1}
-                strokeWidth={isPie ? "50" : "15"}
-                strokeDasharray={isPie ? "47 157" : "71 238"}
-                strokeDashoffset={isPie ? "-86" : "-131"}
-              />
-              {/* Segment 3 */}
-              <circle
-                cx="50"
-                cy="50"
-                r={isPie ? "25" : "38"}
-                fill="transparent"
-                stroke={c2}
-                strokeWidth={isPie ? "50" : "15"}
-                strokeDasharray={isPie ? "24 157" : "36 238"}
-                strokeDashoffset={isPie ? "-133" : "-202"}
-              />
+              {segments.map((seg, i) => (
+                <circle
+                  key={i}
+                  cx="50"
+                  cy="50"
+                  r={radius}
+                  fill="transparent"
+                  stroke={seg.color}
+                  strokeWidth={strokeW}
+                  strokeDasharray={seg.dasharray}
+                  strokeDashoffset={seg.dashoffset}
+                />
+              ))}
             </svg>
             {!isPie && (
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white leading-none">
-                  98.7%
+                  {primaryPct}%
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
-                  Compliant
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1 truncate max-w-[90px] text-center">
+                  {d.categories[0] || "Compliant"}
                 </span>
               </div>
             )}
           </div>
 
           {/* Legend */}
-          <div className="space-y-3 text-xs sm:text-sm font-medium">
-            <div className="flex items-center gap-2.5">
-              <div className="w-3 h-3 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: c0 }} />
-              <span className="text-slate-700 dark:text-zinc-300">Smart Helmets: <b className="font-bold">55%</b></span>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-3 h-3 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: c1 }} />
-              <span className="text-slate-700 dark:text-zinc-300">Vest Hubs: <b className="font-bold">30%</b></span>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-3 h-3 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: c2 }} />
-              <span className="text-slate-700 dark:text-zinc-300">Grounding Boots: <b className="font-bold">15%</b></span>
-            </div>
+          <div className="space-y-2.5 text-xs sm:text-sm font-medium">
+            {segments.map((seg, i) => (
+              <div key={i} className="flex items-center gap-2.5">
+                <div className="w-3 h-3 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: seg.color }} />
+                <span className="text-slate-700 dark:text-zinc-300">
+                  {seg.label}: <b className="font-bold">{seg.val}{d.unit} ({seg.pct}%)</b>
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       );
+    }
 
 
     case "table": {
@@ -331,29 +454,45 @@ export default function ChartRenderer({
     }
 
 
-    case "horizontal-bar":
+    case "horizontal-bar": {
+      const d = resolveChartData(
+        [c0, c1, c2, c3, c4],
+        ["Civil", "Mechanical", "Electrical", "Fabrication"],
+        [93, 88, 90, 85],
+        100,
+        "%"
+      );
+      const yRange = (d.yMax - d.yMin) || 1;
+
       return (
-        <div className="w-full h-44 flex flex-col justify-center py-2 gap-2.5 text-xs">
-          {[
-            { label: "Civil", val: "93%", width: "93%", col: c0 },
-            { label: "Mechanical", val: "88%", width: "88%", col: c1 },
-            { label: "Electrical", val: "90%", width: "90%", col: c2 },
-            { label: "Fabrication", val: "85%", width: "85%", col: c3 },
-          ].map((row, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <span className="w-20 text-right font-medium text-slate-700 dark:text-zinc-300 truncate">{row.label}</span>
-              <div className="flex-1 h-6 bg-slate-100 dark:bg-zinc-800 rounded-r-md flex items-center">
-                <div
-                  className="h-full flex items-center justify-end pr-2 rounded-r-md transition-all"
-                  style={{ width: row.width, backgroundColor: row.col }}
-                >
-                  <span className="text-[10px] font-bold text-white shadow-sm">{row.val}</span>
+        <div className="w-full h-auto min-h-[160px] flex flex-col justify-center py-2 gap-2.5 text-xs">
+          {d.values.map((v, i) => {
+            const pct = Math.max(0, Math.min(100, ((v - d.yMin) / yRange) * 100));
+            const col = d.pointColors?.[i] || [c0, c1, c2, c3, c4][i % 5];
+            const label = d.categories[i] || `Item ${i + 1}`;
+            return (
+              <div key={i} className="flex items-center gap-3">
+                <span className="w-24 text-right font-medium text-slate-700 dark:text-zinc-300 truncate" title={label}>
+                  {label}
+                </span>
+                <div className="flex-1 h-6 bg-slate-100 dark:bg-zinc-800 rounded-r-md flex items-center">
+                  <div
+                    className="h-full flex items-center justify-end pr-2 rounded-r-md transition-all"
+                    style={{ width: `${pct}%`, backgroundColor: col }}
+                  >
+                    {d.showValues && (
+                      <span className="text-[10px] font-bold text-white shadow-sm whitespace-nowrap">
+                        {v}{d.unit}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       );
+    }
 
     case "stacked-horizontal":
       return (
@@ -425,20 +564,38 @@ export default function ChartRenderer({
         </div>
       );
 
-    case "grouped-bar":
+    case "grouped-bar": {
+      const d = resolveChartData(
+        chartColors,
+        ["Civil", "Elec", "Mech", "Safety", "Admin"],
+        [60, 85, 90, 30, 70],
+        100,
+        "%"
+      );
+      const secVals = d.secondaryValues || [40, 60, 55, 20, 50];
+      const n = d.categories.length;
+      const yRange = (d.yMax - d.yMin) || 1;
+      const bw = Math.min(18, Math.max(8, (360 / n) * 0.38));
+
+      const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
+        y: 108 - r * 96,
+        label: `${Math.round(d.yMin + r * yRange)}${d.unit}`,
+      }));
+
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
-          {/* Nomenclature / Legend */}
-          <div className="flex items-center justify-center gap-5 pt-1 text-[11px] font-mono font-medium flex-wrap">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c0 }} />
-              <span className="text-slate-600 dark:text-zinc-300 font-semibold">Actual</span>
+          {d.showLegend && (
+            <div className="flex items-center justify-center gap-5 pt-1 text-[11px] font-mono font-medium flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c0 }} />
+                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{chart.series?.[0]?.name || "Primary / Actual"}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c1 }} />
+                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{chart.series?.[1]?.name || "Target / Prior"}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c1 }} />
-              <span className="text-slate-600 dark:text-zinc-300 font-semibold">Target</span>
-            </div>
-          </div>
+          )}
 
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
@@ -446,29 +603,39 @@ export default function ChartRenderer({
             {/* X-axis */}
             <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y labels */}
-            {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
+            {yTicks.map((g, i) => (
               <g key={i}>
-                <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                {d.showGridLines && (
+                  <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                )}
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.label}</text>
               </g>
             ))}
-            {[
-              { x: 80, v1: 60, v2: 40, label: "Civil" },
-              { x: 160, v1: 85, v2: 60, label: "Elec" },
-              { x: 240, v1: 90, v2: 55, label: "Mech" },
-              { x: 320, v1: 30, v2: 20, label: "Safety" },
-              { x: 400, v1: 70, v2: 50, label: "Admin" },
-            ].map((b, i) => (
-              <g key={i}>
-                <rect x={b.x - 18} y={108 - b.v1} width="16" height={b.v1} fill={c0} rx="2" />
-                <rect x={b.x + 2} y={108 - b.v2} width="16" height={b.v2} fill={c1} rx="2" />
-                <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={b.x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
-              </g>
-            ))}
+            {d.values.map((v1, i) => {
+              const v2 = secVals[i] ?? 0;
+              const x = 45 + ((i + 0.5) / n) * 360;
+              const h1 = Math.max(2, Math.min(96, ((v1 - d.yMin) / yRange) * 96));
+              const h2 = Math.max(2, Math.min(96, ((v2 - d.yMin) / yRange) * 96));
+
+              return (
+                <g key={i}>
+                  <rect x={x - bw - 1} y={108 - h1} width={bw} height={h1} fill={c0} rx="2" />
+                  <rect x={x + 1} y={108 - h2} width={bw} height={h2} fill={c1} rx="2" />
+                  <line x1={x} y1="108" x2={x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.categories[i]}</text>
+                  {d.showValues && (
+                    <text x={x - bw / 2 - 1} y={108 - h1 - 3} fontSize="6" fontWeight="bold" textAnchor="middle" fill={c0}>{v1}</text>
+                  )}
+                </g>
+              );
+            })}
+            {d.xAxisTitle && (
+              <text x="225" y="134" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45" fontStyle="italic">{d.xAxisTitle}</text>
+            )}
           </svg>
         </div>
       );
+    }
 
     case "multi-line":
       return (
@@ -507,27 +674,56 @@ export default function ChartRenderer({
         </div>
       );
 
-    case "two-segment":
+    case "two-segment": {
+      const d = resolveChartData(
+        [c0, c1, c2, c3, c4],
+        ["Compliant Workers", "PPE Score", "Incident-Free Days"],
+        [85, 73, 92],
+        100,
+        "%"
+      );
+      const yRange = (d.yMax - d.yMin) || 1;
+
       return (
-        <div className="w-full h-44 flex flex-col justify-center gap-3 text-xs px-2">
-          {[
-            { label: "Compliant Workers", val: 85, color: c0 },
-            { label: "PPE Score", val: 73, color: c1 },
-            { label: "Incident-Free Days", val: 92, color: c2 },
-          ].map((item, i) => (
-            <div key={i}>
-              <div className="flex justify-between font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                <span>{item.label}</span><span>{item.val}%</span>
+        <div className="w-full h-auto min-h-[140px] flex flex-col justify-center gap-3 text-xs px-2 py-2">
+          {d.values.map((v, i) => {
+            const pct = Math.max(0, Math.min(100, ((v - d.yMin) / yRange) * 100));
+            const col = d.pointColors?.[i] || [c0, c1, c2, c3, c4][i % 5];
+            const label = d.categories[i] || `Metric ${i + 1}`;
+            return (
+              <div key={i}>
+                <div className="flex justify-between font-bold text-slate-700 dark:text-zinc-300 mb-1">
+                  <span>{label}</span>
+                  <span>{v}{d.unit}</span>
+                </div>
+                <div className="w-full h-5 bg-slate-100 dark:bg-zinc-800 rounded-lg overflow-hidden flex">
+                  <div className="h-full rounded-lg transition-all" style={{ width: `${pct}%`, backgroundColor: col }} />
+                </div>
               </div>
-              <div className="w-full h-5 bg-slate-100 dark:bg-zinc-800 rounded-lg overflow-hidden flex">
-                <div className="h-full rounded-lg transition-all" style={{ width: `${item.val}%`, backgroundColor: item.color }} />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       );
+    }
 
-    case "area":
+    case "area": {
+      const d = resolveChartData(chartColors, ["Jan", "Apr", "Jul", "Oct"], [88, 94, 96, 99], 100, "%");
+      const n = d.categories.length;
+      const yRange = (d.yMax - d.yMin) || 1;
+      const points = d.values.map((v, i) => {
+        const cx = 45 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+        const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
+        const cy = 108 - norm * 96;
+        return { cx, cy, val: v, label: d.categories[i] };
+      });
+      const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
+      const areaD = `${pathD} L ${points[points.length - 1].cx.toFixed(1)} 108 L ${points[0].cx.toFixed(1)} 108 Z`;
+
+      const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
+        y: 108 - r * 96,
+        label: `${Math.round(d.yMin + r * yRange)}${d.unit}`,
+      }));
+
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
@@ -542,27 +738,33 @@ export default function ChartRenderer({
             {/* X-axis */}
             <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y grid */}
-            {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
+            {yTicks.map((g, i) => (
               <g key={i}>
-                <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                {d.showGridLines && (
+                  <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                )}
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.label}</text>
               </g>
             ))}
             {/* X ticks */}
-            {[{ x: 90, l: "Jan" }, { x: 180, l: "Apr" }, { x: 270, l: "Jul" }, { x: 405, l: "Oct" }].map((t, i) => (
+            {points.map((p, i) => (
               <g key={i}>
-                <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
+                <line x1={p.cx} y1="108" x2={p.cx} y2="112" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={p.cx} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{p.label}</text>
               </g>
             ))}
-            <path d="M 45 108 L 45 95 Q 110 42, 175 65 T 295 28 T 405 14 L 405 108 Z" fill={`url(#areagrad-${chart.id})`} />
-            <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14" fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
-            {[{ cx: 45, cy: 95 }, { cx: 130, cy: 50 }, { cx: 220, cy: 46 }, { cx: 310, cy: 24 }, { cx: 405, cy: 14 }].map((p, i) => (
-              <circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
+            <path d={areaD} fill={`url(#areagrad-${chart.id})`} />
+            <path d={pathD} fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
+            {points.map((pt, i) => (
+              <circle key={i} cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
             ))}
+            {d.xAxisTitle && (
+              <text x="225" y="134" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45" fontStyle="italic">{d.xAxisTitle}</text>
+            )}
           </svg>
         </div>
       );
+    }
 
     case "radar":
       return (
@@ -575,16 +777,34 @@ export default function ChartRenderer({
         </div>
       );
 
-    case "gauge":
+    case "gauge": {
+      const d = resolveChartData(chartColors, ["Score"], [72], 100, "%");
+      const primaryVal = d.values[0] ?? 72;
+      const yRange = (d.yMax - d.yMin) || 1;
+      const norm = Math.max(0, Math.min(1, (primaryVal - d.yMin) / yRange));
+      const angle = norm * 180;
+      const rad = (180 - angle) * (Math.PI / 180);
+      const endX = 50 + 40 * Math.cos(rad);
+      const endY = 50 - 40 * Math.sin(rad);
+      const pathGauge = `M 10 50 A 40 40 0 0 1 ${endX.toFixed(1)} ${endY.toFixed(1)}`;
+
       return (
         <div className="w-full h-44 flex flex-col items-center justify-center relative">
           <svg viewBox="0 0 100 50" className="w-48 h-24 overflow-visible">
             <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="currentColor" strokeOpacity="0.1" strokeWidth="15" strokeLinecap="round" />
-            <path d="M 10 50 A 40 40 0 0 1 70 15" fill="none" stroke={c0} strokeWidth="15" strokeLinecap="round" />
+            <path d={pathGauge} fill="none" stroke={c0} strokeWidth="15" strokeLinecap="round" />
           </svg>
-          <div className="absolute bottom-6 font-bold text-2xl text-slate-800 dark:text-white">72%</div>
+          <div className="absolute bottom-6 font-bold text-2xl text-slate-800 dark:text-white">
+            {primaryVal}{d.unit}
+          </div>
+          {d.categories[0] && (
+            <div className="text-[10px] font-mono text-slate-400 mt-1 uppercase">
+              {d.categories[0]}
+            </div>
+          )}
         </div>
       );
+    }
 
     case "scatter":
     case "bubble":
@@ -812,7 +1032,23 @@ export default function ChartRenderer({
       );
 
     case "bar":
-    default:
+    default: {
+      const d = resolveChartData(
+        chartColors,
+        ["L&T Civil", "Steel Mech", "Tower Crane", "Batching", "Subterra"],
+        [94.2, 98.7, 88.4, 96.5, 84.0],
+        100,
+        "%"
+      );
+      const n = d.categories.length;
+      const yRange = (d.yMax - d.yMin) || 1;
+      const bw = Math.min(36, Math.max(12, (360 / n) * 0.65));
+
+      const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
+        y: 108 - r * 96,
+        label: `${Math.round(d.yMin + r * yRange)}${d.unit}`,
+      }));
+
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
           <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
@@ -821,30 +1057,43 @@ export default function ChartRenderer({
             {/* X-axis */}
             <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y grid + labels */}
-            {[{ y: 108, l: "0%" }, { y: 82, l: "25%" }, { y: 55, l: "50%" }, { y: 28, l: "75%" }, { y: 8, l: "100%" }].map((g, i) => (
+            {yTicks.map((g, i) => (
               <g key={i}>
-                <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                {d.showGridLines && (
+                  <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                )}
+                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.label}</text>
               </g>
             ))}
             {/* Bars */}
-            {[
-              { x: 80, height: 82, val: "94.2%", label: "L&T Civil" },
-              { x: 160, height: 92, val: "98.7%", label: "Steel Mech" },
-              { x: 240, height: 70, val: "88.4%", label: "Tower Crane" },
-              { x: 320, height: 88, val: "96.5%", label: "Batching" },
-              { x: 400, height: 60, val: "84.0%", label: "Subterra." },
-            ].map((b, i) => (
-              <g key={i}>
-                <rect x={b.x - 17} y={108 - b.height} width="34" height={b.height} rx="4" fill={c0} />
-                <text x={b.x} y={108 - b.height - 4} fontSize="7" fontWeight="bold" textAnchor="middle" fill={c0}>{b.val}</text>
-                <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={b.x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{b.label}</text>
-              </g>
-            ))}
+            {d.values.map((v, i) => {
+              const x = 45 + ((i + 0.5) / n) * 360;
+              const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
+              const barH = Math.max(3, norm * 96);
+              const barColor = d.pointColors?.[i] || c0;
+
+              return (
+                <g key={i}>
+                  <rect x={x - bw / 2} y={108 - barH} width={bw} height={barH} rx="4" fill={barColor} />
+                  {d.showValues && (
+                    <text x={x} y={108 - barH - 4} fontSize="7" fontWeight="bold" textAnchor="middle" fill={barColor}>
+                      {v}{d.unit}
+                    </text>
+                  )}
+                  <line x1={x} y1="108" x2={x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">
+                    {d.categories[i]}
+                  </text>
+                </g>
+              );
+            })}
+            {d.xAxisTitle && (
+              <text x="225" y="134" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45" fontStyle="italic">{d.xAxisTitle}</text>
+            )}
           </svg>
         </div>
       );
+    }
     }
   };
 
