@@ -644,7 +644,7 @@ export function SortableRow({
             borderRadius: row.style?.borderRadius !== undefined ? (typeof row.style.borderRadius === "number" ? `${row.style.borderRadius}px` : row.style.borderRadius) : undefined,
             backgroundColor: getRowBackground(row.style),
           }}
-          className={`canvas-row-cells flex flex-wrap items-stretch min-h-[60px] transition-colors duration-100 rounded-2xl ${
+          className={`canvas-row-cells flex flex-wrap items-stretch ${row.cells.length === 0 ? "min-h-[60px]" : "min-h-0"} transition-colors duration-100 rounded-2xl ${
             isDragOverRow && !isPreview
               ? "ring-2 ring-[#9D61FF] bg-[#9D61FF]/10 p-2 shadow-md"
               : ""

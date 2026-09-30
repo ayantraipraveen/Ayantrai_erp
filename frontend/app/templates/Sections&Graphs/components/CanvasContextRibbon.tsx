@@ -684,7 +684,7 @@ export function CanvasContextRibbon({
                       type="button"
                       onClick={() => {
                         const curr = selectedCell.customHeight ?? baseHeightForCell;
-                        const next = Math.max(80, curr - 20);
+                        const next = Math.max(0, curr - 20);
                         if (onUpdateHeight) onUpdateHeight(next);
                       }}
                       className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
