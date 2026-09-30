@@ -419,7 +419,8 @@ export interface CanvasElementBlock {
 
 export interface CanvasCellStyle {
   fontFamily?: "sans" | "serif" | "mono" | "rounded";
-  fontSize?: "xs" | "sm" | "base" | "lg" | "xl";
+  fontSize?: "xs" | "sm" | "base" | "lg" | "xl" | string;
+  customFontSize?: number; // custom font size in px (e.g. 8 to 48)
   fontWeight?: "normal" | "medium" | "semibold" | "bold";
   textAlign?: "left" | "center" | "right";
   textColor?: string;

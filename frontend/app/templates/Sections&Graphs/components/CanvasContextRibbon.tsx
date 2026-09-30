@@ -1048,16 +1048,26 @@ export function CanvasContextRibbon({
           {selectedCell.blockType === "chart" && chart && onUpdateChart && (
             <>
               {/* Direct Title Text Editing from Ribbon */}
-              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
                 <span className="text-[10px] font-mono font-bold text-slate-400">Title:</span>
                 <input
                   type="text"
-                  value={chart.title}
+                  value={chart.title || ""}
                   onChange={(e) => onUpdateChart({ ...chart, title: e.target.value })}
-                  className="h-6 w-36 sm:w-48 px-1.5 rounded bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none focus:border-[#9D61FF] focus:ring-1 focus:ring-[#9D61FF]/30 transition-all truncate"
-                  placeholder="Chart title..."
-                  title="Edit chart title text directly from ribbon"
+                  className="h-6 w-32 sm:w-44 px-1.5 rounded bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none focus:border-[#9D61FF] focus:ring-1 focus:ring-[#9D61FF]/30 transition-all truncate"
+                  placeholder="No title (hidden)..."
+                  title="Edit chart title (clear to remove from card)"
                 />
+                {chart.title ? (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateChart({ ...chart, title: "" })}
+                    className="text-slate-400 hover:text-red-500 text-[11px] px-1 font-bold cursor-pointer transition-colors"
+                    title="Remove chart name"
+                  >
+                    ✕
+                  </button>
+                ) : null}
               </div>
 
               <select

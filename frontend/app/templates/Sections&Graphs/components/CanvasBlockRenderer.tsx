@@ -312,19 +312,20 @@ function ChartBlock({
       ? "text-sm"
       : "text-[11px] sm:text-xs";
 
+  const hasTitle = Boolean(chart.title && chart.title.trim());
   // Compact spacing & generous chart viewport allocation
   const isCompact = customHeight !== undefined && customHeight < 300;
-  const pClass = isCompact ? "p-3 space-y-1.5" : "p-4 space-y-2.5";
-  const overhead = (chart.description ? 65 : 40) + (isCompact ? 24 : 32);
+  const pClass = isCompact ? "p-3 space-y-1.5" : "p-4 space-y-2";
+  const overhead = (chart.description ? 35 : 0) + (hasTitle ? 28 : 0) + (isCompact ? 16 : 24);
   const chartAreaHeight = customHeight ? Math.max(160, customHeight - overhead) : undefined;
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [localTitle, setLocalTitle] = useState(chart.title);
+  const [localTitle, setLocalTitle] = useState(chart.title || "");
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [localDesc, setLocalDesc] = useState(chart.description || "");
 
   useEffect(() => {
-    setLocalTitle(chart.title);
+    setLocalTitle(chart.title || "");
   }, [chart.title]);
 
   useEffect(() => {
@@ -333,15 +334,17 @@ function ChartBlock({
 
   const handleTitleCommit = () => {
     setIsEditingTitle(false);
-    if (localTitle.trim() && localTitle !== chart.title && onUpdateChart) {
-      onUpdateChart({ ...chart, title: localTitle.trim() });
+    const trimmed = localTitle.trim();
+    if (trimmed !== (chart.title || "").trim() && onUpdateChart) {
+      onUpdateChart({ ...chart, title: trimmed });
     }
   };
 
   const handleDescCommit = () => {
     setIsEditingDesc(false);
-    if (localDesc !== chart.description && onUpdateChart) {
-      onUpdateChart({ ...chart, description: localDesc.trim() });
+    const trimmed = localDesc.trim();
+    if (trimmed !== (chart.description || "").trim() && onUpdateChart) {
+      onUpdateChart({ ...chart, description: trimmed });
     }
   };
 
@@ -350,59 +353,58 @@ function ChartBlock({
       style={customHeight ? { height: `${customHeight}px`, maxHeight: "100%" } : { maxHeight: "100%" }}
       className={`relative group/chart w-full max-h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] ${pClass} shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden`}
     >
-      <div className="flex items-start justify-between gap-3 flex-shrink-0">
-        <div className="min-w-0 flex-1">
-          {isEditingTitle && !isPreview ? (
-            <input
-              type="text"
-              autoFocus
-              value={localTitle}
-              onChange={(e) => setLocalTitle(e.target.value)}
-              onBlur={handleTitleCommit}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleTitleCommit();
-                if (e.key === "Escape") {
-                  setLocalTitle(chart.title);
-                  setIsEditingTitle(false);
-                }
-              }}
-              className={`${titleSizeClass} text-slate-900 dark:text-white bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
-            />
-          ) : (
-            <h3
-              onDoubleClick={() => !isPreview && setIsEditingTitle(true)}
-              title={!isPreview ? "Double click to rename chart" : undefined}
-              className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate ${
-                !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
-              }`}
-            >
-              {chart.title}
-            </h3>
-          )}
-          <div className={`${subtitleSizeClass} font-mono text-slate-400 mt-0.5 truncate`}>{chart.dataSourceField}</div>
-        </div>
+      {/* Configure & Edit Data Button - Clean overlay in top right on hover */}
+      {!isPreview && onOpenChartEditor && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenChartEditor();
+          }}
+          className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover/chart:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#9D61FF] text-white hover:bg-purple-600 shadow-sm cursor-pointer"
+          title="Configure Chart, Data Points & Axis"
+        >
+          <SlidersHorizontal className="w-3 h-3" />
+          <span>Edit Data</span>
+        </button>
+      )}
 
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {!isPreview && onOpenChartEditor && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenChartEditor();
-              }}
-              className="opacity-0 group-hover/chart:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#9D61FF] text-white hover:bg-purple-600 shadow-2xs cursor-pointer"
-              title="Configure Chart, Data Points & Axis"
-            >
-              <SlidersHorizontal className="w-3 h-3" />
-              <span>Edit Data</span>
-            </button>
-          )}
-          <span className="text-[10px] font-mono uppercase px-2.5 py-0.5 rounded-md bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 font-bold flex-shrink-0">
-            {chart.chartType.toUpperCase()}
-          </span>
+      {/* Chart Title (if present or currently editing) */}
+      {(hasTitle || (isEditingTitle && !isPreview)) && (
+        <div className="flex items-start justify-between gap-3 flex-shrink-0 pr-16">
+          <div className="min-w-0 flex-1">
+            {isEditingTitle && !isPreview ? (
+              <input
+                type="text"
+                autoFocus
+                value={localTitle}
+                onChange={(e) => setLocalTitle(e.target.value)}
+                onBlur={handleTitleCommit}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleTitleCommit();
+                  if (e.key === "Escape") {
+                    setLocalTitle(chart.title || "");
+                    setIsEditingTitle(false);
+                  }
+                }}
+                className={`${titleSizeClass} text-slate-900 dark:text-white bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
+              />
+            ) : (
+              <h3
+                onDoubleClick={() => !isPreview && setIsEditingTitle(true)}
+                title={!isPreview ? "Double click to rename or clear chart title" : undefined}
+                className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate ${
+                  !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
+                }`}
+              >
+                {chart.title}
+              </h3>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-1">
+      )}
+
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-0.5">
         <ChartRenderer
           chart={chart}
           color={chart.color || chart.colors?.[0]}
@@ -410,6 +412,8 @@ function ChartBlock({
           gridRows={chart.gridRows}
           gridCols={chart.gridCols}
           height={chartAreaHeight}
+          fontSize={fontSize}
+          customFontSize={style.customFontSize}
         />
       </div>
       {chart.description && (

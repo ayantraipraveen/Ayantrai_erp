@@ -57,7 +57,7 @@ export const initialLibrarySections: LibrarySection[] = [
     charts: [
       {
         id: "ch-1",
-        title: "Workforce Safety KPI Executive Summary",
+        title: "",
         chartType: "bar",
         dataSourceField: "ppe_sensor_compliance",
         description: "Comparative gauge across active contractors and workforce crews",

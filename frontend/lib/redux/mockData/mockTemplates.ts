@@ -13,7 +13,7 @@ export const defaultBlocks: TemplateBlock[] = [
     graphs: [
       {
         id: "grp-km-1",
-        title: "Workforce Safety KPI Executive Summary",
+        title: "",
         type: "bar",
         dataSource: "ppe_sensor_compliance",
         description: "Comparative gauge across active contractors and workforce crews",

@@ -10,6 +10,8 @@ interface ChartRendererProps {
   gridRows?: number;
   gridCols?: number;
   height?: number;
+  fontSize?: "xs" | "sm" | "base" | "lg" | "xl" | string;
+  customFontSize?: number;
 }
 
 /**
@@ -23,6 +25,8 @@ export default function ChartRenderer({
   gridRows,
   gridCols,
   height,
+  fontSize,
+  customFontSize,
 }: ChartRendererProps) {
   const chartColors = colors && colors.length > 0 ? colors : chart.colors || [];
   const c0 = chartColors[0] || chart.color || color;
@@ -153,6 +157,71 @@ export default function ChartRenderer({
     return null;
   };
 
+  // Unified responsive scale across all chart types (same responsive flow as heatmap + custom font size)
+  const isCompact = (height !== undefined && height < 240) || fontSize === "xs" || (customFontSize !== undefined && customFontSize <= 11);
+  const isLarge = (height !== undefined && height > 340 && fontSize !== "xs" && fontSize !== "sm") || fontSize === "lg" || fontSize === "xl" || (customFontSize !== undefined && customFontSize >= 16);
+
+  // Custom font size scale factor (relative to standard 14px base)
+  const customScale = customFontSize !== undefined && customFontSize > 0 ? customFontSize / 14 : undefined;
+
+  // Dynamic SVG font sizes based on selected fontSize & height & custom
+  const svgTickSize = customScale
+    ? +(6.5 * customScale).toFixed(1)
+    : fontSize === "xs"
+    ? 5.2
+    : fontSize === "sm" || isCompact
+    ? 5.8
+    : fontSize === "lg"
+    ? 7.5
+    : fontSize === "xl" || isLarge
+    ? 8.2
+    : 6.5;
+
+  const svgValueSize = customScale
+    ? +(7.0 * customScale).toFixed(1)
+    : fontSize === "xs"
+    ? 5.6
+    : fontSize === "sm" || isCompact
+    ? 6.3
+    : fontSize === "lg"
+    ? 8.0
+    : fontSize === "xl" || isLarge
+    ? 8.8
+    : 7.0;
+
+  const svgTitleSize = customScale
+    ? +(7.0 * customScale).toFixed(1)
+    : fontSize === "xs"
+    ? 5.8
+    : fontSize === "sm" || isCompact
+    ? 6.4
+    : fontSize === "lg"
+    ? 8.0
+    : fontSize === "xl" || isLarge
+    ? 8.8
+    : 7.0;
+
+  // Dynamic Tailwind text classes for HTML-rendered charts & legends
+  const legendTextClass =
+    customFontSize !== undefined
+      ? customFontSize <= 10
+        ? "text-[9px]"
+        : customFontSize <= 12
+        ? "text-[10px]"
+        : customFontSize >= 16
+        ? "text-xs sm:text-sm"
+        : "text-[11px]"
+      : fontSize === "xs"
+      ? "text-[9px]"
+      : fontSize === "sm" || isCompact
+      ? "text-[10px]"
+      : fontSize === "lg" || fontSize === "xl" || isLarge
+      ? "text-xs"
+      : "text-[11px]";
+
+  const legendGapClass = isCompact ? "gap-2.5 pt-0.5" : "gap-4 sm:gap-5 pt-1";
+  const chartWrapperClass = "w-full h-full min-h-0 flex flex-col justify-center items-center overflow-hidden";
+
   const renderChart = () => {
     switch (chart.chartType) {
     case "line": {
@@ -176,8 +245,8 @@ export default function ChartRenderer({
       const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
-        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
-          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
+        <div className={chartWrapperClass}>
+          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full h-full flex-1 max-h-full overflow-visible">
             <defs>
               <linearGradient id={`grad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={c0} stopOpacity="0.35" />
@@ -190,7 +259,7 @@ export default function ChartRenderer({
             <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y-axis Header / Unit */}
             {yHeader && (
-              <text x="48" y="7" fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
@@ -200,14 +269,14 @@ export default function ChartRenderer({
                 {d.showGridLines && (
                   <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
                 )}
-                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
+                <text x="43" y={g.y + 2.5} fontSize={svgTickSize} textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
             {/* X ticks */}
             {points.map((p, i) => (
               <g key={i}>
                 <line x1={p.cx} y1="110" x2={p.cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={p.cx} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
+                <text x={p.cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
               </g>
             ))}
             {/* Area fill */}
@@ -219,14 +288,14 @@ export default function ChartRenderer({
               <g key={i}>
                 <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
                 {d.showValues && (
-                  <text x={pt.cx} y={pt.cy - 6} fontSize="7" fontWeight="bold" textAnchor="middle" fill={c0}>
+                  <text x={pt.cx} y={pt.cy - 6} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={c0}>
                     {formatDataValue(pt.val, d.unit, n > 6)}
                   </text>
                 )}
               </g>
             ))}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize="7" fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
+              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -268,9 +337,16 @@ export default function ChartRenderer({
       const primaryVal = d.values[0] ?? 0;
       const primaryPct = Math.round((primaryVal / sum) * 100);
 
+      const isCompactDonut = isCompact || (height !== undefined && height < 220);
+      const donutSizeClass = isCompactDonut
+        ? "w-28 h-28 sm:w-32 sm:h-32"
+        : isLarge
+        ? "w-44 h-44 sm:w-52 sm:h-52"
+        : "w-36 h-36 sm:w-40 sm:h-40";
+
       return (
-        <div className="w-full h-full min-h-[260px] max-h-[520px] flex items-center justify-center gap-8 sm:gap-14 py-2">
-          <div className="relative w-44 h-44 sm:w-56 sm:h-56 flex items-center justify-center flex-shrink-0">
+        <div className={`w-full h-full min-h-0 flex items-center justify-center ${isCompact ? "gap-3 sm:gap-6" : isLarge ? "gap-8 sm:gap-12" : "gap-5 sm:gap-8"} py-1 overflow-hidden`}>
+          <div className={`relative ${donutSizeClass} flex items-center justify-center flex-shrink-0`}>
             <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 overflow-visible">
               {segments.map((seg, i) => (
                 <circle
@@ -288,10 +364,10 @@ export default function ChartRenderer({
             </svg>
             {!isPie && (
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xl sm:text-2xl font-black font-mono text-slate-900 dark:text-white leading-none">
+                <span className={`${isCompact ? "text-base sm:text-lg" : isLarge ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-black font-mono text-slate-900 dark:text-white leading-none`}>
                   {primaryPct}%
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1 truncate max-w-[90px] text-center">
+                <span className={`${isCompact ? "text-[8px]" : "text-[9px] sm:text-[10px]"} font-bold uppercase tracking-wider text-slate-400 mt-0.5 truncate max-w-[80px] text-center`}>
                   {d.categories[0] || "Compliant"}
                 </span>
               </div>
@@ -299,10 +375,10 @@ export default function ChartRenderer({
           </div>
 
           {/* Legend */}
-          <div className="space-y-2.5 text-xs sm:text-sm font-medium">
+          <div className={`space-y-1.5 sm:space-y-2 ${legendTextClass} font-medium`}>
             {segments.map((seg, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <div className="w-3 h-3 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: seg.color }} />
+              <div key={i} className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: seg.color }} />
                 <span className="text-slate-700 dark:text-zinc-300">
                   {seg.label}: <b className="font-bold">{seg.val}{d.unit} ({seg.pct}%)</b>
                 </span>
@@ -356,13 +432,32 @@ export default function ChartRenderer({
         };
       });
 
+      const tableTextSize =
+        customFontSize !== undefined
+          ? customFontSize <= 10
+            ? "text-[9px]"
+            : customFontSize <= 12
+            ? "text-[10px]"
+            : customFontSize >= 16
+            ? "text-sm"
+            : "text-xs"
+          : isCompact || fontSize === "xs"
+          ? "text-[9px]"
+          : fontSize === "sm"
+          ? "text-[10px]"
+          : fontSize === "xl" || isLarge
+          ? "text-sm"
+          : "text-xs";
+
+      const tablePad = isCompact || fontSize === "xs" ? "py-1 px-2" : "py-1.5 px-3";
+
       return (
-        <div className="w-full h-full max-h-[520px] overflow-auto rounded-xl border border-slate-200/80 dark:border-zinc-800/80 text-xs custom-scrollbar bg-white/40 dark:bg-zinc-900/40 backdrop-blur-sm">
-          <table className="w-full min-w-max text-left border-collapse">
+        <div className="w-full h-full min-h-0 overflow-auto rounded-xl border border-slate-200/80 dark:border-zinc-800/80 custom-scrollbar bg-white/40 dark:bg-zinc-900/40 backdrop-blur-sm">
+          <table className={`w-full min-w-max text-left border-collapse ${tableTextSize}`}>
             <thead>
-              <tr className="bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 font-mono text-[10px] uppercase sticky top-0 z-10 shadow-2xs backdrop-blur-sm">
+              <tr className={`bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 font-mono ${isCompact ? "text-[9px]" : "text-[10px]"} uppercase sticky top-0 z-10 shadow-2xs backdrop-blur-sm`}>
                 {cols.map((c) => (
-                  <th key={c.id} className="py-2 px-3 font-semibold whitespace-nowrap">
+                  <th key={c.id} className={`${tablePad} font-semibold whitespace-nowrap`}>
                     {c.label}
                   </th>
                 ))}
@@ -425,8 +520,7 @@ export default function ChartRenderer({
       const colsCount = effectiveCols || 7;
 
       const standardDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      const days = Array.from({ length: colsCount }, (_, i) => standardDays[i] || `Day ${i + 1}`);
-
+      const days = Array.from({ length: colsCount }, (_, i) => standardDays[i] || `D${i + 1}`);
       const weeks = Array.from({ length: rowsCount }, (_, i) => i < 12 ? `Week ${i + 1}` : `W${i + 1}`);
 
       const getCellValue = (r: number, c: number) => {
@@ -444,37 +538,90 @@ export default function ChartRenderer({
         return ((r * 11 + c * 7 + 83) % 27) + 72;
       };
 
+      // Responsive font sizing and gaps based on container height and selected fontSize
+      const isCompact = (height !== undefined && height < 230) || fontSize === "xs";
+      const isLarge = (height !== undefined && height > 340 && fontSize !== "xs" && fontSize !== "sm") || fontSize === "lg" || fontSize === "xl";
+      const gapClass = isCompact ? "gap-1" : isLarge ? "gap-2" : "gap-1.5";
+      const headerTextSize =
+        fontSize === "xs"
+          ? "text-[8px]"
+          : fontSize === "sm" || isCompact
+          ? "text-[9px]"
+          : fontSize === "lg" || fontSize === "xl" || isLarge
+          ? "text-xs"
+          : "text-[10px]";
+      const weekTextSize =
+        fontSize === "xs"
+          ? "text-[8px]"
+          : fontSize === "sm" || isCompact
+          ? "text-[9px]"
+          : fontSize === "lg" || fontSize === "xl" || isLarge
+          ? "text-xs"
+          : "text-[10px]";
+      const cellTextSize =
+        fontSize === "xs"
+          ? "text-[8px] font-bold"
+          : fontSize === "sm"
+          ? "text-[9px] font-bold"
+          : isCompact
+          ? "text-[9px] font-bold"
+          : fontSize === "xl"
+          ? "text-sm font-bold"
+          : fontSize === "lg" || isLarge
+          ? "text-xs font-bold"
+          : "text-[10px] sm:text-[11px] font-bold";
+
       return (
-        <div className="w-full h-full max-h-[520px] overflow-auto pt-2 text-xs custom-scrollbar bg-transparent">
+        <div className={`w-full h-full min-h-0 flex flex-col justify-between ${gapClass} bg-transparent select-none overflow-hidden py-0.5`}>
+          {/* Header Row: Week label spacer + Days of week pinned at top */}
           <div
-            className="w-full grid gap-1.5 min-w-max pb-1"
+            className={`w-full grid ${gapClass} flex-shrink-0 items-center`}
             style={{
-              gridTemplateColumns: `auto repeat(${colsCount}, minmax(36px, 1fr))`,
+              gridTemplateColumns: `minmax(42px, 56px) repeat(${colsCount}, 1fr)`,
             }}
           >
-            {/* Header column (Week labels) */}
-            <div className="flex flex-col gap-1 font-mono text-[9px] text-slate-400 sticky left-0 bg-white/80 dark:bg-[#0c1017]/80 backdrop-blur-sm z-10">
-              <div className="h-4 mb-1" />
-              {weeks.map((w) => (
-                <div key={w} className="h-7 flex items-center justify-end pr-2 font-semibold whitespace-nowrap">
+            <div className={`text-right pr-2 font-mono ${headerTextSize} text-slate-400 font-semibold truncate`}>
+              WEEK
+            </div>
+            {days.map((day) => (
+              <div
+                key={day}
+                className={`text-center font-bold text-slate-600 dark:text-zinc-400 ${headerTextSize} uppercase truncate tracking-tight`}
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Grid Rows: Each week fills an equal 1fr fraction of available card height */}
+          <div
+            className={`w-full flex-1 min-h-0 grid ${gapClass}`}
+            style={{
+              gridTemplateRows: `repeat(${rowsCount}, 1fr)`,
+            }}
+          >
+            {weeks.map((w, rIdx) => (
+              <div
+                key={w}
+                className={`w-full h-full min-h-0 grid ${gapClass} items-center`}
+                style={{
+                  gridTemplateColumns: `minmax(42px, 56px) repeat(${colsCount}, 1fr)`,
+                }}
+              >
+                {/* Week Label on Left */}
+                <div className={`text-right pr-2 font-mono ${weekTextSize} font-semibold text-slate-500 dark:text-zinc-400 truncate`}>
                   {w}
                 </div>
-              ))}
-            </div>
-            {/* Day columns */}
-            {days.map((day, cIdx) => (
-              <div key={day} className="flex flex-col gap-1 min-w-[36px]">
-                <div className="text-center font-bold text-slate-600 dark:text-zinc-400 mb-1 text-[10px] uppercase truncate h-4 flex items-center justify-center">
-                  {day}
-                </div>
-                {weeks.map((_, rIdx) => {
+                {/* Day Cells across row */}
+                {days.map((_, cIdx) => {
                   const val = getCellValue(rIdx, cIdx);
                   const cellColor = val >= 92 ? c0 : val >= 80 ? c1 : c2;
                   return (
                     <div
-                      key={rIdx}
-                      className="h-7 rounded-md flex items-center justify-center text-[10px] font-bold text-white shadow-2xs transition-all hover:scale-105"
+                      key={cIdx}
+                      className={`w-full h-full min-h-0 rounded-md flex items-center justify-center ${cellTextSize} text-white shadow-2xs transition-all hover:scale-[1.03] cursor-default`}
                       style={{ backgroundColor: cellColor }}
+                      title={`${w}, ${days[cIdx]}: ${val}% Compliance`}
                     >
                       {val}
                     </div>
