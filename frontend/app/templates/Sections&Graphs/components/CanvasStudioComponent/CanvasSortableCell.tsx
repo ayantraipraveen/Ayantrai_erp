@@ -832,6 +832,38 @@ export function SortableCell({
                         >+</button>
                       </div>
 
+                      {/* Height Quick Stepper */}
+                      <div className="flex items-center border-r border-slate-200 dark:border-zinc-700 pr-1.5 mr-0.5 gap-0.5">
+                        <span className="text-[9px] font-mono text-slate-400">H:</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const curH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
+                            const next = Math.max(MIN_BLOCK_H, curH - 20);
+                            if (typeof onHeightChange === "function") onHeightChange(sc.id, rowId, next);
+                          }}
+                          className="w-3.5 h-3.5 rounded text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                          title="Decrease height of this stacked card"
+                        >-</button>
+                        <span className="text-[9px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[28px] text-center">
+                          {sc.customHeight ? `${sc.customHeight}px` : "Auto"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const curH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
+                            const otherH = Math.max(0, stackedExtraHeight - (curH + 12));
+                            const maxH = Math.max(MIN_BLOCK_H, maxColumnHeight - baseBlockHeight - otherH - 12);
+                            const next = Math.min(maxH, curH + 20);
+                            if (typeof onHeightChange === "function") onHeightChange(sc.id, rowId, next);
+                          }}
+                          className="w-3.5 h-3.5 rounded text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                          title="Increase height of this stacked card"
+                        >+</button>
+                      </div>
+
                       {sIdx > 0 && (
                         <button
                           type="button"
@@ -944,6 +976,20 @@ export function SortableCell({
                       title="Drag horizontally to adjust width of this stacked block"
                     >
                       <div className="w-0.5 h-8 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/stacked-block:bg-[#8B3DFF]/80 transition-colors" />
+                    </div>
+                  )}
+
+                  {/* Resize handle for stacked block height (bottom edge) */}
+                  {!isPreview && (
+                    <div
+                      onMouseDown={(e) => {
+                        const curH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
+                        handleStackedHeightResizeStart(e, sc.id, curH);
+                      }}
+                      className="absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center opacity-0 group-hover/stacked-block:opacity-100 transition-opacity"
+                      title="Drag vertically to adjust height of this stacked card"
+                    >
+                      <div className="h-0.5 w-8 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/stacked-block:bg-[#8B3DFF]/80 transition-colors" />
                     </div>
                   )}
                 </div>
