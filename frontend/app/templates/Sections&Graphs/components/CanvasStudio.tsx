@@ -978,7 +978,7 @@ export function CanvasStudio({
       <div
         ref={deskScrollRef}
         onScroll={handleDeskScroll}
-        className="relative flex-1 min-h-0 overflow-auto p-6 sm:p-10 flex flex-col items-center select-none bg-[#f1f4f9] dark:bg-[#06080d]"
+        className="relative flex-1 min-h-0 overflow-auto p-2 sm:p-1 flex flex-col items-center select-none bg-[#f1f4f9] dark:bg-[#06080d]"
         style={
           activeShowGrid
             ? {
@@ -991,7 +991,7 @@ export function CanvasStudio({
       >
         {/* Scalable Multi-Page Desk Container */}
         <div
-          className="flex flex-col items-center gap-10 pb-28 transition-transform duration-200 select-none"
+          className="flex flex-col items-center gap-1 py-2 transition-transform duration-200 select-none"
           style={{
             transform: `scale(${activeZoom})`,
             transformOrigin: "top center",
@@ -1280,16 +1280,16 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                         ) : (
                           <div className="space-y-3.5">
                             {/* Drop zone at the top of this page */}
-                            {!activeIsPreview && page.rows.length > 0 && (
+                            {/* {!activeIsPreview && page.rows.length > 0 && (
                               <DropInsertZone
                                 insertIndex={Math.max(0, rows.findIndex((r) => r.id === page.rows[0]?.id))}
                                 onAddRow={handleInsertRowAtIndex}
                                 onDropBlock={onDropBlock}
                                 label={page.isFirstPage ? "Drop to insert at top of report" : `Drop to insert at top of Page ${page.pageNumber}`}
                               />
-                            )}
+                            )} */}
 
-                            {page.rows.map((row) => {
+                            {page.rows.map((row,rowIdx) => {
                               const globalRowIndex = rows.findIndex((r) => r.id === row.id);
                               return (
                                 <React.Fragment key={row.id}>
@@ -1327,7 +1327,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                                     onAddBlockBeside={handleAddBlockBeside}
                                   />
                                   {/* Drop zone below this row */}
-                                  {!activeIsPreview && (
+                                  {!activeIsPreview && rowIdx === page.rows.length - 1 && (
                                     <DropInsertZone
                                       insertIndex={globalRowIndex + 1}
                                       onAddRow={handleInsertRowAtIndex}

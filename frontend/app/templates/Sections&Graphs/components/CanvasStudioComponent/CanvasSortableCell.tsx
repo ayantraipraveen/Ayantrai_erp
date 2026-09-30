@@ -359,12 +359,14 @@ export function SortableCell({
 
       const reservedBottomSpace = (isPreview ? 16 : 48) + rowsBelowHeight;
       const maxUsable = Math.floor(distanceToFooter - reservedBottomSpace);
-      return Math.max(0, Math.min(460, maxUsable));
+      // return Math.max(0, Math.min(460, maxUsable));
+  return Math.max(0, maxUsable);
     }
 
     const pageRect = pageEl.getBoundingClientRect();
     const distanceToPageBottom = (pageRect.bottom - cellRect.top) / effectiveZoom;
-    return Math.max(0, Math.min(460, Math.floor(distanceToPageBottom - (isPreview ? 32 : 72))));
+    // return Math.max(0, Math.min(460, Math.floor(distanceToPageBottom - (isPreview ? 32 : 72))));
+    return Math.max(0, Math.floor(distanceToPageBottom - (isPreview ? 32 : 72)));
   }, [currentPageNumber, effectiveZoom, isPreview]);
 
   const [dynamicMaxHeight, setDynamicMaxHeight] = useState<number>(() => {

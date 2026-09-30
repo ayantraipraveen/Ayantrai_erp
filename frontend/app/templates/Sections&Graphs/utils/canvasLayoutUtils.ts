@@ -116,9 +116,13 @@ export function partitionCanvasPages(
 
   // Exact physical A4 sheet height: 842px (Standard ISO PDF Page)
   // All pages have identical standard Header (Sitesafe + Section Bar) and identical Footer
-  const standardCapacity = Math.round(
-    Math.max(380, Math.min(540, sheetHeight - page1MarginY - 110 - 75 - 70 - 35))
-  );
+  const BOTTOM_CONTROLS_RESERVE = 100; 
+ const standardCapacity = Math.round(
+  Math.max(
+    380,
+    Math.min(540, sheetHeight - page1MarginY - 110 - 75 - 70 - 35 - BOTTOM_CONTROLS_RESERVE)
+  )
+);
   const capPage1Single = standardCapacity;
   const capPage1Multi = standardCapacity;
   const capMiddlePage = standardCapacity;

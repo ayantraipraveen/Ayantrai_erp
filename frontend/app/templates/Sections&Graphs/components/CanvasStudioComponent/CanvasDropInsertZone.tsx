@@ -15,7 +15,7 @@ export interface PageAddRowDropZoneProps {
 function handleDropSidebarBlock(
   e: React.DragEvent,
   insertIndex: number,
-  onDropBlock?: (e: SidebarAddBlockEvent) => void
+  onDropBlock?: (e: SidebarAddBlockEvent) => void,
 ) {
   e.preventDefault();
   e.stopPropagation();
@@ -37,9 +37,10 @@ export function DropInsertZone({
   onAddRow,
   onDropBlock,
   label = "Insert Row Here",
-}: DropInsertZoneProps) {
+  isLastRow = true,
+}: DropInsertZoneProps & { isLastRow?: boolean }) {
   const [isOver, setIsOver] = useState(false);
-
+if (!isLastRow) return null;
   return (
     <div
       onClick={(e) => {
@@ -135,7 +136,11 @@ export function PageAddRowDropZone({
       }`}
     >
       <Plus className={`w-3.5 h-3.5 ${isOver ? "animate-pulse" : ""}`} />
-      <span>{isOver ? `Drop to add row to Page ${pageNumber}` : `Add Row to Page ${pageNumber}`}</span>
+      <span>
+        {isOver
+          ? `Drop to add row to Page ${pageNumber}`
+          : `Add Row to Page ${pageNumber}`}
+      </span>
     </button>
   );
 }
