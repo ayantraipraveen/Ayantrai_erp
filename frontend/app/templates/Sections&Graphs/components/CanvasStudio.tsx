@@ -20,7 +20,7 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Layers } from "lucide-react";
+import { Layers, Trash2 } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
   CanvasCell,
@@ -33,6 +33,7 @@ import {
   moveCellBetweenRows,
   reorderCellsInRow,
   reorderCanvasRows,
+  setSectionCanvasRows,
   duplicateCanvasCell,
   deleteCanvasCell,
   moveCellToStackBelow,
@@ -48,6 +49,7 @@ import {
   A4_WIDTH_PX,
   A4_HEIGHT_PX,
   partitionCanvasPages,
+  PagePartition,
   isColorDark,
   DEFAULT_CANVAS_MARGIN,
   CanvasMarginConfig,
@@ -157,6 +159,7 @@ export function CanvasStudio({
   }, []);
 
   const [editingPageIndex, setEditingPageIndex] = useState<number | null>(null);
+  const [pageToDelete, setPageToDelete] = useState<PagePartition | null>(null);
   // Internal fallbacks if not controlled by parent
   const [internalSelectedCellId, setInternalSelectedCellId] = useState<string | null>(null);
   const [internalSelectedRowId, setInternalSelectedRowId] = useState<string | null>(null);
@@ -605,6 +608,52 @@ export function CanvasStudio({
     [dispatch, section.id, handleSelectCell]
   );
 
+  const handleConfirmDeletePage = useCallback(
+    (targetPage: PagePartition) => {
+      if (pages.length <= 1) {
+        dispatch(
+          showGlobalToast({
+            message: "Cannot delete the only page in the document.",
+            type: "warning",
+          })
+        );
+        setPageToDelete(null);
+        return;
+      }
+
+      const rowIdsToDelete = new Set(targetPage.rows.map((r) => r.id));
+      const remainingRows = (section.canvasRows || [])
+        .filter((r) => !rowIdsToDelete.has(r.id))
+        .map((r, idx) => {
+          // If page 1 was deleted, clear manual page break on the new first row so content starts cleanly on Page 1
+          if (idx === 0 && r.pageBreakBefore) {
+            return { ...r, pageBreakBefore: false };
+          }
+          return r;
+        });
+
+      dispatch(
+        setSectionCanvasRows({
+          sectionId: section.id,
+          canvasRows: remainingRows,
+        })
+      );
+
+      handleSelectCell(null, null);
+      setActiveViewPageIndex((prev) => Math.max(0, Math.min(prev, pages.length - 2)));
+      setPageToDelete(null);
+
+      const rowCount = targetPage.rows.length;
+      dispatch(
+        showGlobalToast({
+          message: `Page ${targetPage.pageNumber} deleted (${rowCount} ${rowCount === 1 ? "row" : "rows"} removed).`,
+          type: "info",
+        })
+      );
+    },
+    [dispatch, section.id, section.canvasRows, pages.length, handleSelectCell]
+  );
+
   const handleAddBlockBeside = useCallback(
     (rowId: string, cellIndex: number, blockType: CanvasBlockType = "text") => {
       const ts = Date.now();
@@ -993,8 +1042,54 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                         <span className="text-slate-500 dark:text-zinc-400 font-medium">
                           Standard PDF A4 (595 × 842 px)
                         </span>
+                        {!activeIsPreview && pages.length > 1 && (
+                          <>
+                            <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
+                            <button
+                              type="button"
+                              onClick={() => setPageToDelete(page)}
+                              className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-white hover:bg-rose-500 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                              title={`Delete Page ${page.pageNumber}`}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span>Delete Page {page.pageNumber}</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                       <div className="flex-1 border-t-2 border-dashed border-purple-300 dark:border-purple-900/60" />
+                    </div>
+                  )}
+
+                  {/* ── Page Desk Header Toolbar (Page X of Y + Complete Page Delete) ── */}
+                  {!activeIsPreview && (
+                    <div
+                      className="flex items-center justify-between pb-1.5 px-0.5 text-xs select-none"
+                      style={{
+                        width: `${activePageWidth}px`,
+                        marginLeft: activeShowRulers && !activeIsPreview ? "32px" : undefined,
+                        marginTop: pageIdx > 0 ? "8px" : undefined,
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-[11px] text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 px-2.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-700 shadow-xs">
+                          Page {page.pageNumber} of {pages.length}
+                        </span>
+                        <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-mono">
+                          {page.rows.length} {page.rows.length === 1 ? "row" : "rows"}
+                        </span>
+                      </div>
+                      {pages.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setPageToDelete(page)}
+                          className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-zinc-800 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white border border-slate-200 dark:border-zinc-700 hover:border-rose-500 rounded-md transition-all shadow-xs cursor-pointer"
+                          title={`Delete Page ${page.pageNumber} and all its content`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete Page</span>
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -1195,9 +1290,8 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                               />
                             )}
 
-                            {page.rows.map((row, rowIdx) => {
+                            {page.rows.map((row) => {
                               const globalRowIndex = rows.findIndex((r) => r.id === row.id);
-                              const isAutoBreakFirstRow = pageIdx > 0 && rowIdx === 0 && !row.pageBreakBefore;
                               return (
                                 <React.Fragment key={row.id}>
                                   <SortableRow
@@ -1206,7 +1300,6 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                                     selectedCellId={activeSelectedCellId}
                                     selectedRowId={activeSelectedRowId}
                                     isPreview={activeIsPreview}
-                                    isAutoBreakFirstRow={isAutoBreakFirstRow}
                                     currentPageNumber={page.pageNumber}
                                     zoom={activeZoom}
                                     onSelectCell={handleSelectCell}
@@ -1310,6 +1403,14 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
         pagesCount={pages.length}
         activeViewPageIndex={activeViewPageIndex}
         onNavigatePage={handleNavigatePage}
+        onDeleteCurrentPage={
+          pages.length > 1
+            ? () => {
+                const target = pages[activeViewPageIndex] || pages[0];
+                if (target) setPageToDelete(target);
+              }
+            : undefined
+        }
         activeZoom={activeZoom}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
@@ -1323,6 +1424,47 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
         activeIsPreview={activeIsPreview}
         onTogglePreview={handleTogglePreview}
       />
+
+      {/* ── Complete Page Delete Confirmation Modal ── */}
+      {pageToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white text-center">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold">Delete Page {pageToDelete.pageNumber}?</h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1.5 leading-relaxed">
+                {pageToDelete.rows.length > 0 ? (
+                  <>
+                    This will permanently remove all <span className="font-semibold text-slate-700 dark:text-zinc-200">{pageToDelete.rows.length} {pageToDelete.rows.length === 1 ? "row" : "rows"}</span> and their visual blocks on Page {pageToDelete.pageNumber}.
+                  </>
+                ) : (
+                  `Are you sure you want to delete Page ${pageToDelete.pageNumber}?`
+                )}
+                <br />This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setPageToDelete(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleConfirmDeletePage(pageToDelete)}
+                className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-xs font-bold transition-all shadow-md shadow-rose-500/20 cursor-pointer flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Page {pageToDelete.pageNumber}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
 
       {/* ── 3D Elevated Drag Overlay ── */}

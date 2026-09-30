@@ -10,12 +10,14 @@ import {
   Square,
   Ruler,
   Eye,
+  Trash2,
 } from "lucide-react";
 
 export interface CanvasViewportDockProps {
   pagesCount: number;
   activeViewPageIndex: number;
   onNavigatePage: (index: number) => void;
+  onDeleteCurrentPage?: () => void;
   activeZoom: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -34,6 +36,7 @@ export function CanvasViewportDock({
   pagesCount,
   activeViewPageIndex,
   onNavigatePage,
+  onDeleteCurrentPage,
   activeZoom,
   onZoomIn,
   onZoomOut,
@@ -79,6 +82,16 @@ export function CanvasViewportDock({
             >
               <ChevronDown className="w-3.5 h-3.5" />
             </button>
+            {onDeleteCurrentPage && !activeIsPreview && (
+              <button
+                type="button"
+                onClick={onDeleteCurrentPage}
+                className="p-1 ml-0.5 rounded text-rose-500 hover:text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                title={`Delete Page ${currentDisplayPage}`}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
           <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 mx-1" />
         </>

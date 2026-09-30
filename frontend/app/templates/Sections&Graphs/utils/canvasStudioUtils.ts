@@ -65,7 +65,6 @@ export interface SortableRowProps {
   selectedCellId?: string | null;
   selectedRowId?: string | null;
   isPreview?: boolean;
-  isAutoBreakFirstRow?: boolean;
   currentPageNumber?: number;
   onSelectCell?: (cellId: string | null, rowId: string | null) => void;
   onEditCell: (cell: CanvasCell, rowId: string) => void;

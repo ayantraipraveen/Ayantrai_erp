@@ -13,7 +13,6 @@ export function SortableRow({
   selectedCellId,
   selectedRowId,
   isPreview = false,
-  isAutoBreakFirstRow = false,
   currentPageNumber = 1,
   onSelectCell,
   onEditCell,
@@ -78,17 +77,6 @@ export function SortableRow({
           <Layers className="w-3 h-3" />
           <span className="font-bold uppercase tracking-wider">Manual Page Break (Starts on New Page)</span>
           <div className="flex-1 border-t border-dashed border-[#8B3DFF]/40" />
-        </div>
-      )}
-
-      {/* Auto Page Break visual marker (Triggered by standard A4 height 1123px) */}
-      {isAutoBreakFirstRow && !isPreview && (
-        <div className="flex items-center gap-2 -mt-1 mb-2.5 px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60 text-[10px] font-mono text-purple-700 dark:text-purple-300 shadow-xs">
-          <Layers className="w-3.5 h-3.5 text-[#8B3DFF] flex-shrink-0 animate-pulse" />
-          <span className="font-bold uppercase tracking-wider">AUTO PAGE BREAK APPLIED</span>
-          <span className="text-purple-300 dark:text-purple-700">&bull;</span>
-          <span className="text-slate-600 dark:text-zinc-300 font-sans font-medium">Standard PDF Page Limit (842px) &bull; Moved to Page {currentPageNumber}</span>
-          <div className="flex-1 border-t border-dashed border-purple-300 dark:border-purple-700/60" />
         </div>
       )}
 
