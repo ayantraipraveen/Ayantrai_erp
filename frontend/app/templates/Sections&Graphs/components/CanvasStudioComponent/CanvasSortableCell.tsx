@@ -395,7 +395,9 @@ export function SortableCell({
 
   const rawBaseBlockHeight = currentHeight || getDefaultBlockHeight(cell.blockType);
 
-  const rawStackedSum = hasStacked ? cell.stackedCells!.length * STACK_H : 0;
+  const rawStackedSum = hasStacked
+    ? cell.stackedCells!.reduce((sum: number, sc: any) => sum + (sc.customHeight || getDefaultBlockHeight(sc.blockType)), 0)
+    : 0;
 
   const stackGapTotal = hasStacked ? cell.stackedCells!.length * 12 : 0;
   const maxAvailableForCards = Math.max(140, maxColumnHeight - stackGapTotal);
@@ -404,7 +406,7 @@ export function SortableCell({
 
   const baseBlockHeight = Math.max(MIN_BLOCK_H, Math.floor(rawBaseBlockHeight * cardScale));
 
-  const stackedExtraHeight = hasStacked ? cell.stackedCells!.length * (STACK_H + 12) : 0;
+  const stackedExtraHeight = hasStacked ? rawStackedSum + cell.stackedCells!.length * 12 : 0;
 
   const rawMinHeight = hasStacked
     ? baseBlockHeight + stackedExtraHeight
@@ -601,7 +603,9 @@ export function SortableCell({
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
     maxWidth: widthStyle,
-    height: !hasStacked && typeof currentHeight === "number" ? `${currentHeight}px` : undefined,
+    height: typeof currentHeight === "number"
+      ? `${currentHeight + (hasStacked ? stackedExtraHeight : 0)}px`
+      : undefined,
     maxHeight: `${maxColumnHeight}px`,
     minHeight: effectiveMinHeight ? `${Math.min(maxColumnHeight, effectiveMinHeight)}px` : undefined,
     flexShrink: 0,
@@ -703,8 +707,8 @@ export function SortableCell({
         </button>
       )}
 
-      {/* Resize handle (bottom edge for height) — fixed size, opacity-only, shown when no stacked blocks */}
-      {!isPreview && !hasStacked && (
+      {/* Resize handle (bottom edge for height) — always visible on hover */}
+      {!isPreview && (
         <div
           onMouseDown={handleHeightResizeStart}
           className={`absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center transition-opacity ${
@@ -737,7 +741,7 @@ export function SortableCell({
             maxHeight: `${maxPrimaryH}px`,
             height: !hasStacked && typeof currentHeight === "number" ? `${currentHeight}px` : undefined,
           }}
-          className={`w-full ${hasStacked ? "flex-1 min-h-0" : "flex-none"} flex flex-col relative group/primary-block overflow-hidden`}
+          className={`w-full ${hasStacked ? "flex-1 min-h-0" : "flex-none"} flex flex-col relative group/primary-block overflow-visible`}
         >
           <CanvasBlockRenderer
             cell={currentHeight !== cell.customHeight ? { ...cell, customHeight: currentHeight } : cell}
@@ -768,20 +772,6 @@ export function SortableCell({
             }}
           />
 
-          {/* Resize handle for primary block height */}
-          {!isPreview && (
-            <div
-              onMouseDown={(e) => {
-                const primaryDom = cellDomRef.current?.querySelector(".group\\/primary-block") as HTMLElement | null;
-                const startH = primaryDom?.offsetHeight || cell.customHeight || baseBlockHeight || 140;
-                handleHeightResizeStart(e, startH);
-              }}
-              className="absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center opacity-0 group-hover/primary-block:opacity-100 transition-opacity"
-              title="Drag vertically to adjust height of this card"
-            >
-              <div className="h-0.5 w-8 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/primary-block:bg-[#8B3DFF]/80 transition-colors" />
-            </div>
-          )}
         </div>
 
         {/* Stacked Blocks underneath (Canva Column Stack) */}
@@ -804,7 +794,7 @@ export function SortableCell({
                     width: sc.customWidth ? `${sc.customWidth}%` : "100%",
                     maxWidth: "100%",
                     boxSizing: "border-box",
-                    height: STACK_H,
+                    height: sc.customHeight || getDefaultBlockHeight(sc.blockType),
                     flexShrink: 0,
                   }}
                   className={`relative group/stacked-block transition-all ${
@@ -1020,8 +1010,7 @@ export function SortableCell({
               style={{
                 position: "fixed",
                 top: portalPos.top,
-                left: portalPos.left + portalPos.width / 2,
-                transform: "translateX(-50%)",
+                left: portalPos.left,
                 zIndex: 99999,
               }}
               className="portal-quick-add-panel p-1.5 bg-white/98 dark:bg-zinc-900/98 backdrop-blur-md border-2 border-[#8B3DFF] rounded-2xl shadow-2xl flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-150 select-none whitespace-nowrap"
@@ -1138,8 +1127,7 @@ export function SortableCell({
               style={{
                 position: "fixed",
                 top: portalPos.top,
-                left: portalPos.left + portalPos.width / 2,
-                transform: "translateX(-50%)",
+                left: portalPos.left,
                 zIndex: 99999,
               }}
               className="portal-stack-trigger-btn flex items-center gap-1 px-3 py-1 bg-white/95 dark:bg-zinc-900/95 border border-dashed border-[#8B3DFF]/70 hover:border-[#8B3DFF] text-[#8B3DFF] hover:bg-[#8B3DFF]/10 text-[11px] font-semibold rounded-full shadow-lg backdrop-blur-md cursor-pointer transition-all duration-150 animate-in fade-in zoom-in-95 hover:scale-105 active:scale-95"
