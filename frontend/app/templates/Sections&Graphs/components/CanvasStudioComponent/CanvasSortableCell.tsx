@@ -387,18 +387,14 @@ export function SortableCell({
     };
   }, [updateDynamicMaxHeight]);
 
+  const STACK_H = 5;
   const maxColumnHeight = dynamicMaxHeight;
   const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
   const bottomZoneH = 0; // Rendered in React portal, takes zero internal cell layout height
 
   const rawBaseBlockHeight = currentHeight || getDefaultBlockHeight(cell.blockType);
 
-  const rawStackedSum = hasStacked
-    ? cell.stackedCells!.reduce((acc: number, sc: any) => {
-        const scH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
-        return acc + scH;
-      }, 0)
-    : 0;
+  const rawStackedSum = hasStacked ? cell.stackedCells!.length * STACK_H : 0;
 
   const stackGapTotal = hasStacked ? cell.stackedCells!.length * 12 : 0;
   const maxAvailableForCards = Math.max(140, maxColumnHeight - stackGapTotal);
@@ -407,13 +403,7 @@ export function SortableCell({
 
   const baseBlockHeight = Math.max(70, Math.floor(rawBaseBlockHeight * cardScale));
 
-  const stackedExtraHeight = hasStacked
-    ? cell.stackedCells!.reduce((acc: number, sc: any) => {
-        const rawScH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
-        const scH = Math.max(70, Math.floor(rawScH * cardScale));
-        return acc + scH + 12;
-      }, 0)
-    : 0;
+  const stackedExtraHeight = hasStacked ? cell.stackedCells!.length * (STACK_H + 12) : 0;
 
   const rawMinHeight = hasStacked
     ? baseBlockHeight + stackedExtraHeight
@@ -743,7 +733,7 @@ export function SortableCell({
         {/* Primary Block */}
         <div
           style={{ maxHeight: `${maxPrimaryH}px` }}
-          className="w-full flex-none flex flex-col relative group/primary-block overflow-hidden"
+          className={`w-full ${hasStacked ? "flex-1 min-h-0" : "flex-none"} flex flex-col relative group/primary-block overflow-hidden`}
         >
           <CanvasBlockRenderer
             cell={cell}
@@ -795,8 +785,6 @@ export function SortableCell({
           <div className="w-full flex flex-col gap-3">
             {cell.stackedCells.map((sc: any, sIdx: number) => {
               const isStackedSelected = selectedCellId === sc.id;
-              const defaultScH = getDefaultBlockHeight(sc.blockType);
-              const currentScH = sc.customHeight || defaultScH;
               const currentScW = sc.customWidth || 100;
 
               return (
@@ -812,6 +800,8 @@ export function SortableCell({
                     width: sc.customWidth ? `${sc.customWidth}%` : "100%",
                     maxWidth: "100%",
                     boxSizing: "border-box",
+                    height: STACK_H,
+                    flexShrink: 0,
                   }}
                   className={`relative group/stacked-block transition-all ${
                     isStackedSelected && !isPreview ? "ring-2 ring-[#8B3DFF] rounded-2xl shadow-lg" : ""
@@ -845,36 +835,6 @@ export function SortableCell({
                           }}
                           className="w-3.5 h-3.5 rounded text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-[10px] cursor-pointer"
                           title="Increase width of this stacked card"
-                        >+</button>
-                      </div>
-
-                      {/* Height Quick Stepper */}
-                      <div className="flex items-center border-r border-slate-200 dark:border-zinc-700 pr-1.5 mr-0.5 gap-0.5">
-                        <span className="text-[9px] font-mono text-slate-400">H:</span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const next = Math.max(70, currentScH - 20);
-                            if (typeof onHeightChange === "function") onHeightChange(sc.id, rowId, next);
-                          }}
-                          className="w-3.5 h-3.5 rounded text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-[10px] cursor-pointer"
-                          title="Decrease height of this stacked card"
-                        >-</button>
-                        <span className="text-[9px] font-mono font-bold text-slate-700 dark:text-zinc-200 min-w-[32px] text-center">
-                          {currentScH}px
-                        </span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const otherStackedH = Math.max(0, stackedExtraHeight - (currentScH + 12));
-                            const maxScH = Math.max(70, maxColumnHeight - baseBlockHeight - otherStackedH - 12 - bottomZoneH);
-                            const next = Math.min(maxScH, currentScH + 20);
-                            if (typeof onHeightChange === "function") onHeightChange(sc.id, rowId, next);
-                          }}
-                          className="w-3.5 h-3.5 rounded text-slate-500 hover:text-purple-600 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center font-bold text-[10px] cursor-pointer"
-                          title="Increase height of this stacked card"
                         >+</button>
                       </div>
 
@@ -951,32 +911,34 @@ export function SortableCell({
                     </div>
                   )}
 
-                  <CanvasBlockRenderer
-                    cell={sc}
-                    isSelected={isStackedSelected}
-                    isPreview={isPreview}
-                    onUpdateMetricCard={(card) => {
-                      if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, sc.id, card);
-                    }}
-                    onUpdateInsight={(text) => {
-                      if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, sc.id, text);
-                    }}
-                    onUpdateTextBlock={(content) => {
-                      if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, sc.id, content);
-                    }}
-                    onUpdateBadgeStrip={(strip) => {
-                      if (typeof onUpdateBadgeStrip === "function") onUpdateBadgeStrip(rowId, sc.id, strip);
-                    }}
-                    onUpdateSingleBadge={(badgeId, patch) => {
-                      if (typeof onUpdateSingleBadge === "function") onUpdateSingleBadge(rowId, sc.id, badgeId, patch);
-                    }}
-                    onAddBadge={() => {
-                      if (typeof onAddBadge === "function") onAddBadge(rowId, sc.id);
-                    }}
-                    onDeleteBadge={(badgeId) => {
-                      if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, sc.id, badgeId);
-                    }}
-                  />
+                  <div className="h-full overflow-hidden rounded-2xl">
+                    <CanvasBlockRenderer
+                      cell={sc}
+                      isSelected={isStackedSelected}
+                      isPreview={isPreview}
+                      onUpdateMetricCard={(card) => {
+                        if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, sc.id, card);
+                      }}
+                      onUpdateInsight={(text) => {
+                        if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, sc.id, text);
+                      }}
+                      onUpdateTextBlock={(content) => {
+                        if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, sc.id, content);
+                      }}
+                      onUpdateBadgeStrip={(strip) => {
+                        if (typeof onUpdateBadgeStrip === "function") onUpdateBadgeStrip(rowId, sc.id, strip);
+                      }}
+                      onUpdateSingleBadge={(badgeId, patch) => {
+                        if (typeof onUpdateSingleBadge === "function") onUpdateSingleBadge(rowId, sc.id, badgeId, patch);
+                      }}
+                      onAddBadge={() => {
+                        if (typeof onAddBadge === "function") onAddBadge(rowId, sc.id);
+                      }}
+                      onDeleteBadge={(badgeId) => {
+                        if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, sc.id, badgeId);
+                      }}
+                    />
+                  </div>
 
                   {/* Resize handle for stacked block width (right edge) */}
                   {!isPreview && (
@@ -988,19 +950,6 @@ export function SortableCell({
                       title="Drag horizontally to adjust width of this stacked block"
                     >
                       <div className="w-0.5 h-8 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/stacked-block:bg-[#8B3DFF]/80 transition-colors" />
-                    </div>
-                  )}
-
-                  {/* Resize handle for stacked block height (bottom edge) */}
-                  {!isPreview && (
-                    <div
-                      onMouseDown={(e) => {
-                        handleStackedHeightResizeStart(e, sc.id, currentScH);
-                      }}
-                      className="absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center opacity-0 group-hover/stacked-block:opacity-100 transition-opacity"
-                      title="Drag vertically to adjust height of this stacked block"
-                    >
-                      <div className="h-0.5 w-8 rounded-full bg-slate-400/80 dark:bg-zinc-500 group-hover/stacked-block:bg-[#8B3DFF]/80 transition-colors" />
                     </div>
                   )}
                 </div>
