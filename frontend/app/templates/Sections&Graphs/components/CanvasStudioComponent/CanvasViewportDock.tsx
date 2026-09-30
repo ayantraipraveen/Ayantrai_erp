@@ -86,7 +86,7 @@ export function CanvasViewportDock({
               <button
                 type="button"
                 onClick={onDeleteCurrentPage}
-                className="p-1 ml-0.5 rounded text-rose-500 hover:text-white hover:bg-rose-500 transition-colors cursor-pointer"
+                className="p-1 ml-0.5 rounded text-rose-500 hover:text-rose-600 dark:text-rose-400 hover:bg-white dark:hover:bg-zinc-700 transition-colors cursor-pointer"
                 title={`Delete Page ${currentDisplayPage}`}
               >
                 <Trash2 className="w-3.5 h-3.5" />

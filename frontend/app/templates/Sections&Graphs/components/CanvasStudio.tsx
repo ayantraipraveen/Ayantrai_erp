@@ -1023,68 +1023,52 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
 };
               return (
                 <React.Fragment key={`page-${page.pageIndex}`}>
-                  {/* Visual Page Break Between Pages on Desk */}
+                  {/* Clean Document Page Break Divider between pages on desk */}
                   {pageIdx > 0 && (
                     <div
-                      className="flex items-center gap-4 my-2 text-xs select-none"
+                      className="flex items-center gap-3 my-4 select-none"
                       style={{
                         width: `${activePageWidth}px`,
                         marginLeft: activeShowRulers && !activeIsPreview ? "32px" : undefined,
                       }}
                     >
-                      <div className="flex-1 border-t-2 border-dashed border-purple-300 dark:border-purple-900/60" />
-                      <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-zinc-800 border-2 border-purple-300 dark:border-purple-700 text-slate-700 dark:text-zinc-200 font-mono font-bold text-[11px] shadow-md">
-                        <Layers className="w-4 h-4 text-[#8B3DFF] animate-pulse" />
-                        <span className="text-[#8B3DFF] font-black">AUTO PAGE BREAKER</span>
-                        <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
-                        <span>Page {page.pageNumber} of {pages.length}</span>
-                        <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
-                        <span className="text-slate-500 dark:text-zinc-400 font-medium">
-                          Standard PDF A4 (595 × 842 px)
-                        </span>
-                        {!activeIsPreview && pages.length > 1 && (
-                          <>
-                            <span className="text-slate-300 dark:text-zinc-600">&bull;</span>
-                            <button
-                              type="button"
-                              onClick={() => setPageToDelete(page)}
-                              className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 hover:text-white hover:bg-rose-500 px-2 py-0.5 rounded-full transition-colors cursor-pointer"
-                              title={`Delete Page ${page.pageNumber}`}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                              <span>Delete Page {page.pageNumber}</span>
-                            </button>
-                          </>
-                        )}
+                      <div className="flex-1 border-t border-dashed border-slate-300 dark:border-zinc-700" />
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800/90 text-slate-500 dark:text-zinc-400 text-[10px] font-mono uppercase tracking-wider font-semibold border border-slate-200 dark:border-zinc-700 shadow-xs">
+                        <Layers className="w-3 h-3 text-[#8B3DFF]" />
+                        <span>Page Break &bull; Standard A4</span>
                       </div>
-                      <div className="flex-1 border-t-2 border-dashed border-purple-300 dark:border-purple-900/60" />
+                      <div className="flex-1 border-t border-dashed border-slate-300 dark:border-zinc-700" />
                     </div>
                   )}
 
-                  {/* ── Page Desk Header Toolbar (Page X of Y + Complete Page Delete) ── */}
+                  {/* ── Standard Artboard Header Toolbar (Page X of Y + Complete Page Delete) ── */}
                   {!activeIsPreview && (
                     <div
-                      className="flex items-center justify-between pb-1.5 px-0.5 text-xs select-none"
+                      className="flex items-center justify-between pb-2 px-0.5 text-xs select-none"
                       style={{
                         width: `${activePageWidth}px`,
                         marginLeft: activeShowRulers && !activeIsPreview ? "32px" : undefined,
-                        marginTop: pageIdx > 0 ? "8px" : undefined,
+                        marginTop: pageIdx > 0 ? "4px" : undefined,
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-[11px] text-slate-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 px-2.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-700 shadow-xs">
+                        <span className="font-bold text-xs text-slate-800 dark:text-zinc-200">
                           Page {page.pageNumber} of {pages.length}
                         </span>
-                        <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-mono">
-                          {page.rows.length} {page.rows.length === 1 ? "row" : "rows"}
+                        <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">
+                          &bull; {page.rows.length} {page.rows.length === 1 ? "row" : "rows"}
+                        </span>
+                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono bg-slate-100 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded border border-slate-200/80 dark:border-zinc-700/60">
+                          A4 595×842
                         </span>
                       </div>
+
                       {pages.length > 1 && (
                         <button
                           type="button"
                           onClick={() => setPageToDelete(page)}
-                          className="flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-white dark:bg-zinc-800 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-600 dark:hover:text-white border border-slate-200 dark:border-zinc-700 hover:border-rose-500 rounded-md transition-all shadow-xs cursor-pointer"
-                          title={`Delete Page ${page.pageNumber} and all its content`}
+                          className="h-7 px-2.5 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title={`Delete Page ${page.pageNumber}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                           <span>Delete Page</span>
