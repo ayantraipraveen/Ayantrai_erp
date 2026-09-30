@@ -156,6 +156,9 @@ export function CanvasStudio({
 
   const [activeViewPageIndex, setActiveViewPageIndex] = useState<number>(0);
   const prevPagesLengthRef = useRef(pages.length);
+  const deskScrollRef = useRef<HTMLDivElement>(null);
+  const isProgrammaticScrollingRef = useRef<boolean>(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-scroll to newly created page if page count increases
   useEffect(() => {
@@ -168,6 +171,22 @@ export function CanvasStudio({
     }
     prevPagesLengthRef.current = pages.length;
   }, [pages.length]);
+
+  // Keep activeViewPageIndex clamped within valid bounds if page count changes
+  useEffect(() => {
+    if (activeViewPageIndex >= pages.length) {
+      setActiveViewPageIndex(Math.max(0, pages.length - 1));
+    }
+  }, [pages.length, activeViewPageIndex]);
+
+  // Clean up any pending scroll timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const [editingPageIndex, setEditingPageIndex] = useState<number | null>(null);
   // Internal fallbacks if not controlled by parent
@@ -345,6 +364,81 @@ export function CanvasStudio({
   const activeShowGuides = showGuides !== undefined ? showGuides : internalShowGuides;
   const activeShowRulers = showRulers !== undefined ? showRulers : internalShowRulers;
   const activeIsPreview = isPreview !== undefined ? isPreview : internalIsPreview;
+
+  // Programmatic smooth navigation to a target page
+  const handleNavigatePage = useCallback(
+    (targetIdx: number) => {
+      const clamped = Math.max(0, Math.min(pages.length - 1, targetIdx));
+      setActiveViewPageIndex(clamped);
+      isProgrammaticScrollingRef.current = true;
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      const targetEl = document.getElementById(`canvas-page-${clamped}`);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      scrollTimeoutRef.current = setTimeout(() => {
+        isProgrammaticScrollingRef.current = false;
+      }, 600);
+    },
+    [pages.length]
+  );
+
+  // Dynamic active page tracking on desk scroll
+  const handleDeskScroll = useCallback(() => {
+    if (isProgrammaticScrollingRef.current) return;
+    const container = deskScrollRef.current;
+    if (!container || pages.length <= 1) return;
+
+    const containerRect = container.getBoundingClientRect();
+    // Reference reading focal line: 35% down the container viewport
+    const focalY = containerRect.top + Math.min(containerRect.height * 0.35, 260);
+
+    let bestIndex = 0;
+    let maxVisibleHeight = -1;
+
+    // Boundary snap: if scrolled near the top
+    if (container.scrollTop <= 40) {
+      bestIndex = 0;
+    } else if (container.scrollTop + container.clientHeight >= container.scrollHeight - 40) {
+      // Boundary snap: if scrolled near the bottom
+      bestIndex = pages.length - 1;
+    } else {
+      for (let i = 0; i < pages.length; i++) {
+        const pageEl = document.getElementById(`canvas-page-${i}`);
+        if (!pageEl) continue;
+        const pageRect = pageEl.getBoundingClientRect();
+
+        const visibleTop = Math.max(containerRect.top, pageRect.top);
+        const visibleBottom = Math.min(containerRect.bottom, pageRect.bottom);
+        const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+
+        // If the page covers the focal reading line, that's definitely the active page
+        if (pageRect.top <= focalY && pageRect.bottom >= focalY) {
+          bestIndex = i;
+          break;
+        }
+
+        if (visibleHeight > maxVisibleHeight) {
+          maxVisibleHeight = visibleHeight;
+          bestIndex = i;
+        }
+      }
+    }
+
+    setActiveViewPageIndex((prev) => (prev !== bestIndex ? bestIndex : prev));
+  }, [pages.length]);
+
+  // Re-check active page on zoom change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleDeskScroll();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [activeZoom, handleDeskScroll]);
 
   const handleSelectCell = useCallback(
     (cellId: string | null, rowId: string | null) => {
@@ -891,6 +985,8 @@ export function CanvasStudio({
     >
       {/* ── Infinite Studio Blueprint Desk ── */}
       <div
+        ref={deskScrollRef}
+        onScroll={handleDeskScroll}
         className="relative flex-1 min-h-0 overflow-auto p-6 sm:p-10 flex flex-col items-center select-none bg-[#f1f4f9] dark:bg-[#06080d]"
         style={
           activeShowGrid
@@ -1009,6 +1105,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                     {/* ── Fixed A4 Artboard Sheet ── */}
                     <div
                       id={`canvas-page-${page.pageIndex}`}
+                      onClick={() => setActiveViewPageIndex(page.pageIndex)}
                     style={{
                       ...customPaperStyle,
                       borderRadius: "2px",
@@ -1272,10 +1369,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
       <CanvasViewportDock
         pagesCount={pages.length}
         activeViewPageIndex={activeViewPageIndex}
-        onNavigatePage={(targetIdx) => {
-          setActiveViewPageIndex(targetIdx);
-          document.getElementById(`canvas-page-${targetIdx}`)?.scrollIntoView({ behavior: "smooth" });
-        }}
+        onNavigatePage={handleNavigatePage}
         activeZoom={activeZoom}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}

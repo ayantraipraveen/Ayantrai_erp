@@ -47,6 +47,11 @@ export function CanvasViewportDock({
   activeIsPreview,
   onTogglePreview,
 }: CanvasViewportDockProps) {
+  const currentDisplayPage = Math.min(
+    Math.max(1, activeViewPageIndex + 1),
+    Math.max(1, pagesCount)
+  );
+
   return (
     <div className="fixed bottom-4 right-8 z-40 flex items-center gap-1.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-2xl px-3 py-1.5 shadow-2xl backdrop-blur-md select-none text-xs">
       {/* Page Navigator when multi-page */}
@@ -56,19 +61,19 @@ export function CanvasViewportDock({
             <button
               type="button"
               onClick={() => onNavigatePage(Math.max(0, activeViewPageIndex - 1))}
-              disabled={activeViewPageIndex === 0}
+              disabled={activeViewPageIndex <= 0}
               className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
               title="Previous Page"
             >
               <ChevronUp className="w-3.5 h-3.5" />
             </button>
             <span className="px-1 text-[#8B3DFF]">
-              Page {activeViewPageIndex + 1} / {pagesCount}
+              Page {currentDisplayPage} / {pagesCount}
             </span>
             <button
               type="button"
               onClick={() => onNavigatePage(Math.min(pagesCount - 1, activeViewPageIndex + 1))}
-              disabled={activeViewPageIndex === pagesCount - 1}
+              disabled={activeViewPageIndex >= pagesCount - 1}
               className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
               title="Next Page"
             >
