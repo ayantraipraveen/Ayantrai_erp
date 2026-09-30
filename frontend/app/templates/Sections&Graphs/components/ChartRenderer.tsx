@@ -1159,7 +1159,7 @@ export default function ChartRenderer({
     return (
       <div
         style={{ height: `${height}px`, minHeight: `${height}px` }}
-        className="w-full flex items-center justify-center overflow-hidden [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full"
+        className="w-full flex items-center justify-center overflow-hidden [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full"
       >
         {renderChart()}
       </div>
@@ -1167,7 +1167,7 @@ export default function ChartRenderer({
   }
 
   return (
-    <div className="w-full h-full min-h-0 max-h-full flex items-center justify-center overflow-hidden [&>div]:!min-h-[140px] [&>div]:!max-h-full [&>div]:!h-full">
+    <div className="w-full h-full min-h-0 max-h-full flex items-center justify-center overflow-hidden [&>div]:!min-h-[140px] [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full">
       {renderChart()}
     </div>
   );

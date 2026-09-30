@@ -863,9 +863,7 @@ export const sectionsStudioReducers = {
         } else {
           // Top-level column width
           found.cell.colSpan = colSpan;
-          if (customWidth !== undefined) {
-            found.cell.customWidth = customWidth;
-          }
+          found.cell.customWidth = customWidth !== undefined ? customWidth : undefined;
         }
         if (sec) sec.updatedAt = "Just now";
       }

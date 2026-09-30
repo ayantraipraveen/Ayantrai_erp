@@ -59,7 +59,7 @@ export interface CanvasContextRibbonProps {
   sectionName: string;
   sectionEyebrow: string;
   onUpdateColSpan: (span: 1 | 2 | 3 | 4) => void;
-  onUpdateWidth?: (customWidth: number) => void;
+  onUpdateWidth?: (customWidth?: number) => void;
   onUpdateHeight?: (customHeight?: number) => void;
   onUpdateMetricCard?: (card: LibraryMetricCard) => void;
   onUpdateChart?: (chart: LibraryChartCard) => void;
@@ -587,9 +587,10 @@ export function CanvasContextRibbon({
           {/* Fluid Width Controls (Always Visible) */}
           {(() => {
             const currentCellWidth = Math.round(selectedCell.customWidth ?? (selectedCell.colSpan ? selectedCell.colSpan * 25 : 50));
+            const isChart = selectedCell.blockType === "chart";
             const baseHeightForCell =
               selectedCell.customHeight || (
-                selectedCell.blockType === "chart" ? 370 :
+                isChart ? 360 :
                 selectedCell.blockType === "badge-strip" ? 140 :
                 selectedCell.blockType === "insight" ? 110 :
                 selectedCell.blockType === "text" ? 90 :
@@ -600,7 +601,22 @@ export function CanvasContextRibbon({
               <>
                 <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
                   <span className="text-[10px] font-mono font-bold text-slate-400 px-1">Width:</span>
-                  {([25, 33, 50, 75, 100] as const).map((w) => (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onUpdateWidth) onUpdateWidth(undefined);
+                      else onUpdateColSpan(2);
+                    }}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                      selectedCell.customWidth === undefined
+                        ? "bg-[#9D61FF] text-white shadow-xs"
+                        : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
+                    }`}
+                    title="Auto width (fits row naturally)"
+                  >
+                    Auto
+                  </button>
+                  {([25, 33, 50, 66, 75, 100] as const).map((w) => (
                     <button
                       key={w}
                       type="button"
@@ -612,7 +628,7 @@ export function CanvasContextRibbon({
                         }
                       }}
                       className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
-                        currentCellWidth === w
+                        selectedCell.customWidth !== undefined && Math.abs(currentCellWidth - w) <= 1
                           ? "bg-[#9D61FF] text-white shadow-xs"
                           : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
                       }`}
@@ -651,15 +667,23 @@ export function CanvasContextRibbon({
                   </div>
                 </div>
 
-                {/* Fluid Height Controls (Always Visible & Capped at 520px) */}
+                {/* Fluid Height Controls with Standard Block-Aware Presets */}
                 <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
                   <span className="text-[10px] font-mono font-bold text-slate-400 px-1">Height:</span>
-                  {([
-                    { label: "Auto", val: undefined },
-                    { label: "S", val: 140 },
-                    { label: "M", val: 240 },
-                    { label: "L", val: 360 },
-                  ] as const).map((h) => {
+                  {(isChart
+                    ? [
+                        { label: "Auto", val: undefined, tip: "Auto standard golden-ratio height (360px)" },
+                        { label: "S", val: 280, tip: "S (Compact Chart 280px)" },
+                        { label: "M", val: 360, tip: "M (Standard Chart 360px)" },
+                        { label: "L", val: 460, tip: "L (Expanded Chart 460px)" },
+                      ]
+                    : [
+                        { label: "Auto", val: undefined, tip: "Auto fits block content naturally" },
+                        { label: "S", val: 140, tip: "S (Compact 140px)" },
+                        { label: "M", val: 240, tip: "M (Standard 240px)" },
+                        { label: "L", val: 360, tip: "L (Large 360px)" },
+                      ]
+                  ).map((h) => {
                     const isSelected = h.val === undefined
                       ? selectedCell.customHeight === undefined
                       : selectedCell.customHeight === h.val;
@@ -673,7 +697,7 @@ export function CanvasContextRibbon({
                             ? "bg-[#9D61FF] text-white shadow-xs"
                             : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
                         }`}
-                        title={h.val ? `Set block height to ${h.val}px` : "Reset block height to Auto"}
+                        title={h.tip}
                       >
                         {h.label}
                       </button>
@@ -685,11 +709,12 @@ export function CanvasContextRibbon({
                       type="button"
                       onClick={() => {
                         const curr = selectedCell.customHeight ?? baseHeightForCell;
-                        const next = Math.max(0, curr - 20);
+                        const minH = isChart ? 260 : 32;
+                        const next = Math.max(minH, curr - 20);
                         if (onUpdateHeight) onUpdateHeight(next);
                       }}
                       className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
-                      title="Decrease height by 20px"
+                      title={isChart ? "Decrease height by 20px (min 260px)" : "Decrease height by 20px"}
                     >
                       -
                     </button>
@@ -700,7 +725,7 @@ export function CanvasContextRibbon({
                       type="button"
                       onClick={() => {
                         const curr = selectedCell.customHeight ?? baseHeightForCell;
-                        const next = Math.min(480, curr + 20);
+                        const next = Math.min(560, curr + 20);
                         if (onUpdateHeight) onUpdateHeight(next);
                       }}
                       className="w-4 h-4 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-zinc-900 flex items-center justify-center font-bold text-xs cursor-pointer"
@@ -762,6 +787,35 @@ export function CanvasContextRibbon({
                 ))}
               </div>
             </RibbonPortalPopover>
+          </div>
+
+          {/* ── Direct Font Size Scale Controls ── */}
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-zinc-800/80 p-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+            <span className="text-[10px] font-mono font-bold text-slate-400 px-1" title="Font Size Scale">Size:</span>
+            {([
+              { id: "xs", label: "XS", tip: "Extra Small (11px)" },
+              { id: "sm", label: "S", tip: "Small (12px)" },
+              { id: "base", label: "M", tip: "Medium Standard (14px)" },
+              { id: "lg", label: "L", tip: "Large (16px)" },
+              { id: "xl", label: "XL", tip: "Extra Large (18px)" },
+            ] as const).map((sz) => {
+              const isSelected = (currentStyle.fontSize || "base") === sz.id;
+              return (
+                <button
+                  key={sz.id}
+                  type="button"
+                  onClick={() => onUpdateCellStyle && onUpdateCellStyle({ fontSize: sz.id })}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-[#9D61FF] text-white shadow-xs"
+                      : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
+                  }`}
+                  title={sz.tip}
+                >
+                  {sz.label}
+                </button>
+              );
+            })}
           </div>
 
           {/* ── Text Align Controls ── */}
@@ -954,7 +1008,27 @@ export function CanvasContextRibbon({
 
           {/* Metric Card Context Controls (if metric-card) */}
           {selectedCell.blockType === "metric-card" && card && onUpdateMetricCard && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+                <span className="text-[10px] font-mono font-bold text-slate-400">Val:</span>
+                <input
+                  type="text"
+                  value={card.value}
+                  onChange={(e) => onUpdateMetricCard({ ...card, value: e.target.value })}
+                  className="h-6 w-16 px-1.5 rounded bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs font-bold text-slate-800 dark:text-zinc-100 outline-none focus:border-[#9D61FF]"
+                  placeholder="Value..."
+                  title="Edit metric value directly"
+                />
+                <span className="text-[10px] font-mono font-bold text-slate-400 ml-1">Txt:</span>
+                <input
+                  type="text"
+                  value={card.label}
+                  onChange={(e) => onUpdateMetricCard({ ...card, label: e.target.value })}
+                  className="h-6 w-24 px-1.5 rounded bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none focus:border-[#9D61FF] truncate"
+                  placeholder="Label..."
+                  title="Edit metric label directly"
+                />
+              </div>
               <span className="text-[10px] uppercase font-bold text-slate-400 mr-0.5 hidden md:inline">Tint:</span>
               {COLOR_RAMP_DOTS.map((dot) => (
                 <button
@@ -973,6 +1047,19 @@ export function CanvasContextRibbon({
           {/* Chart Context Controls (if chart) */}
           {selectedCell.blockType === "chart" && chart && onUpdateChart && (
             <>
+              {/* Direct Title Text Editing from Ribbon */}
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-zinc-800/80 px-2 py-0.5 rounded-lg border border-slate-200/80 dark:border-zinc-700/80">
+                <span className="text-[10px] font-mono font-bold text-slate-400">Title:</span>
+                <input
+                  type="text"
+                  value={chart.title}
+                  onChange={(e) => onUpdateChart({ ...chart, title: e.target.value })}
+                  className="h-6 w-36 sm:w-48 px-1.5 rounded bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-800 dark:text-zinc-100 outline-none focus:border-[#9D61FF] focus:ring-1 focus:ring-[#9D61FF]/30 transition-all truncate"
+                  placeholder="Chart title..."
+                  title="Edit chart title text directly from ribbon"
+                />
+              </div>
+
               <select
                 value={chart.chartType}
                 onChange={(e) => onUpdateChart({ ...chart, chartType: e.target.value as GraphType })}

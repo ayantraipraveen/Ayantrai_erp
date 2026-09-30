@@ -811,10 +811,15 @@ export default function SectionCanvasEditor({
   );
 
   const handleUpdateWidth = useCallback(
-    (customWidth: number) => {
+    (customWidth?: number) => {
       if (!selectedRowId || !selectedCellId) return;
-      const colSpan = (customWidth <= 30 ? 1 : customWidth <= 55 ? 2 : customWidth <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
-      dispatch(updateCellColSpan({ sectionId, rowId: selectedRowId, cellId: selectedCellId, colSpan, customWidth }));
+      if (customWidth === undefined) {
+        // Reset to balanced auto colSpan
+        dispatch(updateCellColSpan({ sectionId, rowId: selectedRowId, cellId: selectedCellId, colSpan: 2, customWidth: undefined }));
+      } else {
+        const colSpan = (customWidth <= 30 ? 1 : customWidth <= 55 ? 2 : customWidth <= 80 ? 3 : 4) as 1 | 2 | 3 | 4;
+        dispatch(updateCellColSpan({ sectionId, rowId: selectedRowId, cellId: selectedCellId, colSpan, customWidth }));
+      }
     },
     [dispatch, sectionId, selectedRowId, selectedCellId]
   );

@@ -279,14 +279,57 @@ function ChartBlock({
   const chart = cell.chart;
   if (!chart) return null;
   const customHeight = cell.customHeight;
-  const chartAreaHeight = customHeight ? Math.max(90, customHeight - (chart.description ? 130 : 95)) : undefined;
+  const style = cell.style || {};
+
+  // Dynamic font sizing
+  const fontSize = style.fontSize || "base";
+  const titleSizeClass =
+    fontSize === "xs"
+      ? "text-xs font-bold"
+      : fontSize === "sm"
+      ? "text-sm font-bold"
+      : fontSize === "lg"
+      ? "text-base sm:text-lg font-bold"
+      : fontSize === "xl"
+      ? "text-lg sm:text-xl font-bold"
+      : "text-sm sm:text-base font-bold";
+
+  const subtitleSizeClass =
+    fontSize === "xs" || fontSize === "sm"
+      ? "text-[9px]"
+      : fontSize === "lg" || fontSize === "xl"
+      ? "text-xs"
+      : "text-[10px]";
+
+  const descSizeClass =
+    fontSize === "xs"
+      ? "text-[10px]"
+      : fontSize === "sm"
+      ? "text-[11px]"
+      : fontSize === "lg"
+      ? "text-xs sm:text-sm"
+      : fontSize === "xl"
+      ? "text-sm"
+      : "text-[11px] sm:text-xs";
+
+  // Compact spacing & generous chart viewport allocation
+  const isCompact = customHeight !== undefined && customHeight < 300;
+  const pClass = isCompact ? "p-3 space-y-1.5" : "p-4 space-y-2.5";
+  const overhead = (chart.description ? 65 : 40) + (isCompact ? 24 : 32);
+  const chartAreaHeight = customHeight ? Math.max(160, customHeight - overhead) : undefined;
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [localTitle, setLocalTitle] = useState(chart.title);
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [localDesc, setLocalDesc] = useState(chart.description || "");
 
   useEffect(() => {
     setLocalTitle(chart.title);
   }, [chart.title]);
+
+  useEffect(() => {
+    setLocalDesc(chart.description || "");
+  }, [chart.description]);
 
   const handleTitleCommit = () => {
     setIsEditingTitle(false);
@@ -295,12 +338,17 @@ function ChartBlock({
     }
   };
 
+  const handleDescCommit = () => {
+    setIsEditingDesc(false);
+    if (localDesc !== chart.description && onUpdateChart) {
+      onUpdateChart({ ...chart, description: localDesc.trim() });
+    }
+  };
+
   return (
     <div
       style={customHeight ? { height: `${customHeight}px`, maxHeight: "100%" } : { maxHeight: "100%" }}
-      className={`relative group/chart w-full max-h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden ${
-        customHeight ? "space-y-1.5" : "space-y-3"
-      }`}
+      className={`relative group/chart w-full max-h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] ${pClass} shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden`}
     >
       <div className="flex items-start justify-between gap-3 flex-shrink-0">
         <div className="min-w-0 flex-1">
@@ -318,20 +366,20 @@ function ChartBlock({
                   setIsEditingTitle(false);
                 }
               }}
-              className="text-sm font-bold text-slate-900 dark:text-white bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full"
+              className={`${titleSizeClass} text-slate-900 dark:text-white bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
             />
           ) : (
             <h3
               onDoubleClick={() => !isPreview && setIsEditingTitle(true)}
               title={!isPreview ? "Double click to rename chart" : undefined}
-              className={`text-sm font-bold text-slate-900 dark:text-white tracking-tight truncate ${
+              className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate ${
                 !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
               }`}
             >
               {chart.title}
             </h3>
           )}
-          <div className="text-[10px] font-mono text-slate-400 mt-0.5 truncate">{chart.dataSourceField}</div>
+          <div className={`${subtitleSizeClass} font-mono text-slate-400 mt-0.5 truncate`}>{chart.dataSourceField}</div>
         </div>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -354,7 +402,7 @@ function ChartBlock({
           </span>
         </div>
       </div>
-      <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden py-1">
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-1">
         <ChartRenderer
           chart={chart}
           color={chart.color || chart.colors?.[0]}
@@ -365,9 +413,33 @@ function ChartBlock({
         />
       </div>
       {chart.description && (
-        <p className="text-[11px] text-slate-500 dark:text-zinc-400 pt-1.5 border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 line-clamp-2">
-          {chart.description}
-        </p>
+        isEditingDesc && !isPreview ? (
+          <input
+            type="text"
+            autoFocus
+            value={localDesc}
+            onChange={(e) => setLocalDesc(e.target.value)}
+            onBlur={handleDescCommit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleDescCommit();
+              if (e.key === "Escape") {
+                setLocalDesc(chart.description || "");
+                setIsEditingDesc(false);
+              }
+            }}
+            className={`${descSizeClass} font-medium text-slate-700 dark:text-zinc-300 bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
+          />
+        ) : (
+          <p
+            onDoubleClick={() => !isPreview && setIsEditingDesc(true)}
+            title={!isPreview ? "Double click to edit description / caption" : undefined}
+            className={`${descSizeClass} text-slate-500 dark:text-zinc-400 pt-1.5 border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 line-clamp-2 ${
+              !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
+            }`}
+          >
+            {chart.description}
+          </p>
+        )
       )}
     </div>
   );
@@ -1894,12 +1966,13 @@ function ElementBlock({ cell }: { cell: CanvasCell }) {
 // ── Helper to resolve CanvasCellStyle overrides ──────────────────────────────
 export function getCellStyleClasses(style?: CanvasCell["style"]): {
   fontClass: string;
+  fontSizeClass: string;
   alignClass: string;
   bgClass: string;
   textColorClass: string;
   styleProps: React.CSSProperties;
 } {
-  if (!style) return { fontClass: "", alignClass: "", bgClass: "", textColorClass: "", styleProps: {} };
+  if (!style) return { fontClass: "", fontSizeClass: "", alignClass: "", bgClass: "", textColorClass: "", styleProps: {} };
 
   const fontClass =
     style.fontFamily === "serif"
@@ -1910,13 +1983,24 @@ export function getCellStyleClasses(style?: CanvasCell["style"]): {
       ? "font-sans tracking-wide"
       : "font-sans";
 
+  const fontSizeClass =
+    style.fontSize === "xs"
+      ? "text-xs"
+      : style.fontSize === "sm"
+      ? "text-sm"
+      : style.fontSize === "lg"
+      ? "text-lg"
+      : style.fontSize === "xl"
+      ? "text-xl"
+      : "";
+
   const alignClass =
     style.textAlign === "center"
       ? "text-center"
       : style.textAlign === "right"
       ? "text-right"
       : "";
-const styleProps: React.CSSProperties = {};
+  const styleProps: React.CSSProperties = {};
   let bgClass = "";
   if (style.cardBg === "white") {
     bgClass = "[&>div]:bg-white dark:[&>div]:bg-[#0c1017] [&>div]:border-slate-200 dark:[&>div]:border-zinc-800";
@@ -2016,7 +2100,7 @@ const styleProps: React.CSSProperties = {};
     textColorClass = "[&_p]:!text-[inherit] [&_span]:!text-[inherit] [&_h1]:!text-[inherit] [&_h2]:!text-[inherit] [&_h3]:!text-[inherit] [&_h4]:!text-[inherit]";
   }
 
-  return { fontClass, alignClass, bgClass, textColorClass, styleProps };
+  return { fontClass, fontSizeClass, alignClass, bgClass, textColorClass, styleProps };
 }
 
 function withAlpha(color: string, opacity: number): string {
@@ -2066,7 +2150,7 @@ export function CanvasBlockRenderer({
   onAddBadge,
   onDeleteBadge,
 }: BlockRendererProps) {
-  const { fontClass, alignClass, bgClass, textColorClass, styleProps } = getCellStyleClasses(cell.style);
+  const { fontClass, fontSizeClass, alignClass, bgClass, textColorClass, styleProps } = getCellStyleClasses(cell.style);
   const backgroundColor = getCardBackgroundColor(cell.style);
 
   const renderInner = () => {
@@ -2167,7 +2251,7 @@ export function CanvasBlockRenderer({
 
   return (
     <div
-      className={`w-full h-full flex-1 min-h-0 flex flex-col transition-all ${fontClass} ${alignClass} ${bgClass} ${textColorClass}`}
+      className={`w-full h-full flex-1 min-h-0 flex flex-col transition-all ${fontClass} ${fontSizeClass} ${alignClass} ${bgClass} ${textColorClass}`}
       style={{
         color: styleProps.color,
       }}

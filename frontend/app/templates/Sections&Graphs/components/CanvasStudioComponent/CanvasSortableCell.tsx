@@ -1264,7 +1264,7 @@ export function SortableCell({
               >
                 Auto
               </button>
-              {[25, 33, 50, 75, 100].map((preset) => (
+              {[25, 33, 50, 66, 75, 100].map((preset) => (
                 <button
                   key={preset}
                   type="button"
@@ -1276,7 +1276,7 @@ export function SortableCell({
                     if (typeof onWidthChange === "function") onWidthChange(cell.id, rowId, preset);
                   }}
                   className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
-                    Math.abs(currentPercent - preset) <= 3
+                    Math.abs(currentPercent - preset) <= 2
                       ? "bg-[#8B3DFF] text-white font-bold"
                       : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
                   }`}
@@ -1305,61 +1305,77 @@ export function SortableCell({
               >
                 Auto
               </button>
-              {[
-                { label: "S", h: 200 },
-                { label: "M", h: 300 },
-                { label: "L", h: 400 },
-              ].map((preset) => {
-                const currentAllowed = Math.max(MIN_BLOCK_H, getAvailableHeightToFooter() - stackedExtraHeight);
-                const targetH = Math.min(currentAllowed, preset.h);
+              {(() => {
+                const isChart = cell.blockType === "chart";
+                const presetsToUse = isChart
+                  ? [
+                      { label: "S", h: 280 },
+                      { label: "M", h: 360 },
+                      { label: "L", h: 460 },
+                    ]
+                  : [
+                      { label: "S", h: 200 },
+                      { label: "M", h: 300 },
+                      { label: "L", h: 400 },
+                    ];
+                const minSafeH = isChart ? 260 : MIN_BLOCK_H;
+
                 return (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setResizeHeight(targetH);
-                      if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, targetH);
-                    }}
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
-                      currentHeight !== undefined && Math.abs(currentHeight - targetH) <= 15
-                        ? "bg-[#8B3DFF] text-white font-bold"
-                        : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
-                    }`}
-                    title={`Set height to ${preset.label} (${targetH}px)`}
-                  >
-                    {preset.label}
-                  </button>
+                  <>
+                    {presetsToUse.map((preset) => {
+                      const currentAllowed = Math.max(minSafeH, getAvailableHeightToFooter() - stackedExtraHeight);
+                      const targetH = Math.min(currentAllowed, preset.h);
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setResizeHeight(targetH);
+                            if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, targetH);
+                          }}
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                            currentHeight !== undefined && Math.abs(currentHeight - targetH) <= 15
+                              ? "bg-[#8B3DFF] text-white font-bold"
+                              : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
+                          }`}
+                          title={`Set height to ${preset.label} (${targetH}px)`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newH = Math.max(minSafeH, ((typeof currentHeight === "number" ? currentHeight : baseBlockHeight)) - 25);
+                        setResizeHeight(newH);
+                        if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
+                      }}
+                      className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      title={isChart ? "Decrease height by 25px (min 260px)" : "Decrease height by 25px"}
+                    >
+                      -
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const currentAllowed = Math.max(minSafeH, getAvailableHeightToFooter() - stackedExtraHeight);
+                        const targetH = (typeof currentHeight === "number" ? currentHeight : baseBlockHeight) + 25;
+                        const newH = Math.min(currentAllowed, targetH);
+                        setResizeHeight(newH);
+                        if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
+                      }}
+                      className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      title="Increase height by 25px"
+                    >
+                      +
+                    </button>
+                  </>
                 );
-              })}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const newH = Math.max(MIN_BLOCK_H, ((typeof currentHeight === "number" ? currentHeight : baseBlockHeight)) - 25);
-                  setResizeHeight(newH);
-                  if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
-                }}
-                className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title="Decrease height by 25px"
-              >
-                -
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const currentAllowed = Math.max(MIN_BLOCK_H, getAvailableHeightToFooter() - stackedExtraHeight);
-                  const targetH = (typeof currentHeight === "number" ? currentHeight : baseBlockHeight) + 25;
-                  const newH = Math.min(currentAllowed, targetH);
-                  setResizeHeight(newH);
-                  if (typeof onHeightChange === "function") onHeightChange(cell.id, rowId, newH);
-                }}
-                className="px-1 py-0.5 rounded text-[10px] font-mono text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title="Increase height by 25px"
-              >
-                +
-              </button>
+              })()}
             </div>
 
             <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800 mx-0.5" />
