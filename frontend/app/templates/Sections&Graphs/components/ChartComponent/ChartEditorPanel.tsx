@@ -1536,9 +1536,11 @@ export default function ChartEditorPanel({
                   <div className="space-y-2">
                     <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
                       <span className="col-span-1 text-center">#</span>
-                      <span className="col-span-5">Facility / Site</span>
-                      <span className="col-span-3 text-center">Alert Metric</span>
-                      <span className="col-span-2 text-center">Risk Level</span>
+                      <span className="col-span-3">Facility / Site</span>
+                      <span className="col-span-2 text-center">X Pos %</span>
+                      <span className="col-span-2 text-center">Y Pos %</span>
+                      <span className="col-span-2 text-center">Score</span>
+                      <span className="col-span-1 text-center">Status</span>
                       <span className="col-span-1 text-center"></span>
                     </div>
 
