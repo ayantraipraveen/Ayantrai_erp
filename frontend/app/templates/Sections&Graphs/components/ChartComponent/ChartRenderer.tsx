@@ -390,130 +390,6 @@ export default function ChartRenderer({
     }
 
 
-    case "table": {
-      const rowsCount = effectiveRows || 4;
-      const colsCount = effectiveCols || 4;
-
-      const ALL_COLUMNS = [
-        { id: "supervisor", label: "Supervisor / Area" },
-        { id: "zone", label: "Zone" },
-        { id: "response", label: "Response" },
-        { id: "status", label: "Status" },
-        { id: "shift", label: "Adherence" },
-        { id: "headcount", label: "Headcount" },
-        { id: "incidents", label: "Incidents" },
-        { id: "ppeScore", label: "PPE Score" },
-        { id: "inspection", label: "Inspection" },
-        { id: "permit", label: "Permit #" },
-      ];
-      const cols = Array.from({ length: colsCount }, (_, i) => ALL_COLUMNS[i] || { id: `col_${i + 1}`, label: `Col ${i + 1}` });
-
-      const ALL_DATA = [
-        { supervisor: "Sunil M. (Crew #1)", zone: "Zone 1", response: "18s", status: "Optimal", shift: "98.2%", headcount: "42", incidents: "0", ppeScore: "99%", inspection: "Passed", permit: "WP-1041" },
-        { supervisor: "Pooja K. (Structural)", zone: "Tower L12", response: "24s", status: "Compliant", shift: "95.0%", headcount: "38", incidents: "0", ppeScore: "96%", inspection: "Passed", permit: "WP-1042" },
-        { supervisor: "Anand R. (Subcontractor)", zone: "Batching", response: "42s", status: "Review", shift: "88.4%", headcount: "27", incidents: "1", ppeScore: "87%", inspection: "Flagged", permit: "WP-1043" },
-        { supervisor: "Rajesh V. (Electrical)", zone: "Substation", response: "15s", status: "Optimal", shift: "99.1%", headcount: "19", incidents: "0", ppeScore: "100%", inspection: "Passed", permit: "WP-1044" },
-        { supervisor: "Deepa S. (Safety Lead)", zone: "Gate 3", response: "29s", status: "Compliant", shift: "94.6%", headcount: "31", incidents: "0", ppeScore: "94%", inspection: "Passed", permit: "WP-1045" },
-        { supervisor: "Vikram T. (Excavation)", zone: "Pit North", response: "48s", status: "Review", shift: "86.0%", headcount: "22", incidents: "2", ppeScore: "82%", inspection: "Review", permit: "WP-1046" },
-      ];
-      const dataRows = Array.from({ length: rowsCount }, (_, i) => {
-        if (i < ALL_DATA.length) return ALL_DATA[i];
-        return {
-          supervisor: `Operator #${i + 1} (${["Mech", "Civil", "Elec", "Safety"][i % 4]})`,
-          zone: `Zone ${(i % 6) + 1}`,
-          response: `${14 + (i * 4) % 35}s`,
-          status: i % 3 === 0 ? "Optimal" : i % 3 === 1 ? "Compliant" : "Review",
-          shift: `${90 + (i * 2) % 10}%`,
-          headcount: `${20 + (i * 3) % 30}`,
-          incidents: `${i % 3}`,
-          ppeScore: `${85 + (i * 3) % 15}%`,
-          inspection: i % 3 === 2 ? "Review" : "Passed",
-          permit: `WP-${1040 + i}`,
-        };
-      });
-
-      const tableTextSize =
-        customFontSize !== undefined
-          ? customFontSize <= 10
-            ? "text-[9px]"
-            : customFontSize <= 12
-            ? "text-[10px]"
-            : customFontSize >= 16
-            ? "text-sm"
-            : "text-xs"
-          : isCompact || fontSize === "xs"
-          ? "text-[9px]"
-          : fontSize === "sm"
-          ? "text-[10px]"
-          : fontSize === "xl" || isLarge
-          ? "text-sm"
-          : "text-xs";
-
-      const tablePad = isCompact || fontSize === "xs" ? "py-1 px-2" : "py-1.5 px-3";
-
-      return (
-        <div className="w-full h-full min-h-0 overflow-auto rounded-xl border border-slate-200/80 dark:border-zinc-800/80 custom-scrollbar bg-white/40 dark:bg-zinc-900/40 backdrop-blur-sm">
-          <table className={`w-full min-w-max text-left border-collapse ${tableTextSize}`}>
-            <thead>
-              <tr className={`bg-slate-100/80 dark:bg-zinc-900/80 text-slate-600 dark:text-zinc-400 font-mono ${isCompact ? "text-[9px]" : "text-[10px]"} uppercase sticky top-0 z-10 shadow-2xs backdrop-blur-sm`}>
-                {cols.map((c) => (
-                  <th key={c.id} className={`${tablePad} font-semibold whitespace-nowrap`}>
-                    {c.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/80">
-              {dataRows.map((row, rIdx) => (
-                <tr key={rIdx} className="hover:bg-slate-50 dark:hover:bg-zinc-900/40">
-                  {cols.map((c) => {
-                    if (c.id === "supervisor") {
-                      return (
-                        <td key={c.id} className="py-2 px-3 font-medium text-slate-900 dark:text-white whitespace-nowrap">
-                          {row.supervisor}
-                        </td>
-                      );
-                    }
-                    if (c.id === "status") {
-                      const isOptimal = row.status === "Optimal";
-                      const isReview = row.status === "Review";
-                      const badgeColor = isOptimal ? c0 : isReview ? c2 : c1;
-                      return (
-                        <td key={c.id} className="py-2 px-3 whitespace-nowrap">
-                          <span
-                            className="px-1.5 py-0.5 rounded text-[10px] font-bold"
-                            style={{ backgroundColor: `${badgeColor}18`, color: badgeColor }}
-                          >
-                            {row.status}
-                          </span>
-                        </td>
-                      );
-                    }
-                    if (c.id === "response") {
-                      const isFast = parseInt(row.response) <= 20;
-                      return (
-                        <td
-                          key={c.id}
-                          className="py-2 px-3 font-mono font-bold whitespace-nowrap"
-                          style={{ color: isFast ? c0 : c1 }}
-                        >
-                          {row.response}
-                        </td>
-                      );
-                    }
-                    return (
-                      <td key={c.id} className="py-2 px-3 font-mono text-slate-500 whitespace-nowrap">
-                        {(row as Record<string, string>)[c.id] || "—"}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    }
 
     case "heatmap": {
       const rowsCount = effectiveRows || (chart.dataPoints && chart.dataPoints.length > 0 ? chart.dataPoints.length : 4);
@@ -772,9 +648,10 @@ export default function ChartRenderer({
               </g>
             ))}
             {d.categories.map((cat, i) => {
+              // Read all 4 stacked series values directly from dataPoints
               const pt = chart.dataPoints?.[i];
               const h1 = pt?.value ?? d.values[i] ?? 30;
-              const h2 = pt?.secondaryValue ?? 35;
+              const h2 = pt?.secondaryValue ?? (d.secondaryValues?.[i] ?? 35);
               const h3 = pt?.tertiaryValue ?? 15;
               const h4 = pt?.quaternaryValue ?? 10;
               const totalVal = h1 + h2 + h3 + h4;
