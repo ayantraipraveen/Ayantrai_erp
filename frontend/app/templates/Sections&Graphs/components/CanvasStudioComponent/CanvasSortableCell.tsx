@@ -824,7 +824,7 @@ export function SortableCell({
                   }`}
                 >
                   {/* Mini Hover Toolbar for Stacked Item — positioned -top-8 (32px above) so it sits fully above the card and doesn't cover top content */}
-                  {!isPreview && (
+                  {!isPreview && isStackedSelected && (
                     <div className={`absolute -top-8 left-0 z-30 ${isStackedSelected ? "opacity-100" : "opacity-0 group-hover/stacked-block:opacity-100"} transition-opacity flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-0.5 shadow-md text-xs backdrop-blur-sm`}>
                       {/* Width Quick Stepper */}
                       <div className="flex items-center border-r border-slate-200 dark:border-zinc-700 pr-1.5 mr-0.5 gap-0.5">
@@ -989,7 +989,7 @@ export function SortableCell({
                   </div>
 
                   {/* Resize handle for stacked block width (right edge) */}
-                  {!isPreview && (
+                  {!isPreview  && (
                     <div
                       onMouseDown={(e) => {
                         handleStackedWidthResizeStart(e, sc.id, currentScW);
