@@ -127,6 +127,32 @@ export default function ChartRenderer({
     };
   };
 
+  /** Formats Y-axis numerical ticks cleanly without repeating long units on every tick */
+  const formatYTick = (val: number, unit: string) => {
+    const rounded = Math.round(val);
+    if (!unit) return `${rounded}`;
+    if (unit === "%" || unit === "°" || unit === "°C") return `${rounded}${unit}`;
+    return `${rounded}`;
+  };
+
+  /** Formats value badges displayed above chart bars or points */
+  const formatDataValue = (val: number, unit: string, isCrowded = false) => {
+    if (!unit) return `${val}`;
+    if (unit === "%" || unit === "°" || unit === "°C") return `${val}${unit}`;
+    if (isCrowded && unit.length > 3) return `${val}`;
+    return `${val} ${unit}`;
+  };
+
+  /** Header title or unit badge rendered at top of Y-axis */
+  const getYAxisHeader = (yAxisTitle?: string, unit?: string) => {
+    if (yAxisTitle && unit && unit !== "None") {
+      return `${yAxisTitle} (${unit})`;
+    }
+    if (yAxisTitle) return yAxisTitle;
+    if (unit && unit !== "None" && unit.length > 2) return `(${unit})`;
+    return null;
+  };
+
   const renderChart = () => {
     switch (chart.chartType) {
     case "line": {
@@ -134,22 +160,24 @@ export default function ChartRenderer({
       const n = d.categories.length;
       const yRange = (d.yMax - d.yMin) || 1;
       const points = d.values.map((v, i) => {
-        const cx = 45 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+        const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
         const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
-        const cy = 108 - norm * 96;
+        const cy = 110 - norm * 96;
         return { cx, cy, val: v, label: d.categories[i] };
       });
       const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
-      const areaD = `${pathD} L ${points[points.length - 1].cx.toFixed(1)} 108 L ${points[0].cx.toFixed(1)} 108 Z`;
+      const areaD = `${pathD} L ${points[points.length - 1].cx.toFixed(1)} 110 L ${points[0].cx.toFixed(1)} 110 Z`;
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 108 - r * 96,
-        label: `${Math.round(d.yMin + r * yRange)}${d.unit}`,
+        y: 110 - r * 96,
+        label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
+
+      const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
-          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
             <defs>
               <linearGradient id={`grad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={c0} stopOpacity="0.35" />
@@ -157,23 +185,29 @@ export default function ChartRenderer({
               </linearGradient>
             </defs>
             {/* Y-axis */}
-            <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            {/* Y-axis Header / Unit */}
+            {yHeader && (
+              <text x="48" y="7" fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+                {yHeader}
+              </text>
+            )}
             {/* Y grid + labels */}
             {yTicks.map((g, i) => (
               <g key={i}>
                 {d.showGridLines && (
-                  <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                  <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
                 )}
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.label}</text>
+                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
             {/* X ticks */}
             {points.map((p, i) => (
               <g key={i}>
-                <line x1={p.cx} y1="108" x2={p.cx} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={p.cx} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{p.label}</text>
+                <line x1={p.cx} y1="110" x2={p.cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={p.cx} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
               </g>
             ))}
             {/* Area fill */}
@@ -185,14 +219,14 @@ export default function ChartRenderer({
               <g key={i}>
                 <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
                 {d.showValues && (
-                  <text x={pt.cx} y={pt.cy - 6} fontSize="7.5" fontWeight="bold" textAnchor="middle" fill={c0}>
-                    {pt.val}{d.unit}
+                  <text x={pt.cx} y={pt.cy - 6} fontSize="7" fontWeight="bold" textAnchor="middle" fill={c0}>
+                    {formatDataValue(pt.val, d.unit, n > 6)}
                   </text>
                 )}
               </g>
             ))}
             {d.xAxisTitle && (
-              <text x="225" y="134" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45" fontStyle="italic">{d.xAxisTitle}</text>
+              <text x="238" y="141" fontSize="7" fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -529,34 +563,34 @@ export default function ChartRenderer({
             ))}
           </div>
 
-          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
+          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
-            <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y labels */}
-            {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
+            {[{ y: 110, l: "0%" }, { y: 86, l: "25%" }, { y: 62, l: "50%" }, { y: 38, l: "75%" }, { y: 14, l: "100%" }].map((g, i) => (
               <g key={i}>
-                <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
               </g>
             ))}
             {[
-              { x: 80, h1: 35, h2: 40, h3: 15, h4: 10, label: "Civil" },
-              { x: 160, h1: 32, h2: 38, h3: 20, h4: 10, label: "Mech" },
+              { x: 90, h1: 35, h2: 40, h3: 15, h4: 10, label: "Civil" },
+              { x: 165, h1: 32, h2: 38, h3: 20, h4: 10, label: "Mech" },
               { x: 240, h1: 28, h2: 42, h3: 18, h4: 12, label: "Elec" },
-              { x: 320, h1: 40, h2: 35, h3: 15, h4: 10, label: "Fab" },
-              { x: 400, h1: 20, h2: 45, h3: 25, h4: 10, label: "Safety" },
+              { x: 315, h1: 40, h2: 35, h3: 15, h4: 10, label: "Fab" },
+              { x: 390, h1: 20, h2: 45, h3: 25, h4: 10, label: "Safety" },
             ].map((b, i) => {
               const totalH = b.h1 + b.h2 + b.h3 + b.h4;
               return (
                 <g key={i}>
-                  <rect x={b.x - 16} y={108 - b.h1} width="32" height={b.h1} fill={c0} />
-                  <rect x={b.x - 16} y={108 - b.h1 - b.h2} width="32" height={b.h2} fill={c1} />
-                  <rect x={b.x - 16} y={108 - b.h1 - b.h2 - b.h3} width="32" height={b.h3} fill={c2} />
-                  <rect x={b.x - 16} y={108 - totalH} width="32" height={b.h4} fill={c3} />
-                  <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={b.x} y={122} fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
+                  <rect x={b.x - 16} y={110 - b.h1} width="32" height={b.h1} fill={c0} />
+                  <rect x={b.x - 16} y={110 - b.h1 - b.h2} width="32" height={b.h2} fill={c1} />
+                  <rect x={b.x - 16} y={110 - b.h1 - b.h2 - b.h3} width="32" height={b.h3} fill={c2} />
+                  <rect x={b.x - 16} y={110 - totalH} width="32" height={b.h4} fill={c3} />
+                  <line x1={b.x} y1="110" x2={b.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={b.x} y={124} fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
                 </g>
               );
             })}
@@ -578,9 +612,11 @@ export default function ChartRenderer({
       const bw = Math.min(18, Math.max(8, (360 / n) * 0.38));
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 108 - r * 96,
-        label: `${Math.round(d.yMin + r * yRange)}${d.unit}`,
+        y: 110 - r * 96,
+        label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
+
+      const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
@@ -597,40 +633,46 @@ export default function ChartRenderer({
             </div>
           )}
 
-          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
-            <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            {/* Y-axis Header / Unit */}
+            {yHeader && (
+              <text x="48" y="7" fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+                {yHeader}
+              </text>
+            )}
             {/* Y labels */}
             {yTicks.map((g, i) => (
               <g key={i}>
                 {d.showGridLines && (
-                  <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                  <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
                 )}
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.label}</text>
+                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
             {d.values.map((v1, i) => {
               const v2 = secVals[i] ?? 0;
-              const x = 45 + ((i + 0.5) / n) * 360;
+              const x = 56 + ((i + 0.5) / n) * 360;
               const h1 = Math.max(2, Math.min(96, ((v1 - d.yMin) / yRange) * 96));
               const h2 = Math.max(2, Math.min(96, ((v2 - d.yMin) / yRange) * 96));
 
               return (
                 <g key={i}>
-                  <rect x={x - bw - 1} y={108 - h1} width={bw} height={h1} fill={c0} rx="2" />
-                  <rect x={x + 1} y={108 - h2} width={bw} height={h2} fill={c1} rx="2" />
-                  <line x1={x} y1="108" x2={x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.categories[i]}</text>
+                  <rect x={x - bw - 1} y={110 - h1} width={bw} height={h1} fill={c0} rx="2" />
+                  <rect x={x + 1} y={110 - h2} width={bw} height={h2} fill={c1} rx="2" />
+                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{d.categories[i]}</text>
                   {d.showValues && (
-                    <text x={x - bw / 2 - 1} y={108 - h1 - 3} fontSize="6" fontWeight="bold" textAnchor="middle" fill={c0}>{v1}</text>
+                    <text x={x - bw / 2 - 1} y={110 - h1 - 3} fontSize="6" fontWeight="bold" textAnchor="middle" fill={c0}>{v1}</text>
                   )}
                 </g>
               );
             })}
             {d.xAxisTitle && (
-              <text x="225" y="134" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45" fontStyle="italic">{d.xAxisTitle}</text>
+              <text x="238" y="141" fontSize="7" fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -640,36 +682,36 @@ export default function ChartRenderer({
     case "multi-line":
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
-          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
+          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
-            <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y grid + labels */}
-            {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
+            {[{ y: 110, l: "0%" }, { y: 86, l: "25%" }, { y: 62, l: "50%" }, { y: 38, l: "75%" }, { y: 14, l: "100%" }].map((g, i) => (
               <g key={i}>
-                <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
               </g>
             ))}
             {/* X ticks */}
-            {[{ x: 90, l: "Q1" }, { x: 180, l: "Q2" }, { x: 270, l: "Q3" }, { x: 405, l: "Q4" }].map((t, i) => (
+            {[{ x: 100, l: "Q1" }, { x: 190, l: "Q2" }, { x: 280, l: "Q3" }, { x: 415, l: "Q4" }].map((t, i) => (
               <g key={i}>
-                <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
+                <line x1={t.x} y1="110" x2={t.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={t.x} y="124" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{t.l}</text>
               </g>
             ))}
             {/* Line 1 */}
-            <path d="M 45 95 Q 110 42, 175 65 T 295 28 T 405 14" fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
-            {[{ cx: 45, cy: 95 }, { cx: 175, cy: 65 }, { cx: 295, cy: 28 }, { cx: 405, cy: 14 }].map((p, i) => <circle key={i} cx={p.cx} cy={p.cy} r="3" fill={c0} />)}
+            <path d="M 55 97 Q 120 44, 185 67 T 305 30 T 415 16" fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
+            {[{ cx: 55, cy: 97 }, { cx: 185, cy: 67 }, { cx: 305, cy: 30 }, { cx: 415, cy: 16 }].map((p, i) => <circle key={i} cx={p.cx} cy={p.cy} r="3" fill={c0} />)}
             {/* Line 2 */}
-            <path d="M 45 105 Q 110 78, 175 52 T 295 62 T 405 38" fill="none" stroke={c1} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="5 2" />
-            {[{ cx: 45, cy: 105 }, { cx: 175, cy: 52 }, { cx: 295, cy: 62 }, { cx: 405, cy: 38 }].map((p, i) => <circle key={i} cx={p.cx} cy={p.cy} r="3" fill={c1} />)}
+            <path d="M 55 107 Q 120 80, 185 54 T 305 64 T 415 40" fill="none" stroke={c1} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="5 2" />
+            {[{ cx: 55, cy: 107 }, { cx: 185, cy: 54 }, { cx: 305, cy: 64 }, { cx: 415, cy: 40 }].map((p, i) => <circle key={i} cx={p.cx} cy={p.cy} r="3" fill={c1} />)}
             {/* Legend */}
-            <rect x="290" y="10" width="8" height="3" fill={c0} rx="1" />
-            <text x="301" y="14" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Zone A</text>
-            <rect x="290" y="20" width="8" height="3" fill={c1} rx="1" />
-            <text x="301" y="24" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Zone B</text>
+            <rect x="300" y="10" width="8" height="3" fill={c0} rx="1" />
+            <text x="311" y="14" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Zone A</text>
+            <rect x="300" y="20" width="8" height="3" fill={c1} rx="1" />
+            <text x="311" y="24" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Zone B</text>
           </svg>
         </div>
       );
@@ -694,7 +736,7 @@ export default function ChartRenderer({
               <div key={i}>
                 <div className="flex justify-between font-bold text-slate-700 dark:text-zinc-300 mb-1">
                   <span>{label}</span>
-                  <span>{v}{d.unit}</span>
+                  <span>{formatDataValue(v, d.unit)}</span>
                 </div>
                 <div className="w-full h-5 bg-slate-100 dark:bg-zinc-800 rounded-lg overflow-hidden flex">
                   <div className="h-full rounded-lg transition-all" style={{ width: `${pct}%`, backgroundColor: col }} />
@@ -711,22 +753,24 @@ export default function ChartRenderer({
       const n = d.categories.length;
       const yRange = (d.yMax - d.yMin) || 1;
       const points = d.values.map((v, i) => {
-        const cx = 45 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+        const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
         const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
-        const cy = 108 - norm * 96;
+        const cy = 110 - norm * 96;
         return { cx, cy, val: v, label: d.categories[i] };
       });
       const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
-      const areaD = `${pathD} L ${points[points.length - 1].cx.toFixed(1)} 108 L ${points[0].cx.toFixed(1)} 108 Z`;
+      const areaD = `${pathD} L ${points[points.length - 1].cx.toFixed(1)} 110 L ${points[0].cx.toFixed(1)} 110 Z`;
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 108 - r * 96,
-        label: `${Math.round(d.yMin + r * yRange)}${d.unit}`,
+        y: 110 - r * 96,
+        label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
+
+      const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
-          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
             <defs>
               <linearGradient id={`areagrad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={c0} stopOpacity="0.5" />
@@ -734,23 +778,29 @@ export default function ChartRenderer({
               </linearGradient>
             </defs>
             {/* Y-axis */}
-            <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            {/* Y-axis Header / Unit */}
+            {yHeader && (
+              <text x="48" y="7" fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+                {yHeader}
+              </text>
+            )}
             {/* Y grid */}
             {yTicks.map((g, i) => (
               <g key={i}>
                 {d.showGridLines && (
-                  <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                  <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
                 )}
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.label}</text>
+                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
             {/* X ticks */}
             {points.map((p, i) => (
               <g key={i}>
-                <line x1={p.cx} y1="108" x2={p.cx} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={p.cx} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{p.label}</text>
+                <line x1={p.cx} y1="110" x2={p.cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={p.cx} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
               </g>
             ))}
             <path d={areaD} fill={`url(#areagrad-${chart.id})`} />
@@ -759,7 +809,7 @@ export default function ChartRenderer({
               <circle key={i} cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
             ))}
             {d.xAxisTitle && (
-              <text x="225" y="134" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45" fontStyle="italic">{d.xAxisTitle}</text>
+              <text x="238" y="141" fontSize="7" fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -810,31 +860,31 @@ export default function ChartRenderer({
     case "bubble":
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
-          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
+          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
-            <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y grid + labels */}
-            {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
+            {[{ y: 110, l: "0" }, { y: 86, l: "25" }, { y: 62, l: "50" }, { y: 38, l: "75" }, { y: 14, l: "100" }].map((g, i) => (
               <g key={i}>
-                <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
               </g>
             ))}
             {/* X ticks */}
-            {[{ x: 100, l: "20" }, { x: 180, l: "40" }, { x: 260, l: "60" }, { x: 340, l: "80" }, { x: 405, l: "100" }].map((t, i) => (
+            {[{ x: 110, l: "20" }, { x: 190, l: "40" }, { x: 270, l: "60" }, { x: 350, l: "80" }, { x: 415, l: "100" }].map((t, i) => (
               <g key={i}>
-                <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45">{t.l}</text>
+                <line x1={t.x} y1="110" x2={t.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={t.x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{t.l}</text>
               </g>
             ))}
             {[
-              { cx: 120, cy: 78, r: chart.chartType === "bubble" ? 15 : 4 },
-              { cx: 185, cy: 50, r: chart.chartType === "bubble" ? 22 : 5 },
-              { cx: 245, cy: 65, r: chart.chartType === "bubble" ? 28 : 6 },
-              { cx: 305, cy: 42, r: chart.chartType === "bubble" ? 19 : 5 },
-              { cx: 365, cy: 68, r: chart.chartType === "bubble" ? 14 : 4 },
+              { cx: 130, cy: 78, r: chart.chartType === "bubble" ? 15 : 4 },
+              { cx: 195, cy: 50, r: chart.chartType === "bubble" ? 22 : 5 },
+              { cx: 255, cy: 65, r: chart.chartType === "bubble" ? 28 : 6 },
+              { cx: 315, cy: 42, r: chart.chartType === "bubble" ? 19 : 5 },
+              { cx: 375, cy: 68, r: chart.chartType === "bubble" ? 14 : 4 },
             ].map((c, i) => (
               <circle
                 key={i}
@@ -883,34 +933,34 @@ export default function ChartRenderer({
     case "combo":
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
-          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
+          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
-            <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y grid */}
-            {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
+            {[{ y: 110, l: "0" }, { y: 86, l: "25" }, { y: 62, l: "50" }, { y: 38, l: "75" }, { y: 14, l: "100" }].map((g, i) => (
               <g key={i}>
-                <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
               </g>
             ))}
             {/* Bars */}
-            {[{ x: 70, h: 55 }, { x: 145, h: 75 }, { x: 220, h: 42 }, { x: 295, h: 85 }, { x: 370, h: 30 }].map((b, i) => (
+            {[{ x: 80, h: 55 }, { x: 155, h: 75 }, { x: 230, h: 42 }, { x: 305, h: 85 }, { x: 380, h: 30 }].map((b, i) => (
               <g key={i}>
-                <rect x={b.x - 18} y={108 - b.h} width="36" height={b.h} fill={c0} opacity="0.8" rx="2" />
-                <line x1={b.x} y1="108" x2={b.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={b.x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.5">{["Jan", "Feb", "Mar", "Apr", "May"][i]}</text>
+                <rect x={b.x - 18} y={110 - b.h} width="36" height={b.h} fill={c0} opacity="0.8" rx="2" />
+                <line x1={b.x} y1="110" x2={b.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={b.x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{["Jan", "Feb", "Mar", "Apr", "May"][i]}</text>
               </g>
             ))}
             {/* Trend line */}
-            <path d="M 70 52 L 145 34 L 220 68 L 295 22 L 370 80" fill="none" stroke={c1} strokeWidth="2.5" strokeLinecap="round" />
-            {[{ cx: 70, cy: 52 }, { cx: 145, cy: 34 }, { cx: 220, cy: 68 }, { cx: 295, cy: 22 }, { cx: 370, cy: 80 }].map((p, i) => (
+            <path d="M 80 54 L 155 36 L 230 70 L 305 24 L 380 82" fill="none" stroke={c1} strokeWidth="2.5" strokeLinecap="round" />
+            {[{ cx: 80, cy: 54 }, { cx: 155, cy: 36 }, { cx: 230, cy: 70 }, { cx: 305, cy: 24 }, { cx: 380, cy: 82 }].map((p, i) => (
               <circle key={i} cx={p.cx} cy={p.cy} r="3" fill={c1} />
             ))}
             {/* Legend */}
-            <rect x="42" y="10" width="7" height="7" fill={c0} rx="1" /><text x="52" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Volume</text>
-            <line x1="100" y1="14" x2="112" y2="14" stroke={c1} strokeWidth="2" /><text x="115" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Trend</text>
+            <rect x="52" y="10" width="7" height="7" fill={c0} rx="1" /><text x="62" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Volume</text>
+            <line x1="110" y1="14" x2="122" y2="14" stroke={c1} strokeWidth="2" /><text x="125" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Trend</text>
           </svg>
         </div>
       );
@@ -918,33 +968,33 @@ export default function ChartRenderer({
     case "waterfall":
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
-          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
+          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
-            <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y labels */}
-            {[{ y: 108, l: "0" }, { y: 82, l: "25" }, { y: 55, l: "50" }, { y: 28, l: "75" }, { y: 8, l: "100" }].map((g, i) => (
+            {[{ y: 110, l: "0" }, { y: 86, l: "25" }, { y: 62, l: "50" }, { y: 38, l: "75" }, { y: 14, l: "100" }].map((g, i) => (
               <g key={i}>
-                <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.l}</text>
+                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
               </g>
             ))}
             {/* Connectors */}
-            <line x1="106" y1="48" x2="120" y2="48" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
-            <line x1="186" y1="28" x2="200" y2="48" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
-            <line x1="266" y1="68" x2="280" y2="88" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
-            <line x1="346" y1="88" x2="360" y2="88" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
+            <line x1="116" y1="50" x2="130" y2="50" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
+            <line x1="196" y1="30" x2="210" y2="50" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
+            <line x1="276" y1="70" x2="290" y2="90" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
+            <line x1="356" y1="90" x2="370" y2="90" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
             {/* Bars: start (c2), +20 (c0), -20 (c1), +10 (c0), total (c2) */}
-            <rect x="44" y="48" width="62" height="60" fill={c2} rx="2" />
-            <rect x="120" y="28" width="66" height="20" fill={c0} rx="2" />
-            <rect x="200" y="48" width="66" height="20" fill={c1} rx="2" />
-            <rect x="280" y="88" width="66" height="20" fill={c0} rx="2" />
-            <rect x="360" y="28" width="42" height="80" fill={c2} rx="2" />
-            {[{ x: 75, l: "Start" }, { x: 153, l: "+20" }, { x: 233, l: "-20" }, { x: 313, l: "+10" }, { x: 381, l: "Total" }].map((t, i) => (
+            <rect x="54" y="50" width="62" height="60" fill={c2} rx="2" />
+            <rect x="130" y="30" width="66" height="20" fill={c0} rx="2" />
+            <rect x="210" y="50" width="66" height="20" fill={c1} rx="2" />
+            <rect x="290" y="90" width="66" height="20" fill={c0} rx="2" />
+            <rect x="370" y="30" width="42" height="80" fill={c2} rx="2" />
+            {[{ x: 85, l: "Start" }, { x: 163, l: "+20" }, { x: 243, l: "-20" }, { x: 323, l: "+10" }, { x: 391, l: "Total" }].map((t, i) => (
               <g key={i}>
-                <line x1={t.x} y1="108" x2={t.x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="122" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{t.l}</text>
+                <line x1={t.x} y1="110" x2={t.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={t.x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{t.l}</text>
               </g>
             ))}
           </svg>
@@ -1045,50 +1095,58 @@ export default function ChartRenderer({
       const bw = Math.min(36, Math.max(12, (360 / n) * 0.65));
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 108 - r * 96,
-        label: `${Math.round(d.yMin + r * yRange)}${d.unit}`,
+        y: 110 - r * 96,
+        label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
+
+      const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
         <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
-          <svg viewBox="0 0 420 136" className="w-full flex-1 overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
-            <line x1="38" y1="8" x2="38" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="38" y1="108" x2="410" y2="108" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            {/* Y-axis Header / Unit */}
+            {yHeader && (
+              <text x="48" y="7" fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+                {yHeader}
+              </text>
+            )}
             {/* Y grid + labels */}
             {yTicks.map((g, i) => (
               <g key={i}>
                 {d.showGridLines && (
-                  <line x1="35" y1={g.y} x2="410" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                  <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
                 )}
-                <text x="32" y={g.y + 3} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.45">{g.label}</text>
+                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
             {/* Bars */}
             {d.values.map((v, i) => {
-              const x = 45 + ((i + 0.5) / n) * 360;
+              const x = 56 + ((i + 0.5) / n) * 360;
               const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
               const barH = Math.max(3, norm * 96);
               const barColor = d.pointColors?.[i] || c0;
 
               return (
                 <g key={i}>
-                  <rect x={x - bw / 2} y={108 - barH} width={bw} height={barH} rx="4" fill={barColor} />
+                  <rect x={x - bw / 2} y={110 - barH} width={bw} height={barH} rx="4" fill={barColor} />
                   {d.showValues && (
-                    <text x={x} y={108 - barH - 4} fontSize="7" fontWeight="bold" textAnchor="middle" fill={barColor}>
-                      {v}{d.unit}
+                    <text x={x} y={110 - barH - 4} fontSize="6.5" fontWeight="bold" textAnchor="middle" fill={barColor}>
+                      {formatDataValue(v, d.unit, n > 6)}
                     </text>
                   )}
-                  <line x1={x} y1="108" x2={x} y2="112" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={122} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">
+                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">
                     {d.categories[i]}
                   </text>
                 </g>
               );
             })}
             {d.xAxisTitle && (
-              <text x="225" y="134" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.45" fontStyle="italic">{d.xAxisTitle}</text>
+              <text x="238" y="141" fontSize="7" fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>

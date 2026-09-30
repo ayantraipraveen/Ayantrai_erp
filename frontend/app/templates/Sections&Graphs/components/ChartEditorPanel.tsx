@@ -447,7 +447,7 @@ export default function ChartEditorPanel({
                   </span>
                   <span className="text-[10px] text-slate-400">Click to autofill data</span>
                 </div>
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                   {PRESET_DATASETS.map((preset) => (
                     <button
                       key={preset.name}
