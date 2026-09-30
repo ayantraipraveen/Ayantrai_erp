@@ -1047,7 +1047,8 @@ export default function ChartEditorPanel({
                           <span className="col-span-1 text-center text-xs font-mono text-slate-400 font-bold">
                             {idx + 1}
                           </span>
-                          <div className="col-span-4">
+                          {/* Label */}
+                          <div className={editorMode === "bubble" ? "col-span-3" : "col-span-4"}>
                             <input
                               type="text"
                               value={pt.label}
@@ -1056,7 +1057,8 @@ export default function ChartEditorPanel({
                               className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
                             />
                           </div>
-                          <div className="col-span-3">
+                          {/* X Coordinate */}
+                          <div className={editorMode === "bubble" ? "col-span-2" : "col-span-3"}>
                             <input
                               type="number"
                               value={pt.x ?? pt.value}
@@ -1069,7 +1071,8 @@ export default function ChartEditorPanel({
                               className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center font-bold text-[#9D61FF]"
                             />
                           </div>
-                          <div className={editorMode === "bubble" ? "col-span-3" : "col-span-3"}>
+                          {/* Y Coordinate */}
+                          <div className={editorMode === "bubble" ? "col-span-2" : "col-span-3"}>
                             <input
                               type="number"
                               value={pt.y ?? pt.secondaryValue ?? 50}
@@ -1082,6 +1085,22 @@ export default function ChartEditorPanel({
                               className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center font-bold text-emerald-600 dark:text-emerald-400"
                             />
                           </div>
+                          {/* Bubble Size */}
+                          {editorMode === "bubble" && (
+                            <div className="col-span-2">
+                              <input
+                                type="number"
+                                value={pt.size ?? 16}
+                                min={4}
+                                max={50}
+                                onChange={(e) =>
+                                  handleUpdatePoint(idx, "size", parseFloat(e.target.value) || 16)
+                                }
+                                placeholder="Size"
+                                className="w-full px-1.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center font-bold text-amber-500"
+                              />
+                            </div>
+                          )}
                           <div className="col-span-1 flex items-center justify-center">
                             <button
                               type="button"
@@ -1532,7 +1551,8 @@ export default function ChartEditorPanel({
                           <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
                             {idx + 1}
                           </span>
-                          <div className="col-span-5">
+                          {/* Site Name */}
+                          <div className="col-span-3">
                             <input
                               type="text"
                               value={pt.label}
@@ -1541,27 +1561,57 @@ export default function ChartEditorPanel({
                               className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
                             />
                           </div>
-                          <div className="col-span-3">
+                          {/* X position (0-100) */}
+                          <div className="col-span-2">
+                            <input
+                              type="number"
+                              value={typeof pt.x === "number" ? pt.x : 50}
+                              min={0}
+                              max={100}
+                              onChange={(e) =>
+                                handleUpdatePoint(idx, "x", parseFloat(e.target.value) || 0)
+                              }
+                              placeholder="X %"
+                              className="w-full px-1.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center font-bold text-[#9D61FF]"
+                            />
+                          </div>
+                          {/* Y position (0-100) */}
+                          <div className="col-span-2">
+                            <input
+                              type="number"
+                              value={pt.y ?? 50}
+                              min={0}
+                              max={100}
+                              onChange={(e) =>
+                                handleUpdatePoint(idx, "y", parseFloat(e.target.value) || 0)
+                              }
+                              placeholder="Y %"
+                              className="w-full px-1.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center font-bold text-emerald-600 dark:text-emerald-400"
+                            />
+                          </div>
+                          {/* Alert Metric Value */}
+                          <div className="col-span-2">
                             <input
                               type="number"
                               value={pt.value}
                               onChange={(e) =>
                                 handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
                               }
-                              placeholder="Incidents"
-                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-[#9D61FF] text-center"
+                              placeholder="Score"
+                              className="w-full px-1.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-amber-500 text-center"
                             />
                           </div>
-                          <div className="col-span-2">
+                          {/* Risk Level */}
+                          <div className="col-span-1">
                             <select
                               value={pt.status || "Normal"}
                               onChange={(e) => handleUpdatePoint(idx, "status", e.target.value)}
-                              className="w-full px-1.5 py-1 text-[11px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 font-semibold"
+                              className="w-full px-1 py-1 text-[10px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 font-semibold"
                             >
-                              <option value="Optimal">Optimal</option>
-                              <option value="Normal">Normal</option>
-                              <option value="Warning">Warning</option>
-                              <option value="Critical">Critical</option>
+                              <option value="Optimal">✓</option>
+                              <option value="Normal">~</option>
+                              <option value="Warning">!</option>
+                              <option value="Critical">✕</option>
                             </select>
                           </div>
                           <div className="col-span-1 flex items-center justify-center">
@@ -1589,7 +1639,164 @@ export default function ChartEditorPanel({
                   </div>
                 )}
 
-                {/* 12. STANDARD TABLE EDITOR (table, radar, treemap, waterfall, sparkline, and standard bar/line/area) */}
+                {/* 12. SPARKLINE CHANNEL EDITOR */}
+                {editorMode === "sparkline" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40">
+                      <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1">
+                        <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                        {currentDataPoints.length} Channels — Edit sparkline values (comma separated)
+                      </span>
+                    </div>
+                    <div className="space-y-2.5">
+                      {currentDataPoints.map((pt, idx) => {
+                        const vals = (pt.rowValues && pt.rowValues.length > 0)
+                          ? pt.rowValues.map(v => (typeof v === "number" ? v : parseFloat(String(v)) || 0))
+                          : [10, 20, 15, 30, 25, 35];
+                        return (
+                          <div key={pt.id || idx} className="p-3 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs space-y-2">
+                            <div className="flex items-center justify-between">
+                              <input
+                                type="text"
+                                value={pt.label}
+                                onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                                placeholder={`Channel ${idx + 1} Name`}
+                                className="flex-1 px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold"
+                              />
+                              <button
+                                type="button"
+                                disabled={currentDataPoints.length <= 1}
+                                onClick={() => handleDeletePoint(idx)}
+                                className="p-1 ml-2 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-6 gap-1.5">
+                              {vals.map((v, ci) => (
+                                <input
+                                  key={ci}
+                                  type="number"
+                                  value={v}
+                                  onChange={(e) => {
+                                    const newVals = [...vals];
+                                    newVals[ci] = parseFloat(e.target.value) || 0;
+                                    const updated = [...currentDataPoints];
+                                    updated[idx] = { ...updated[idx], rowValues: newVals, value: newVals[0] ?? v };
+                                    changeDataPoints(updated);
+                                  }}
+                                  placeholder={`T${ci + 1}`}
+                                  className="w-full px-1 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center font-bold text-[#9D61FF]"
+                                />
+                              ))}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...currentDataPoints];
+                                updated[idx] = { ...updated[idx], rowValues: [...vals, 0] };
+                                changeDataPoints(updated);
+                              }}
+                              className="text-[10px] font-bold text-[#9D61FF] hover:text-purple-700 cursor-pointer"
+                            >
+                              + Add Time Point
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Sparkline Channel</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 13. WATERFALL STEP EDITOR */}
+                {editorMode === "waterfall" && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                      <span className="col-span-1 text-center">#</span>
+                      <span className="col-span-4">Step / Event</span>
+                      <span className="col-span-3 text-center">Net Change</span>
+                      <span className="col-span-3 text-center">Type</span>
+                      <span className="col-span-1 text-center"></span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {currentDataPoints.map((pt, idx) => {
+                        const isNeg = pt.value < 0;
+                        return (
+                          <div
+                            key={pt.id || idx}
+                            className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                          >
+                            <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">{idx + 1}</span>
+                            <div className="col-span-4">
+                              <input
+                                type="text"
+                                value={pt.label}
+                                onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                                placeholder="Step Name"
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <input
+                                type="number"
+                                value={pt.value}
+                                onChange={(e) =>
+                                  handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
+                                }
+                                placeholder="e.g. +20 or -15"
+                                className={`w-full px-2 py-1 text-xs rounded-lg border bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-center focus:outline-none focus:border-[#9D61FF] ${
+                                  isNeg
+                                    ? "border-rose-400 text-rose-500"
+                                    : "border-emerald-400 text-emerald-600"
+                                }`}
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <select
+                                value={pt.status || "add"}
+                                onChange={(e) => handleUpdatePoint(idx, "status", e.target.value)}
+                                className="w-full px-1.5 py-1 text-[11px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 font-semibold"
+                              >
+                                <option value="start">Base / Start</option>
+                                <option value="add">Positive (+)</option>
+                                <option value="sub">Negative (−)</option>
+                                <option value="total">Total / Net</option>
+                              </select>
+                            </div>
+                            <div className="col-span-1 flex items-center justify-center">
+                              <button
+                                type="button"
+                                disabled={currentDataPoints.length <= 1}
+                                onClick={() => handleDeletePoint(idx)}
+                                className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Waterfall Step</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 14. STANDARD TABLE EDITOR (table, radar, treemap, and standard bar/line/area) */}
                 {![
                   "heatmap",
                   "gauge",
@@ -1603,6 +1810,8 @@ export default function ChartEditorPanel({
                   "funnel",
                   "timeline",
                   "geo-map",
+                  "sparkline",
+                  "waterfall",
                 ].includes(editorMode) && (
                   <div className="space-y-2">
                     <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
@@ -1612,8 +1821,6 @@ export default function ChartEditorPanel({
                           ? "Audit Dimension"
                           : editorMode === "treemap"
                           ? "Category / Hazard"
-                          : editorMode === "waterfall"
-                          ? "Step / Event"
                           : "Label / Category"}
                       </span>
                       <span className="col-span-3 text-center">
