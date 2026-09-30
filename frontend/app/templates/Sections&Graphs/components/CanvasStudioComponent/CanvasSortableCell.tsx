@@ -359,12 +359,12 @@ export function SortableCell({
 
       const reservedBottomSpace = (isPreview ? 16 : 48) + rowsBelowHeight;
       const maxUsable = Math.floor(distanceToFooter - reservedBottomSpace);
-      return Math.max(70, Math.min(460, maxUsable));
+      return Math.max(60, Math.min(460, maxUsable));
     }
 
     const pageRect = pageEl.getBoundingClientRect();
     const distanceToPageBottom = (pageRect.bottom - cellRect.top) / effectiveZoom;
-    return Math.max(70, Math.min(460, Math.floor(distanceToPageBottom - (isPreview ? 32 : 72))));
+    return Math.max(60, Math.min(460, Math.floor(distanceToPageBottom - (isPreview ? 32 : 72))));
   }, [currentPageNumber, effectiveZoom, isPreview]);
 
   const [dynamicMaxHeight, setDynamicMaxHeight] = useState<number>(() => {
@@ -388,6 +388,7 @@ export function SortableCell({
   }, [updateDynamicMaxHeight]);
 
   const STACK_H = 5;
+  const MIN_BLOCK_H = 60;
   const maxColumnHeight = dynamicMaxHeight;
   const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
   const bottomZoneH = 0; // Rendered in React portal, takes zero internal cell layout height
@@ -401,17 +402,17 @@ export function SortableCell({
   const totalCardsRawH = rawBaseBlockHeight + rawStackedSum;
   const cardScale = totalCardsRawH > maxAvailableForCards ? maxAvailableForCards / totalCardsRawH : 1;
 
-  const baseBlockHeight = Math.max(70, Math.floor(rawBaseBlockHeight * cardScale));
+  const baseBlockHeight = Math.max(MIN_BLOCK_H, Math.floor(rawBaseBlockHeight * cardScale));
 
   const stackedExtraHeight = hasStacked ? cell.stackedCells!.length * (STACK_H + 12) : 0;
 
   const rawMinHeight = hasStacked
     ? baseBlockHeight + stackedExtraHeight
-    : (currentHeight ? Math.max(120, currentHeight) : undefined);
+    : (currentHeight ? Math.max(MIN_BLOCK_H, currentHeight) : undefined);
 
   const effectiveMinHeight = rawMinHeight !== undefined ? Math.min(maxColumnHeight, rawMinHeight) : undefined;
 
-  const maxPrimaryH = Math.max(70, maxColumnHeight - stackedExtraHeight);
+  const maxPrimaryH = Math.max(MIN_BLOCK_H, maxColumnHeight - stackedExtraHeight);
 
   const handleHeightResizeStart = (e: React.MouseEvent, explicitStartH?: number) => {
     e.stopPropagation();
@@ -428,8 +429,8 @@ export function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
-      const newH = Math.min(currentAllowed, Math.max(70, Math.round(startH + deltaY)));
+      const currentAllowed = Math.max(MIN_BLOCK_H, getAvailableHeightToFooter() - stackedExtraHeight);
+      const newH = Math.min(currentAllowed, Math.max(MIN_BLOCK_H, Math.round(startH + deltaY)));
       setResizeHeight(newH);
       if (typeof onHeightChange === "function") {
         onHeightChange(cell.id, rowId, newH);
@@ -444,8 +445,8 @@ export function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
-      const finalH = Math.min(currentAllowed, Math.max(70, Math.round(startH + deltaY)));
+      const currentAllowed = Math.max(MIN_BLOCK_H, getAvailableHeightToFooter() - stackedExtraHeight);
+      const finalH = Math.min(currentAllowed, Math.max(MIN_BLOCK_H, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       if (typeof onHeightChange === "function") {
@@ -485,8 +486,8 @@ export function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
-      const newH = Math.min(currentAllowed, Math.max(70, Math.round(startH + deltaY)));
+      const currentAllowed = Math.max(MIN_BLOCK_H, getAvailableHeightToFooter() - stackedExtraHeight);
+      const newH = Math.min(currentAllowed, Math.max(MIN_BLOCK_H, Math.round(startH + deltaY)));
       setResizeHeight(newH);
       if (typeof onHeightChange === "function") {
         onHeightChange(cell.id, rowId, newH);
@@ -509,8 +510,8 @@ export function SortableCell({
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (upEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const currentAllowed = Math.max(70, getAvailableHeightToFooter() - stackedExtraHeight);
-      const finalH = Math.min(currentAllowed, Math.max(70, Math.round(startH + deltaY)));
+      const currentAllowed = Math.max(MIN_BLOCK_H, getAvailableHeightToFooter() - stackedExtraHeight);
+      const finalH = Math.min(currentAllowed, Math.max(MIN_BLOCK_H, Math.round(startH + deltaY)));
       setResizeHeight(finalH);
 
       let colSpan: 1 | 2 | 3 | 4 = 1;
@@ -543,13 +544,13 @@ export function SortableCell({
     const scrollContainer = cellDomRef.current?.closest(".overflow-y-auto, .overflow-auto") as HTMLElement | null;
     const startScrollTop = scrollContainer?.scrollTop || 0;
     const otherStackedH = Math.max(0, stackedExtraHeight - (startH + 12));
-    const maxScH = Math.max(70, maxColumnHeight - baseBlockHeight - otherStackedH - 12 - bottomZoneH);
+    const maxScH = Math.max(MIN_BLOCK_H, maxColumnHeight - baseBlockHeight - otherStackedH - 12 - bottomZoneH);
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const currentScrollTop = scrollContainer?.scrollTop || 0;
       const scrollDeltaY = currentScrollTop - startScrollTop;
       const deltaY = (moveEvent.clientY - startY + scrollDeltaY) / effectiveZoom;
-      const newH = Math.min(maxScH, Math.max(70, Math.round(startH + deltaY)));
+      const newH = Math.min(maxScH, Math.max(MIN_BLOCK_H, Math.round(startH + deltaY)));
       if (typeof onHeightChange === "function") {
         onHeightChange(scId, rowId, newH);
       }
@@ -600,7 +601,7 @@ export function SortableCell({
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
     maxWidth: widthStyle,
-    height: undefined,
+    height: !hasStacked && currentHeight ? `${currentHeight}px` : undefined,
     maxHeight: `${maxColumnHeight}px`,
     minHeight: effectiveMinHeight ? `${Math.min(maxColumnHeight, effectiveMinHeight)}px` : undefined,
     flexShrink: 0,
@@ -732,11 +733,14 @@ export function SortableCell({
       <div className="w-full flex-1 flex flex-col gap-1 min-h-fit">
         {/* Primary Block */}
         <div
-          style={{ maxHeight: `${maxPrimaryH}px` }}
+          style={{
+            maxHeight: `${maxPrimaryH}px`,
+            height: !hasStacked && currentHeight ? `${currentHeight}px` : undefined,
+          }}
           className={`w-full ${hasStacked ? "flex-1 min-h-0" : "flex-none"} flex flex-col relative group/primary-block overflow-hidden`}
         >
           <CanvasBlockRenderer
-            cell={cell}
+            cell={currentHeight !== cell.customHeight ? { ...cell, customHeight: currentHeight } : cell}
             isSelected={isSelected}
             isPreview={isPreview}
             isForceEditing={isCellEditing}
