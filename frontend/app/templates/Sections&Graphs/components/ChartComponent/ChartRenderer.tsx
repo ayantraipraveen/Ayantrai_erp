@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { LibraryChartCard } from "@/lib/redux/slices/reportModuleSlice";
+import { LibraryChartCard, ChartDataPoint } from "@/lib/redux/slices/reportModuleSlice";
 
 interface ChartRendererProps {
   chart: LibraryChartCard;
@@ -516,14 +516,22 @@ export default function ChartRenderer({
     }
 
     case "heatmap": {
-      const rowsCount = effectiveRows || 4;
+      const rowsCount = effectiveRows || (chart.dataPoints && chart.dataPoints.length > 0 ? chart.dataPoints.length : 4);
       const colsCount = effectiveCols || 7;
 
       const standardDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
       const days = Array.from({ length: colsCount }, (_, i) => standardDays[i] || `D${i + 1}`);
-      const weeks = Array.from({ length: rowsCount }, (_, i) => i < 12 ? `Week ${i + 1}` : `W${i + 1}`);
+      const weeks = Array.from({ length: rowsCount }, (_, i) => {
+        if (chart.dataPoints?.[i]?.label) return chart.dataPoints[i].label;
+        return i < 12 ? `Week ${i + 1}` : `W${i + 1}`;
+      });
 
       const getCellValue = (r: number, c: number) => {
+        const pt = chart.dataPoints?.[r];
+        if (pt && pt.rowValues && pt.rowValues[c] !== undefined) {
+          const val = typeof pt.rowValues[c] === "number" ? pt.rowValues[c] : parseFloat(String(pt.rowValues[c]));
+          if (!isNaN(val as number)) return val as number;
+        }
         const matrix = [
           [96, 96, 96, 96, 96, 82, 82],
           [94, 94, 94, 94, 94, 78, 78],
@@ -646,17 +654,17 @@ export default function ChartRenderer({
       const yRange = (d.yMax - d.yMin) || 1;
 
       return (
-        <div className="w-full h-auto min-h-[160px] flex flex-col justify-center py-2 gap-2.5 text-xs">
+        <div className="w-full h-full min-h-0 flex flex-col justify-center py-1 gap-2 text-xs overflow-hidden">
           {d.values.map((v, i) => {
             const pct = Math.max(0, Math.min(100, ((v - d.yMin) / yRange) * 100));
             const col = d.pointColors?.[i] || [c0, c1, c2, c3, c4][i % 5];
             const label = d.categories[i] || `Item ${i + 1}`;
             return (
-              <div key={i} className="flex items-center gap-3">
-                <span className="w-24 text-right font-medium text-slate-700 dark:text-zinc-300 truncate" title={label}>
+              <div key={i} className="flex items-center gap-2 sm:gap-3">
+                <span className={`w-20 sm:w-24 text-right font-medium text-slate-700 dark:text-zinc-300 truncate ${legendTextClass}`} title={label}>
                   {label}
                 </span>
-                <div className="flex-1 h-6 bg-slate-100 dark:bg-zinc-800 rounded-r-md flex items-center">
+                <div className="flex-1 h-5 sm:h-6 bg-slate-100 dark:bg-zinc-800 rounded-r-md flex items-center">
                   <div
                     className="h-full flex items-center justify-end pr-2 rounded-r-md transition-all"
                     style={{ width: `${pct}%`, backgroundColor: col }}
@@ -675,34 +683,68 @@ export default function ChartRenderer({
       );
     }
 
-    case "stacked-horizontal":
+    case "stacked-horizontal": {
+      const d = resolveChartData(
+        [c0, c1],
+        ["Hours without Violations", "Hours with Violations"],
+        [17330, 1420],
+        20000,
+        "hrs"
+      );
+      const v0 = d.values[0] ?? 17330;
+      const v1 = d.values[1] ?? (chart.dataPoints?.[0]?.secondaryValue ?? 1420);
+      const total = v0 + v1 || 1;
+      const p0 = ((v0 / total) * 100).toFixed(1);
+      const p1 = ((v1 / total) * 100).toFixed(1);
+      const label0 = d.categories[0] || "Safe Hours";
+      const label1 = d.categories[1] || "Violations";
+
       return (
-        <div className="w-full h-44 flex flex-col justify-center py-4 text-xs">
+        <div className="w-full h-full min-h-0 flex flex-col justify-center py-2 text-xs overflow-hidden">
           <div className="flex items-center justify-between mb-2 px-1">
-            <span className="font-semibold text-slate-700 dark:text-zinc-300">Total Operational Hours</span>
-            <span className="font-bold text-slate-900 dark:text-white">18,750</span>
+            <span className={`font-semibold text-slate-700 dark:text-zinc-300 ${legendTextClass}`}>{chart.title || "Total Operational Hours"}</span>
+            <span className={`font-bold text-slate-900 dark:text-white ${legendTextClass}`}>{total.toLocaleString()} {d.unit}</span>
           </div>
-          <div className="w-full h-10 flex rounded-lg overflow-hidden shadow-sm mb-4">
-            <div className="flex items-center justify-center text-white font-bold text-xs" style={{ width: "92.4%", backgroundColor: c0 }}>
-              92.4% Safe
+          <div className="w-full h-8 sm:h-10 flex rounded-lg overflow-hidden shadow-sm mb-3">
+            <div className="flex items-center justify-center text-white font-bold text-xs" style={{ width: `${p0}%`, backgroundColor: c0 }}>
+              {p0}% {label0}
             </div>
-            <div className="flex items-center justify-center text-white font-bold text-xs" style={{ width: "7.6%", backgroundColor: c1 }}>
-              7.6%
+            <div className="flex items-center justify-center text-white font-bold text-xs" style={{ width: `${p1}%`, backgroundColor: c1 }}>
+              {p1}%
             </div>
           </div>
-          <div className="flex justify-between text-[10px] font-mono text-slate-500 px-1">
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: c0 }} /> Hours without Violations (17,330)</div>
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: c1 }} /> Hours with Violations (1,420)</div>
+          <div className={`flex justify-between ${legendTextClass} font-mono text-slate-500 px-1`}>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: c0 }} /> {label0} ({v0.toLocaleString()})</div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: c1 }} /> {label1} ({v1.toLocaleString()})</div>
           </div>
         </div>
       );
+    }
 
-    case "stacked-bar":
+    case "stacked-bar": {
+      const d = resolveChartData(
+        chartColors,
+        ["Civil", "Mech", "Elec", "Fab", "Safety"],
+        [35, 32, 28, 40, 20],
+        100,
+        "%"
+      );
+      const n = d.categories.length;
+      const yRange = (d.yMax - d.yMin) || 1;
+      const bw = Math.min(32, Math.max(12, (360 / n) * 0.5));
+
+      const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
+        y: 110 - r * 96,
+        label: formatYTick(d.yMin + r * yRange, d.unit),
+      }));
+
+      const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
+
       return (
-        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
-          {/* Nomenclature / Legend placed safely above chart bars */}
-          <div className="flex items-center justify-center gap-5 pt-1 text-[11px] font-mono font-medium flex-wrap">
-            {[{ c: c0, l: "Civil" }, { c: c1, l: "PPE" }, { c: c2, l: "Safety" }, { c: c3, l: "Risk" }].map((lg, i) => (
+        <div className={chartWrapperClass}>
+          {/* Nomenclature / Legend */}
+          <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
+            {[{ c: c0, l: chart.series?.[0]?.name || "Civil" }, { c: c1, l: chart.series?.[1]?.name || "PPE" }, { c: c2, l: chart.series?.[2]?.name || "Safety" }, { c: c3, l: chart.series?.[3]?.name || "Risk" }].map((lg, i) => (
               <div key={i} className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: lg.c }} />
                 <span className="text-slate-600 dark:text-zinc-300 font-semibold">{lg.l}</span>
@@ -710,40 +752,57 @@ export default function ChartRenderer({
             ))}
           </div>
 
-          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
             <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            {yHeader && (
+              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+                {yHeader}
+              </text>
+            )}
             {/* Y labels */}
-            {[{ y: 110, l: "0%" }, { y: 86, l: "25%" }, { y: 62, l: "50%" }, { y: 38, l: "75%" }, { y: 14, l: "100%" }].map((g, i) => (
+            {yTicks.map((g, i) => (
               <g key={i}>
-                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
+                {d.showGridLines && (
+                  <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                )}
+                <text x="43" y={g.y + 2.5} fontSize={svgTickSize} textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
-            {[
-              { x: 90, h1: 35, h2: 40, h3: 15, h4: 10, label: "Civil" },
-              { x: 165, h1: 32, h2: 38, h3: 20, h4: 10, label: "Mech" },
-              { x: 240, h1: 28, h2: 42, h3: 18, h4: 12, label: "Elec" },
-              { x: 315, h1: 40, h2: 35, h3: 15, h4: 10, label: "Fab" },
-              { x: 390, h1: 20, h2: 45, h3: 25, h4: 10, label: "Safety" },
-            ].map((b, i) => {
-              const totalH = b.h1 + b.h2 + b.h3 + b.h4;
+            {d.categories.map((cat, i) => {
+              const pt = chart.dataPoints?.[i];
+              const h1 = pt?.value ?? d.values[i] ?? 30;
+              const h2 = pt?.secondaryValue ?? 35;
+              const h3 = pt?.tertiaryValue ?? 15;
+              const h4 = pt?.quaternaryValue ?? 10;
+              const totalVal = h1 + h2 + h3 + h4;
+              const scaleH = (v: number) => Math.max(1, (v / (totalVal || 1)) * 96);
+              const sh1 = scaleH(h1);
+              const sh2 = scaleH(h2);
+              const sh3 = scaleH(h3);
+              const sh4 = scaleH(h4);
+              const x = 56 + ((i + 0.5) / n) * 360;
+
               return (
                 <g key={i}>
-                  <rect x={b.x - 16} y={110 - b.h1} width="32" height={b.h1} fill={c0} />
-                  <rect x={b.x - 16} y={110 - b.h1 - b.h2} width="32" height={b.h2} fill={c1} />
-                  <rect x={b.x - 16} y={110 - b.h1 - b.h2 - b.h3} width="32" height={b.h3} fill={c2} />
-                  <rect x={b.x - 16} y={110 - totalH} width="32" height={b.h4} fill={c3} />
-                  <line x1={b.x} y1="110" x2={b.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={b.x} y={124} fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{b.label}</text>
+                  <rect x={x - bw / 2} y={110 - sh1} width={bw} height={sh1} fill={c0} />
+                  <rect x={x - bw / 2} y={110 - sh1 - sh2} width={bw} height={sh2} fill={c1} />
+                  <rect x={x - bw / 2} y={110 - sh1 - sh2 - sh3} width={bw} height={sh3} fill={c2} />
+                  <rect x={x - bw / 2} y={110 - sh1 - sh2 - sh3 - sh4} width={bw} height={sh4} fill={c3} />
+                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={124} fontSize={svgTickSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{cat}</text>
                 </g>
               );
             })}
+            {d.xAxisTitle && (
+              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
+            )}
           </svg>
         </div>
       );
+    }
 
     case "grouped-bar": {
       const d = resolveChartData(
@@ -766,9 +825,9 @@ export default function ChartRenderer({
       const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
-        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center gap-2">
+        <div className={chartWrapperClass}>
           {d.showLegend && (
-            <div className="flex items-center justify-center gap-5 pt-1 text-[11px] font-mono font-medium flex-wrap">
+            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c0 }} />
                 <span className="text-slate-600 dark:text-zinc-300 font-semibold">{chart.series?.[0]?.name || "Primary / Actual"}</span>
@@ -785,9 +844,8 @@ export default function ChartRenderer({
             <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
             <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* Y-axis Header / Unit */}
             {yHeader && (
-              <text x="48" y="7" fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
@@ -797,7 +855,7 @@ export default function ChartRenderer({
                 {d.showGridLines && (
                   <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
                 )}
-                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
+                <text x="43" y={g.y + 2.5} fontSize={svgTickSize} textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
             {d.values.map((v1, i) => {
@@ -811,57 +869,114 @@ export default function ChartRenderer({
                   <rect x={x - bw - 1} y={110 - h1} width={bw} height={h1} fill={c0} rx="2" />
                   <rect x={x + 1} y={110 - h2} width={bw} height={h2} fill={c1} rx="2" />
                   <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{d.categories[i]}</text>
+                  <text x={x} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{d.categories[i]}</text>
                   {d.showValues && (
-                    <text x={x - bw / 2 - 1} y={110 - h1 - 3} fontSize="6" fontWeight="bold" textAnchor="middle" fill={c0}>{v1}</text>
+                    <text x={x - bw / 2 - 1} y={110 - h1 - 3} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={c0}>{v1}</text>
                   )}
                 </g>
               );
             })}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize="7" fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
+              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
       );
     }
 
-    case "multi-line":
+    case "multi-line": {
+      const d = resolveChartData(
+        chartColors,
+        ["08:00", "12:00", "16:00", "20:00", "24:00"],
+        [85, 94, 96, 92, 88],
+        100,
+        "%"
+      );
+      const secVals = d.secondaryValues || [78, 88, 91, 84, 80];
+      const n = d.categories.length;
+      const yRange = (d.yMax - d.yMin) || 1;
+
+      const points1 = d.values.map((v, i) => {
+        const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+        const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
+        const cy = 110 - norm * 96;
+        return { cx, cy, val: v, label: d.categories[i] };
+      });
+
+      const points2 = secVals.map((v, i) => {
+        const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+        const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
+        const cy = 110 - norm * 96;
+        return { cx, cy, val: v, label: d.categories[i] };
+      });
+
+      const path1 = points1.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
+      const path2 = points2.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
+
+      const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
+        y: 110 - r * 96,
+        label: formatYTick(d.yMin + r * yRange, d.unit),
+      }));
+
+      const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
+
       return (
-        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
-          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
+        <div className={chartWrapperClass}>
+          {d.showLegend && (
+            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c0 }} />
+                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{chart.series?.[0]?.name || "Line 1 (Actual)"}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c1 }} />
+                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{chart.series?.[1]?.name || "Line 2 (Target)"}</span>
+              </div>
+            </div>
+          )}
+          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
             <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
             <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* Y grid + labels */}
-            {[{ y: 110, l: "0%" }, { y: 86, l: "25%" }, { y: 62, l: "50%" }, { y: 38, l: "75%" }, { y: 14, l: "100%" }].map((g, i) => (
+            {yHeader && (
+              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+                {yHeader}
+              </text>
+            )}
+            {/* Y grid */}
+            {yTicks.map((g, i) => (
               <g key={i}>
-                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
+                {d.showGridLines && (
+                  <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                )}
+                <text x="43" y={g.y + 2.5} fontSize={svgTickSize} textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
             {/* X ticks */}
-            {[{ x: 100, l: "Q1" }, { x: 190, l: "Q2" }, { x: 280, l: "Q3" }, { x: 415, l: "Q4" }].map((t, i) => (
+            {points1.map((p, i) => (
               <g key={i}>
-                <line x1={t.x} y1="110" x2={t.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y="124" fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{t.l}</text>
+                <line x1={p.cx} y1="110" x2={p.cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={p.cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
               </g>
             ))}
             {/* Line 1 */}
-            <path d="M 55 97 Q 120 44, 185 67 T 305 30 T 415 16" fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
-            {[{ cx: 55, cy: 97 }, { cx: 185, cy: 67 }, { cx: 305, cy: 30 }, { cx: 415, cy: 16 }].map((p, i) => <circle key={i} cx={p.cx} cy={p.cy} r="3" fill={c0} />)}
+            <path d={path1} fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
+            {points1.map((p, i) => (
+              <circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
+            ))}
             {/* Line 2 */}
-            <path d="M 55 107 Q 120 80, 185 54 T 305 64 T 415 40" fill="none" stroke={c1} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="5 2" />
-            {[{ cx: 55, cy: 107 }, { cx: 185, cy: 54 }, { cx: 305, cy: 64 }, { cx: 415, cy: 40 }].map((p, i) => <circle key={i} cx={p.cx} cy={p.cy} r="3" fill={c1} />)}
-            {/* Legend */}
-            <rect x="300" y="10" width="8" height="3" fill={c0} rx="1" />
-            <text x="311" y="14" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Zone A</text>
-            <rect x="300" y="20" width="8" height="3" fill={c1} rx="1" />
-            <text x="311" y="24" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Zone B</text>
+            <path d={path2} fill="none" stroke={c1} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="4 2" />
+            {points2.map((p, i) => (
+              <circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#fff" stroke={c1} strokeWidth="2" />
+            ))}
+            {d.xAxisTitle && (
+              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
+            )}
           </svg>
         </div>
       );
+    }
 
     case "two-segment": {
       const d = resolveChartData(
@@ -874,18 +989,18 @@ export default function ChartRenderer({
       const yRange = (d.yMax - d.yMin) || 1;
 
       return (
-        <div className="w-full h-auto min-h-[140px] flex flex-col justify-center gap-3 text-xs px-2 py-2">
+        <div className="w-full h-full min-h-0 flex flex-col justify-center gap-2.5 text-xs px-2 py-1 overflow-hidden">
           {d.values.map((v, i) => {
             const pct = Math.max(0, Math.min(100, ((v - d.yMin) / yRange) * 100));
             const col = d.pointColors?.[i] || [c0, c1, c2, c3, c4][i % 5];
             const label = d.categories[i] || `Metric ${i + 1}`;
             return (
-              <div key={i}>
-                <div className="flex justify-between font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                  <span>{label}</span>
-                  <span>{formatDataValue(v, d.unit)}</span>
+              <div key={i} className="space-y-1">
+                <div className="flex justify-between font-bold text-slate-700 dark:text-zinc-300">
+                  <span className={legendTextClass}>{label}</span>
+                  <span className={legendTextClass}>{formatDataValue(v, d.unit)}</span>
                 </div>
-                <div className="w-full h-5 bg-slate-100 dark:bg-zinc-800 rounded-lg overflow-hidden flex">
+                <div className="w-full h-4 sm:h-5 bg-slate-100 dark:bg-zinc-800 rounded-lg overflow-hidden flex">
                   <div className="h-full rounded-lg transition-all" style={{ width: `${pct}%`, backgroundColor: col }} />
                 </div>
               </div>
@@ -916,7 +1031,7 @@ export default function ChartRenderer({
       const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
-        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className={chartWrapperClass}>
           <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
             <defs>
               <linearGradient id={`areagrad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -924,30 +1039,25 @@ export default function ChartRenderer({
                 <stop offset="100%" stopColor={c0} stopOpacity="0.03" />
               </linearGradient>
             </defs>
-            {/* Y-axis */}
             <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* X-axis */}
             <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* Y-axis Header / Unit */}
             {yHeader && (
-              <text x="48" y="7" fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
-            {/* Y grid */}
             {yTicks.map((g, i) => (
               <g key={i}>
                 {d.showGridLines && (
                   <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
                 )}
-                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
+                <text x="43" y={g.y + 2.5} fontSize={svgTickSize} textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
-            {/* X ticks */}
             {points.map((p, i) => (
               <g key={i}>
                 <line x1={p.cx} y1="110" x2={p.cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={p.cx} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
+                <text x={p.cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
               </g>
             ))}
             <path d={areaD} fill={`url(#areagrad-${chart.id})`} />
@@ -956,27 +1066,69 @@ export default function ChartRenderer({
               <circle key={i} cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
             ))}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize="7" fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
+              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
       );
     }
 
-    case "radar":
+    case "radar": {
+      const d = resolveChartData(
+        chartColors,
+        ["PPE", "Response", "Reporting", "Checks", "Housekeeping"],
+        [94, 85, 78, 92, 86],
+        100,
+        "pts"
+      );
+      const n = d.categories.length || 5;
+      const rOuter = 40;
+      const cx = 50;
+      const cy = 50;
+
+      const getPoints = (vals: number[]) =>
+        vals
+          .map((v, i) => {
+            const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+            const norm = Math.max(0.1, Math.min(1, v / (d.yMax || 100)));
+            const px = cx + rOuter * norm * Math.cos(angle);
+            const py = cy + rOuter * norm * Math.sin(angle);
+            return `${px.toFixed(1)},${py.toFixed(1)}`;
+          })
+          .join(" ");
+
       return (
-        <div className="w-full h-44 flex items-center justify-center">
-          <svg viewBox="0 0 100 100" className="h-full w-full">
-            <polygon points="50,5 95,35 80,90 20,90 5,35" fill="none" stroke="currentColor" strokeOpacity="0.2" />
-            <polygon points="50,20 80,45 70,80 30,80 20,45" fill="none" stroke="currentColor" strokeOpacity="0.2" />
-            <polygon points="50,15 85,40 60,75 35,80 15,45" fill={c0} fillOpacity="0.4" stroke={c0} strokeWidth="1.5" />
+        <div className="w-full h-full min-h-0 flex items-center justify-center overflow-hidden py-1">
+          <svg viewBox="0 0 100 100" className="h-full w-full max-h-full overflow-visible">
+            {/* Background Webs */}
+            <polygon points={getPoints(Array(n).fill(100))} fill="none" stroke="currentColor" strokeOpacity="0.2" strokeWidth="0.8" />
+            <polygon points={getPoints(Array(n).fill(50))} fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="0.8" strokeDasharray="2 2" />
+            {/* Target Series polygon if available */}
+            {d.secondaryValues && (
+              <polygon points={getPoints(d.secondaryValues)} fill={c1} fillOpacity="0.2" stroke={c1} strokeWidth="1.2" strokeDasharray="3 2" />
+            )}
+            {/* Main Series polygon */}
+            <polygon points={getPoints(d.values)} fill={c0} fillOpacity="0.38" stroke={c0} strokeWidth="1.6" />
+            {/* Labels */}
+            {d.categories.map((cat, i) => {
+              const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+              const px = cx + (rOuter + 8) * Math.cos(angle);
+              const py = cy + (rOuter + 8) * Math.sin(angle);
+              return (
+                <text key={i} x={px} y={py + 2} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.7" fontWeight="bold">
+                  {cat}
+                </text>
+              );
+            })}
           </svg>
         </div>
       );
+    }
 
     case "gauge": {
       const d = resolveChartData(chartColors, ["Score"], [72], 100, "%");
-      const primaryVal = d.values[0] ?? 72;
+      const primaryVal = chart.dataPoints?.[0]?.value ?? d.values[0] ?? 72;
+      const targetVal = chart.dataPoints?.[0]?.target;
       const yRange = (d.yMax - d.yMin) || 1;
       const norm = Math.max(0, Math.min(1, (primaryVal - d.yMin) / yRange));
       const angle = norm * 180;
@@ -986,247 +1138,448 @@ export default function ChartRenderer({
       const pathGauge = `M 10 50 A 40 40 0 0 1 ${endX.toFixed(1)} ${endY.toFixed(1)}`;
 
       return (
-        <div className="w-full h-44 flex flex-col items-center justify-center relative">
-          <svg viewBox="0 0 100 50" className="w-48 h-24 overflow-visible">
-            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="currentColor" strokeOpacity="0.1" strokeWidth="15" strokeLinecap="round" />
-            <path d={pathGauge} fill="none" stroke={c0} strokeWidth="15" strokeLinecap="round" />
+        <div className="w-full h-full min-h-0 flex flex-col items-center justify-center relative overflow-hidden py-1">
+          <svg viewBox="0 0 100 56" className="w-48 sm:w-56 h-auto overflow-visible">
+            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="12" strokeLinecap="round" />
+            <path d={pathGauge} fill="none" stroke={c0} strokeWidth="12" strokeLinecap="round" />
           </svg>
-          <div className="absolute bottom-6 font-bold text-2xl text-slate-800 dark:text-white">
-            {primaryVal}{d.unit}
-          </div>
-          {d.categories[0] && (
-            <div className="text-[10px] font-mono text-slate-400 mt-1 uppercase">
-              {d.categories[0]}
+          <div className="text-center -mt-3">
+            <div className="font-black text-2xl sm:text-3xl text-slate-800 dark:text-white leading-none">
+              {primaryVal}{d.unit}
             </div>
-          )}
+            {targetVal !== undefined && (
+              <div className="text-[10px] font-mono text-slate-400 mt-1">
+                Target: {targetVal}{d.unit}
+              </div>
+            )}
+            {d.categories[0] && (
+              <div className="text-[10px] font-mono text-[#9D61FF] font-bold uppercase mt-0.5">
+                {d.categories[0]}
+              </div>
+            )}
+          </div>
         </div>
       );
     }
 
     case "scatter":
-    case "bubble":
+    case "bubble": {
+      const isBubble = chart.chartType === "bubble";
+      const pts = (chart.dataPoints && chart.dataPoints.length > 0)
+        ? chart.dataPoints
+        : [
+            { label: "Pump A-1", x: 25, y: 35, size: 14, value: 35 },
+            { label: "Turbine T-2", x: 45, y: 78, size: 24, value: 78 },
+            { label: "Compressor C-1", x: 60, y: 52, size: 18, value: 52 },
+            { label: "Generator G-4", x: 80, y: 88, size: 28, value: 88 },
+            { label: "Motor M-5", x: 92, y: 40, size: 12, value: 40 },
+          ];
+
       return (
-        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className={chartWrapperClass}>
           <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
-            {/* Y-axis */}
             <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* X-axis */}
             <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* Y grid + labels */}
-            {[{ y: 110, l: "0" }, { y: 86, l: "25" }, { y: 62, l: "50" }, { y: 38, l: "75" }, { y: 14, l: "100" }].map((g, i) => (
-              <g key={i}>
-                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
-              </g>
-            ))}
-            {/* X ticks */}
-            {[{ x: 110, l: "20" }, { x: 190, l: "40" }, { x: 270, l: "60" }, { x: 350, l: "80" }, { x: 415, l: "100" }].map((t, i) => (
-              <g key={i}>
-                <line x1={t.x} y1="110" x2={t.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{t.l}</text>
-              </g>
-            ))}
-            {[
-              { cx: 130, cy: 78, r: chart.chartType === "bubble" ? 15 : 4 },
-              { cx: 195, cy: 50, r: chart.chartType === "bubble" ? 22 : 5 },
-              { cx: 255, cy: 65, r: chart.chartType === "bubble" ? 28 : 6 },
-              { cx: 315, cy: 42, r: chart.chartType === "bubble" ? 19 : 5 },
-              { cx: 375, cy: 68, r: chart.chartType === "bubble" ? 14 : 4 },
-            ].map((c, i) => (
-              <circle
+            {[0, 25, 50, 75, 100].map((v, i) => {
+              const y = 110 - (v / 100) * 96;
+              return (
+                <g key={i}>
+                  <line x1="45" y1={y} x2="425" y2={y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                  <text x="43" y={y + 2.5} fontSize={svgTickSize} textAnchor="end" fill="currentColor" fillOpacity="0.5">{v}</text>
+                </g>
+              );
+            })}
+            {[20, 40, 60, 80, 100].map((v, i) => {
+              const x = 48 + (v / 100) * 360;
+              return (
+                <g key={i}>
+                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{v}</text>
+                </g>
+              );
+            })}
+            {pts.map((pt, i) => {
+              const rawX = typeof pt.x === "number" ? pt.x : parseFloat(String(pt.x)) || (i * 20 + 20);
+              const rawY = typeof pt.y === "number" ? pt.y : pt.value ?? (i * 15 + 30);
+              const cx = 48 + Math.max(0, Math.min(100, rawX) / 100) * 360;
+              const cy = 110 - Math.max(0, Math.min(100, rawY) / 100) * 96;
+              const r = isBubble ? Math.max(6, Math.min(26, pt.size ?? 16)) : 4.5;
+              const pCol = pt.color || c0;
+
+              return (
+                <g key={i}>
+                  <circle cx={cx} cy={cy} r={r} fill={pCol} fillOpacity={isBubble ? "0.45" : "0.9"} stroke={pCol} strokeWidth="1.5" />
+                  <text x={cx} y={cy - r - 3} fontSize={svgTickSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.75">{pt.label}</text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      );
+    }
+
+    case "funnel": {
+      const pts = (chart.dataPoints && chart.dataPoints.length > 0)
+        ? chart.dataPoints
+        : [
+            { label: "Gate Entries", value: 1200 },
+            { label: "Briefing Passed", value: 850 },
+            { label: "PPE Inspected", value: 420 },
+            { label: "Zero Violations", value: 180 },
+          ];
+      const maxVal = Math.max(...pts.map((p) => p.value), 1);
+
+      return (
+        <div className="w-full h-full min-h-0 flex flex-col items-center justify-center gap-1.5 text-xs text-white font-bold py-1 overflow-hidden">
+          {pts.map((pt, i) => {
+            const pct = Math.max(25, (pt.value / maxVal) * 100);
+            const op = 1 - (i * 0.18);
+            return (
+              <div
                 key={i}
-                cx={c.cx}
-                cy={c.cy}
-                r={c.r}
-                fill={c0}
-                fillOpacity="0.45"
-                stroke={c0}
-                strokeWidth="1.5"
-              />
-            ))}
-          </svg>
+                className="h-7 sm:h-8 rounded-lg flex items-center justify-between px-3 shadow-2xs transition-all"
+                style={{ width: `${pct}%`, backgroundColor: c0, opacity: Math.max(0.4, op) }}
+              >
+                <span className="text-[10px] sm:text-xs truncate">{pt.label}</span>
+                <span className="text-[10px] sm:text-xs font-mono font-black">{pt.value.toLocaleString()}</span>
+              </div>
+            );
+          })}
         </div>
       );
+    }
 
-    case "funnel":
+    case "sparkline": {
+      const channels = (chart.dataPoints && chart.dataPoints.length > 0)
+        ? chart.dataPoints
+        : [
+            { label: "Zone A", rowValues: [25, 10, 20, 5, 15, 0], color: c0 },
+            { label: "Zone B", rowValues: [20, 25, 10, 20, 5, 15], color: c1 },
+            { label: "Zone C", rowValues: [30, 15, 25, 10, 20, 5], color: c2 },
+          ];
+
       return (
-        <div className="w-full h-44 flex flex-col items-center justify-center gap-1 text-xs text-white font-bold">
-          <div className="h-8 rounded flex items-center justify-center shadow-xs" style={{ width: "90%", backgroundColor: c0 }}>1,200</div>
-          <div className="h-8 rounded flex items-center justify-center shadow-xs" style={{ width: "70%", backgroundColor: `${c0}CC` }}>850</div>
-          <div className="h-8 rounded flex items-center justify-center shadow-xs text-slate-900" style={{ width: "50%", backgroundColor: `${c0}88` }}>420</div>
-          <div className="h-8 rounded flex items-center justify-center shadow-xs text-slate-900" style={{ width: "30%", backgroundColor: `${c0}55` }}>180</div>
+        <div className="w-full h-full min-h-0 flex flex-col items-center justify-center gap-2.5 py-1 overflow-hidden">
+          {channels.map((s, i) => {
+            const vals = (s.rowValues && s.rowValues.length > 0)
+              ? s.rowValues.map((v) => (typeof v === "number" ? v : parseFloat(String(v)) || 0))
+              : [10, 20, 15, 30, 25, 35];
+            const maxV = Math.max(...vals, 1);
+            const minV = Math.min(...vals, 0);
+            const span = (maxV - minV) || 1;
+            const ptsSvg = vals
+              .map((v, idx) => {
+                const x = (idx / (vals.length - 1 || 1)) * 100;
+                const y = 30 - ((v - minV) / span) * 26;
+                return `${idx === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+              })
+              .join(" ");
+
+            return (
+              <div key={i} className="flex items-center gap-3 w-full px-2">
+                <span className={`text-[10px] font-bold text-slate-500 w-16 text-right truncate ${legendTextClass}`}>{s.label}</span>
+                <svg viewBox="0 0 100 32" className="flex-1 h-6 overflow-visible">
+                  <path d={ptsSvg} fill="none" stroke={s.color || c0} strokeWidth="2.2" strokeLinecap="round" />
+                </svg>
+                <span className="text-[10px] font-bold" style={{ color: s.color || c0 }}>↑</span>
+              </div>
+            );
+          })}
         </div>
       );
+    }
 
-    case "sparkline":
-      return (
-        <div className="w-full h-44 flex flex-col items-center justify-center gap-3">
-          {[
-            { label: "Zone A", d: "M 0 25 L 20 10 L 40 20 L 60 5 L 80 15 L 100 0", color: c0 },
-            { label: "Zone B", d: "M 0 20 L 20 25 L 40 10 L 60 20 L 80 5 L 100 15", color: c1 },
-            { label: "Zone C", d: "M 0 30 L 20 15 L 40 25 L 60 10 L 80 20 L 100 5", color: c2 },
-          ].map((s, i) => (
-            <div key={i} className="flex items-center gap-3 w-full px-4">
-              <span className="text-[10px] font-bold text-slate-500 w-12 text-right">{s.label}</span>
-              <svg viewBox="0 0 100 30" className="w-48 h-8 overflow-visible flex-shrink-0">
-                <path d={s.d} fill="none" stroke={s.color} strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
-              <span className="text-[10px] font-bold" style={{ color: s.color }}>↑</span>
-            </div>
-          ))}
-        </div>
-      );
+    case "combo": {
+      const d = resolveChartData(chartColors, ["Jan", "Feb", "Mar", "Apr", "May"], [55, 75, 42, 85, 30], 100, "%");
+      const secVals = d.secondaryValues || [45, 65, 35, 75, 25];
+      const n = d.categories.length;
+      const yRange = (d.yMax - d.yMin) || 1;
 
-    case "combo":
       return (
-        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className={chartWrapperClass}>
           <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
-            {/* Y-axis */}
             <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* X-axis */}
             <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* Y grid */}
-            {[{ y: 110, l: "0" }, { y: 86, l: "25" }, { y: 62, l: "50" }, { y: 38, l: "75" }, { y: 14, l: "100" }].map((g, i) => (
-              <g key={i}>
-                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
-              </g>
-            ))}
-            {/* Bars */}
-            {[{ x: 80, h: 55 }, { x: 155, h: 75 }, { x: 230, h: 42 }, { x: 305, h: 85 }, { x: 380, h: 30 }].map((b, i) => (
-              <g key={i}>
-                <rect x={b.x - 18} y={110 - b.h} width="36" height={b.h} fill={c0} opacity="0.8" rx="2" />
-                <line x1={b.x} y1="110" x2={b.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={b.x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">{["Jan", "Feb", "Mar", "Apr", "May"][i]}</text>
-              </g>
-            ))}
-            {/* Trend line */}
-            <path d="M 80 54 L 155 36 L 230 70 L 305 24 L 380 82" fill="none" stroke={c1} strokeWidth="2.5" strokeLinecap="round" />
-            {[{ cx: 80, cy: 54 }, { cx: 155, cy: 36 }, { cx: 230, cy: 70 }, { cx: 305, cy: 24 }, { cx: 380, cy: 82 }].map((p, i) => (
-              <circle key={i} cx={p.cx} cy={p.cy} r="3" fill={c1} />
-            ))}
+            {[0, 25, 50, 75, 100].map((v, i) => {
+              const y = 110 - (v / 100) * 96;
+              return (
+                <g key={i}>
+                  <line x1="45" y1={y} x2="425" y2={y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
+                  <text x="43" y={y + 2.5} fontSize={svgTickSize} textAnchor="end" fill="currentColor" fillOpacity="0.5">{v}</text>
+                </g>
+              );
+            })}
+            {/* Bars for Series 1 */}
+            {d.values.map((v, i) => {
+              const x = 56 + ((i + 0.5) / n) * 360;
+              const h = Math.max(3, ((v - d.yMin) / yRange) * 96);
+              return (
+                <g key={i}>
+                  <rect x={x - 16} y={110 - h} width="32" height={h} fill={c0} opacity="0.8" rx="2" />
+                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{d.categories[i]}</text>
+                </g>
+              );
+            })}
+            {/* Line for Series 2 */}
+            <path
+              d={secVals.map((v, i) => {
+                const x = 56 + ((i + 0.5) / n) * 360;
+                const y = 110 - Math.max(3, ((v - d.yMin) / yRange) * 96);
+                return `${i === 0 ? "M" : "L"} ${x} ${y}`;
+              }).join(" ")}
+              fill="none"
+              stroke={c1}
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            {secVals.map((v, i) => {
+              const x = 56 + ((i + 0.5) / n) * 360;
+              const y = 110 - Math.max(3, ((v - d.yMin) / yRange) * 96);
+              return <circle key={i} cx={x} cy={y} r="3" fill={c1} />;
+            })}
             {/* Legend */}
-            <rect x="52" y="10" width="7" height="7" fill={c0} rx="1" /><text x="62" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Volume</text>
-            <line x1="110" y1="14" x2="122" y2="14" stroke={c1} strokeWidth="2" /><text x="125" y="16" fontSize="6.5" fill="currentColor" fillOpacity="0.6">Trend</text>
+            <rect x="52" y="10" width="7" height="7" fill={c0} rx="1" /><text x="62" y="16" fontSize={svgTickSize} fill="currentColor" fillOpacity="0.6">Volume</text>
+            <line x1="110" y1="14" x2="122" y2="14" stroke={c1} strokeWidth="2" /><text x="125" y="16" fontSize={svgTickSize} fill="currentColor" fillOpacity="0.6">Trend</text>
           </svg>
         </div>
       );
+    }
 
-    case "waterfall":
+    case "waterfall": {
+      const pts = (chart.dataPoints && chart.dataPoints.length > 0)
+        ? chart.dataPoints
+        : [
+            { label: "Base", value: 65, color: "#64748B" },
+            { label: "+ Audits", value: 20, color: "#10B981" },
+            { label: "- Violations", value: -15, color: "#F43F5E" },
+            { label: "+ Training", value: 10, color: "#10B981" },
+            { label: "Net Total", value: 80, color: c0 },
+          ];
+
       return (
-        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className={chartWrapperClass}>
           <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
-            {/* Y-axis */}
             <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* X-axis */}
             <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* Y labels */}
-            {[{ y: 110, l: "0" }, { y: 86, l: "25" }, { y: 62, l: "50" }, { y: 38, l: "75" }, { y: 14, l: "100" }].map((g, i) => (
-              <g key={i}>
-                <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
-                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.l}</text>
-              </g>
-            ))}
-            {/* Connectors */}
-            <line x1="116" y1="50" x2="130" y2="50" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
-            <line x1="196" y1="30" x2="210" y2="50" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
-            <line x1="276" y1="70" x2="290" y2="90" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
-            <line x1="356" y1="90" x2="370" y2="90" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 2" />
-            {/* Bars: start (c2), +20 (c0), -20 (c1), +10 (c0), total (c2) */}
-            <rect x="54" y="50" width="62" height="60" fill={c2} rx="2" />
-            <rect x="130" y="30" width="66" height="20" fill={c0} rx="2" />
-            <rect x="210" y="50" width="66" height="20" fill={c1} rx="2" />
-            <rect x="290" y="90" width="66" height="20" fill={c0} rx="2" />
-            <rect x="370" y="30" width="42" height="80" fill={c2} rx="2" />
-            {[{ x: 85, l: "Start" }, { x: 163, l: "+20" }, { x: 243, l: "-20" }, { x: 323, l: "+10" }, { x: 391, l: "Total" }].map((t, i) => (
-              <g key={i}>
-                <line x1={t.x} y1="110" x2={t.x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={t.x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{t.l}</text>
-              </g>
-            ))}
+            {pts.map((p, i) => {
+              const x = 60 + i * 72;
+              const isNeg = p.value < 0;
+              const h = Math.min(60, Math.max(12, Math.abs(p.value) * 1.2));
+              const y = isNeg ? 60 : 60 - h;
+              const barColor = p.color || (isNeg ? "#F43F5E" : "#10B981");
+
+              return (
+                <g key={i}>
+                  <rect x={x} y={y} width="52" height={h} fill={barColor} rx="2" />
+                  <line x1={x + 26} y1="110" x2={x + 26} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x + 26} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.7">{p.label}</text>
+                </g>
+              );
+            })}
           </svg>
         </div>
       );
+    }
 
-    case "treemap":
-      return (
-        <div className="w-full h-auto min-h-[176px] max-h-[352px] grid grid-cols-3 gap-1 p-2 text-white font-bold text-[10px]">
-          <div className="col-span-2 row-span-2 rounded p-2 flex items-end shadow-2xs" style={{ backgroundColor: c0 }}>Item A</div>
-          <div className="rounded p-2 flex items-end shadow-2xs" style={{ backgroundColor: c1 }}>Item B</div>
-          <div className="rounded p-2 flex items-end shadow-2xs" style={{ backgroundColor: c2 }}>Item C</div>
-          <div className="col-span-3 rounded p-2 flex items-end shadow-2xs" style={{ backgroundColor: c3 }}>Item D</div>
-        </div>
-      );
+    case "treemap": {
+      const items = (chart.dataPoints && chart.dataPoints.length > 0)
+        ? chart.dataPoints
+        : [
+            { label: "Civil Works", value: 45, color: c0 },
+            { label: "Mechanical", value: 25, color: c1 },
+            { label: "Electrical", value: 18, color: c2 },
+            { label: "Chemical", value: 12, color: c3 },
+          ];
 
-    case "kpi-card":
       return (
-        <div className="w-full h-full max-h-[460px] grid grid-cols-2 gap-4 p-2 text-xs auto-rows-fr">
-          {[
-            { label: "Total Incidents", val: "1,248", trend: "-18%", color: c3, icon: "↓" },
-            { label: "PPE Compliance", val: "97.4%", trend: "+2.1%", color: c0, icon: "↑" },
-            { label: "Worker Hours", val: "18,750", trend: "+5.3%", color: c1, icon: "↑" },
-            { label: "Near-Misses", val: "12", trend: "-33%", color: c2, icon: "↓" },
-          ].map((k, i) => (
+        <div className="w-full h-full min-h-0 grid grid-cols-3 gap-1.5 p-1 text-white font-bold text-[10px] overflow-hidden">
+          {items.map((item, i) => (
             <div
               key={i}
-              className="flex flex-col justify-between bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-2xl p-5 sm:p-6 border border-slate-200/80 dark:border-zinc-800/80 shadow-xs hover:border-[#9D61FF]/40 transition-all"
+              className={`rounded-lg p-2 flex items-end shadow-2xs ${i === 0 ? "col-span-2 row-span-2" : i === 3 ? "col-span-3" : ""}`}
+              style={{ backgroundColor: item.color || [c0, c1, c2, c3][i % 4] }}
             >
-              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+              <div className="truncate">
+                <div>{item.label}</div>
+                <div className="text-[9px] font-mono opacity-80">{item.value}%</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    case "kpi-card": {
+      const kpis: ChartDataPoint[] = (chart.dataPoints && chart.dataPoints.length > 0)
+        ? chart.dataPoints
+        : [
+            { id: "k1", label: "Total Incidents", value: 0, status: "0", trend: "-100%", trendDirection: "down", color: "#10B981" },
+            { id: "k2", label: "PPE Compliance", value: 97.4, status: "97.4%", trend: "+2.1%", trendDirection: "up", color: c0 },
+            { id: "k3", label: "Worker Hours", value: 18750, status: "18,750", trend: "+5.3%", trendDirection: "up", color: c1 },
+            { id: "k4", label: "Near-Misses", value: 12, status: "12", trend: "-33%", trendDirection: "down", color: c2 },
+          ];
+
+      return (
+        <div className="w-full h-full min-h-0 grid grid-cols-2 gap-2.5 p-1 auto-rows-fr overflow-hidden">
+          {kpis.slice(0, 4).map((k, i) => (
+            <div
+              key={i}
+              className="flex flex-col justify-between bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs hover:border-[#9D61FF]/40 transition-all min-h-0 overflow-hidden"
+            >
+              <span className={`text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider truncate`}>
                 {k.label}
               </span>
-              <div className="font-black text-3xl sm:text-4xl text-slate-900 dark:text-white leading-tight my-auto">
-                {k.val}
+              <div className="font-black text-xl sm:text-2xl text-slate-900 dark:text-white leading-tight my-auto truncate">
+                {k.status || k.value}
               </div>
-              <span className="font-bold text-xs sm:text-sm flex items-center gap-1" style={{ color: k.color }}>
-                {k.icon} {k.trend}
+              <span className="font-bold text-[10px] sm:text-xs flex items-center gap-1" style={{ color: k.color || [c3, c0, c1, c2][i % 4] }}>
+                {k.trendDirection === "down" ? "↓" : "↑"} {k.trend || "+0%"}
               </span>
             </div>
           ))}
         </div>
       );
+    }
 
-    case "timeline":
+    case "timeline": {
+      const tasks = (chart.dataPoints && chart.dataPoints.length > 0)
+        ? chart.dataPoints
+        : [
+            { label: "Foundation", value: 10, secondaryValue: 35, status: "Completed", color: c0 },
+            { label: "Framing", value: 40, secondaryValue: 30, status: "In Progress", color: c1 },
+            { label: "Sign-Off", value: 65, secondaryValue: 30, status: "Pending", color: c2 },
+          ];
+
       return (
-        <div className="w-full h-44 flex flex-col justify-center gap-2 p-2">
-          <div className="flex items-center gap-2">
-            <div className="w-16 text-right text-[10px] font-bold text-slate-500">Task 1</div>
-            <div className="h-4 rounded shadow-2xs" style={{ width: "40%", marginLeft: "10%", backgroundColor: c0 }}></div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-16 text-right text-[10px] font-bold text-slate-500">Task 2</div>
-            <div className="h-4 rounded shadow-2xs" style={{ width: "30%", marginLeft: "45%", backgroundColor: c1 }}></div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-16 text-right text-[10px] font-bold text-slate-500">Task 3</div>
-            <div className="h-4 rounded shadow-2xs" style={{ width: "50%", marginLeft: "20%", backgroundColor: c2 }}></div>
-          </div>
+        <div className="w-full h-full min-h-0 flex flex-col justify-center gap-2 p-1 overflow-hidden">
+          {tasks.map((t, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className={`w-20 text-right text-[10px] font-bold text-slate-500 truncate ${legendTextClass}`}>{t.label}</div>
+              <div className="flex-1 h-5 bg-slate-100 dark:bg-zinc-800 rounded flex items-center">
+                <div
+                  className="h-full rounded shadow-2xs transition-all"
+                  style={{
+                    width: `${Math.max(10, Math.min(80, t.secondaryValue ?? 30))}%`,
+                    marginLeft: `${Math.max(0, Math.min(70, t.value ?? 10))}%`,
+                    backgroundColor: t.color || [c0, c1, c2, c3][i % 4],
+                  }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       );
+    }
 
-    case "geo-map":
+    case "geo-map": {
+      const sites = (chart.dataPoints && chart.dataPoints.length > 0)
+        ? chart.dataPoints
+        : [
+            { label: "Site A", x: 30, y: 45, color: c0 },
+            { label: "Site B", x: 62, y: 35, color: c1 },
+            { label: "Site C", x: 45, y: 75, color: c2 },
+            { label: "Site D", x: 80, y: 62, color: c3 },
+          ];
+
       return (
-        <div className="w-full h-44 relative overflow-hidden rounded-xl bg-slate-100 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-700">
+        <div className="w-full h-full min-h-0 relative overflow-hidden rounded-xl bg-slate-100 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-700">
           <svg viewBox="0 0 400 176" className="w-full h-full">
-            {/* Grid lines for map feel */}
             {[40, 80, 120, 160].map((y) => <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="currentColor" strokeOpacity="0.08" strokeDasharray="4 4" />)}
             {[80, 160, 240, 320].map((x) => <line key={x} x1={x} y1="0" x2={x} y2="176" stroke="currentColor" strokeOpacity="0.08" strokeDasharray="4 4" />)}
-            {/* Site location markers */}
-            {[
-              { cx: 120, cy: 80, label: "Site A", color: c0 },
-              { cx: 250, cy: 60, label: "Site B", color: c1 },
-              { cx: 180, cy: 130, label: "Site C", color: c2 },
-              { cx: 320, cy: 110, label: "Site D", color: c3 },
-            ].map((s, i) => (
-              <g key={i}>
-                <circle cx={s.cx} cy={s.cy} r="14" fill={s.color} fillOpacity="0.2" />
-                <circle cx={s.cx} cy={s.cy} r="6" fill={s.color} />
-                <text x={s.cx} y={s.cy + 22} fontSize="9" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.7">{s.label}</text>
-              </g>
-            ))}
+            {sites.map((s, i) => {
+              const rawX = typeof s.x === "number" ? s.x : 50;
+              const rawY = typeof s.y === "number" ? s.y : 50;
+              const cx = (rawX / 100) * 360 + 20;
+              const cy = (rawY / 100) * 140 + 18;
+              const pinColor = s.color || [c0, c1, c2, c3][i % 4];
+
+              return (
+                <g key={i}>
+                  <circle cx={cx} cy={cy} r="12" fill={pinColor} fillOpacity="0.2" />
+                  <circle cx={cx} cy={cy} r="5" fill={pinColor} />
+                  <text x={cx} y={cy + 18} fontSize="8.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.75">{s.label}</text>
+                </g>
+              );
+            })}
           </svg>
-          <div className="absolute bottom-2 right-2 text-[9px] font-mono text-slate-400 bg-white/70 dark:bg-zinc-900/70 px-2 py-0.5 rounded">Geo / Map Chart</div>
+          <div className="absolute bottom-1.5 right-2 text-[8px] font-mono text-slate-400 bg-white/70 dark:bg-zinc-900/70 px-1.5 py-0.5 rounded">Telemetry Map</div>
         </div>
       );
+    }
+
+    case "table": {
+      const headers = chart.tableColumns && chart.tableColumns.length > 0
+        ? chart.tableColumns
+        : ["#", "Category / Metric", "Value", "Target", "Status"];
+
+      const pts = (chart.dataPoints && chart.dataPoints.length > 0)
+        ? chart.dataPoints
+        : [
+            { id: "t1", label: "Zone North", value: 94.5, secondaryValue: 90, status: "Optimal" },
+            { id: "t2", label: "Substation East", value: 88.0, secondaryValue: 85, status: "Normal" },
+            { id: "t3", label: "Refinery Yard", value: 76.5, secondaryValue: 85, status: "Review" },
+            { id: "t4", label: "Storage Depot", value: 92.0, secondaryValue: 90, status: "Optimal" },
+          ];
+
+      return (
+        <div className="w-full h-full min-h-0 overflow-auto custom-scrollbar p-1">
+          <table className="w-full text-left border-collapse text-[10px] sm:text-xs">
+            <thead>
+              <tr className="border-b border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/60 sticky top-0">
+                {headers.map((h, i) => {
+                  const headerTitle = typeof h === "string" ? h : (h?.label || h?.id || `Col ${i + 1}`);
+                  return (
+                    <th key={i} className="py-1.5 px-2 font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                      {headerTitle}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60 font-medium text-slate-700 dark:text-zinc-200">
+              {pts.map((pt, rIdx) => {
+                const rowCells = pt.rowValues && pt.rowValues.length > 0
+                  ? pt.rowValues
+                  : [
+                      rIdx + 1,
+                      pt.label,
+                      `${pt.value}${chart.yAxis?.unit ? ` ${chart.yAxis.unit}` : ""}`,
+                      pt.secondaryValue !== undefined ? `${pt.secondaryValue}${chart.yAxis?.unit ? ` ${chart.yAxis.unit}` : ""}` : "-",
+                      pt.status || (pt.value >= 90 ? "Optimal" : pt.value >= 80 ? "Normal" : "Review")
+                    ];
+
+                return (
+                  <tr key={pt.id || rIdx} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-colors">
+                    {rowCells.map((cell, cIdx) => (
+                      <td key={cIdx} className="py-1.5 px-2 whitespace-nowrap">
+                        {cIdx === rowCells.length - 1 && typeof cell === "string" && ["Optimal", "Normal", "Review", "Warning", "Critical"].includes(cell) ? (
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                              cell === "Optimal"
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : cell === "Normal"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                : cell === "Review" || cell === "Warning"
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                            }`}
+                          >
+                            {cell}
+                          </span>
+                        ) : (
+                          String(cell ?? "")
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
 
     case "bar":
     default: {
@@ -1249,28 +1602,23 @@ export default function ChartRenderer({
       const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
-        <div className="w-full h-auto min-h-[260px] max-h-[520px] flex flex-col justify-center">
+        <div className={chartWrapperClass}>
           <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
-            {/* Y-axis */}
             <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* X-axis */}
             <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* Y-axis Header / Unit */}
             {yHeader && (
-              <text x="48" y="7" fontSize="6.5" fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
-            {/* Y grid + labels */}
             {yTicks.map((g, i) => (
               <g key={i}>
                 {d.showGridLines && (
                   <line x1="45" y1={g.y} x2="425" y2={g.y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
                 )}
-                <text x="43" y={g.y + 2.5} fontSize="6.5" textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
+                <text x="43" y={g.y + 2.5} fontSize={svgTickSize} textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
-            {/* Bars */}
             {d.values.map((v, i) => {
               const x = 56 + ((i + 0.5) / n) * 360;
               const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
@@ -1281,19 +1629,19 @@ export default function ChartRenderer({
                 <g key={i}>
                   <rect x={x - bw / 2} y={110 - barH} width={bw} height={barH} rx="4" fill={barColor} />
                   {d.showValues && (
-                    <text x={x} y={110 - barH - 4} fontSize="6.5" fontWeight="bold" textAnchor="middle" fill={barColor}>
+                    <text x={x} y={110 - barH - 4} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={barColor}>
                       {formatDataValue(v, d.unit, n > 6)}
                     </text>
                   )}
                   <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={124} fontSize="6.5" textAnchor="middle" fill="currentColor" fillOpacity="0.55">
+                  <text x={x} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">
                     {d.categories[i]}
                   </text>
                 </g>
               );
             })}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize="7" fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
+              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>

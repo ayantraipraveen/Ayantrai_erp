@@ -280,7 +280,19 @@ export interface ChartDataPoint {
   label: string;
   value: number;
   secondaryValue?: number;
+  tertiaryValue?: number;
+  quaternaryValue?: number;
   color?: string;
+  // Multi-dimensional & specialized chart fields
+  x?: number | string;
+  y?: number;
+  size?: number; // bubble size / weight / radius
+  target?: number;
+  status?: string; // "Optimal" | "Review" | "Completed" | "Safe" | "Passed"
+  category?: string;
+  trend?: string; // KPI trend e.g. "+3.4%"
+  trendDirection?: "up" | "down" | "no-change";
+  rowValues?: (number | string)[]; // Matrix / Table row values
 }
 
 export interface ChartAxisConfig {
@@ -324,6 +336,12 @@ export interface LibraryChartCard {
   yAxis?: ChartAxisConfig;
   series?: ChartSeriesConfig[];
   options?: ChartCustomizationOptions;
+  // Matrix & Table datasets
+  matrixData?: number[][];
+  matrixRowLabels?: string[];
+  matrixColLabels?: string[];
+  tableColumns?: { id: string; label: string }[];
+  tableRows?: Record<string, string | number>[];
 }
 
 export type KeyInsightVariant =
@@ -419,7 +437,7 @@ export interface CanvasElementBlock {
 
 export interface CanvasCellStyle {
   fontFamily?: "sans" | "serif" | "mono" | "rounded";
-  fontSize?: "xs" | "sm" | "base" | "lg" | "xl" | string;
+  fontSize?: "xs" | "sm" | "base" | "lg" | "xl";
   customFontSize?: number; // custom font size in px (e.g. 8 to 48)
   fontWeight?: "normal" | "medium" | "semibold" | "bold";
   textAlign?: "left" | "center" | "right";

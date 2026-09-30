@@ -1458,6 +1458,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
               >
                 Cancel
               </button>
+              
               <button
                 type="button"
                 onClick={() => handleConfirmDeletePage(pageToDelete)}

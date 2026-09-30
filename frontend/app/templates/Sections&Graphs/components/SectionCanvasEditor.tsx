@@ -70,7 +70,7 @@ import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
 import { CanvasStudio } from "./CanvasStudio";
 import { CanvasContextRibbon } from "./CanvasContextRibbon";
 import { CanvasMarginConfig, DEFAULT_CANVAS_MARGIN } from "../utils";
-import ChartEditorPanel from "./ChartEditorPanel";
+import ChartEditorPanel from "./ChartComponent/ChartEditorPanel";
 import {
   EditSectionHeaderModal,
   MetricCardModal,

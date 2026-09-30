@@ -13,6 +13,11 @@ import {
   RotateCcw,
   Hash,
   Check,
+  ArrowUp,
+  ArrowDown,
+  Layers,
+  Gauge,
+  Percent,
 } from "lucide-react";
 import {
   LibraryChartCard,
@@ -27,82 +32,14 @@ import {
   PALETTE_COLORS,
   THEME_PRESETS,
   getChartSeriesConfig,
-} from "./constants/chartTypes";
-
-const PRESET_DATASETS: {
-  name: string;
-  unit: string;
-  yMin: number;
-  yMax: number;
-  points: ChartDataPoint[];
-}[] = [
-  {
-    name: "PPE Compliance",
-    unit: "%",
-    yMin: 0,
-    yMax: 100,
-    points: [
-      { id: "p1", label: "Zone A (Welding)", value: 96, secondaryValue: 90 },
-      { id: "p2", label: "Zone B (Assembly)", value: 92, secondaryValue: 88 },
-      { id: "p3", label: "Zone C (Warehouse)", value: 85, secondaryValue: 80 },
-      { id: "p4", label: "Zone D (Loading)", value: 98, secondaryValue: 95 },
-      { id: "p5", label: "Zone E (Chemical)", value: 99, secondaryValue: 92 },
-    ],
-  },
-  {
-    name: "Hourly Telemetry",
-    unit: "ppm",
-    yMin: 0,
-    yMax: 120,
-    points: [
-      { id: "p1", label: "08:00", value: 45, secondaryValue: 50 },
-      { id: "p2", label: "10:00", value: 78, secondaryValue: 70 },
-      { id: "p3", label: "12:00", value: 95, secondaryValue: 85 },
-      { id: "p4", label: "14:00", value: 110, secondaryValue: 90 },
-      { id: "p5", label: "16:00", value: 88, secondaryValue: 80 },
-      { id: "p6", label: "18:00", value: 62, secondaryValue: 60 },
-    ],
-  },
-  {
-    name: "Weekly Workers",
-    unit: "workers",
-    yMin: 0,
-    yMax: 200,
-    points: [
-      { id: "p1", label: "Mon", value: 142, secondaryValue: 130 },
-      { id: "p2", label: "Tue", value: 156, secondaryValue: 140 },
-      { id: "p3", label: "Wed", value: 168, secondaryValue: 150 },
-      { id: "p4", label: "Thu", value: 162, secondaryValue: 145 },
-      { id: "p5", label: "Fri", value: 150, secondaryValue: 135 },
-      { id: "p6", label: "Sat", value: 85, secondaryValue: 80 },
-    ],
-  },
-  {
-    name: "Gas Sensors",
-    unit: "ppm",
-    yMin: 0,
-    yMax: 50,
-    points: [
-      { id: "p1", label: "Sensor 01", value: 12, secondaryValue: 25 },
-      { id: "p2", label: "Sensor 02", value: 18, secondaryValue: 25 },
-      { id: "p3", label: "Sensor 03", value: 29, secondaryValue: 25 },
-      { id: "p4", label: "Sensor 04", value: 15, secondaryValue: 25 },
-      { id: "p5", label: "Sensor 05", value: 8, secondaryValue: 25 },
-    ],
-  },
-  {
-    name: "Safety Incidents",
-    unit: "cases",
-    yMin: 0,
-    yMax: 10,
-    points: [
-      { id: "p1", label: "Q1", value: 4, secondaryValue: 6 },
-      { id: "p2", label: "Q2", value: 2, secondaryValue: 5 },
-      { id: "p3", label: "Q3", value: 1, secondaryValue: 4 },
-      { id: "p4", label: "Q4", value: 0, secondaryValue: 3 },
-    ],
-  },
-];
+} from "../constants/chartTypes";
+import {
+  getChartEditorMode,
+  getChartTypePresets,
+  getInitialDataForChartType,
+  ChartEditorMode,
+  ChartPresetDefinition,
+} from "../constants/chartDataPresets";
 
 const COMMON_UNITS = ["%", "workers", "ppm", "hrs", "pts", "deg", "cases", "dB", "None"];
 
@@ -303,14 +240,146 @@ export default function ChartEditorPanel({
     changeDataPoints(updated);
   };
 
-  const handleApplyPreset = (preset: typeof PRESET_DATASETS[0]) => {
+  const handleApplyPreset = (preset: ChartPresetDefinition) => {
     changeDataPoints(preset.points);
     changeYAxis({
       ...currentYAxis,
-      unit: preset.unit,
-      min: preset.yMin,
-      max: preset.yMax,
+      unit: preset.unit !== undefined ? preset.unit : currentYAxis.unit,
+      min: preset.yMin !== undefined ? preset.yMin : currentYAxis.min,
+      max: preset.yMax !== undefined ? preset.yMax : currentYAxis.max,
+      title: preset.yAxisTitle !== undefined ? preset.yAxisTitle : currentYAxis.title,
     });
+    if (preset.xAxisTitle) {
+      changeXAxis({
+        ...currentXAxis,
+        title: preset.xAxisTitle,
+      });
+    }
+  };
+
+  // ── Mode-Specific Handlers ───────────────────────────────────────────────
+  const editorMode = getChartEditorMode(chartType);
+  const chartPresets = getChartTypePresets(chartType, chartColor);
+
+  // Heatmap Matrix Handlers
+  const handleUpdateHeatmapCell = (rowIdx: number, colIdx: number, val: number) => {
+    const updated = [...currentDataPoints];
+    const row = updated[rowIdx]
+      ? { ...updated[rowIdx] }
+      : { id: `r_${rowIdx + 1}`, label: `Week ${rowIdx + 1}`, value: val };
+    const rowVals = row.rowValues ? [...row.rowValues] : Array(currentCols).fill(row.value ?? 90);
+    rowVals[colIdx] = val;
+    row.rowValues = rowVals;
+    row.value = Number(rowVals[0]) || val;
+    updated[rowIdx] = row;
+    changeDataPoints(updated);
+  };
+
+  const handleUpdateHeatmapRowLabel = (rowIdx: number, label: string) => {
+    const updated = [...currentDataPoints];
+    if (updated[rowIdx]) {
+      updated[rowIdx] = { ...updated[rowIdx], label };
+      changeDataPoints(updated);
+    }
+  };
+
+  const handleAddHeatmapRow = () => {
+    const nextIdx = currentDataPoints.length + 1;
+    const newRow: ChartDataPoint = {
+      id: `r_${Date.now()}`,
+      label: `Week ${nextIdx}`,
+      value: 92,
+      rowValues: Array(currentCols).fill(92),
+    };
+    changeDataPoints([...currentDataPoints, newRow]);
+  };
+
+  const handleDeleteHeatmapRow = (rowIdx: number) => {
+    if (currentDataPoints.length <= 1) return;
+    changeDataPoints(currentDataPoints.filter((_, i) => i !== rowIdx));
+  };
+
+  const handleBatchHeatmap = (type: "all95" | "weekday" | "random") => {
+    const updated = currentDataPoints.map((pt) => {
+      let rowValues: number[] = [];
+      if (type === "all95") {
+        rowValues = Array(currentCols).fill(95);
+      } else if (type === "weekday") {
+        rowValues = Array.from({ length: currentCols }, (_, c) => (c >= 5 ? 78 : 96));
+      } else {
+        rowValues = Array.from({ length: currentCols }, () => Math.floor(Math.random() * 20 + 78));
+      }
+      return {
+        ...pt,
+        value: rowValues[0] ?? 90,
+        rowValues,
+      };
+    });
+    changeDataPoints(updated);
+  };
+
+  // KPI Card Handlers
+  const handleUpdateKpi = (
+    idx: number,
+    field: keyof ChartDataPoint,
+    val: string | number | undefined
+  ) => {
+    const updated = [...currentDataPoints];
+    if (updated[idx]) {
+      updated[idx] = { ...updated[idx], [field]: val };
+      changeDataPoints(updated);
+    }
+  };
+
+  const handleAddKpi = () => {
+    if (currentDataPoints.length >= 4) return;
+    const nextIdx = currentDataPoints.length + 1;
+    const newKpi: ChartDataPoint = {
+      id: `kpi_${Date.now()}`,
+      label: `Metric ${nextIdx}`,
+      value: 100,
+      status: "100%",
+      trend: "+0%",
+      trendDirection: "up",
+      color: chartColors[nextIdx % chartColors.length] || chartColor,
+    };
+    changeDataPoints([...currentDataPoints, newKpi]);
+  };
+
+  const handleDeleteKpi = (idx: number) => {
+    if (currentDataPoints.length <= 1) return;
+    changeDataPoints(currentDataPoints.filter((_, i) => i !== idx));
+  };
+
+  // Two-Segment Handlers
+  const handleBalanceTwoSegment = () => {
+    if (currentDataPoints.length < 2) return;
+    const seg1 = currentDataPoints[0]?.value ?? 50;
+    const seg2 = Math.max(0, 100 - seg1);
+    const updated = [...currentDataPoints];
+    updated[1] = { ...updated[1], value: seg2 };
+    changeDataPoints(updated);
+  };
+
+  // Gauge Handlers
+  const handleUpdateGaugeValue = (val: number) => {
+    const updated = [...currentDataPoints];
+    if (updated[0]) {
+      updated[0] = { ...updated[0], value: val };
+    } else {
+      updated[0] = { id: "gauge_1", label: "Gauge Reading", value: val, status: "Optimal" };
+    }
+    changeDataPoints(updated);
+  };
+
+  const handleUpdateGaugeStatus = (status: string) => {
+    const updated = [...currentDataPoints];
+    if (updated[0]) {
+      updated[0] = { ...updated[0], status };
+    } else {
+      updated[0] = { id: "gauge_1", label: "Gauge Reading", value: 85, status };
+    }
+    changeDataPoints(updated);
   };
 
   return (
@@ -443,17 +512,17 @@ export default function ChartEditorPanel({
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-[#9D61FF]" />
-                    Quick Presets
+                    Quick Presets ({editorMode})
                   </span>
                   <span className="text-[10px] text-slate-400">Click to autofill data</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                  {PRESET_DATASETS.map((preset) => (
+                  {chartPresets.map((preset) => (
                     <button
                       key={preset.name}
                       type="button"
                       onClick={() => handleApplyPreset(preset)}
-                      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 text-[11px] font-medium text-slate-600 dark:text-zinc-300 hover:border-[#9D61FF] hover:text-[#9D61FF] bg-slate-50 dark:bg-zinc-800/60 transition-colors whitespace-nowrap cursor-pointer"
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 text-[11px] font-medium text-slate-600 dark:text-zinc-300 hover:border-[#9D61FF] hover:text-[#9D61FF] bg-slate-50 dark:bg-zinc-800/60 transition-colors whitespace-nowrap cursor-pointer shadow-2xs"
                     >
                       {preset.name}
                     </button>
@@ -461,92 +530,1180 @@ export default function ChartEditorPanel({
                 </div>
               </div>
 
-              {/* Data Table / List */}
-              <div className="flex-1 overflow-auto custom-scrollbar p-3.5 space-y-2">
-                <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
-                  <span className="col-span-1 text-center">#</span>
-                  <span className="col-span-5">Label / Category</span>
-                  <span className="col-span-3">Value</span>
-                  <span className="col-span-2">Target</span>
-                  <span className="col-span-1 text-center"></span>
-                </div>
-
-                <div className="space-y-1.5">
-                  {currentDataPoints.map((pt, idx) => (
-                    <div
-                      key={pt.id || idx}
-                      className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
-                    >
-                      <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
-                        {idx + 1}
+              {/* Mode-Specific Data Editor Container */}
+              <div className="flex-1 overflow-auto custom-scrollbar p-3.5 space-y-3">
+                {/* 1. HEATMAP MATRIX EDITOR */}
+                {editorMode === "heatmap" && (
+                  <div className="space-y-3">
+                    {/* Quick batch tools */}
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-900/40">
+                      <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-300 uppercase tracking-wider flex items-center gap-1">
+                        <Grid className="w-3.5 h-3.5 text-[#9D61FF]" />
+                        {currentDataPoints.length} Rows × {currentCols} Days Matrix
                       </span>
-                      <div className="col-span-5">
-                        <input
-                          type="text"
-                          value={pt.label}
-                          onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
-                          placeholder="Label"
-                          className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          type="number"
-                          value={pt.value}
-                          onChange={(e) =>
-                            handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
-                          }
-                          placeholder="0"
-                          className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-[#9D61FF] dark:text-[#a78bfa] focus:outline-none focus:border-[#9D61FF]"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          value={pt.secondaryValue ?? ""}
-                          onChange={(e) =>
-                            handleUpdatePoint(
-                              idx,
-                              "secondaryValue",
-                              e.target.value === "" ? undefined : parseFloat(e.target.value) || 0
-                            )
-                          }
-                          placeholder="Opt."
-                          className="w-full px-1.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-slate-500 focus:outline-none focus:border-[#9D61FF]"
-                        />
-                      </div>
-                      <div className="col-span-1 flex items-center justify-center">
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          disabled={currentDataPoints.length <= 1}
-                          onClick={() => handleDeletePoint(idx)}
-                          className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors disabled:opacity-30 cursor-pointer"
-                          title="Delete row"
+                          onClick={() => handleBatchHeatmap("all95")}
+                          className="px-2 py-0.5 rounded text-[10px] font-semibold bg-white dark:bg-zinc-900 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100/50 cursor-pointer"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          Fill 95%
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBatchHeatmap("weekday")}
+                          className="px-2 py-0.5 rounded text-[10px] font-semibold bg-white dark:bg-zinc-900 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100/50 cursor-pointer"
+                        >
+                          Weekday Pattern
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleBatchHeatmap("random")}
+                          className="px-2 py-0.5 rounded text-[10px] font-semibold bg-white dark:bg-zinc-900 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100/50 cursor-pointer"
+                        >
+                          Randomize
                         </button>
                       </div>
                     </div>
-                  ))}
-                </div>
 
-                {/* Add Data Point Button */}
-                <button
-                  type="button"
-                  onClick={handleAddPoint}
-                  className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Data Point</span>
-                </button>
+                    {/* Matrix Spreadsheet Grid */}
+                    <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 p-2 shadow-2xs">
+                      <div
+                        className="grid gap-1.5 items-center mb-2 pb-1.5 border-b border-slate-200/70 dark:border-zinc-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+                        style={{
+                          gridTemplateColumns: `minmax(75px, 90px) repeat(${currentCols}, minmax(42px, 1fr)) 28px`,
+                        }}
+                      >
+                        <span>Week / Shift</span>
+                        {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+                          .slice(0, currentCols)
+                          .map((day, dIdx) => (
+                            <span key={dIdx} className="text-center font-mono">
+                              {day}
+                            </span>
+                          ))}
+                        <span className="text-center"></span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        {currentDataPoints.map((pt, rIdx) => {
+                          const rowVals = pt.rowValues && pt.rowValues.length > 0
+                            ? pt.rowValues
+                            : Array(currentCols).fill(pt.value || 90);
+
+                          return (
+                            <div
+                              key={pt.id || rIdx}
+                              className="grid gap-1.5 items-center hover:bg-purple-50/20 dark:hover:bg-purple-950/10 p-1 rounded-lg transition-colors"
+                              style={{
+                                gridTemplateColumns: `minmax(75px, 90px) repeat(${currentCols}, minmax(42px, 1fr)) 28px`,
+                              }}
+                            >
+                              <input
+                                type="text"
+                                value={pt.label}
+                                onChange={(e) => handleUpdateHeatmapRowLabel(rIdx, e.target.value)}
+                                placeholder={`Row ${rIdx + 1}`}
+                                className="w-full px-1.5 py-1 text-xs rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
+                              />
+                              {Array.from({ length: currentCols }, (_, cIdx) => {
+                                const val = Number(rowVals[cIdx] ?? 90);
+                                const isHigh = val >= 90;
+                                const isMed = val >= 80 && val < 90;
+
+                                return (
+                                  <input
+                                    key={cIdx}
+                                    type="number"
+                                    value={val}
+                                    onChange={(e) =>
+                                      handleUpdateHeatmapCell(
+                                        rIdx,
+                                        cIdx,
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                    className={`w-full py-1 text-center text-xs font-mono font-bold rounded-md border transition-all focus:outline-none focus:ring-1 focus:ring-[#9D61FF] ${
+                                      isHigh
+                                        ? "bg-purple-500/15 text-[#9D61FF] dark:text-[#a78bfa] border-purple-500/30"
+                                        : isMed
+                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                        : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                    }`}
+                                  />
+                                );
+                              })}
+                              <div className="flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  disabled={currentDataPoints.length <= 1}
+                                  onClick={() => handleDeleteHeatmapRow(rIdx)}
+                                  className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                                  title="Delete row"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddHeatmapRow}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Matrix Row</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 2. GAUGE EDITOR */}
+                {editorMode === "gauge" && (
+                  <div className="space-y-4">
+                    {/* Primary Hero Gauge Reading */}
+                    <div className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                          <Gauge className="w-4 h-4 text-[#9D61FF]" />
+                          Current Telemetry Reading
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-[#9D61FF] font-bold">
+                          Unit: {currentYAxis.unit || "%"}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="number"
+                          value={currentDataPoints[0]?.value ?? 85}
+                          onChange={(e) => handleUpdateGaugeValue(parseFloat(e.target.value) || 0)}
+                          className="flex-1 px-4 py-2.5 text-2xl font-black font-mono rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 text-[#9D61FF] dark:text-[#a78bfa] focus:outline-none focus:border-[#9D61FF]"
+                          placeholder="85"
+                        />
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase">
+                            Sensor Label
+                          </span>
+                          <input
+                            type="text"
+                            value={currentDataPoints[0]?.label || "Live Telemetry Gauge"}
+                            onChange={(e) => handleUpdatePoint(0, "label", e.target.value)}
+                            placeholder="Gauge Label"
+                            className="px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Quick Shortcut Pills */}
+                      <div className="flex items-center gap-1.5 pt-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">
+                          Quick Set:
+                        </span>
+                        {[25, 50, 75, 85, 95].map((val) => (
+                          <button
+                            key={val}
+                            type="button"
+                            onClick={() => handleUpdateGaugeValue(val)}
+                            className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 text-[10px] font-bold font-mono text-slate-600 dark:text-zinc-300 hover:border-[#9D61FF] hover:text-[#9D61FF] bg-slate-50 dark:bg-zinc-800/60 cursor-pointer"
+                          >
+                            {val}
+                            {currentYAxis.unit || "%"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Status & Scale Card */}
+                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 shadow-2xs">
+                      <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 block">
+                        Status & Health Alert
+                      </span>
+                      <div className="grid grid-cols-4 gap-2">
+                        {["Optimal", "Normal", "Warning", "Critical"].map((st) => {
+                          const currentSt = currentDataPoints[0]?.status || "Optimal";
+                          const isSel = currentSt === st;
+                          return (
+                            <button
+                              key={st}
+                              type="button"
+                              onClick={() => handleUpdateGaugeStatus(st)}
+                              className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                                isSel
+                                  ? st === "Optimal"
+                                    ? "bg-emerald-500/15 text-emerald-600 border-emerald-500 shadow-2xs"
+                                    : st === "Normal"
+                                    ? "bg-blue-500/15 text-blue-600 border-blue-500 shadow-2xs"
+                                    : st === "Warning"
+                                    ? "bg-amber-500/15 text-amber-600 border-amber-500 shadow-2xs"
+                                    : "bg-rose-500/15 text-rose-600 border-rose-500 shadow-2xs"
+                                  : "border-slate-200 dark:border-zinc-800 text-slate-500 hover:border-slate-300"
+                              }`}
+                            >
+                              {st}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                            Min Scale
+                          </label>
+                          <input
+                            type="number"
+                            value={currentYAxis.min ?? 0}
+                            onChange={(e) =>
+                              changeYAxis({
+                                ...currentYAxis,
+                                min: parseFloat(e.target.value) || 0,
+                              })
+                            }
+                            className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                            Max Scale
+                          </label>
+                          <input
+                            type="number"
+                            value={currentYAxis.max ?? 100}
+                            onChange={(e) =>
+                              changeYAxis({
+                                ...currentYAxis,
+                                max: parseFloat(e.target.value) || 100,
+                              })
+                            }
+                            className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">
+                            Target Alert
+                          </label>
+                          <input
+                            type="number"
+                            value={currentDataPoints[0]?.target ?? 85}
+                            onChange={(e) =>
+                              handleUpdatePoint(0, "target", parseFloat(e.target.value) || 0)
+                            }
+                            className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center text-amber-500 font-bold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. KPI CARDS EDITOR */}
+                {editorMode === "kpi-card" && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 dark:text-zinc-200">
+                        Executive KPI Metrics ({currentDataPoints.length}/4)
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {currentDataPoints.slice(0, 4).map((kpi, idx) => (
+                        <div
+                          key={kpi.id || idx}
+                          className="p-3 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs space-y-2.5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-[#9D61FF] uppercase tracking-wider">
+                              Card #{idx + 1}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={currentDataPoints.length <= 1}
+                              onClick={() => handleDeleteKpi(idx)}
+                              className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">
+                                Metric Title
+                              </label>
+                              <input
+                                type="text"
+                                value={kpi.label}
+                                onChange={(e) => handleUpdateKpi(idx, "label", e.target.value)}
+                                placeholder="e.g. PPE Compliance"
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">
+                                Display Value / Status
+                              </label>
+                              <input
+                                type="text"
+                                value={kpi.status || String(kpi.value)}
+                                onChange={(e) => {
+                                  handleUpdateKpi(idx, "status", e.target.value);
+                                  const num = parseFloat(e.target.value.replace(/[^0-9.]/g, ""));
+                                  if (!isNaN(num)) handleUpdateKpi(idx, "value", num);
+                                }}
+                                placeholder="e.g. 97.4% or 18,750"
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-[#9D61FF]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-zinc-800/80">
+                            <div className="flex-1">
+                              <label className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">
+                                Trend Delta
+                              </label>
+                              <input
+                                type="text"
+                                value={kpi.trend || "+0%"}
+                                onChange={(e) => handleUpdateKpi(idx, "trend", e.target.value)}
+                                placeholder="+2.1%"
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono font-medium"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">
+                                Direction
+                              </label>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateKpi(idx, "trendDirection", "up")}
+                                  className={`p-1 rounded-lg border cursor-pointer ${
+                                    kpi.trendDirection !== "down"
+                                      ? "bg-emerald-500/15 border-emerald-500 text-emerald-600"
+                                      : "border-slate-200 dark:border-zinc-800 text-slate-400"
+                                  }`}
+                                  title="Trending Up"
+                                >
+                                  <ArrowUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateKpi(idx, "trendDirection", "down")}
+                                  className={`p-1 rounded-lg border cursor-pointer ${
+                                    kpi.trendDirection === "down"
+                                      ? "bg-rose-500/15 border-rose-500 text-rose-600"
+                                      : "border-slate-200 dark:border-zinc-800 text-slate-400"
+                                  }`}
+                                  title="Trending Down"
+                                >
+                                  <ArrowDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {currentDataPoints.length < 4 && (
+                      <button
+                        type="button"
+                        onClick={handleAddKpi}
+                        className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add KPI Metric Card</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* 4. MULTI-SERIES EDITOR (multi-line, grouped-bar, combo, stacked-bar) */}
+                {editorMode === "multi-series" && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                      <span className="col-span-4">Category</span>
+                      <span className="col-span-3 text-center truncate">
+                        {seriesConfig[0]?.label || "Series 1"}
+                      </span>
+                      <span className="col-span-3 text-center truncate">
+                        {seriesConfig[1]?.label || "Series 2"}
+                      </span>
+                      {seriesConfig.length >= 3 && (
+                        <span className="col-span-1 text-center truncate">
+                          {seriesConfig[2]?.label || "S3"}
+                        </span>
+                      )}
+                      <span className="col-span-1 text-center"></span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {currentDataPoints.map((pt, idx) => (
+                        <div
+                          key={pt.id || idx}
+                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                        >
+                          <div className="col-span-4">
+                            <input
+                              type="text"
+                              value={pt.label}
+                              onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                              placeholder="e.g. Jan"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <input
+                              type="number"
+                              value={pt.value}
+                              onChange={(e) =>
+                                handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
+                              }
+                              placeholder="0"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-[#9D61FF] text-center focus:outline-none focus:border-[#9D61FF]"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <input
+                              type="number"
+                              value={pt.secondaryValue ?? 0}
+                              onChange={(e) =>
+                                handleUpdatePoint(
+                                  idx,
+                                  "secondaryValue",
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              placeholder="0"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-emerald-600 dark:text-emerald-400 text-center focus:outline-none focus:border-[#9D61FF]"
+                            />
+                          </div>
+                          {seriesConfig.length >= 3 && (
+                            <div className="col-span-1">
+                              <input
+                                type="number"
+                                value={pt.tertiaryValue ?? 0}
+                                onChange={(e) =>
+                                  handleUpdatePoint(
+                                    idx,
+                                    "tertiaryValue",
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                placeholder="0"
+                                className="w-full px-1 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-amber-500 text-center focus:outline-none focus:border-[#9D61FF]"
+                              />
+                            </div>
+                          )}
+                          <div className="col-span-1 flex items-center justify-center">
+                            <button
+                              type="button"
+                              disabled={currentDataPoints.length <= 1}
+                              onClick={() => handleDeletePoint(idx)}
+                              className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Category Row</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 5. SCATTER & BUBBLE PLOT EDITOR */}
+                {(editorMode === "scatter" || editorMode === "bubble") && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                      <span className="col-span-1 text-center">#</span>
+                      <span className="col-span-4">Point Label</span>
+                      <span className="col-span-3 text-center">X Coordinate</span>
+                      <span className="col-span-3 text-center">
+                        {editorMode === "bubble" ? "Y Coord" : "Y Value"}
+                      </span>
+                      {editorMode === "bubble" && (
+                        <span className="col-span-1 text-center">Size</span>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {currentDataPoints.map((pt, idx) => (
+                        <div
+                          key={pt.id || idx}
+                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                        >
+                          <span className="col-span-1 text-center text-xs font-mono text-slate-400 font-bold">
+                            {idx + 1}
+                          </span>
+                          <div className="col-span-4">
+                            <input
+                              type="text"
+                              value={pt.label}
+                              onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                              placeholder="Node Name"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <input
+                              type="number"
+                              value={pt.x ?? pt.value}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                handleUpdatePoint(idx, "x", val);
+                                handleUpdatePoint(idx, "value", val);
+                              }}
+                              placeholder="X"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center font-bold text-[#9D61FF]"
+                            />
+                          </div>
+                          <div className={editorMode === "bubble" ? "col-span-3" : "col-span-3"}>
+                            <input
+                              type="number"
+                              value={pt.y ?? pt.secondaryValue ?? 50}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                handleUpdatePoint(idx, "y", val);
+                                handleUpdatePoint(idx, "secondaryValue", val);
+                              }}
+                              placeholder="Y"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-center font-bold text-emerald-600 dark:text-emerald-400"
+                            />
+                          </div>
+                          <div className="col-span-1 flex items-center justify-center">
+                            <button
+                              type="button"
+                              disabled={currentDataPoints.length <= 1}
+                              onClick={() => handleDeletePoint(idx)}
+                              className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Coordinate Point</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 6. STACKED HORIZONTAL EDITOR */}
+                {editorMode === "stacked-horizontal" && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                      <span className="col-span-5">Worksite / Zone</span>
+                      <span className="col-span-3 text-center text-emerald-600 dark:text-emerald-400">
+                        Safe / Passed
+                      </span>
+                      <span className="col-span-3 text-center text-rose-500">Violations</span>
+                      <span className="col-span-1 text-center"></span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {currentDataPoints.map((pt, idx) => {
+                        const val1 = pt.value || 0;
+                        const val2 = pt.secondaryValue || 0;
+                        const total = val1 + val2 || 1;
+                        const pct1 = Math.round((val1 / total) * 100);
+
+                        return (
+                          <div
+                            key={pt.id || idx}
+                            className="p-2 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs space-y-1.5"
+                          >
+                            <div className="grid grid-cols-12 gap-2 items-center">
+                              <div className="col-span-5">
+                                <input
+                                  type="text"
+                                  value={pt.label}
+                                  onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                                  placeholder="Worksite Name"
+                                  className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
+                                />
+                              </div>
+                              <div className="col-span-3">
+                                <input
+                                  type="number"
+                                  value={pt.value}
+                                  onChange={(e) =>
+                                    handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
+                                  }
+                                  placeholder="Safe"
+                                  className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-emerald-600 text-center"
+                                />
+                              </div>
+                              <div className="col-span-3">
+                                <input
+                                  type="number"
+                                  value={pt.secondaryValue ?? 0}
+                                  onChange={(e) =>
+                                    handleUpdatePoint(
+                                      idx,
+                                      "secondaryValue",
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                  placeholder="Risk"
+                                  className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-rose-500 text-center"
+                                />
+                              </div>
+                              <div className="col-span-1 flex items-center justify-center">
+                                <button
+                                  type="button"
+                                  disabled={currentDataPoints.length <= 1}
+                                  onClick={() => handleDeletePoint(idx)}
+                                  className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                            {/* Visual ratio bar */}
+                            <div className="h-1.5 w-full bg-rose-500/20 rounded-full overflow-hidden flex">
+                              <div
+                                style={{ width: `${pct1}%` }}
+                                className="h-full bg-emerald-500 transition-all"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Worksite Row</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 7. TWO-SEGMENT COMPARISON EDITOR */}
+                {editorMode === "two-segment" && (
+                  <div className="space-y-3">
+                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-700 dark:text-zinc-200">
+                          Dual Segment Breakdown
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleBalanceTwoSegment}
+                          className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 hover:bg-purple-500/20 cursor-pointer"
+                        >
+                          Balance to 100%
+                        </button>
+                      </div>
+
+                      {/* Segment 1 */}
+                      <div className="p-2.5 rounded-xl border border-purple-200/60 dark:border-purple-900/40 bg-purple-50/20 dark:bg-purple-950/10 space-y-1.5">
+                        <span className="text-[10px] font-bold text-[#9D61FF] uppercase">
+                          Segment 1 (Primary)
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={currentDataPoints[0]?.label || "Operational"}
+                            onChange={(e) => handleUpdatePoint(0, "label", e.target.value)}
+                            placeholder="Segment 1 Label"
+                            className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-medium"
+                          />
+                          <input
+                            type="number"
+                            value={currentDataPoints[0]?.value ?? 85}
+                            onChange={(e) =>
+                              handleUpdatePoint(0, "value", parseFloat(e.target.value) || 0)
+                            }
+                            placeholder="Value"
+                            className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-mono font-bold text-[#9D61FF] text-center"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Segment 2 */}
+                      <div className="p-2.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50 space-y-1.5">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase">
+                          Segment 2 (Secondary)
+                        </span>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="text"
+                            value={currentDataPoints[1]?.label || "Maintenance"}
+                            onChange={(e) => handleUpdatePoint(1, "label", e.target.value)}
+                            placeholder="Segment 2 Label"
+                            className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-medium"
+                          />
+                          <input
+                            type="number"
+                            value={currentDataPoints[1]?.value ?? 15}
+                            onChange={(e) =>
+                              handleUpdatePoint(1, "value", parseFloat(e.target.value) || 0)
+                            }
+                            placeholder="Value"
+                            className="px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-mono font-bold text-slate-500 text-center"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 8. DONUT & PIE EDITOR */}
+                {editorMode === "donut" && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                      <span className="col-span-1 text-center">#</span>
+                      <span className="col-span-5">Slice Category</span>
+                      <span className="col-span-3 text-center">Value</span>
+                      <span className="col-span-2 text-center">% Share</span>
+                      <span className="col-span-1 text-center"></span>
+                    </div>
+
+                    {(() => {
+                      const totalVal =
+                        currentDataPoints.reduce((sum, p) => sum + (p.value || 0), 0) || 1;
+
+                      return (
+                        <div className="space-y-1.5">
+                          {currentDataPoints.map((pt, idx) => {
+                            const pct = ((pt.value / totalVal) * 100).toFixed(1);
+                            return (
+                              <div
+                                key={pt.id || idx}
+                                className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                              >
+                                <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
+                                  {idx + 1}
+                                </span>
+                                <div className="col-span-5">
+                                  <input
+                                    type="text"
+                                    value={pt.label}
+                                    onChange={(e) =>
+                                      handleUpdatePoint(idx, "label", e.target.value)
+                                    }
+                                    placeholder="Hazard / Slice"
+                                    className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
+                                  />
+                                </div>
+                                <div className="col-span-3">
+                                  <input
+                                    type="number"
+                                    value={pt.value}
+                                    onChange={(e) =>
+                                      handleUpdatePoint(
+                                        idx,
+                                        "value",
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                    placeholder="0"
+                                    className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-[#9D61FF] text-center"
+                                  />
+                                </div>
+                                <div className="col-span-2 flex items-center justify-center">
+                                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-purple-500/10 text-[#9D61FF]">
+                                    {pct}%
+                                  </span>
+                                </div>
+                                <div className="col-span-1 flex items-center justify-center">
+                                  <button
+                                    type="button"
+                                    disabled={currentDataPoints.length <= 1}
+                                    onClick={() => handleDeletePoint(idx)}
+                                    className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Pie / Donut Slice</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 9. FUNNEL / STAGE PROGRESSION EDITOR */}
+                {editorMode === "funnel" && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                      <span className="col-span-1 text-center">#</span>
+                      <span className="col-span-5">Stage Name</span>
+                      <span className="col-span-3 text-center">Count / Throughput</span>
+                      <span className="col-span-2 text-center">Stage Drop</span>
+                      <span className="col-span-1 text-center"></span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {currentDataPoints.map((pt, idx) => {
+                        const prevVal = currentDataPoints[idx - 1]?.value || pt.value;
+                        const drop =
+                          idx > 0 && prevVal > 0
+                            ? `${Math.round((pt.value / prevVal) * 100)}%`
+                            : "100%";
+
+                        return (
+                          <div
+                            key={pt.id || idx}
+                            className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                          >
+                            <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
+                              {idx + 1}
+                            </span>
+                            <div className="col-span-5">
+                              <input
+                                type="text"
+                                value={pt.label}
+                                onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                                placeholder="Stage Name"
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <input
+                                type="number"
+                                value={pt.value}
+                                onChange={(e) =>
+                                  handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
+                                }
+                                placeholder="0"
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-[#9D61FF] text-center"
+                              />
+                            </div>
+                            <div className="col-span-2 flex items-center justify-center">
+                              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                                {drop}
+                              </span>
+                            </div>
+                            <div className="col-span-1 flex items-center justify-center">
+                              <button
+                                type="button"
+                                disabled={currentDataPoints.length <= 1}
+                                onClick={() => handleDeletePoint(idx)}
+                                className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Funnel Stage</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 10. TIMELINE / ROADMAP EDITOR */}
+                {editorMode === "timeline" && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                      <span className="col-span-1 text-center">#</span>
+                      <span className="col-span-5">Milestone / Task</span>
+                      <span className="col-span-3 text-center">Duration (Days)</span>
+                      <span className="col-span-2 text-center">Status</span>
+                      <span className="col-span-1 text-center"></span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {currentDataPoints.map((pt, idx) => (
+                        <div
+                          key={pt.id || idx}
+                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                        >
+                          <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
+                            {idx + 1}
+                          </span>
+                          <div className="col-span-5">
+                            <input
+                              type="text"
+                              value={pt.label}
+                              onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                              placeholder="Milestone"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <input
+                              type="number"
+                              value={pt.value}
+                              onChange={(e) =>
+                                handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
+                              }
+                              placeholder="Days"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-[#9D61FF] text-center"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <select
+                              value={pt.status || "In Progress"}
+                              onChange={(e) => handleUpdatePoint(idx, "status", e.target.value)}
+                              className="w-full px-1.5 py-1 text-[11px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 font-semibold"
+                            >
+                              <option value="Completed">Done</option>
+                              <option value="In Progress">Active</option>
+                              <option value="Pending">Queue</option>
+                              <option value="Delayed">Delay</option>
+                            </select>
+                          </div>
+                          <div className="col-span-1 flex items-center justify-center">
+                            <button
+                              type="button"
+                              disabled={currentDataPoints.length <= 1}
+                              onClick={() => handleDeletePoint(idx)}
+                              className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Milestone Task</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 11. GEO-MAP / ZONES EDITOR */}
+                {editorMode === "geo-map" && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                      <span className="col-span-1 text-center">#</span>
+                      <span className="col-span-5">Facility / Site</span>
+                      <span className="col-span-3 text-center">Alert Metric</span>
+                      <span className="col-span-2 text-center">Risk Level</span>
+                      <span className="col-span-1 text-center"></span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {currentDataPoints.map((pt, idx) => (
+                        <div
+                          key={pt.id || idx}
+                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                        >
+                          <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
+                            {idx + 1}
+                          </span>
+                          <div className="col-span-5">
+                            <input
+                              type="text"
+                              value={pt.label}
+                              onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                              placeholder="Site Name"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <input
+                              type="number"
+                              value={pt.value}
+                              onChange={(e) =>
+                                handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
+                              }
+                              placeholder="Incidents"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono font-bold text-[#9D61FF] text-center"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <select
+                              value={pt.status || "Normal"}
+                              onChange={(e) => handleUpdatePoint(idx, "status", e.target.value)}
+                              className="w-full px-1.5 py-1 text-[11px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 font-semibold"
+                            >
+                              <option value="Optimal">Optimal</option>
+                              <option value="Normal">Normal</option>
+                              <option value="Warning">Warning</option>
+                              <option value="Critical">Critical</option>
+                            </select>
+                          </div>
+                          <div className="col-span-1 flex items-center justify-center">
+                            <button
+                              type="button"
+                              disabled={currentDataPoints.length <= 1}
+                              onClick={() => handleDeletePoint(idx)}
+                              className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Facility Zone</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* 12. STANDARD TABLE EDITOR (table, radar, treemap, waterfall, sparkline, and standard bar/line/area) */}
+                {![
+                  "heatmap",
+                  "gauge",
+                  "kpi-card",
+                  "multi-series",
+                  "scatter",
+                  "bubble",
+                  "stacked-horizontal",
+                  "two-segment",
+                  "donut",
+                  "funnel",
+                  "timeline",
+                  "geo-map",
+                ].includes(editorMode) && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
+                      <span className="col-span-1 text-center">#</span>
+                      <span className="col-span-5">
+                        {editorMode === "radar"
+                          ? "Audit Dimension"
+                          : editorMode === "treemap"
+                          ? "Category / Hazard"
+                          : editorMode === "waterfall"
+                          ? "Step / Event"
+                          : "Label / Category"}
+                      </span>
+                      <span className="col-span-3 text-center">
+                        {editorMode === "waterfall" ? "Net Change" : "Value"}
+                      </span>
+                      <span className="col-span-2 text-center">
+                        {editorMode === "radar" ? "Target" : "Benchmark"}
+                      </span>
+                      <span className="col-span-1 text-center"></span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      {currentDataPoints.map((pt, idx) => (
+                        <div
+                          key={pt.id || idx}
+                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                        >
+                          <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
+                            {idx + 1}
+                          </span>
+                          <div className="col-span-5">
+                            <input
+                              type="text"
+                              value={pt.label}
+                              onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                              placeholder="Label"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <input
+                              type="number"
+                              value={pt.value}
+                              onChange={(e) =>
+                                handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
+                              }
+                              placeholder="0"
+                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-[#9D61FF] dark:text-[#a78bfa] text-center focus:outline-none focus:border-[#9D61FF]"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <input
+                              type="number"
+                              value={pt.secondaryValue ?? ""}
+                              onChange={(e) =>
+                                handleUpdatePoint(
+                                  idx,
+                                  "secondaryValue",
+                                  e.target.value === ""
+                                    ? undefined
+                                    : parseFloat(e.target.value) || 0
+                                )
+                              }
+                              placeholder="Opt."
+                              className="w-full px-1.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-mono text-slate-500 text-center focus:outline-none focus:border-[#9D61FF]"
+                            />
+                          </div>
+                          <div className="col-span-1 flex items-center justify-center">
+                            <button
+                              type="button"
+                              disabled={currentDataPoints.length <= 1}
+                              onClick={() => handleDeletePoint(idx)}
+                              className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors disabled:opacity-30 cursor-pointer"
+                              title="Delete row"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddPoint}
+                      className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Data Point</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Data Summary Stats */}
               <div className="px-4 py-2 border-t border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/40 text-[11px] font-mono text-slate-500 dark:text-zinc-400 flex items-center justify-between flex-shrink-0">
                 <span>Total Items: {currentDataPoints.length}</span>
                 <span>
-                  Max: {Math.max(...currentDataPoints.map((p) => p.value), 0)} | Min:{" "}
-                  {Math.min(...currentDataPoints.map((p) => p.value), 0)}
+                  Max: {Math.max(...currentDataPoints.map((p) => p.value || 0), 0)} | Min:{" "}
+                  {Math.min(...currentDataPoints.map((p) => p.value || 0), 0)}
                 </span>
               </div>
             </div>
