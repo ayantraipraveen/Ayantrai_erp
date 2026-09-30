@@ -16,7 +16,34 @@ export function getCellWidthStyle(percent: number): string {
   return `calc(${p}% - ${gapSub.toFixed(1)}px)`;
 }
 
-export function getDefaultBlockHeight(blockType?: string): number {
+export function getDefaultBlockHeight(blockType?: string, cellOrVariant?: CanvasCell | string): number {
+  if (blockType === "insight") {
+    const variant = typeof cellOrVariant === "string" 
+      ? cellOrVariant 
+      : (cellOrVariant?.insight?.variant || "single");
+    switch (variant) {
+      case "vertical-takeaways":
+        return 320;
+      case "priority-actions":
+        return 200;
+      case "split-quote":
+        return 190;
+      case "columns-titled":
+      case "narrative-summary":
+        return 180;
+      case "columns-numbered":
+      case "vision-banner":
+      case "risk-factors":
+      case "bullet-observations":
+        return 160;
+      case "quote-card":
+        return 130;
+      case "single":
+      default:
+        return 110;
+    }
+  }
+
   switch (blockType) {
     case "chart":
       return 370;
@@ -24,8 +51,6 @@ export function getDefaultBlockHeight(blockType?: string): number {
       return 135;
     case "badge-strip":
       return 140;
-    case "insight":
-      return 110;
     case "text":
       return 90;
     case "divider":
@@ -48,7 +73,7 @@ export function estimateRowHeight(row: CanvasRow): number {
 
   for (const cell of row.cells) {
     // Use stored height if available, otherwise use accurate block-type default
-    let h = cell.customHeight || getDefaultBlockHeight(cell.blockType);
+    let h = cell.customHeight || getDefaultBlockHeight(cell.blockType, cell);
 
     // Account for stacked cells — group into flex-wrap rows by width, same as renderer
     if (cell.stackedCells && cell.stackedCells.length > 0) {
@@ -57,7 +82,7 @@ export function estimateRowHeight(row: CanvasRow): number {
       let rowMaxH = 0;
       for (const sc of cell.stackedCells) {
         const w = sc.customWidth || 100;
-        const scH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
+        const scH = sc.customHeight || getDefaultBlockHeight(sc.blockType, sc);
         if (rowW + w > 100 && rowW > 0) {
           rowMaxHeights.push(rowMaxH);
           rowW = w;

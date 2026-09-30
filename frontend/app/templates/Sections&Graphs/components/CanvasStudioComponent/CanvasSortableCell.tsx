@@ -395,7 +395,7 @@ export function SortableCell({
   const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
   const bottomZoneH = 0; // Rendered in React portal, takes zero internal cell layout height
 
-  const rawBaseBlockHeight = currentHeight || getDefaultBlockHeight(cell.blockType);
+  const rawBaseBlockHeight = currentHeight || getDefaultBlockHeight(cell.blockType, cell);
 
   // Groups stacked cells into flex-wrap rows by width and returns total height
   const calcWrappedStackedH = (cells: any[]): { contentH: number; numRows: number } => {
@@ -405,7 +405,7 @@ export function SortableCell({
     let rowMaxH = 0;
     for (const sc of cells) {
       const w = sc.customWidth || 100;
-      const h = sc.customHeight || getDefaultBlockHeight(sc.blockType);
+      const h = sc.customHeight || getDefaultBlockHeight(sc.blockType, sc);
       if (rowW + w > 100 && rowW > 0) {
         rowMaxHeights.push(rowMaxH);
         rowW = w;
@@ -776,8 +776,8 @@ export function SortableCell({
             onUpdateMetricCard={(card) => {
               if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, cell.id, card);
             }}
-            onUpdateInsight={(text) => {
-              if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, cell.id, text);
+            onUpdateInsight={(textOrInsight) => {
+              if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, cell.id, textOrInsight);
             }}
             onUpdateTextBlock={(content) => {
               if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, cell.id, content);
@@ -818,7 +818,7 @@ export function SortableCell({
                     width: sc.customWidth ? `${sc.customWidth}%` : "100%",
                     maxWidth: "100%",
                     boxSizing: "border-box",
-                    height: sc.customHeight || getDefaultBlockHeight(sc.blockType),
+                    height: sc.customHeight || getDefaultBlockHeight(sc.blockType, sc),
                     flexShrink: 0,
                   }}
                   className={`relative group/stacked-block transition-all ${
@@ -863,7 +863,7 @@ export function SortableCell({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const curH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
+                            const curH = sc.customHeight || getDefaultBlockHeight(sc.blockType, sc);
                             const next = Math.max(MIN_BLOCK_H, curH - 20);
                             if (typeof onHeightChange === "function") onHeightChange(sc.id, rowId, next);
                           }}
@@ -877,7 +877,7 @@ export function SortableCell({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const curH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
+                            const curH = sc.customHeight || getDefaultBlockHeight(sc.blockType, sc);
                             const otherH = Math.max(0, stackedExtraHeight - (curH + 12));
                             const maxH = Math.max(MIN_BLOCK_H, maxColumnHeight - baseBlockHeight - otherH - 12);
                             const next = Math.min(maxH, curH + 20);
@@ -969,8 +969,8 @@ export function SortableCell({
                       onUpdateMetricCard={(card) => {
                         if (typeof onUpdateMetricCard === "function") onUpdateMetricCard(rowId, sc.id, card);
                       }}
-                      onUpdateInsight={(text) => {
-                        if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, sc.id, text);
+                      onUpdateInsight={(textOrInsight) => {
+                        if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, sc.id, textOrInsight);
                       }}
                       onUpdateTextBlock={(content) => {
                         if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, sc.id, content);
@@ -1007,7 +1007,7 @@ export function SortableCell({
                   {!isPreview && (
                     <div
                       onMouseDown={(e) => {
-                        const curH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
+                        const curH = sc.customHeight || getDefaultBlockHeight(sc.blockType, sc);
                         handleStackedHeightResizeStart(e, sc.id, curH);
                       }}
                       className="absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center opacity-0 group-hover/stacked-block:opacity-100 transition-opacity"

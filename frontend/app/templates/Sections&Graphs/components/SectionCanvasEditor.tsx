@@ -470,10 +470,19 @@ export default function SectionCanvasEditor({
             id: `cell-ki-${ts}`,
             colSpan: 4,
             blockType: "insight",
-            insight: {
-              id: `ki-${ts}`,
-              text: "Key operational observation recorded during routine industrial monitoring.",
-            },
+            insight: e.customInsight
+              ? {
+                  ...e.customInsight,
+                  id: `ki-${ts}`,
+                  items: e.customInsight.items
+                    ? e.customInsight.items.map((item, idx) => ({ ...item, id: `kib-${ts}-${idx}` }))
+                    : undefined,
+                }
+              : {
+                  id: `ki-${ts}`,
+                  variant: "single",
+                  text: "Key operational observation recorded during routine industrial monitoring.",
+                },
           };
           break;
         case "text":
@@ -681,12 +690,16 @@ export default function SectionCanvasEditor({
   );
 
   const handleUpdateInsightInCell = useCallback(
-    (rowId: string, cellId: string, text: string) => {
+    (rowId: string, cellId: string, textOrInsight: string | LibraryKeyInsightItem) => {
       if (!section?.canvasRows) return;
       const row = section.canvasRows.find((r) => r.id === rowId);
       const cell = row?.cells.find((c) => c.id === cellId);
       if (cell && cell.insight) {
-        dispatch(updateInsightInCell({ sectionId, rowId, cellId, insight: { ...cell.insight, text } }));
+        const nextInsight =
+          typeof textOrInsight === "string"
+            ? { ...cell.insight, text: textOrInsight }
+            : { ...cell.insight, ...textOrInsight };
+        dispatch(updateInsightInCell({ sectionId, rowId, cellId, insight: nextInsight }));
       }
     },
     [dispatch, sectionId, section?.canvasRows]

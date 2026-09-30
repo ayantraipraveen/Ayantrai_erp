@@ -29,12 +29,20 @@ import {
   X,
   Sliders,
   GripVertical,
+  FileText,
+  MessageSquare,
+  Quote,
+  HardHat,
+  CheckSquare,
+  ListChecks,
+  AlertTriangle,
 } from "lucide-react";
 import {
   CanvasBlockType,
   CanvasElementBlock,
   GraphType,
   LibraryChartCard,
+  LibraryKeyInsightItem,
 } from "@/lib/redux/slices/reportModuleSlice";
 import {
   CHART_TYPE_OPTIONS,
@@ -48,6 +56,7 @@ export interface SidebarAddBlockEvent {
   elementBlock?: CanvasElementBlock;
   chartType?: GraphType;
   customChart?: LibraryChartCard;
+  customInsight?: LibraryKeyInsightItem;
   targetRowId?: string;
   targetCellIndex?: number;
   insertRowAtIndex?: number;
@@ -262,8 +271,9 @@ function MiniChartPreview({ type }: { type: GraphType }) {
   }
 }
 
-// ── Standard Non-Chart Blocks ────────────────────────────────────────────────
+// ── Standard Non-Chart & Key Bullet Blocks ──────────────────────────────────
 interface BaseBlockDef {
+  id: string;
   type: CanvasBlockType;
   label: string;
   category: "metrics" | "text";
@@ -271,10 +281,12 @@ interface BaseBlockDef {
   badge: string;
   icon: React.ElementType;
   preview: React.ReactNode;
+  defaultInsight?: LibraryKeyInsightItem;
 }
 
 const BASE_BLOCK_DEFS: BaseBlockDef[] = [
   {
+    id: "base-kpi-card",
     type: "metric-card",
     label: "KPI Metric Card",
     category: "metrics",
@@ -292,6 +304,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
     ),
   },
   {
+    id: "base-badge-strip",
     type: "badge-strip",
     label: "4-Badge Metric Strip",
     category: "metrics",
@@ -320,12 +333,487 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
     ),
   },
   {
+    id: "bullet-insight-cols",
+    type: "insight",
+    label: "Key Insights (4 Columns)",
+    category: "text",
+    description: "4-column cards with numbered color badges & metrics",
+    badge: "Full Width",
+    icon: Lightbulb,
+    defaultInsight: {
+      id: "ki-cols",
+      variant: "columns-numbered",
+      title: "Key Insights",
+      text: "Overall attendance and supervisory observations across vendors.",
+      items: [
+        {
+          id: "ki-1",
+          num: 1,
+          color: "green",
+          text: "<b>Shakti Construction Services</b> recorded the <b>highest attendance efficiency at 95.2%</b>, with the lowest late comings (<b>4.2%</b>) and early exits (<b>2.8%</b>).",
+        },
+        {
+          id: "ki-2",
+          num: 2,
+          color: "blue",
+          text: "<b>Prime Facilities</b> had the <b>lowest attendance efficiency at 88.6%</b>, along with the highest late comings (<b>13.2%</b>) and early exits (<b>8.6%</b>), indicating a need for closer monitoring.",
+        },
+        {
+          id: "ki-3",
+          num: 3,
+          color: "purple",
+          text: "<b>Metro Engineers</b> and <b>Sree Enterprises</b> also observed relatively higher late coming and early exit rates compared to other vendors.",
+        },
+        {
+          id: "ki-4",
+          num: 4,
+          color: "orange",
+          text: "Overall vendor attendance remained <b>healthy at 92.4%</b>, with scope for improvement in <b>Prime Facilities</b> and <b>Metro Engineers</b> through better workforce management and supervision.",
+        },
+      ],
+    },
+    preview: (
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1.5 shadow-2xs">
+        <div className="flex items-center gap-1.5 pb-1 border-b border-slate-100 dark:border-zinc-800">
+          <div className="w-3.5 h-3.5 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center text-[7px] font-bold">💡</div>
+          <div className="text-[8px] font-bold text-blue-900 dark:text-blue-400">Key Insights</div>
+        </div>
+        <div className="grid grid-cols-4 gap-1 text-[6px] leading-tight">
+          <div className="flex items-start gap-1 border-r border-slate-100 dark:border-zinc-800 pr-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-[5.5px] shrink-0">1</span>
+            <span className="text-slate-600 dark:text-zinc-300 truncate">Shakti 95.2%</span>
+          </div>
+          <div className="flex items-start gap-1 border-r border-slate-100 dark:border-zinc-800 pr-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center text-[5.5px] shrink-0">2</span>
+            <span className="text-slate-600 dark:text-zinc-300 truncate">Prime 88.6%</span>
+          </div>
+          <div className="flex items-start gap-1 border-r border-slate-100 dark:border-zinc-800 pr-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-purple-500 text-white font-bold flex items-center justify-center text-[5.5px] shrink-0">3</span>
+            <span className="text-slate-600 dark:text-zinc-300 truncate">Metro & Sree</span>
+          </div>
+          <div className="flex items-start gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-orange-500 text-white font-bold flex items-center justify-center text-[5.5px] shrink-0">4</span>
+            <span className="text-slate-600 dark:text-zinc-300 truncate">Vendor 92.4%</span>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bullet-insight-titled",
+    type: "insight",
+    label: "Key Insights (Titled Cards)",
+    category: "text",
+    description: "4 columns with bold headline titles and detailed analysis",
+    badge: "Full Width",
+    icon: Lightbulb,
+    defaultInsight: {
+      id: "ki-titled",
+      variant: "columns-titled",
+      title: "Key Insights",
+      text: "Departmental compliance and safety audit observations.",
+      items: [
+        {
+          id: "kit-1",
+          num: 1,
+          color: "green",
+          title: "Fabrication Needs Attention",
+          text: "Fabrication has the highest average violations per worker (<b>4.3</b>) and a high share of helmet violations (<b>40%</b>), indicating a need for focused training and supervision.",
+        },
+        {
+          id: "kit-2",
+          num: 2,
+          color: "blue",
+          title: "Repeat Violators Concentrated in Few Departments",
+          text: "Civil (35) and Mechanical (28) together account for <b>61% of total repeated violators (63 out of 103)</b>, suggesting targeted engagement with supervisors in these departments.",
+        },
+        {
+          id: "kit-3",
+          num: 3,
+          color: "orange",
+          title: "Vest Violations are Most Common",
+          text: "Across all departments, vest violations form the largest share, averaging <b>40% of total violations</b>, indicating the need for increased awareness and checks for vest usage.",
+        },
+        {
+          id: "kit-4",
+          num: 4,
+          color: "red",
+          title: "Safety and Admin Performing Well",
+          text: "Safety (<b>96% compliance</b>) and Admin (<b>94% compliance</b>) show the best performance with the lowest average violations per worker (<b>0.9 and 0.6</b> respectively).",
+        },
+      ],
+    },
+    preview: (
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1.5 shadow-2xs">
+        <div className="flex items-center gap-1.5 pb-1 border-b border-slate-100 dark:border-zinc-800">
+          <div className="w-3.5 h-3.5 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center text-[7px] font-bold">💡</div>
+          <div className="text-[8px] font-bold text-blue-900 dark:text-blue-400">Key Insights</div>
+        </div>
+        <div className="grid grid-cols-4 gap-1 text-[6px]">
+          <div className="space-y-0.5 border-r border-slate-100 dark:border-zinc-800 pr-1">
+            <div className="flex items-center gap-0.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-[4.5px]">1</span>
+              <span className="font-bold text-blue-800 dark:text-blue-300 truncate">Fabrication</span>
+            </div>
+            <div className="text-[5px] text-slate-400 line-clamp-1">Needs attention</div>
+          </div>
+          <div className="space-y-0.5 border-r border-slate-100 dark:border-zinc-800 pr-1">
+            <div className="flex items-center gap-0.5">
+              <span className="w-2 h-2 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center text-[4.5px]">2</span>
+              <span className="font-bold text-blue-800 dark:text-blue-300 truncate">Repeat</span>
+            </div>
+            <div className="text-[5px] text-slate-400 line-clamp-1">Civil & Mech</div>
+          </div>
+          <div className="space-y-0.5 border-r border-slate-100 dark:border-zinc-800 pr-1">
+            <div className="flex items-center gap-0.5">
+              <span className="w-2 h-2 rounded-full bg-orange-500 text-white font-bold flex items-center justify-center text-[4.5px]">3</span>
+              <span className="font-bold text-blue-800 dark:text-blue-300 truncate">Vest PPE</span>
+            </div>
+            <div className="text-[5px] text-slate-400 line-clamp-1">Most common</div>
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-0.5">
+              <span className="w-2 h-2 rounded-full bg-rose-500 text-white font-bold flex items-center justify-center text-[4.5px]">4</span>
+              <span className="font-bold text-blue-800 dark:text-blue-300 truncate">Safety/Admin</span>
+            </div>
+            <div className="text-[5px] text-slate-400 line-clamp-1">Well performing</div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bullet-takeaways",
+    type: "insight",
+    label: "Key Takeaways (Numbered List)",
+    category: "text",
+    description: "Vertical stacked bullet list with 8 colored number badges",
+    badge: "Full Width",
+    icon: ListChecks,
+    defaultInsight: {
+      id: "ki-takeaways",
+      variant: "vertical-takeaways",
+      title: "Key Takeaways",
+      text: "Executive takeaway metrics for workforce safety and device deployment.",
+      items: [
+        { id: "kt-1", num: 1, color: "blue", title: "Attendance Rate", text: "<b>92.4%</b> of the registered workforce was present on-site this month, showing a <b>2.1% improvement</b> from last month." },
+        { id: "kt-2", num: 2, color: "green", title: "Compliance Rate", text: "PPE compliance stood at <b>96.8%</b>, reflecting strong adherence and a <b>3.6% improvement</b>." },
+        { id: "kt-3", num: 3, color: "purple", title: "Devices Sent", text: "A total of <b>300 devices</b> were deployed at the site, with no change from last month." },
+        { id: "kt-4", num: 4, color: "red", title: "Damaged Devices", text: "<b>5 devices</b> were reported damaged this month, an increase of 2 compared to last month." },
+        { id: "kt-5", num: 5, color: "emerald", title: "Risk-Free Working Hours", text: "<b>18,450 hours</b> were recorded without any high-risk incidents, marking a <b>12% increase</b>." },
+        { id: "kt-6", num: 6, color: "amber", title: "Supervisory Efficiency", text: "Supervisors responded and resolved violations with <b>89.2% efficiency</b>, up by <b>4.5%</b>." },
+        { id: "kt-7", num: 7, color: "sky", title: "Total Runtime", text: "Devices operated for a total of <b>26,340 hours</b>, an <b>8% increase</b>, ensuring consistent site coverage." },
+        { id: "kt-8", num: 8, color: "green", title: "Overtime of Devices", text: "Devices logged <b>320 hours</b> of overtime, a <b>28% reduction</b> from last month, indicating improved deployment management." },
+      ],
+    },
+    preview: (
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1 shadow-2xs">
+        <div className="flex items-center gap-1.5 pb-0.5 border-b border-slate-100 dark:border-zinc-800">
+          <div className="w-3 h-3 rounded bg-blue-500/10 text-blue-600 flex items-center justify-center text-[7px]">📄</div>
+          <div className="text-[8px] font-bold text-blue-900 dark:text-blue-400">Key Takeaways</div>
+        </div>
+        <div className="space-y-0.5 text-[6px]">
+          <div className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center text-[5px]">1</span>
+            <span className="font-bold text-slate-700 dark:text-zinc-200">Attendance:</span>
+            <span className="text-slate-400 truncate">92.4% workforce</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-[5px]">2</span>
+            <span className="font-bold text-slate-700 dark:text-zinc-200">Compliance:</span>
+            <span className="text-slate-400 truncate">96.8% PPE adherence</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-purple-500 text-white font-bold flex items-center justify-center text-[5px]">3</span>
+            <span className="font-bold text-slate-700 dark:text-zinc-200">Devices Sent:</span>
+            <span className="text-slate-400 truncate">300 active devices</span>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bullet-narrative",
+    type: "insight",
+    label: "Narrative Key Insights",
+    category: "text",
+    description: "Structured multi-paragraph executive commentary with bold metrics",
+    badge: "Full Width",
+    icon: FileText,
+    defaultInsight: {
+      id: "ki-narrative",
+      variant: "narrative-summary",
+      title: "Key Insights",
+      text: `<p>The site maintained a strong workforce presence throughout the month, with an average of <b>276 workers present daily</b>, resulting in an <b>attendance rate of 92.4%</b>, which is a <b>2.1% improvement</b> from last month.</p>
+<p>A total of <b>412 instances of late coming</b> and <b>196 instances of early exits</b> were recorded this month, with noticeable spikes around <b>8 September</b> and <b>22 September</b>, indicating periods of reduced punctuality.</p>
+<p>The most absent worker this month was <b>Rajesh Kumar (Emp ID: W1876)</b>, with <b>12 days of absence</b>.</p>
+<p>The vendor with the most absentees was <b>Shakti Construction Services</b>, with a total of <b>28 absent workers</b>.</p>
+<p>Overall, attendance remained stable, but continued focus on punctuality and shift discipline is recommended, especially during identified spike periods.</p>`,
+    },
+    preview: (
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1 shadow-2xs">
+        <div className="flex items-center gap-1.5 pb-0.5 border-b border-slate-100 dark:border-zinc-800">
+          <div className="w-3 h-3 rounded bg-blue-500/10 text-blue-600 flex items-center justify-center text-[7px]">📑</div>
+          <div className="text-[8px] font-bold text-blue-900 dark:text-blue-400">Key Insights</div>
+        </div>
+        <div className="space-y-1 text-[6px] text-slate-500 line-clamp-3">
+          The site maintained strong workforce presence with <b>276 workers daily</b> (92.4%). 412 late instances recorded with noticeable spikes.
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bullet-split-quote",
+    type: "insight",
+    label: "Remarks & Quote Split Block",
+    category: "text",
+    description: "Side-by-side operational commentary with large inspirational quote",
+    badge: "Full Width",
+    icon: MessageSquare,
+    defaultInsight: {
+      id: "ki-split-quote",
+      variant: "split-quote",
+      title: "3. Operational Remarks",
+      text: "During the reporting period, the site maintained <b>92.4% PPE compliance</b> across <b>400 monitored workers</b>. Violation activity was primarily concentrated within a few key departments/vendors, while repeated violations accounted for <b>18% of total events</b>. Supervisory teams demonstrated strong responsiveness, resolving <b>94.2% of alerts</b> with an average resolution time of <b>7.4 minutes</b>, though <b>4.8% of alerts</b> required escalation.",
+      quote: {
+        text: "A safer site is not an accident. It is the result of consistent action, responsible teams and data-driven decisions.",
+      },
+    },
+    preview: (
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 grid grid-cols-3 gap-1.5 items-center shadow-2xs">
+        <div className="col-span-2 space-y-0.5 border-r border-slate-100 dark:border-zinc-800 pr-1.5">
+          <div className="text-[7px] font-bold text-blue-900 dark:text-blue-400">3. Operational Remarks</div>
+          <div className="text-[5.5px] text-slate-400 line-clamp-2">92.4% PPE compliance across 400 monitored workers...</div>
+        </div>
+        <div className="text-center font-serif italic text-[6px] text-blue-800 dark:text-blue-300 line-clamp-3">
+          “A safer site is not an accident...”
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bullet-quote",
+    type: "insight",
+    label: "Executive Quote Callout",
+    category: "text",
+    description: "Serif quote card with decorative quotation marks and accent underline",
+    badge: "Full Width",
+    icon: Quote,
+    defaultInsight: {
+      id: "ki-quote",
+      variant: "quote-card",
+      text: "Consistent attendance builds safer sites and stronger teams.",
+    },
+    preview: (
+      <div className="w-full bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 rounded-xl p-2.5 flex flex-col items-center justify-center text-center space-y-1">
+        <span className="text-[10px] text-blue-400 font-serif leading-none font-black">“</span>
+        <div className="text-[8px] font-serif italic text-blue-900 dark:text-blue-300 font-semibold line-clamp-2">
+          Consistent attendance builds safer sites and stronger teams.
+        </div>
+        <div className="w-6 h-0.5 bg-blue-500 rounded-full" />
+      </div>
+    ),
+  },
+  {
+    id: "bullet-banner",
+    type: "insight",
+    label: "Campaign Vision Banner",
+    category: "text",
+    description: "Wide banner with hardhat avatar, 3 feature pills, and script tagline",
+    badge: "Full Width",
+    icon: HardHat,
+    defaultInsight: {
+      id: "ki-banner",
+      variant: "vision-banner",
+      title: "Turning Insights into a Safer Tomorrow",
+      text: "Continuous monitoring. Clearer actions. Safer workplaces.",
+      banner: {
+        headline: "Turning Insights into a Safer Tomorrow",
+        subtitle: "Continuous monitoring. Clearer actions. Safer workplaces.",
+        pills: ["People Safer", "Sites Smarter", "Operations Stronger"],
+        tagline: "Every Worker Returns Home Safe",
+      },
+    },
+    preview: (
+      <div className="w-full bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 dark:from-blue-950/30 dark:to-zinc-900 border border-blue-200 dark:border-blue-900/50 rounded-xl p-2 flex items-center justify-between gap-1 shadow-2xs">
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded-full bg-blue-900 text-white flex items-center justify-center text-[7px]">⛑️</div>
+          <div>
+            <div className="text-[7px] font-bold text-blue-950 dark:text-blue-200 leading-tight">Safer Tomorrow</div>
+            <div className="text-[5px] text-sky-600 dark:text-sky-400">Safer workplaces</div>
+          </div>
+        </div>
+        <div className="text-[6px] font-serif italic font-bold text-blue-900 dark:text-blue-300 text-right">
+          Every Worker Safe
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bullet-risk",
+    type: "insight",
+    label: "Key Factors (Risk Bullets)",
+    category: "text",
+    description: "Solid red alert bullet list for high risk assessments",
+    badge: "Full Width",
+    icon: AlertTriangle,
+    defaultInsight: {
+      id: "ki-risk",
+      variant: "risk-factors",
+      title: "Key Factors",
+      text: "Critical non-compliance observations.",
+      items: [
+        { id: "rf-1", color: "red", text: "Multiple PPE violations (12 instances)" },
+        { id: "rf-2", color: "red", text: "Repeated non-compliance over 8 days" },
+        { id: "rf-3", color: "red", text: "Irregular PPE usage pattern detected" },
+        { id: "rf-4", color: "red", text: "Lowest compliance rate among all vendors (86.1%)" },
+      ],
+    },
+    preview: (
+      <div className="w-full bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 rounded-xl p-2 space-y-1">
+        <div className="flex items-center gap-1 text-[7.5px] font-bold text-rose-700 dark:text-rose-400">
+          <span>⚠️</span> Key Factors
+        </div>
+        <div className="space-y-0.5 text-[6px] text-slate-600 dark:text-zinc-300">
+          <div className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-rose-500" /> Multiple PPE violations</div>
+          <div className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-rose-500" /> Repeated non-compliance</div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bullet-observations",
+    type: "insight",
+    label: "Key Observations (Dot Bullets)",
+    category: "text",
+    description: "Clean bullet dots with indented operational observations",
+    badge: "Full Width",
+    icon: BarChart2,
+    defaultInsight: {
+      id: "ki-obs",
+      variant: "bullet-observations",
+      title: "Key Observations",
+      text: "Hourly compliance patterns.",
+      items: [
+        { id: "ko-1", color: "blue", text: "Compliance is highest during start (8–9 AM) and end of day (5–6 PM)." },
+        { id: "ko-2", color: "blue", text: "Lowest compliance observed between 12 PM–2 PM (average 85%)." },
+        { id: "ko-3", color: "blue", text: "A clear mid-day dip indicates need for increased supervision and alerts during lunch." },
+      ],
+    },
+    preview: (
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1">
+        <div className="flex items-center gap-1 text-[7.5px] font-bold text-blue-900 dark:text-blue-400">
+          <span>📊</span> Key Observations
+        </div>
+        <div className="space-y-0.5 text-[6px] text-slate-600 dark:text-zinc-300">
+          <div className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-blue-500" /> Highest during start 8–9 AM</div>
+          <div className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-blue-500" /> Mid-day dip at 12–2 PM</div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bullet-priority-actions",
+    type: "insight",
+    label: "Priority Actions (5 Steps)",
+    category: "text",
+    description: "5 numbered action cards with colored pill headers and bullet points",
+    badge: "Full Width",
+    icon: CheckSquare,
+    defaultInsight: {
+      id: "ki-priority",
+      variant: "priority-actions",
+      title: "2. Priority Actions for Next Month",
+      text: "Key actions to address identified improvement areas.",
+      items: [
+        {
+          id: "pa-1",
+          num: 1,
+          color: "blue",
+          title: "Reduce Repeated Violations",
+          text: "Target high-risk workers with counselling",
+          subItems: [
+            "Identify workers crossing threshold",
+            "Conduct targeted training",
+            "Monitor weekly reviews",
+          ],
+        },
+        {
+          id: "pa-2",
+          num: 2,
+          color: "green",
+          title: "Strengthen Supervisor Response",
+          text: "Accelerate alert turnaround",
+          subItems: [
+            "Improve alert acknowledgement times",
+            "Ensure timely resolution",
+            "Provide supervisor training",
+          ],
+        },
+        {
+          id: "pa-3",
+          num: 3,
+          color: "amber",
+          title: "Improve PPE-Specific Compliance",
+          text: "Target helmet & vest enforcement",
+          subItems: [
+            "Focus on high-violation categories",
+            "Run on-site awareness drives",
+            "Track improvement trends",
+          ],
+        },
+        {
+          id: "pa-4",
+          num: 4,
+          color: "purple",
+          title: "Vendor & Department Monitoring",
+          text: "Drive contractor accountability",
+          subItems: [
+            "Increase review frequency",
+            "Share summaries with leaders",
+            "Set department action plans",
+          ],
+        },
+        {
+          id: "pa-5",
+          num: 5,
+          color: "red",
+          title: "Optimise Device Deployment",
+          text: "Maintain operational readiness",
+          subItems: [
+            "Reallocate underutilised units",
+            "Plan preventive maintenance",
+            "Ensure buffer flexibility",
+          ],
+        },
+      ],
+    },
+    preview: (
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1">
+        <div className="text-[7.5px] font-bold text-blue-900 dark:text-blue-400">2. Priority Actions</div>
+        <div className="grid grid-cols-5 gap-0.5 text-center text-[5px]">
+          <div className="bg-blue-50 dark:bg-blue-950/40 rounded p-0.5"><div className="font-bold text-blue-700 dark:text-blue-300">01</div>Violations</div>
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 rounded p-0.5"><div className="font-bold text-emerald-700 dark:text-emerald-300">02</div>Response</div>
+          <div className="bg-amber-50 dark:bg-amber-950/40 rounded p-0.5"><div className="font-bold text-amber-700 dark:text-amber-300">03</div>PPE Focus</div>
+          <div className="bg-purple-50 dark:bg-purple-950/40 rounded p-0.5"><div className="font-bold text-purple-700 dark:text-purple-300">04</div>Vendors</div>
+          <div className="bg-rose-50 dark:bg-rose-950/40 rounded p-0.5"><div className="font-bold text-rose-700 dark:text-rose-300">05</div>Devices</div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bullet-single-insight",
     type: "insight",
     label: "Key Insight Bullet",
     category: "text",
     description: "Numbered observation callout block",
     badge: "Full Width",
     icon: Lightbulb,
+    defaultInsight: {
+      id: "ki-single",
+      variant: "single",
+      text: "Supervisory compliance increased 14.2% across North Yard shifts.",
+    },
     preview: (
       <div className="w-full bg-amber-500/10 border border-amber-400/30 rounded-xl p-2.5 flex items-center gap-2">
         <div className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[8px] font-bold flex-shrink-0">
@@ -338,6 +826,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
     ),
   },
   {
+    id: "base-text",
     type: "text",
     label: "Text Paragraph",
     category: "text",
@@ -353,6 +842,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
     ),
   },
   {
+    id: "base-divider",
     type: "divider",
     label: "Horizontal Divider",
     category: "text",
@@ -485,7 +975,7 @@ export function CanvasSidebar({
                     : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 hover:text-slate-800 dark:hover:text-white"
                 }`}
               >
-                {cat === "charts" ? "Charts" : cat === "watermarks" ? "Stamps" : cat}
+                {cat === "charts" ? "Charts" : cat === "watermarks" ? "Stamps" : cat === "text" ? "Bullets & Text" : cat}
               </button>
             ))}
           </div>
@@ -873,10 +1363,20 @@ export function CanvasSidebar({
                   const Icon = def.icon;
                   return (
                     <div
-                      key={def.type}
+                      key={def.id}
                       draggable={true}
-                      onDragStart={(e) => handleBlockDragStart(e, { blockType: def.type })}
-                      onClick={() => onAddBlock({ blockType: def.type })}
+                      onDragStart={(e) =>
+                        handleBlockDragStart(e, {
+                          blockType: def.type,
+                          customInsight: def.defaultInsight,
+                        })
+                      }
+                      onClick={() =>
+                        onAddBlock({
+                          blockType: def.type,
+                          customInsight: def.defaultInsight,
+                        })
+                      }
                       className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden p-3 space-y-2"
                       title="Drag anywhere on report to place, or click to add"
                     >
