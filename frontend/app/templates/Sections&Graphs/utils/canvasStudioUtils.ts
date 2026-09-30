@@ -1,5 +1,7 @@
 import {
   CanvasRow,
+  CanvasRowStyle,
+  CanvasSectionStyle,
   CanvasCell,
   CanvasBadgeStrip,
   CanvasBadgeItem,
@@ -89,6 +91,7 @@ export interface SortableRowProps {
   onReorderStacked?: (rowId: string, parentCellId: string, direction: "up" | "down", index: number) => void;
   activeDragCellId?: string | null;
   onAddBlockBeside?: (rowId: string, cellIndex: number, blockType: CanvasBlockType) => void;
+  onUpdateRowStyle?: (rowId: string, style: Partial<CanvasRowStyle>) => void;
   zoom?: number;
 }
 
@@ -106,6 +109,8 @@ export interface CanvasStudioProps {
   onAddBadgeToStripInCell?: (rowId: string, cellId: string) => void;
   onDeleteBadgeFromStripInCell?: (rowId: string, cellId: string, badgeId: string) => void;
   onHeightChange?: (cellId: string, rowId: string, customHeight?: number) => void;
+  onUpdateRowStyle?: (rowId: string, style: Partial<CanvasRowStyle>) => void;
+  onUpdateSectionStyle?: (style: Partial<CanvasSectionStyle>) => void;
   paperTone?: string;
   marginConfig?: CanvasMarginConfig;
   pageNumber?: number;

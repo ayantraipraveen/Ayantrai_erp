@@ -926,7 +926,7 @@ export const sectionsStudioReducers = {
       }
     },
 
-    /** Update a cell's style (font, color, bg, border, align) */
+    /** Update a cell's style (font, color, bg, border, align, padding, margin) */
     updateCellStyleInCell: (
       state: ReportModuleState,
       action: PayloadAction<{
@@ -944,6 +944,40 @@ export const sectionsStudioReducers = {
       if (found) {
         found.cell.style = { ...(found.cell.style || {}), ...style };
         if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update a row's style (columnGap, rowGap, padding, margin, border, borderRadius, backgroundColor) */
+    updateRowStyle: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        style: Partial<CanvasRowStyle>;
+      }>
+    ) => {
+      const { sectionId, rowId, style } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      if (row) {
+        row.style = { ...(row.style || {}), ...style };
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update a section's style (padding, margin, border, borderRadius, backgroundColor) */
+    updateSectionStyle: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        style: Partial<CanvasSectionStyle>;
+      }>
+    ) => {
+      const { sectionId, style } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      if (sec) {
+        sec.sectionStyle = { ...(sec.sectionStyle || {}), ...style };
+        sec.updatedAt = "Just now";
       }
     },
 

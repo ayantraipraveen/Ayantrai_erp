@@ -3,9 +3,22 @@
 import React, { useState } from "react";
 import { useSortable, SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Layers, GripVertical, Trash2, Plus } from "lucide-react";
+import { Layers, GripVertical, Trash2, Plus, Sliders } from "lucide-react";
 import { SortableCell } from "./CanvasSortableCell";
 import { SortableRowProps } from "../../utils";
+import { CanvasRowStyle } from "@/lib/redux/slices/reportModuleSlice";
+
+function getRowBackground(style?: CanvasRowStyle): string | undefined {
+  if (!style?.backgroundColor) return undefined;
+  if (style.backgroundOpacity === undefined || style.backgroundOpacity === 100) return style.backgroundColor;
+  const hex = style.backgroundColor.trim();
+  const alpha = Math.max(0, Math.min(100, style.backgroundOpacity)) / 100;
+  if (/^#[0-9a-f]{6}$/i.test(hex)) {
+    const value = parseInt(hex.slice(1), 16);
+    return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`;
+  }
+  return style.backgroundColor;
+}
 
 export function SortableRow({
   sectionId,
@@ -119,6 +132,22 @@ export function SortableRow({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
+              if (typeof onSelectCell === "function") {
+                onSelectCell(null, row.id);
+              }
+            }}
+            className={`p-0.5 rounded cursor-pointer transition-colors ${
+              isRowSelected ? "text-[#8B3DFF] bg-purple-500/15 font-bold" : "hover:text-[#8B3DFF]"
+            }`}
+            title="Configure Row Spacing & Borders (Row Gap, Column Gap, Padding, Borders)"
+          >
+            <Sliders className="w-3 h-3" />
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
               onRemoveRow(row.id);
             }}
             className="p-0.5 hover:text-rose-500 rounded cursor-pointer"
@@ -162,7 +191,22 @@ export function SortableRow({
               console.error("Row drop error:", err);
             }
           }}
-          className={`canvas-row-cells flex flex-wrap gap-3 items-stretch min-h-[60px] transition-colors duration-100 rounded-2xl ${
+          style={{
+            columnGap: row.style?.columnGap !== undefined ? `${row.style.columnGap}px` : "12px",
+            rowGap: row.style?.rowGap !== undefined ? `${row.style.rowGap}px` : "12px",
+            paddingTop: row.style?.paddingTop !== undefined ? `${row.style.paddingTop}px` : row.style?.padding !== undefined ? `${row.style.padding}px` : undefined,
+            paddingBottom: row.style?.paddingBottom !== undefined ? `${row.style.paddingBottom}px` : row.style?.padding !== undefined ? `${row.style.padding}px` : undefined,
+            paddingLeft: row.style?.paddingLeft !== undefined ? `${row.style.paddingLeft}px` : row.style?.padding !== undefined ? `${row.style.padding}px` : undefined,
+            paddingRight: row.style?.paddingRight !== undefined ? `${row.style.paddingRight}px` : row.style?.padding !== undefined ? `${row.style.padding}px` : undefined,
+            marginTop: row.style?.marginTop !== undefined ? `${row.style.marginTop}px` : row.style?.margin !== undefined ? `${row.style.margin}px` : undefined,
+            marginBottom: row.style?.marginBottom !== undefined ? `${row.style.marginBottom}px` : row.style?.margin !== undefined ? `${row.style.margin}px` : undefined,
+            borderWidth: row.style?.borderWidth !== undefined ? `${row.style.borderWidth}px` : undefined,
+            borderColor: row.style?.borderColor || undefined,
+            borderStyle: row.style?.borderStyle || (row.style?.borderWidth ? "solid" : undefined),
+            borderRadius: row.style?.borderRadius !== undefined ? (typeof row.style.borderRadius === "number" ? `${row.style.borderRadius}px` : row.style.borderRadius) : undefined,
+            backgroundColor: getRowBackground(row.style),
+          }}
+          className={`canvas-row-cells flex flex-wrap items-stretch min-h-[60px] transition-colors duration-100 rounded-2xl ${
             isDragOverRow && !isPreview
               ? "ring-2 ring-[#9D61FF] bg-[#9D61FF]/10 p-2 shadow-md"
               : ""

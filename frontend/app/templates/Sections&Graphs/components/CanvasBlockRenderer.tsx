@@ -1195,6 +1195,26 @@ const styleProps: React.CSSProperties = {};
     styleProps.boxShadow = SHADOW_MAP[style.shadow] || style.shadow;
   }
 
+  // Dynamic Inner Padding
+  if (style.padding !== undefined) {
+    styleProps.padding = `${style.padding}px`;
+  } else {
+    if (style.paddingTop !== undefined) styleProps.paddingTop = `${style.paddingTop}px`;
+    if (style.paddingBottom !== undefined) styleProps.paddingBottom = `${style.paddingBottom}px`;
+    if (style.paddingLeft !== undefined) styleProps.paddingLeft = `${style.paddingLeft}px`;
+    if (style.paddingRight !== undefined) styleProps.paddingRight = `${style.paddingRight}px`;
+  }
+
+  // Dynamic Outer Margin
+  if (style.margin !== undefined) {
+    styleProps.margin = `${style.margin}px`;
+  } else {
+    if (style.marginTop !== undefined) styleProps.marginTop = `${style.marginTop}px`;
+    if (style.marginBottom !== undefined) styleProps.marginBottom = `${style.marginBottom}px`;
+    if (style.marginLeft !== undefined) styleProps.marginLeft = `${style.marginLeft}px`;
+    if (style.marginRight !== undefined) styleProps.marginRight = `${style.marginRight}px`;
+  }
+
   let textColorClass = "";
   if (style.textColor) {
     styleProps.color = style.textColor;
@@ -1317,6 +1337,16 @@ export function CanvasBlockRenderer({
   if (styleProps.borderStyle) cardStyles.borderStyle = styleProps.borderStyle;
   if (styleProps.borderRadius) cardStyles.borderRadius = styleProps.borderRadius;
   if (styleProps.boxShadow) cardStyles.boxShadow = styleProps.boxShadow;
+  if (styleProps.padding) cardStyles.padding = styleProps.padding;
+  if (styleProps.paddingTop) cardStyles.paddingTop = styleProps.paddingTop;
+  if (styleProps.paddingBottom) cardStyles.paddingBottom = styleProps.paddingBottom;
+  if (styleProps.paddingLeft) cardStyles.paddingLeft = styleProps.paddingLeft;
+  if (styleProps.paddingRight) cardStyles.paddingRight = styleProps.paddingRight;
+  if (styleProps.margin) cardStyles.margin = styleProps.margin;
+  if (styleProps.marginTop) cardStyles.marginTop = styleProps.marginTop;
+  if (styleProps.marginBottom) cardStyles.marginBottom = styleProps.marginBottom;
+  if (styleProps.marginLeft) cardStyles.marginLeft = styleProps.marginLeft;
+  if (styleProps.marginRight) cardStyles.marginRight = styleProps.marginRight;
 
   const innerWithBackground = Object.keys(cardStyles).length > 0 && React.isValidElement(renderedInner)
     ? React.cloneElement(renderedInner as React.ReactElement<{ style?: React.CSSProperties }>, {

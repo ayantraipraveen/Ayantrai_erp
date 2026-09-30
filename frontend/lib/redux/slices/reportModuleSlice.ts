@@ -159,6 +159,8 @@ export const {
   updateCellWidth,
   updateCellHeight,
   updateCellStyleInCell,
+  updateRowStyle,
+  updateSectionStyle,
   updateTextBlockInCell,
   updateBadgeStripInCell,
   updateSingleBadgeInCell,
