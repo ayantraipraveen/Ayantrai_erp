@@ -45,7 +45,7 @@ import {
 } from "@/lib/redux/slices/reportModuleSlice";
 import { DynamicTextEditor, renderDynamicText } from "./DynamicTitleEditor";
 import { PALETTE_RAMPS } from "./constants/chartTypes";
-import ChartRenderer from "./ChartRenderer";
+import ChartRenderer from "./ChartComponent/ChartRenderer";
 import {
   CARD_BG_PRESETS,
   BADGE_COLOR_PALETTES,
