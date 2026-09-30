@@ -8,6 +8,8 @@ import {
   LibraryChartCard,
   LibraryKeyInsightItem,
   CanvasRow,
+  CanvasRowStyle,
+  CanvasSectionStyle,
   CanvasCell,
   CanvasCellStyle,
   CanvasTextBlock,

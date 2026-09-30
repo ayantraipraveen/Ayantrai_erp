@@ -355,6 +355,16 @@ export interface CanvasCellStyle {
   borderRadius?: number | "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "full" | string; // custom px (0-60) or preset
   shadow?: "none" | "sm" | "md" | "lg" | "xl" | "glow" | string; // custom box-shadow or preset
   backgroundOpacity?: number; // card background opacity from 0 to 100
+  padding?: number; // inner card padding in px (0-64px)
+  paddingTop?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  margin?: number; // outer card margin in px (0-48px)
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
 }
 
 export interface CanvasCell {
@@ -374,10 +384,49 @@ export interface CanvasCell {
   stackedCells?: CanvasCell[]; 
 }
 
+export interface CanvasRowStyle {
+  columnGap?: number; // px gap between cells horizontally in this row (0-64px, default 12px)
+  rowGap?: number; // px gap when items wrap or stacked cells (0-64px, default 12px)
+  padding?: number; // uniform row padding in px
+  paddingTop?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  margin?: number; // uniform row margin in px
+  marginTop?: number;
+  marginBottom?: number;
+  borderWidth?: number; // border width in px
+  borderColor?: string; // hex, preset or transparent
+  borderStyle?: "solid" | "dashed" | "dotted" | "none";
+  borderRadius?: number | "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "full" | string;
+  backgroundColor?: string;
+  backgroundOpacity?: number;
+  shadow?: "none" | "sm" | "md" | "lg" | "xl" | string;
+}
+
 export interface CanvasRow {
   id: string;
   cells: CanvasCell[];
   pageBreakBefore?: boolean;
+  style?: CanvasRowStyle;
+}
+
+export interface CanvasSectionStyle {
+  padding?: number; // uniform section padding in px
+  paddingTop?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  margin?: number; // uniform section margin in px
+  marginTop?: number;
+  marginBottom?: number;
+  borderWidth?: number; // border width in px
+  borderColor?: string; // hex, preset or transparent
+  borderStyle?: "solid" | "dashed" | "dotted" | "none";
+  borderRadius?: number | "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "full" | string;
+  backgroundColor?: string;
+  backgroundOpacity?: number;
+  shadow?: "none" | "sm" | "md" | "lg" | "xl" | string;
 }
 
 export interface SectionTitleStyle {
@@ -402,6 +451,7 @@ export interface LibrarySection {
   icon?: string;
   updatedAt: string;
   headerSpacing?: "compact" | "normal" | "spacious";
+  sectionStyle?: CanvasSectionStyle;
   // Legacy flat arrays (kept for backward compat – migrated on first canvas open)
   metricCards: LibraryMetricCard[];
   charts: LibraryChartCard[];
