@@ -1344,7 +1344,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                         {/* Add Row Button on this page (Hidden in preview) */}
                         {!activeIsPreview && (
                           <div className="flex items-center gap-2 pt-2">
-                            {(() => {
+                            {/* {(() => {
                               const lastRowOfPage = page.rows[page.rows.length - 1];
                               const pageEndInsertIndex = lastRowOfPage
                                 ? rows.findIndex((r) => r.id === lastRowOfPage.id) + 1
@@ -1357,7 +1357,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                                   onDropBlock={onDropBlock}
                                 />
                               );
-                            })()}
+                            })()} */}
                             {page.isLastPage && (
                               <button
                                 type="button"
