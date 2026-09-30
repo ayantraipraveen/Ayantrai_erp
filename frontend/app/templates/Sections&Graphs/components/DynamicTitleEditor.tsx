@@ -326,9 +326,9 @@ useEffect(() => {
     // inside the editor or toolbar (composedPath is captured at dispatch time)
     if (e.composedPath().includes(container)) return;
 
-    // portaled dropdowns
+    // portaled dropdowns and portaled toolbar
     const el = e.target as HTMLElement | null;
-    if (el?.closest(".portal-title-dropdown, .portal-ribbon-popover, .portal-quick-add-panel")) return;
+    if (el?.closest(".portal-title-dropdown, .portal-title-toolbar, .portal-ribbon-popover, .portal-quick-add-panel")) return;
 
     const ed = editorRef.current;
     if (!ed) return;

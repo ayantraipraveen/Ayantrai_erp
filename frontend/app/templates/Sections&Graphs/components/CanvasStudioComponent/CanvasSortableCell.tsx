@@ -131,8 +131,14 @@ export function SortableCell({
       }
     }
 
+    // Clamp against the viewport bottom boundary and floating dock (dock is ~48px high)
+    const maxDockTop = window.innerHeight - 52;
+    if (topPos > maxDockTop) {
+      topPos = Math.min(maxDockTop, Math.max(rect.top + 8, rect.bottom - 34));
+    }
+
     setPortalPos({
-      top: topPos,
+      top: Math.round(topPos),
       left: rect.left,
       width: rect.width,
     });
@@ -201,7 +207,7 @@ export function SortableCell({
 
   const effectiveZoom = zoom > 0 ? zoom : 1;
 
-  const showTopToolbar = !isPreview && !isCellEditing && !isDragging && (isSelected || isResizing || isHeightResizing);
+  const showTopToolbar = !isPreview && !isDragging && (isSelected || isResizing || isHeightResizing);
 
   const updateToolbarPortalPos = useCallback(() => {
     if (!cellDomRef.current) {
@@ -214,14 +220,24 @@ export function SortableCell({
       return;
     }
 
-    const toolbarWidth = toolbarDomRef.current?.offsetWidth || 580;
+    const toolbarWidth = toolbarDomRef.current?.offsetWidth || 560;
     const toolbarHeight = toolbarDomRef.current?.offsetHeight || 36;
 
     let idealLeft = isLastInRow ? (rect.right - toolbarWidth) : rect.left;
     const clampedLeft = Math.max(16, Math.min(window.innerWidth - toolbarWidth - 16, idealLeft));
 
-    const fitsAbove = rect.top - toolbarHeight - 8 >= 80;
-    const targetTop = fitsAbove ? rect.top - toolbarHeight - 8 : rect.bottom + 8;
+    // Place above card if fits; otherwise place below card
+    const fitsAbove = rect.top - toolbarHeight - 8 >= 88;
+    let targetTop = fitsAbove ? rect.top - toolbarHeight - 8 : rect.bottom + 8;
+
+    // Viewport clamping so toolbar is never cut off by top ribbon or bottom of screen
+    const maxAllowedBottom = window.innerHeight - 56 - toolbarHeight;
+    if (targetTop > maxAllowedBottom) {
+      targetTop = Math.max(88, maxAllowedBottom);
+    }
+    if (targetTop < 88) {
+      targetTop = 88;
+    }
 
     setToolbarPortalPos({
       top: Math.round(targetTop),
@@ -1053,7 +1069,7 @@ export function SortableCell({
                 top: portalPos.top,
                 left: portalPos.left + portalPos.width / 2,
                 transform: "translateX(-50%)",
-                zIndex: 9999,
+                zIndex: 99999,
               }}
               className="portal-quick-add-panel p-1.5 bg-white/98 dark:bg-zinc-900/98 backdrop-blur-md border-2 border-[#8B3DFF] rounded-2xl shadow-2xl flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-150 select-none whitespace-nowrap"
             >
@@ -1171,7 +1187,7 @@ export function SortableCell({
                 top: portalPos.top,
                 left: portalPos.left + portalPos.width / 2,
                 transform: "translateX(-50%)",
-                zIndex: 9999,
+                zIndex: 99999,
               }}
               className="portal-stack-trigger-btn flex items-center gap-1 px-3 py-1 bg-white/95 dark:bg-zinc-900/95 border border-dashed border-[#8B3DFF]/70 hover:border-[#8B3DFF] text-[#8B3DFF] hover:bg-[#8B3DFF]/10 text-[11px] font-semibold rounded-full shadow-lg backdrop-blur-md cursor-pointer transition-all duration-150 animate-in fade-in zoom-in-95 hover:scale-105 active:scale-95"
               title="Click to stack another block directly below in this column"
@@ -1195,7 +1211,7 @@ export function SortableCell({
               position: "fixed",
               top: `${toolbarPortalPos.top}px`,
               left: `${toolbarPortalPos.left}px`,
-              zIndex: 9999,
+              zIndex: 99999,
             }}
             className="portal-cell-action-bar flex items-center gap-0.5 bg-white/98 dark:bg-zinc-900/98 border border-slate-200 dark:border-zinc-800 rounded-xl px-1.5 py-0.5 shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap animate-in fade-in duration-100"
           >
