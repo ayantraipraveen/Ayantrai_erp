@@ -420,8 +420,8 @@ export function SortableCell({
 
   const stackedWrap = hasStacked ? calcWrappedStackedH(cell.stackedCells!) : { contentH: 0, numRows: 0 };
   const rawStackedSum = stackedWrap.contentH;
-  // Gap between stacked rows (12px each) + 4px outer gap between primary and first stacked row
-  const stackGapTotal = hasStacked ? Math.max(0, stackedWrap.numRows - 1) * 12 + 4 : 0;
+  // Gap between stacked rows (12px each) + 12px outer gap between primary and first stacked row (gap-3)
+  const stackGapTotal = hasStacked ? Math.max(0, stackedWrap.numRows - 1) * 12 + 12 : 0;
   const maxAvailableForCards = Math.max(140, maxColumnHeight - stackGapTotal);
   const totalCardsRawH = rawBaseBlockHeight + rawStackedSum;
   const cardScale = totalCardsRawH > maxAvailableForCards ? maxAvailableForCards / totalCardsRawH : 1;
@@ -756,7 +756,7 @@ export function SortableCell({
       )}
 
       {/* Render the actual cell content block and vertically stacked blocks */}
-      <div className="w-full flex-1 flex flex-col gap-1 min-h-fit">
+      <div className="w-full flex-1 flex flex-col gap-3 min-h-fit overflow-visible">
         {/* Primary Block */}
         <div
           style={{
@@ -798,7 +798,7 @@ export function SortableCell({
 
         {/* Stacked Blocks underneath (Canva Column Stack) */}
         {cell.stackedCells && cell.stackedCells.length > 0 && (
-          <div className="w-full flex flex-row flex-wrap gap-3">
+          <div className="w-full flex flex-row flex-wrap gap-3 overflow-visible">
             {cell.stackedCells.map((sc: any, sIdx: number) => {
               const isStackedSelected = selectedCellId === sc.id;
               const currentScW = sc.customWidth || 100;
@@ -823,9 +823,9 @@ export function SortableCell({
                     isStackedSelected && !isPreview ? "ring-2 ring-[#8B3DFF] rounded-2xl shadow-lg" : ""
                   }`}
                 >
-                  {/* Mini Hover Toolbar for Stacked Item */}
+                  {/* Mini Hover Toolbar for Stacked Item — positioned -top-8 (32px above) so it sits fully above the card and doesn't cover top content */}
                   {!isPreview && (
-                    <div className={`absolute -top-3.5 right-2 z-30 ${isStackedSelected ? "opacity-100" : "opacity-0 group-hover/stacked-block:opacity-100"} transition-opacity flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-0.5 shadow-md text-xs backdrop-blur-sm`}>
+                    <div className={`absolute -top-8 left-0 z-30 ${isStackedSelected ? "opacity-100" : "opacity-0 group-hover/stacked-block:opacity-100"} transition-opacity flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-0.5 shadow-md text-xs backdrop-blur-sm`}>
                       {/* Width Quick Stepper */}
                       <div className="flex items-center border-r border-slate-200 dark:border-zinc-700 pr-1.5 mr-0.5 gap-0.5">
                         <span className="text-[9px] font-mono text-slate-400">W:</span>

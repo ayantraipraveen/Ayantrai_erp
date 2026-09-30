@@ -68,10 +68,10 @@ export function estimateRowHeight(row: CanvasRow): number {
         }
       }
       rowMaxHeights.push(rowMaxH);
-      // sum of row heights + inter-row gaps (12px) + outer gap between primary and stacked (4px)
+      // sum of row heights + inter-row gaps (12px) + outer gap between primary and stacked (12px = gap-3)
       const stackedH = rowMaxHeights.reduce((t, rh) => t + rh, 0)
         + Math.max(0, rowMaxHeights.length - 1) * 12
-        + 4;
+        + 12;
       h += stackedH;
     }
 
