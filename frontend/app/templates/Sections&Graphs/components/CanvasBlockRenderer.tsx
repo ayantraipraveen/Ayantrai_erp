@@ -25,7 +25,6 @@ import {
   Trash2,
   Plus,
   X,
-  Check,
 } from "lucide-react";
 import {
   CanvasCell,

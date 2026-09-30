@@ -6,3 +6,4 @@ export * from "./CanvasReportHeader";
 export * from "./CanvasSectionHeader";
 export * from "./CanvasReportFooter";
 export * from "./CanvasViewportDock";
+export * from "./CanvasInlineEditableText";

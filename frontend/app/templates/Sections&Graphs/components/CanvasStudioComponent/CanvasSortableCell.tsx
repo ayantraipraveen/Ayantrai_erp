@@ -22,7 +22,7 @@ import {
   Minus,
 } from "lucide-react";
 import { CanvasBlockRenderer } from "../CanvasBlockRenderer";
-import { SortableCellProps, getCellWidthStyle } from "../../utils";
+import { SortableCellProps, getCellWidthStyle, getDefaultBlockHeight } from "../../utils";
 
 export function SortableCell({
   sectionId,
@@ -44,7 +44,6 @@ export function SortableCell({
   onUpdateSingleBadge,
   onAddBadge,
   onDeleteBadge,
-  isDraggingOverlay = false,
   cellIndex,
   totalCellsInRow,
   selectedCellId,
@@ -318,23 +317,11 @@ export function SortableCell({
   const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
   const bottomZoneH = 0; // Rendered in React portal, takes zero internal cell layout height
 
-  const rawBaseBlockHeight = currentHeight || (
-    cell.blockType === "chart" ? 370 :
-    cell.blockType === "badge-strip" ? 140 :
-    cell.blockType === "insight" ? 110 :
-    cell.blockType === "text" ? 90 :
-    cell.blockType === "divider" ? 32 : 140
-  );
+  const rawBaseBlockHeight = currentHeight || getDefaultBlockHeight(cell.blockType);
 
   const rawStackedSum = hasStacked
     ? cell.stackedCells!.reduce((acc: number, sc: any) => {
-        const scH = sc.customHeight || (
-          sc.blockType === "chart" ? 370 :
-          sc.blockType === "badge-strip" ? 140 :
-          sc.blockType === "insight" ? 110 :
-          sc.blockType === "text" ? 90 :
-          sc.blockType === "divider" ? 32 : 140
-        );
+        const scH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
         return acc + scH;
       }, 0)
     : 0;
@@ -348,13 +335,7 @@ export function SortableCell({
 
   const stackedExtraHeight = hasStacked
     ? cell.stackedCells!.reduce((acc: number, sc: any) => {
-        const rawScH = sc.customHeight || (
-          sc.blockType === "chart" ? 370 :
-          sc.blockType === "badge-strip" ? 140 :
-          sc.blockType === "insight" ? 110 :
-          sc.blockType === "text" ? 90 :
-          sc.blockType === "divider" ? 32 : 140
-        );
+        const rawScH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
         const scH = Math.max(70, Math.floor(rawScH * cardScale));
         return acc + scH + 12;
       }, 0)
@@ -949,11 +930,7 @@ export function SortableCell({
           <div className="w-full flex flex-col gap-3">
             {cell.stackedCells.map((sc: any, sIdx: number) => {
               const isStackedSelected = selectedCellId === sc.id;
-              const defaultScH = sc.blockType === "chart" ? 370 :
-                sc.blockType === "badge-strip" ? 140 :
-                sc.blockType === "insight" ? 110 :
-                sc.blockType === "text" ? 90 :
-                sc.blockType === "divider" ? 32 : 140;
+              const defaultScH = getDefaultBlockHeight(sc.blockType);
               const currentScH = sc.customHeight || defaultScH;
               const currentScW = sc.customWidth || 100;
 

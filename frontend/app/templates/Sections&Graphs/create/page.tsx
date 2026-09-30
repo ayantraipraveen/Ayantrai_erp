@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, useEffect, useState, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   createLibrarySection,

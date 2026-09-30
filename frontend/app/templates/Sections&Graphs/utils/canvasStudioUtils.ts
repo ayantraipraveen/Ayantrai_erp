@@ -44,7 +44,6 @@ export interface SortableCellProps {
   onUpdateSingleBadge?: (rowId: string, cellId: string, badgeId: string, patch: Partial<CanvasBadgeItem>) => void;
   onAddBadge?: (rowId: string, cellId: string) => void;
   onDeleteBadge?: (rowId: string, cellId: string, badgeId: string) => void;
-  isDraggingOverlay?: boolean;
   cellIndex?: number;
   totalCellsInRow?: number;
   selectedCellId?: string | null;

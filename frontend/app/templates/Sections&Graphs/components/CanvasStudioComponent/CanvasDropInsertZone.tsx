@@ -12,6 +12,25 @@ export interface PageAddRowDropZoneProps {
   onDropBlock?: (e: SidebarAddBlockEvent) => void;
 }
 
+function handleDropSidebarBlock(
+  e: React.DragEvent,
+  insertIndex: number,
+  onDropBlock?: (e: SidebarAddBlockEvent) => void
+) {
+  e.preventDefault();
+  e.stopPropagation();
+  try {
+    const raw = e.dataTransfer.getData("application/json");
+    if (!raw) return;
+    const data: SidebarAddBlockEvent = JSON.parse(raw);
+    if (onDropBlock) {
+      onDropBlock({ ...data, insertRowAtIndex: insertIndex });
+    }
+  } catch (err) {
+    console.error("DropBlock error:", err);
+  }
+}
+
 // ─── Drop Insertion Zone (Between Rows) ───────────────────────────────────────
 export function DropInsertZone({
   insertIndex,
@@ -41,19 +60,8 @@ export function DropInsertZone({
         setIsOver(false);
       }}
       onDrop={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
         setIsOver(false);
-        try {
-          const raw = e.dataTransfer.getData("application/json");
-          if (!raw) return;
-          const data: SidebarAddBlockEvent = JSON.parse(raw);
-          if (onDropBlock) {
-            onDropBlock({ ...data, insertRowAtIndex: insertIndex });
-          }
-        } catch (err) {
-          console.error("DropInsertZone error:", err);
-        }
+        handleDropSidebarBlock(e, insertIndex, onDropBlock);
       }}
       className={`group/dropzone relative w-full rounded-xl transition-all duration-200 flex items-center justify-center cursor-pointer select-none ${
         isOver
@@ -117,19 +125,8 @@ export function PageAddRowDropZone({
         setIsOver(false);
       }}
       onDrop={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
         setIsOver(false);
-        try {
-          const raw = e.dataTransfer.getData("application/json");
-          if (!raw) return;
-          const data: SidebarAddBlockEvent = JSON.parse(raw);
-          if (onDropBlock) {
-            onDropBlock({ ...data, insertRowAtIndex: insertIndex });
-          }
-        } catch (err) {
-          console.error("PageAddRowDropZone error:", err);
-        }
+        handleDropSidebarBlock(e, insertIndex, onDropBlock);
       }}
       className={`flex-1 py-2.5 rounded-xl border border-dashed transition-all flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold ${
         isOver

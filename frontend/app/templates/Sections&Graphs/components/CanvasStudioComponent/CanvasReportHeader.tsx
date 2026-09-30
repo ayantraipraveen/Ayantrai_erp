@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { DynamicTextEditor, renderDynamicText } from "../DynamicTitleEditor";
+import { CanvasInlineEditableText } from "./CanvasInlineEditableText";
 import { ReportHeaderValues, HeaderTitleFormat } from "../../utils";
 
 export type HeaderField = "taglinePrimary" | "taglineSecondary" | "title" | "period";
@@ -65,95 +65,62 @@ export function CanvasReportHeader({
 
         <div className={`min-w-0 flex flex-col justify-center ${taglineZ}`}>
           <div className="flex flex-col gap-0.5 border-l-2 border-[#2454d8] pl-2.5 px-3 py-2">
-            {editingHeaderValue === "taglinePrimary" ? (
-              <DynamicTextEditor
-                initialValue={headerValues.taglinePrimary}
-                initialHtml={headerValues.taglinePrimaryHtml}
-                defaultFontSize={13}
-                multiline={false}
-                toolbarPosition="top"
-                className="text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                onSave={(plain, html) => onSave("taglinePrimary", plain, html)}
-                onCancel={onCancel}
-              />
-            ) : (
-              <p
-                className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                onDoubleClick={() => open("taglinePrimary")}
-                title="Double-click to format primary report tagline (Word style)"
-              >
-                {renderDynamicText(headerValues.taglinePrimaryHtml, headerValues.taglinePrimary)}
-              </p>
-            )}
-            {editingHeaderValue === "taglineSecondary" ? (
-              <DynamicTextEditor
-                initialValue={headerValues.taglineSecondary}
-                initialHtml={headerValues.taglineSecondaryHtml}
-                defaultFontSize={13}
-                multiline={false}
-                toolbarPosition="bottom"
-                className="text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                onSave={(plain, html) => onSave("taglineSecondary", plain, html)}
-                onCancel={onCancel}
-              />
-            ) : (
-              <p
-                className="cursor-text text-[13px] font-semibold italic leading-tight text-[#2454d8]"
-                onDoubleClick={() => open("taglineSecondary")}
-                title="Double-click to format secondary report tagline (Word style)"
-              >
-                {renderDynamicText(headerValues.taglineSecondaryHtml, headerValues.taglineSecondary)}
-              </p>
-            )}
+            <CanvasInlineEditableText
+              value={headerValues.taglinePrimary}
+              html={headerValues.taglinePrimaryHtml}
+              isEditing={editingHeaderValue === "taglinePrimary"}
+              defaultFontSize={13}
+              toolbarPosition="top"
+              className="text-[13px] font-semibold italic leading-tight text-[#2454d8]"
+              title="Double-click to format primary report tagline (Word style)"
+              onDoubleClick={() => open("taglinePrimary")}
+              onSave={(plain, html) => onSave("taglinePrimary", plain, html)}
+              onCancel={onCancel}
+            />
+            <CanvasInlineEditableText
+              value={headerValues.taglineSecondary}
+              html={headerValues.taglineSecondaryHtml}
+              isEditing={editingHeaderValue === "taglineSecondary"}
+              defaultFontSize={13}
+              toolbarPosition="bottom"
+              className="text-[13px] font-semibold italic leading-tight text-[#2454d8]"
+              title="Double-click to format secondary report tagline (Word style)"
+              onDoubleClick={() => open("taglineSecondary")}
+              onSave={(plain, html) => onSave("taglineSecondary", plain, html)}
+              onCancel={onCancel}
+            />
           </div>
         </div>
 
         <div className={`min-w-0 flex flex-col justify-center px-2 py-2 ${titleZ}`}>
-          <div className="relative">
-            {editingHeaderValue === "title" ? (
-              <DynamicTextEditor
-                initialValue={headerValues.title}
-                initialHtml={headerValues.titleHtml}
-                defaultFontSize={headerTitleFormat.fontSize || 22}
-                multiline={false}
-                toolbarPosition="top"
-                toolbarAlign="right"
-                className="text-lg sm:text-xl font-black leading-tight"
-                onSave={(plain, html) => onSave("title", plain, html)}
-                onCancel={onCancel}
-              />
-            ) : (
-              <p
-                className="cursor-text pr-5 leading-tight"
-                style={headerTitleTextStyle}
-                onDoubleClick={() => open("title")}
-                title="Double-click to format report title (Word style)"
-              >
-                {renderDynamicText(headerValues.titleHtml, headerValues.title)}
-              </p>
-            )}
-          </div>
-          {editingHeaderValue === "period" ? (
-            <DynamicTextEditor
-              initialValue={headerValues.period}
-              initialHtml={headerValues.periodHtml}
-              defaultFontSize={11}
-              multiline={false}
-              toolbarPosition="bottom"
+          <div className="relative" style={editingHeaderValue !== "title" ? headerTitleTextStyle : undefined}>
+            <CanvasInlineEditableText
+              value={headerValues.title}
+              html={headerValues.titleHtml}
+              isEditing={editingHeaderValue === "title"}
+              defaultFontSize={headerTitleFormat.fontSize || 22}
+              toolbarPosition="top"
               toolbarAlign="right"
-              className="mt-0.5 text-[11px] font-semibold leading-tight text-[#1836a0]"
-              onSave={(plain, html) => onSave("period", plain, html)}
+              className="text-lg sm:text-xl font-black leading-tight pr-5"
+              title="Double-click to format report title (Word style)"
+              onDoubleClick={() => open("title")}
+              onSave={(plain, html) => onSave("title", plain, html)}
               onCancel={onCancel}
             />
-          ) : (
-            <p
-              className="mt-0.5 cursor-text text-[11px] font-semibold leading-tight text-[#1836a0]"
-              onDoubleClick={() => open("period")}
-              title="Double-click to format report period (Word style)"
-            >
-              {renderDynamicText(headerValues.periodHtml, headerValues.period)}
-            </p>
-          )}
+          </div>
+          <CanvasInlineEditableText
+            value={headerValues.period}
+            html={headerValues.periodHtml}
+            isEditing={editingHeaderValue === "period"}
+            defaultFontSize={11}
+            toolbarPosition="bottom"
+            toolbarAlign="right"
+            className="mt-0.5 text-[11px] font-semibold leading-tight text-[#1836a0]"
+            title="Double-click to format report period (Word style)"
+            onDoubleClick={() => open("period")}
+            onSave={(plain, html) => onSave("period", plain, html)}
+            onCancel={onCancel}
+          />
           <div className="mt-1 h-0.5 w-10 rounded-full bg-[#2454d8]" />
         </div>
 

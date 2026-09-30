@@ -16,6 +16,25 @@ export function getCellWidthStyle(percent: number): string {
   return `calc(${p}% - ${gapSub.toFixed(1)}px)`;
 }
 
+export function getDefaultBlockHeight(blockType?: string): number {
+  switch (blockType) {
+    case "chart":
+      return 370;
+    case "metric-card":
+      return 135;
+    case "badge-strip":
+      return 140;
+    case "insight":
+      return 110;
+    case "text":
+      return 90;
+    case "divider":
+      return 32;
+    default:
+      return 140;
+  }
+}
+
 /**
  * Predictive Row Height Estimation (Calibrated for Standard 842px ISO PDF Page).
  * Evaluates block types, stacked blocks, and flex-wrap progression.
@@ -61,28 +80,7 @@ export function estimateRowHeight(row: CanvasRow): number {
     // Account for stacked cells in this column
     if (cell.stackedCells && cell.stackedCells.length > 0) {
       for (const sc of cell.stackedCells) {
-        let scH = sc.customHeight || 90;
-        if (!sc.customHeight) {
-          switch (sc.blockType) {
-            case "chart":
-              scH = 370;
-              break;
-            case "metric-card":
-              scH = 135;
-              break;
-            case "badge-strip":
-              scH = 140;
-              break;
-            case "insight":
-              scH = 110;
-              break;
-            case "text":
-              scH = 90;
-              break;
-            default:
-              scH = 90;
-          }
-        }
+        const scH = sc.customHeight || getDefaultBlockHeight(sc.blockType);
         h += scH + 12; // 12px gap between stacked blocks
       }
     }

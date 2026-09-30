@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useCallback, useState, useRef, useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
 import {
   DndContext,
   DragEndEvent,
-  DragOverEvent,
   DragStartEvent,
   PointerSensor,
   KeyboardSensor,
@@ -15,18 +13,13 @@ import {
   pointerWithin,
   rectIntersection,
   DragOverlay,
-  UniqueIdentifier,
-  useDroppable,
 } from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  rectSortingStrategy,
   verticalListSortingStrategy,
-  useSortable,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Layers } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
@@ -34,7 +27,6 @@ import {
   CanvasBlockType,
   updateLibrarySection,
   addCanvasRow,
-  addRowWithCell,
   toggleRowPageBreak,
   removeCanvasRow,
   addCellToRow,
@@ -50,36 +42,24 @@ import {
   showGlobalToast,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
-import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
-import { SidebarAddBlockEvent } from "./CanvasSidebar";
 import { CanvasRuler } from "./CanvasRuler";
 
 import {
   A4_WIDTH_PX,
   A4_HEIGHT_PX,
-  getCellWidthStyle,
-  estimateRowHeight,
-  PagePartition,
   partitionCanvasPages,
-  renderDualToneEyebrow,
-  renderDualToneTitle,
   isColorDark,
-  getPaperToneColor,
   DEFAULT_CANVAS_MARGIN,
   CanvasMarginConfig,
   RulerUnit,
   CanvasStudioProps,
- 
   HeaderTitleFormat,
   DEFAULT_HEADER_TITLE_FORMAT,
-  ReportHeaderValues,
-  ReportFooterValues,
 } from "../utils";
 
 import {
   DropInsertZone,
   PageAddRowDropZone,
-  SortableCell,
   SortableRow,
   WatermarkStampLayer,
   CanvasReportHeader,
@@ -87,18 +67,6 @@ import {
   CanvasReportFooter,
   CanvasViewportDock,
 } from "./CanvasStudioComponent";
-
-export {
-  A4_WIDTH_PX,
-  A4_HEIGHT_PX,
-  getCellWidthStyle,
-  estimateRowHeight,
-  partitionCanvasPages,
-  renderDualToneEyebrow,
-  renderDualToneTitle,
-};
-export type { PagePartition };
-
 
 export type { CanvasStudioProps };
 
@@ -258,23 +226,6 @@ export function CanvasStudio({
     textAlign: headerTitleFormat.textAlign,
   };
 
-  const updateHeaderTitleFormat = <Key extends keyof HeaderTitleFormat,>(
-    field: Key,
-    value: HeaderTitleFormat[Key]
-  ) => {
-    setHeaderTitleFormatsBySection((current) => ({
-      ...current,
-      [section.id]: { ...(current[section.id] || DEFAULT_HEADER_TITLE_FORMAT), [field]: value },
-    }));
-  };
-
-  const updateHeaderValue = (field: "taglinePrimary" | "taglineSecondary" | "title" | "period", value: string) => {
-    setHeaderValuesBySection((current) => ({
-      ...current,
-      [section.id]: { ...headerValues, [field]: value },
-    }));
-  };
-
   const updateHeaderValueWithHtml = (
     field: "taglinePrimary" | "taglineSecondary" | "title" | "period",
     plainText: string,
@@ -291,8 +242,6 @@ export function CanvasStudio({
     setEditingHeaderValue(null);
   };
 
-  const commitHeaderValue = () => setEditingHeaderValue(null);
-
   const footerValues = footerValuesBySection[section.id] || {
     company: "AyantrAI Private Limited",
     companyHtml: "",
@@ -300,13 +249,6 @@ export function CanvasStudio({
     websitesHtml: "",
     quote: "Every Worker Returns Home Safe",
     quoteHtml: "",
-  };
-
-  const updateFooterValue = (field: "company" | "websites" | "quote", value: string) => {
-    setFooterValuesBySection((current) => ({
-      ...current,
-      [section.id]: { ...footerValues, [field]: value },
-    }));
   };
 
   const updateFooterValueWithHtml = (
@@ -324,8 +266,6 @@ export function CanvasStudio({
     }));
     setEditingFooterValue(null);
   };
-
-  const commitFooterValue = () => setEditingFooterValue(null);
 
   // Section Header Live / Inline Editing State
   const [editingSectionField, setEditingSectionField] = useState<"eyebrow" | "name" | "description" | null>(null);

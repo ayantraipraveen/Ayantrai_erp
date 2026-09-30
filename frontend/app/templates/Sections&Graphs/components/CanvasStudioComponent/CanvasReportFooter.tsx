@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { DynamicTextEditor, renderDynamicText } from "../DynamicTitleEditor";
+import { CanvasInlineEditableText } from "./CanvasInlineEditableText";
 import { ReportFooterValues, getPaperToneColor } from "../../utils";
 
 export type FooterField = "company" | "websites" | "quote";
@@ -42,73 +42,48 @@ export function CanvasReportFooter({
       style={{ backgroundColor: getPaperToneColor(paperTone) }}
     >
       <div className={`min-w-0 ${leftZ}`}>
-        {editingFooterValue === "company" ? (
-          <DynamicTextEditor
-            initialValue={footerValues.company}
-            initialHtml={footerValues.companyHtml}
-            defaultFontSize={14}
-            multiline={false}
-            toolbarPosition="top"
-            className="text-sm font-bold text-[#1836a0]"
-            onSave={(plain, html) => onSave("company", plain, html)}
-            onCancel={onCancel}
-          />
-        ) : (
-          <p
-            className="cursor-text text-sm font-bold text-[#1836a0]"
-            onDoubleClick={() => open("company")}
-            title="Double-click to format company name (Word style)"
-          >
-            {renderDynamicText(footerValues.companyHtml, footerValues.company)}
-          </p>
-        )}
-
-        {editingFooterValue === "websites" ? (
-          <DynamicTextEditor
-            initialValue={footerValues.websites}
-            initialHtml={footerValues.websitesHtml}
-            defaultFontSize={12}
-            multiline={false}
-            toolbarPosition="top"
-            className="mt-1 text-xs font-semibold text-[#1836a0]"
-            onSave={(plain, html) => onSave("websites", plain, html)}
-            onCancel={onCancel}
-          />
-        ) : (
-          <p
-            className="mt-1 cursor-text text-xs font-semibold text-[#1836a0]"
-            onDoubleClick={() => open("websites")}
-            title="Double-click to format website links (Word style)"
-          >
-            {renderDynamicText(footerValues.websitesHtml, footerValues.websites)}
-          </p>
-        )}
+        <CanvasInlineEditableText
+          value={footerValues.company}
+          html={footerValues.companyHtml}
+          isEditing={editingFooterValue === "company"}
+          defaultFontSize={14}
+          toolbarPosition="top"
+          className="text-sm font-bold text-[#1836a0]"
+          title="Double-click to format company name (Word style)"
+          onDoubleClick={() => open("company")}
+          onSave={(plain, html) => onSave("company", plain, html)}
+          onCancel={onCancel}
+        />
+        <CanvasInlineEditableText
+          value={footerValues.websites}
+          html={footerValues.websitesHtml}
+          isEditing={editingFooterValue === "websites"}
+          defaultFontSize={12}
+          toolbarPosition="top"
+          className="mt-1 text-xs font-semibold text-[#1836a0]"
+          title="Double-click to format website links (Word style)"
+          onDoubleClick={() => open("websites")}
+          onSave={(plain, html) => onSave("websites", plain, html)}
+          onCancel={onCancel}
+        />
       </div>
 
       <div className="h-[2px] w-full bg-[#1836a0]/60" />
 
       <div className={`min-w-0 ${rightZ}`}>
-        {editingFooterValue === "quote" ? (
-          <DynamicTextEditor
-            initialValue={footerValues.quote}
-            initialHtml={footerValues.quoteHtml}
-            defaultFontSize={14}
-            multiline={false}
-            toolbarPosition="top"
-            toolbarAlign="right"
-            className="text-right text-sm font-semibold text-[#1836a0]"
-            onSave={(plain, html) => onSave("quote", plain, html)}
-            onCancel={onCancel}
-          />
-        ) : (
-          <p
-            className="cursor-text text-right text-sm font-semibold text-[#1836a0]"
-            onDoubleClick={() => open("quote")}
-            title="Double-click to format safety quote (Word style)"
-          >
-            &ldquo;{renderDynamicText(footerValues.quoteHtml, footerValues.quote)}&rdquo;
-          </p>
-        )}
+        <CanvasInlineEditableText
+          value={footerValues.quote}
+          html={footerValues.quoteHtml}
+          isEditing={editingFooterValue === "quote"}
+          defaultFontSize={14}
+          toolbarPosition="top"
+          toolbarAlign="right"
+          className="text-right text-sm font-semibold text-[#1836a0]"
+          title="Double-click to format safety quote (Word style)"
+          onDoubleClick={() => open("quote")}
+          onSave={(plain, html) => onSave("quote", plain, html)}
+          onCancel={onCancel}
+        />
       </div>
     </footer>
   );
