@@ -1191,6 +1191,25 @@ export const sectionsStudioReducers = {
         sec.updatedAt = "Just now";
       }
     },
+    updateTableOfContentsData: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        data: Partial<import("../../types/reportModuleTypes").TableOfContentsData>;
+      }>
+    ) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.tableOfContentsData = { ...(sec.tableOfContentsData || {
+          title: "Contents",
+          subtitle: "A complete overview of workforce safety, device utilisation and operational performance.",
+          sidebarTitle: "Safer People\nStronger Industries",
+          sidebarTagline: "AI + IoT for a safer,\nsmarter tomorrow.",
+          items: [],
+        }), ...action.payload.data };
+        sec.updatedAt = "Just now";
+      }
+    },
     updateBackCoverData: (
       state: ReportModuleState,
       action: PayloadAction<{

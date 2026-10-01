@@ -58,9 +58,10 @@ import {
   ChartCustomizationOptions,
   ChartSeriesConfig,
   updateCoverPageData,
+  updateTableOfContentsData,
   updateBackCoverData,
 } from "@/lib/redux/slices/reportModuleSlice";
-import { CanvasSidebar, SidebarAddBlockEvent } from "./CanvasSidebar";
+import { CanvasSidebar, SidebarAddBlockEvent, ReportOutlineItem } from "./CanvasSidebar";
 import {
   getUploadedWatermarks,
   getSectionWatermarkConfig,
@@ -80,8 +81,11 @@ import {
   KeyInsightModal,
   BadgeStripModal,
 } from "./SectionCanvasModals";
-import { CanvasCoverPage } from "./CanvasStudioComponent/CanvasCoverPage";
-import { CanvasBackCoverPage } from "./CanvasStudioComponent/CanvasBackCoverPage";
+import {
+  CanvasCoverPage,
+  CanvasTableOfContentsPage,
+  CanvasBackCoverPage,
+} from "./CanvasStudioComponent";
 
 export { PALETTE_RAMPS } from "./constants/chartTypes";
 
@@ -263,6 +267,109 @@ export default function SectionCanvasEditor({
     if (!selectedRowId || !section?.canvasRows) return null;
     return section.canvasRows.find((r) => r.id === selectedRowId) || null;
   }, [selectedRowId, section?.canvasRows]);
+
+  // Report Sections Outline & Sidebar Jump Navigator
+  const [activeReportSectionKey, setActiveReportSectionKey] = useState<string>("cover");
+
+  const computedReportSections = useMemo<ReportOutlineItem[]>(() => {
+    const list: ReportOutlineItem[] = [
+      {
+        id: "outline-cover",
+        key: "cover",
+        title: "Cover Page",
+        subtitle: section?.coverPageData?.reportType || "Monthly Report",
+        type: "cover",
+        pageNumber: 1,
+      },
+      {
+        id: "outline-toc",
+        key: "toc",
+        title: "Table of Contents",
+        subtitle: "Executive Summary & Section Index",
+        type: "toc",
+        pageNumber: 2,
+      },
+    ];
+
+    const rows = section?.canvasRows || [];
+    let currentSecIndex = 1;
+    rows.forEach((r, rIdx) => {
+      if (r.pageBreakBefore && rIdx > 0) {
+        list.push({
+          id: `outline-sec-${rIdx}`,
+          key: `section-${r.id}`,
+          title: `Section ${currentSecIndex}`,
+          subtitle: `Telemetry rows & widgets (${r.cells.length} cells)`,
+          type: "section",
+          pageNumber: list.length + 1,
+          rowsCount: 1,
+        });
+        currentSecIndex++;
+      }
+    });
+
+    if (list.length === 2) {
+      list.push({
+        id: `outline-main`,
+        key: `section-main`,
+        title: section?.name || "Report Telemetry & Analysis",
+        subtitle: section?.eyebrow || "Workforce and inspection metrics",
+        type: "section",
+        pageNumber: 3,
+        rowsCount: rows.length,
+      });
+    }
+
+    list.push({
+      id: "outline-back-cover",
+      key: "back-cover",
+      title: "Back Cover Page",
+      subtitle: "Document Closure & Sign-off",
+      type: "back-cover",
+      pageNumber: list.length + 1,
+    });
+
+    return list;
+  }, [section?.coverPageData, section?.canvasRows, section?.name, section?.eyebrow]);
+
+  const handleSelectReportSection = useCallback((key: string) => {
+    setActiveReportSectionKey(key);
+    let targetEl: HTMLElement | null = null;
+    if (key === "cover") {
+      targetEl = document.getElementById("canvas-cover-page");
+    } else if (key === "toc") {
+      targetEl = document.getElementById("canvas-toc-page");
+    } else if (key === "back-cover") {
+      targetEl = document.getElementById("canvas-back-cover-page");
+    } else if (key.startsWith("section-")) {
+      const rowId = key.replace("section-", "");
+      targetEl = document.getElementById(`row-${rowId}`) || document.getElementById(key);
+    }
+
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      targetEl.classList.add("ring-4", "ring-[#9D61FF]/40", "ring-offset-2");
+      setTimeout(() => {
+        targetEl?.classList.remove("ring-4", "ring-[#9D61FF]/40", "ring-offset-2");
+      }, 2000);
+    }
+  }, []);
+
+  const handleAddSectionRows = useCallback(
+    (rowsToAdd: CanvasRow[], sectionName: string) => {
+      if (!section) return;
+      const currentRows = section.canvasRows || [];
+      const clonedRows: CanvasRow[] = rowsToAdd.map((r, rIdx) => ({
+        ...r,
+        id: `row-${Date.now()}-${rIdx}-${Math.random().toString(36).substr(2, 4)}`,
+        pageBreakBefore: rIdx === 0,
+      }));
+      const nextRows = [...currentRows, ...clonedRows];
+      dispatch(setSectionCanvasRows({ sectionId, canvasRows: nextRows }));
+      dispatch(showGlobalToast({ message: `Added "${sectionName}" to report!`, type: "success" }));
+    },
+    [dispatch, section, sectionId]
+  );
 
   // Sync marginConfig from persistent sectionStyle when section loads
   useEffect(() => {
@@ -1388,6 +1495,10 @@ export default function SectionCanvasEditor({
             onAddWatermarkElement={handleAddWatermarkElement}
             watermarkConfig={watermarkConfig}
             onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
+            reportSections={computedReportSections}
+            activeReportSectionKey={activeReportSectionKey}
+            onSelectReportSection={handleSelectReportSection}
+            onAddSectionRows={handleAddSectionRows}
           />
         )}
 
@@ -1446,18 +1557,31 @@ export default function SectionCanvasEditor({
             setEditHeaderOpen(true);
           }}
           beforeContent={
-            <CanvasCoverPage
-              coverPageData={section.coverPageData}
-              activeIsPreview={isPreview}
-              onUpdate={(data) => dispatch(updateCoverPageData({ sectionId, data }))}
-            />
+            <div className="space-y-6">
+              <div id="canvas-cover-page" className="transition-all duration-300 rounded-2xl">
+                <CanvasCoverPage
+                  coverPageData={section.coverPageData}
+                  activeIsPreview={isPreview}
+                  onUpdate={(data) => dispatch(updateCoverPageData({ sectionId, data }))}
+                />
+              </div>
+              <div id="canvas-toc-page" className="transition-all duration-300 rounded-2xl">
+                <CanvasTableOfContentsPage
+                  tocData={section.tableOfContentsData}
+                  activeIsPreview={isPreview}
+                  onUpdate={(data) => dispatch(updateTableOfContentsData({ sectionId, data }))}
+                />
+              </div>
+            </div>
           }
           afterContent={
-            <CanvasBackCoverPage
-              backCoverData={section.backCoverData}
-              activeIsPreview={isPreview}
-              onUpdate={(data) => dispatch(updateBackCoverData({ sectionId, data }))}
-            />
+            <div id="canvas-back-cover-page" className="transition-all duration-300 rounded-2xl">
+              <CanvasBackCoverPage
+                backCoverData={section.backCoverData}
+                activeIsPreview={isPreview}
+                onUpdate={(data) => dispatch(updateBackCoverData({ sectionId, data }))}
+              />
+            </div>
           }
         />
       </div>

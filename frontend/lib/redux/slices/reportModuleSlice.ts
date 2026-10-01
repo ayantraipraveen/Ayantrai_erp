@@ -194,6 +194,7 @@ export const {
   setDefaultWatermark,
   assignWatermarkToSections,
   updateCoverPageData,
+  updateTableOfContentsData,
   updateBackCoverData,
 } = reportModuleSlice.actions;
 

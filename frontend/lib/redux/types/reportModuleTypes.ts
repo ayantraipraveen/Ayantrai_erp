@@ -90,6 +90,7 @@ export interface ReportTemplate {
   complianceStandards?: string[];
   hasAuditHash?: boolean;
   coverPageData?: CoverPageData;
+  tableOfContentsData?: TableOfContentsData;
   backCoverData?: BackCoverData;
   canvasSectionId?: string;
 }
@@ -584,6 +585,44 @@ export const DEFAULT_BACK_COVER_DATA: BackCoverData = {
   location: "Noida, Uttar Pradesh, India",
 };
 
+export interface TableOfContentsItem {
+  id: string;
+  number: string;
+  title: string;
+  description: string;
+  pageRange: string;
+  iconType?: string;
+  color?: string;
+}
+
+export interface TableOfContentsData {
+  title: string;
+  subtitle: string;
+  sidebarTitle?: string;
+  sidebarTagline?: string;
+  reportingPeriod?: string;
+  projectSite?: string;
+  items: TableOfContentsItem[];
+}
+
+export const DEFAULT_TOC_DATA: TableOfContentsData = {
+  title: "Contents",
+  subtitle: "A complete overview of workforce safety, device utilisation and operational performance.",
+  sidebarTitle: "Safer People\nStronger Industries",
+  sidebarTagline: "AI + IoT for a safer,\nsmarter tomorrow.",
+  reportingPeriod: "01 Sept 2025 – 30 Sept 2025",
+  projectSite: "ABC Infrastructure Project",
+  items: [
+    { id: "toc-1", number: "01", title: "Key Metrics", description: "Overall performance summary and key highlights for the reporting period.", pageRange: "3", iconType: "chart", color: "#3b82f6" },
+    { id: "toc-2", number: "02", title: "Attendance Trends", description: "Workforce attendance overview, trends and department-wise analysis.", pageRange: "4 – 7", iconType: "users", color: "#10b981" },
+    { id: "toc-3", number: "03", title: "Violation Trends", description: "PPE violations, trends, categories and recurring issues.", pageRange: "8 – 12", iconType: "alert", color: "#ef4444" },
+    { id: "toc-4", number: "04", title: "Supervisor Analysis", description: "Supervisor performance, alert handling and response analysis.", pageRange: "13 – 15", iconType: "supervisor", color: "#8b5cf6" },
+    { id: "toc-5", number: "05", title: "Unit Analysis", description: "Device utilisation, operating hours and unit-wise performance.", pageRange: "16", iconType: "box", color: "#f59e0b" },
+    { id: "toc-6", number: "06", title: "Operational Review", description: "Key observations, insights and operational remarks.", pageRange: "17", iconType: "file", color: "#2563eb" },
+    { id: "toc-7", number: "07", title: "Improvement and Action Plan", description: "Focus areas, action items and targets for the next reporting period.", pageRange: "18", iconType: "target", color: "#6366f1" },
+  ],
+};
+
 export interface LibrarySection {
   id: string;
   name: string;
@@ -607,6 +646,7 @@ export interface LibrarySection {
   watermarkId?: string;
   // Fixed first/last page data
   coverPageData?: CoverPageData;
+  tableOfContentsData?: TableOfContentsData;
   backCoverData?: BackCoverData;
 }
 

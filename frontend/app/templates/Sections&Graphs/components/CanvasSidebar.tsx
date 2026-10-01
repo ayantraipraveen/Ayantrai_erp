@@ -43,7 +43,10 @@ import {
   GraphType,
   LibraryChartCard,
   LibraryKeyInsightItem,
+  CanvasRow,
+  LibrarySection,
 } from "@/lib/redux/slices/reportModuleSlice";
+import { useAppSelector } from "@/lib/redux/hooks";
 import {
   CHART_TYPE_OPTIONS,
   ChartTypeOption,
@@ -72,6 +75,17 @@ export function handleBlockDragStart(
   e.dataTransfer.effectAllowed = "copy";
 }
 
+export interface ReportOutlineItem {
+  id: string;
+  key: string;
+  title: string;
+  subtitle?: string;
+  type: "cover" | "toc" | "section" | "back-cover";
+  pageNumber?: string | number;
+  sectionId?: string;
+  rowsCount?: number;
+}
+
 export interface CanvasSidebarProps {
   onAddBlock: (e: SidebarAddBlockEvent) => void;
   sectionCharts?: LibraryChartCard[];
@@ -83,6 +97,12 @@ export interface CanvasSidebarProps {
   watermarkConfig?: WatermarkStampConfig;
   onUpdateWatermarkConfig?: (cfg: Partial<WatermarkStampConfig>) => void;
   isCollapsed?: boolean;
+  // Dynamic report sections & outline navigation
+  reportSections?: ReportOutlineItem[];
+  activeReportSectionKey?: string;
+  onSelectReportSection?: (key: string) => void;
+  onAddSectionRows?: (rows: CanvasRow[], sectionName: string) => void;
+  onRemoveReportSection?: (sectionId: string) => void;
 }
 
 // ── Mini SVG / CSS Graphic Previews for Chart Types ─────────────────────────
@@ -893,9 +913,25 @@ export function CanvasSidebar({
   watermarkConfig,
   onUpdateWatermarkConfig,
   isCollapsed,
+  reportSections,
+  activeReportSectionKey,
+  onSelectReportSection,
+  onAddSectionRows,
+  onRemoveReportSection,
 }: CanvasSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<"all" | "charts" | "metrics" | "text" | "watermarks">("charts");
+  const [selectedCategory, setSelectedCategory] = useState<"all" | "sections" | "charts" | "metrics" | "text" | "watermarks">(
+    reportSections && reportSections.length > 0 ? "sections" : "charts"
+  );
+
+  const reduxLibrarySections = useAppSelector((state) => state.reportModule.librarySections || []);
+
+  // Filter existing library sections
+  const filteredLibrarySections = reduxLibrarySections.filter((sec) =>
+    sec.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    sec.eyebrow.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    sec.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // State for Chart Quick Preview Dialog
   const [previewingChart, setPreviewingChart] = useState<LibraryChartCard | null>(null);
@@ -996,9 +1032,11 @@ export function CanvasSidebar({
 
           {/* Categories */}
           <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
-            {(["all", "charts", "metrics", "text", "watermarks"] as const).map((cat) => {
+            {(["sections", "all", "charts", "metrics", "text", "watermarks"] as const).map((cat) => {
               const label =
-                cat === "charts"
+                cat === "sections"
+                  ? "Sections"
+                  : cat === "charts"
                   ? "Charts"
                   : cat === "watermarks"
                   ? "Stamps"
@@ -1009,7 +1047,13 @@ export function CanvasSidebar({
                 <button
                   key={cat}
                   type="button"
-                  title={cat === "text" ? "Key Bullets, Insights & Takeaways" : undefined}
+                  title={
+                    cat === "sections"
+                      ? "Report Sections & Library Blueprints"
+                      : cat === "text"
+                      ? "Key Bullets, Insights & Takeaways"
+                      : undefined
+                  }
                   onClick={() => setSelectedCategory(cat)}
                   className={`h-7 px-2.5 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
                     selectedCategory === cat
@@ -1026,6 +1070,207 @@ export function CanvasSidebar({
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
+
+          {/* ── REPORT SECTIONS & OUTLINE NAVIGATOR (Complete Report Format) ── */}
+          {(selectedCategory === "sections" || selectedCategory === "all") && (
+            <div className="space-y-3 pb-2 border-b border-slate-200/80 dark:border-zinc-800/80">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-mono uppercase font-bold text-[#9D61FF] flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5" />
+                  Report Pages ({reportSections ? reportSections.length : 4})
+                </span>
+                <span className="text-[9px] text-slate-400">Click to Jump &amp; Edit</span>
+              </div>
+
+              <div className="space-y-1.5">
+                {/* 1. Fixed Cover Page */}
+                <button
+                  type="button"
+                  onClick={() => onSelectReportSection?.("cover")}
+                  className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
+                    activeReportSectionKey === "cover"
+                      ? "border-blue-500 bg-blue-500/10 shadow-sm"
+                      : "border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/60"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-600 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-800 dark:text-zinc-200 group-hover:text-blue-600 truncate">
+                        1. Cover Page
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        Fixed Page 1 • Title, Subtitle, Site, Author
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-600 flex-shrink-0">
+                    Page 01
+                  </span>
+                </button>
+
+                {/* 2. Fixed Table of Contents */}
+                <button
+                  type="button"
+                  onClick={() => onSelectReportSection?.("toc")}
+                  className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
+                    activeReportSectionKey === "toc"
+                      ? "border-indigo-500 bg-indigo-500/10 shadow-sm"
+                      : "border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 hover:border-indigo-500/60"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-500/15 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                      <ListChecks className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-800 dark:text-zinc-200 group-hover:text-indigo-600 truncate">
+                        2. Table of Contents
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        Fixed Page 2 • Section Index &amp; Overview
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-600 flex-shrink-0">
+                    Page 02
+                  </span>
+                </button>
+
+                {/* 3...N. Dynamic Body Sections */}
+                {reportSections &&
+                  reportSections
+                    .filter((s) => s.type === "section")
+                    .map((sec, idx) => (
+                      <button
+                        key={sec.id || idx}
+                        type="button"
+                        onClick={() => onSelectReportSection?.(sec.key)}
+                        className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
+                          activeReportSectionKey === sec.key
+                            ? "border-[#9D61FF] bg-purple-500/15 shadow-sm"
+                            : "border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-7 h-7 rounded-lg bg-purple-500/15 text-[#9D61FF] flex items-center justify-center flex-shrink-0">
+                            <Layers className="w-3.5 h-3.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 dark:text-zinc-200 group-hover:text-[#9D61FF] truncate">
+                              {idx + 3}. {sec.title}
+                            </div>
+                            <div className="text-[10px] text-slate-400 truncate">
+                              {sec.subtitle || `Telemetry charts & metrics (${sec.rowsCount || 1} rows)`}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] flex-shrink-0">
+                          Page {sec.pageNumber || idx + 3}
+                        </span>
+                      </button>
+                    ))}
+
+                {/* Last. Fixed Back Cover Page */}
+                <button
+                  type="button"
+                  onClick={() => onSelectReportSection?.("back-cover")}
+                  className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
+                    activeReportSectionKey === "back-cover"
+                      ? "border-emerald-500 bg-emerald-500/10 shadow-sm"
+                      : "border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/60"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                      <CheckSquare className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-slate-800 dark:text-zinc-200 group-hover:text-emerald-600 truncate">
+                        End. Back Cover Page
+                      </div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        Fixed Last Page • Thank You &amp; Sign-off
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 flex-shrink-0">
+                    Last Page
+                  </span>
+                </button>
+              </div>
+
+              {/* ── EXISTING SECTIONS FROM LIBRARY (+ INSERT SECTION) ── */}
+              <div className="pt-3 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[10px] font-mono uppercase font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#9D61FF]" />
+                    Insert Existing Section ({filteredLibrarySections.length})
+                  </span>
+                  <span className="text-[9px] text-emerald-500 font-semibold font-mono">Available</span>
+                </div>
+
+                <div className="space-y-2">
+                  {filteredLibrarySections.map((libSec) => {
+                    const chartsCount = libSec.charts?.length || 0;
+                    const metricsCount = libSec.metricCards?.length || 0;
+                    const rowsCount = libSec.canvasRows?.length || 1;
+
+                    return (
+                      <div
+                        key={libSec.id}
+                        className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#9D61FF]/60 hover:shadow-sm transition-all space-y-2"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {libSec.name}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono truncate mt-0.5">
+                              {libSec.eyebrow}
+                            </div>
+                          </div>
+                          <span
+                            className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded-full ${
+                              libSec.type === "core"
+                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                : "bg-amber-500/15 text-amber-600"
+                            }`}
+                          >
+                            {libSec.type || "core"}
+                          </span>
+                        </div>
+
+                        {/* Badges / Stats */}
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+                          <span>
+                            {chartsCount} {chartsCount === 1 ? "Chart" : "Charts"}
+                          </span>
+                          <span>•</span>
+                          <span>{metricsCount} Metrics</span>
+                          <span>•</span>
+                          <span>{rowsCount} Rows</span>
+                        </div>
+
+                        {/* Action Button: Insert Section into Report */}
+                        <button
+                          type="button"
+                          onClick={() => onAddSectionRows?.(libSec.canvasRows || [], libSec.name)}
+                          className="w-full py-1.5 px-2.5 rounded-xl bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Insert Section to Report</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ── SECTION CHARTS (Already Added to Current Section) ── */}
           {(selectedCategory === "charts" || selectedCategory === "all") && filteredSectionCharts.length > 0 && (
             <div className="space-y-2">
