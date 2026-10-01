@@ -20,10 +20,21 @@ export default function SectionsGraphsPage() {
     (state) => state.reportModule.selectedLibrarySectionId
   );
 
-  // When visiting the catalog overview route, ensure no section is locked in inline editor mode
+  // If visiting this route with query parameters (e.g. ?id=... or ?editChartCell=...), forward to /edit
   React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const search = window.location.search;
+      const params = new URLSearchParams(search);
+      const id = params.get("id") || params.get("sectionId");
+      if (id) {
+        dispatch(setSelectedLibrarySectionId(id));
+        router.push(`/templates/Sections&Graphs/edit${search}`);
+        return;
+      }
+    }
     dispatch(setSelectedLibrarySectionId(null));
-  }, [dispatch]);
+  }, [dispatch, router]);
+
 
   return (
     <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden bg-white dark:bg-[#0c1017]">

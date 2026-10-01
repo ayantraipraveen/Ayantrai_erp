@@ -559,3 +559,23 @@ export const initialLibrarySections: LibrarySection[] = [
     ],
   },
 ];
+
+export const SECTIONS_STORAGE_KEY = "ayantrai_library_sections";
+
+export function getInitialLibrarySections(): LibrarySection[] {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem(SECTIONS_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not read library sections from localStorage:", e);
+    }
+  }
+  return initialLibrarySections;
+}
+

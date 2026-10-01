@@ -13,6 +13,7 @@ import {
   initialActivityLogs,
   initialWatermarks,
   initialLibrarySections,
+  getInitialLibrarySections,
 } from "../mockData";
 import { governanceReducers } from "./modules/governanceReducers";
 import { templatesReducers } from "./modules/templatesReducers";
@@ -57,8 +58,9 @@ export const initialState: ReportModuleState = {
 
   // Master Global Library of Sections & Graphs
   globalSections: defaultBlocks,
-  librarySections: initialLibrarySections,
+  librarySections: getInitialLibrarySections(),
   selectedLibrarySectionId: null,
+
 
   // Master Document Watermark Library & Studio
   watermarks: initialWatermarks,

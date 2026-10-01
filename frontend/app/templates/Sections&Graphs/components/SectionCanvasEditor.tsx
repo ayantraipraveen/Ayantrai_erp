@@ -355,6 +355,20 @@ export default function SectionCanvasEditor({
     setChartModalOpen(false);
     setEditingChartCellMeta(null);
     dispatch(setChartEditorFullscreen(false));
+
+    // Clear URL search params and session storage
+    if (typeof window !== "undefined") {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("editChartCell");
+        url.searchParams.delete("editChartRow");
+        window.history.replaceState({}, "", url.toString());
+        sessionStorage.removeItem("ayantrai_active_chart_cell");
+      } catch (err) {
+        console.warn("Could not clear chart edit URL params:", err);
+      }
+    }
+
     if (targetCellId) {
       setTimeout(() => {
         const cellEl = document.getElementById(`canvas-cell-${targetCellId}`);
@@ -689,6 +703,19 @@ export default function SectionCanvasEditor({
             setChartOptions(cell.chart.options || { showValues: true, showGridLines: true, showLegend: true });
             setChartModalOpen(true);
             dispatch(setChartEditorFullscreen(true));
+
+            // Synchronize with URL search params and session storage for persistent reload support
+            if (typeof window !== "undefined") {
+              try {
+                const url = new URL(window.location.href);
+                url.searchParams.set("editChartCell", cell.id);
+                url.searchParams.set("editChartRow", rowId);
+                window.history.replaceState({}, "", url.toString());
+                sessionStorage.setItem("ayantrai_active_chart_cell", JSON.stringify({ sectionId, cellId: cell.id, rowId }));
+              } catch (err) {
+                console.warn("Could not sync chart edit URL params:", err);
+              }
+            }
           }
           break;
         case "insight":
@@ -713,10 +740,92 @@ export default function SectionCanvasEditor({
           break;
       }
     },
-    [dispatch]
+    [dispatch, sectionId]
   );
 
+  // Auto-restore active chart editor on browser refresh (F5) if editChartCell query param or session is present
+  const hasRestoredChartRef = useRef(false);
+  useEffect(() => {
+    if (hasRestoredChartRef.current || !section?.canvasRows) return;
+    if (typeof window === "undefined") return;
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+      let targetCellId = params.get("editChartCell");
+      let targetRowId = params.get("editChartRow");
+
+      if (!targetCellId) {
+        const rawSession = sessionStorage.getItem("ayantrai_active_chart_cell");
+        if (rawSession) {
+          const parsed = JSON.parse(rawSession);
+          if (parsed.sectionId === sectionId && parsed.cellId) {
+            targetCellId = parsed.cellId;
+            targetRowId = parsed.rowId;
+          }
+        }
+      }
+
+      if (targetCellId) {
+        let foundCell: CanvasCell | null = null;
+        let foundRowId: string | null = targetRowId || null;
+
+        for (const r of section.canvasRows) {
+          for (const c of r.cells) {
+            if (c.id === targetCellId && c.blockType === "chart" && c.chart) {
+              foundCell = c;
+              foundRowId = r.id;
+              break;
+            }
+            if (c.stackedCells && c.stackedCells.length > 0) {
+              for (const sc of c.stackedCells) {
+                if (sc.id === targetCellId && sc.blockType === "chart" && sc.chart) {
+                  foundCell = sc;
+                  foundRowId = r.id;
+                  break;
+                }
+              }
+            }
+            if (foundCell) break;
+          }
+          if (foundCell) break;
+        }
+
+        if (foundCell && foundCell.chart && foundRowId) {
+          hasRestoredChartRef.current = true;
+          handleEditCell(foundCell, foundRowId);
+        }
+      }
+    } catch (err) {
+      console.warn("Could not restore chart editor on refresh:", err);
+    }
+  }, [section?.id, section?.canvasRows, handleEditCell, sectionId]);
+
+  // Sync section to localStorage whenever canvasRows change so refreshes never lose work
+  useEffect(() => {
+    if (section && section.canvasRows && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("ayantrai_library_sections");
+        if (stored) {
+          const list = JSON.parse(stored);
+          if (Array.isArray(list)) {
+            const idx = list.findIndex((s: any) => s.id === section.id);
+            if (idx !== -1) {
+              list[idx] = section;
+              localStorage.setItem("ayantrai_library_sections", JSON.stringify(list));
+            } else {
+              list.push(section);
+              localStorage.setItem("ayantrai_library_sections", JSON.stringify(list));
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Could not sync section to localStorage:", err);
+      }
+    }
+  }, [section]);
+
   // ── Inline Cell Updates (Live on Canvas & from Ribbon) ──────────────────────
+
   const handleUpdateMetricCardInCell = useCallback(
     (rowId: string, cellId: string, card: LibraryMetricCard) => {
       dispatch(updateMetricCardInCell({ sectionId, rowId, cellId, card }));
@@ -1065,7 +1174,7 @@ export default function SectionCanvasEditor({
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn bg-white dark:bg-[#07090d] relative">
       {/* Fullscreen Telemetry Studio Overlay (keeps CanvasStudio mounted so page and scroll position are preserved) */}
       {chartModalOpen && chartEditorFullscreen && editingChart && editingChartCellMeta && (
-        <div className="fixed inset-0 z-[100000] flex flex-col bg-white dark:bg-[#07090d] animate-fadeIn">
+        <div data-chart-editor-open="true" className="fixed inset-0 z-[100000] flex flex-col bg-white dark:bg-[#07090d] animate-fadeIn">
           <ChartEditorPanel
             editingChart={editingChart}
             chartTitle={chartTitle}

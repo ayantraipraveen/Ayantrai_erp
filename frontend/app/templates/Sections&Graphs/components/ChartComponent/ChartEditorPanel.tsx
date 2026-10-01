@@ -210,17 +210,13 @@ export default function ChartEditorPanel({
     chartSeries !== undefined && chartSeries.length > 0 ? chartSeries : internalSeries;
 
   const changeSeriesList = (next: ChartSeriesConfig[] | ((prev: ChartSeriesConfig[]) => ChartSeriesConfig[])) => {
-    if (typeof next === "function") {
-      setInternalSeries((prev) => {
-        const resolved = next(prev);
-        if (setChartSeries) setChartSeries(resolved);
-        return resolved;
-      });
-    } else {
-      setInternalSeries(next);
-      if (setChartSeries) setChartSeries(next);
+    const resolved = typeof next === "function" ? next(currentSeriesList) : next;
+    setInternalSeries(resolved);
+    if (setChartSeries) {
+      setChartSeries(resolved);
     }
   };
+
 
   // Harmonized series config combining default metadata with dynamic series items
   const seriesConfig = useMemo(() => {

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { CanvasBlockRenderer } from "../CanvasBlockRenderer";
 import { SortableCellProps, getCellWidthStyle, getDefaultBlockHeight } from "../../utils";
+import { useAppSelector } from "@/lib/redux/hooks";
 
 export function SortableCell({
   sectionId,
@@ -102,6 +103,7 @@ export function SortableCell({
   const [mounted, setMounted] = useState(false);
   const [portalPos, setPortalPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const [toolbarPortalPos, setToolbarPortalPos] = useState<{ top: number; left: number } | null>(null);
+  const chartEditorFullscreen = useAppSelector((state) => state.reportModule.chartEditorFullscreen);
   const cellDomRef = useRef<HTMLDivElement | null>(null);
   const toolbarDomRef = useRef<HTMLDivElement | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -112,6 +114,16 @@ export function SortableCell({
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     };
   }, []);
+
+  // When chart editor is active, immediately clear floating portal positions
+  useEffect(() => {
+    if (chartEditorFullscreen) {
+      setPortalPos(null);
+      setToolbarPortalPos(null);
+      setQuickAddOpen(false);
+    }
+  }, [chartEditorFullscreen]);
+
 
   const updatePortalPos = useCallback(() => {
     if (!cellDomRef.current) return;
@@ -1079,7 +1091,7 @@ export function SortableCell({
       </div>
 
       {/* ── React Portal: Floating "+ Stack below" Button & Quick-Add Menu ── */}
-      {mounted && typeof document !== "undefined" && portalPos && !isPreview && !isDragging && (isSelected || isHovered || quickAddOpen) &&
+      {mounted && !chartEditorFullscreen && typeof document !== "undefined" && portalPos && !isPreview && !isDragging && (isSelected || isHovered || quickAddOpen) &&
         createPortal(
           quickAddOpen ? (
             <div
@@ -1221,7 +1233,7 @@ export function SortableCell({
       }
 
       {/* ── React Portal: Floating Cell Action Bar (Width, Height, Drag, Stack, Actions) ── */}
-      {mounted && typeof document !== "undefined" && toolbarPortalPos && showTopToolbar &&
+      {mounted && !chartEditorFullscreen && typeof document !== "undefined" && toolbarPortalPos && showTopToolbar &&
         createPortal(
           <div
             ref={toolbarDomRef}
