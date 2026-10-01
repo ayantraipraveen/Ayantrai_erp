@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Stamp,
   Check,
@@ -95,6 +95,7 @@ export interface CanvasSidebarProps {
   onSelectReportSection?: (key: string) => void;
   onAddSectionRows?: (rows: CanvasRow[], sectionName: string) => void;
   onRemoveReportSection?: (sectionId: string) => void;
+  showReportSections?: boolean;
 }
 
 // ── Mini SVG / CSS Graphic Previews for Chart Types ─────────────────────────
@@ -910,11 +911,26 @@ export function CanvasSidebar({
   onSelectReportSection,
   onAddSectionRows,
   onRemoveReportSection,
+  showReportSections = false,
 }: CanvasSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const availableCategories = useMemo(() => {
+    if (showReportSections) {
+      return ["sections", "all", "charts", "metrics", "text", "watermarks"] as const;
+    }
+    return ["all", "charts", "metrics", "text", "watermarks"] as const;
+  }, [showReportSections]);
+
   const [selectedCategory, setSelectedCategory] = useState<"all" | "sections" | "charts" | "metrics" | "text" | "watermarks">(
-    reportSections && reportSections.length > 0 ? "sections" : "charts"
+    showReportSections && reportSections && reportSections.length > 0 ? "sections" : "all"
   );
+
+  useEffect(() => {
+    if (!showReportSections && selectedCategory === "sections") {
+      setSelectedCategory("all");
+    }
+  }, [showReportSections, selectedCategory]);
 
   const reduxLibrarySections = useAppSelector((state) => state.reportModule.librarySections || []);
 
@@ -1033,7 +1049,7 @@ export function CanvasSidebar({
 
           {/* Categories */}
           <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
-            {(["sections", "all", "charts", "metrics", "text", "watermarks"] as const).map((cat) => {
+            {availableCategories.map((cat) => {
               const label =
                 cat === "sections"
                   ? "Sections"
@@ -1072,8 +1088,8 @@ export function CanvasSidebar({
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
 
-          {/* ── REPORT SECTIONS & OUTLINE NAVIGATOR (Complete Report Format) ── */}
-          {(selectedCategory === "sections" || selectedCategory === "all") && (
+          {/* ── REPORT SECTIONS & OUTLINE NAVIGATOR (Complete Report Format Only) ── */}
+          {showReportSections && (selectedCategory === "sections" || selectedCategory === "all") && (
             <div className="space-y-3 pb-2 border-b border-slate-200/80 dark:border-zinc-800/80">
               <div className="flex items-center justify-between px-1">
                 <span className="text-[10px] font-mono uppercase font-bold text-[#9D61FF] flex items-center gap-1.5">

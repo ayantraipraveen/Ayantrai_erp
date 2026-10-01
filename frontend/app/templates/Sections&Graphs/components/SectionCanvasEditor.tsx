@@ -77,20 +77,33 @@ import {
   CanvasTableOfContentsPage,
   CanvasBackCoverPage,
 } from "./CanvasStudioComponent";
-import { AlertCircle, ArrowLeft, Edit2, Eye, Redo2, Save, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Building, Check, Edit2, Eye, Redo2, Save, Undo2 } from "lucide-react";
 
 export { PALETTE_RAMPS } from "./constants/chartTypes";
+
+export interface TemplateHeaderProps {
+  templateId: string;
+  templateName: string;
+  onTemplateNameChange: (name: string) => void;
+  sites: { id: string; name: string }[];
+  selectedSiteId: string;
+  onSelectSiteId: (siteId: string) => void;
+  onSaveDraft: () => void;
+  onPublish: () => void;
+}
 
 interface SectionCanvasEditorProps {
   sectionId: string;
   onBack: () => void;
   showReportFrame?: boolean;
+  templateHeaderProps?: TemplateHeaderProps;
 }
 
 export default function SectionCanvasEditor({
   sectionId,
   onBack,
   showReportFrame,
+  templateHeaderProps,
 }: SectionCanvasEditorProps) {
   const dispatch = useAppDispatch();
   const librarySections = useAppSelector((s) => s.reportModule.librarySections || []);
@@ -1321,114 +1334,246 @@ export default function SectionCanvasEditor({
         </div>
       )}
 
-      {/* ── Global Canva Studio Header ── */}
-      <div className="flex-shrink-0 flex items-center justify-between gap-3 flex-wrap px-4 sm:px-6 py-2 border-b border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-md z-30">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="h-8 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Sections</span>
-          </button>
+      {/* ── Global Canva Studio Header (Unified Single Row in Template Mode, Standard Header in Section Mode) ── */}
+      {templateHeaderProps ? (
+        <div className="flex-shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 py-2 border-b border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-md z-30">
+          {/* Left: Back to Templates, Blueprint ID, Template Name, Stats */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={onBack}
+              className="h-8 px-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs flex-shrink-0"
+              title="Back to Templates"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Templates</span>
+            </button>
 
-          <div className="h-4 w-[1px] bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
+            <div className="h-4 w-px bg-slate-200 dark:bg-zinc-800 hidden sm:block flex-shrink-0" />
 
-          {/* Section Eyebrow & Title */}
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase font-bold text-[#9D61FF] bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
-              {section.eyebrow}
+            <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-[#9D61FF] border border-purple-500/20 flex-shrink-0">
+              {templateHeaderProps.templateId}
             </span>
-            <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-              <span>{section.name}</span>
+
+            {/* Inline Editable Template Title */}
+            <div className="flex items-center gap-1.5 min-w-0 flex-1 max-w-md group">
+              <input
+                type="text"
+                value={templateHeaderProps.templateName}
+                onChange={(e) => {
+                  templateHeaderProps.onTemplateNameChange(e.target.value);
+                  dispatch(updateLibrarySection({ id: section.id, name: e.target.value }));
+                }}
+                placeholder="Enter Template Blueprint Name..."
+                className="bg-transparent font-bold text-sm text-slate-900 dark:text-white border-b border-transparent hover:border-slate-300 dark:hover:border-zinc-700 focus:border-[#9D61FF] focus:outline-none px-1 py-0.5 truncate w-full transition-all"
+                title="Click to rename template"
+              />
+              <Edit2 className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+            </div>
+
+            <span className="text-[10.5px] text-slate-400 dark:text-zinc-500 hidden xl:inline flex-shrink-0">
+              {section.canvasRows?.length || 0} rows &middot;{" "}
+              {section.canvasRows?.reduce(
+                (acc, r) => acc + r.cells.reduce((cAcc, c) => cAcc + 1 + (c.stackedCells?.length || 0), 0),
+                0
+              ) || 0}{" "}
+              blocks
+            </span>
+          </div>
+
+          {/* Right: Undo/Redo, Preview, Site Selector, Save Draft, Publish */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Undo / Redo Toolbar Buttons */}
+            <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-zinc-800 pr-2 mr-0.5">
               <button
                 type="button"
-                onClick={() => {
-                  setEditName(section.name);
-                  setEditEyebrow(section.eyebrow);
-                  setEditDesc(section.description);
-                  setEditHeaderOpen(true);
-                }}
-                className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                title="Edit Section Title"
+                onClick={handleUndo}
+                disabled={!canUndo}
+                className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                  canUndo
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                    : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+                }`}
+                title="Undo (Ctrl+Z)"
               >
-                <Edit2 className="w-3.5 h-3.5" />
+                <Undo2 className="w-3.5 h-3.5" />
               </button>
-            </h1>
-          </div>
-        </div>
+              <button
+                type="button"
+                onClick={handleRedo}
+                disabled={!canRedo}
+                className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                  canRedo
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                    : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+                }`}
+                title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
+              >
+                <Redo2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
-        {/* Global Actions */}
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-400 dark:text-zinc-500 hidden md:block">
-            {section.canvasRows?.length || 0} rows &middot;{" "}
-            {section.canvasRows?.reduce(
-              (acc, r) => acc + r.cells.reduce((cAcc, c) => cAcc + 1 + (c.stackedCells?.length || 0), 0),
-              0
-            ) || 0}{" "}
-            blocks
-          </span>
-
-          {/* Undo / Redo Toolbar Buttons */}
-          <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-zinc-800 pr-2 mr-1">
+            {/* Clean Preview Toggle */}
             <button
               type="button"
-              onClick={handleUndo}
-              disabled={!canUndo}
-              className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
-                canUndo
-                  ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
-                  : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+              onClick={() => setIsPreview(!isPreview)}
+              className={`h-8 px-2.5 sm:px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                isPreview
+                  ? "bg-[#9D61FF] text-white border-transparent shadow-sm"
+                  : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
               }`}
-              title="Undo (Ctrl+Z)"
+              title="Toggle Clean Preview Mode"
             >
-              <Undo2 className="w-3.5 h-3.5" />
+              <Eye className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isPreview ? "Exit Preview" : "Preview"}</span>
             </button>
+
+            {/* Target Industrial Site Selector */}
+            <div className="hidden lg:flex items-center gap-1.5 bg-slate-100/80 dark:bg-zinc-900/80 rounded-xl px-2.5 py-1 border border-slate-200 dark:border-zinc-800 text-xs">
+              <Building className="w-3.5 h-3.5 text-slate-400" />
+              <select
+                value={templateHeaderProps.selectedSiteId}
+                onChange={(e) => templateHeaderProps.onSelectSiteId(e.target.value)}
+                className="bg-transparent text-slate-800 dark:text-zinc-200 outline-none text-xs font-medium cursor-pointer"
+              >
+                {templateHeaderProps.sites.map((s) => (
+                  <option key={s.id} value={s.id} className="dark:bg-zinc-900 text-slate-900 dark:text-white">
+                    {s.name} ({s.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Save Draft */}
             <button
               type="button"
-              onClick={handleRedo}
-              disabled={!canRedo}
-              className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
-                canRedo
-                  ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
-                  : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
-              }`}
-              title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
+              onClick={templateHeaderProps.onSaveDraft}
+              className="h-8 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
             >
-              <Redo2 className="w-3.5 h-3.5" />
+              <Save className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden md:inline">Save Draft</span>
+            </button>
+
+            {/* Publish Blueprint */}
+            <button
+              type="button"
+              onClick={templateHeaderProps.onPublish}
+              className="h-8 px-3.5 rounded-xl bg-gradient-to-r from-[#9D61FF] to-[#8035ea] hover:from-[#9254f8] hover:to-[#7227dc] text-white text-xs font-bold flex items-center gap-1.5 shadow-[0_2px_12px_rgba(157,97,255,0.35)] hover:shadow-[0_4px_20px_rgba(157,97,255,0.5)] transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Publish Blueprint</span>
             </button>
           </div>
-
-          {/* Clean Preview Toggle */}
-          <button
-            type="button"
-            onClick={() => setIsPreview(!isPreview)}
-            className={`h-8 px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-              isPreview
-                ? "bg-[#9D61FF] text-white border-transparent shadow-sm"
-                : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
-            }`}
-            title="Toggle Clean Preview Mode"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isPreview ? "Exit Preview" : "Preview"}</span>
-          </button>
-
-          {/* Save to Library */}
-          <button
-            type="button"
-            onClick={() => {
-              dispatch(showGlobalToast({ message: "Section saved to Library!", type: "success" }));
-              onBack();
-            }}
-            className="h-8 px-4 rounded-xl glow-btn-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm text-white"
-          >
-            <Save className="w-3.5 h-3.5" />
-            <span>Save to Library</span>
-          </button>
         </div>
-      </div>
+      ) : (
+        <div className="flex-shrink-0 flex items-center justify-between gap-3 flex-wrap px-4 sm:px-6 py-2 border-b border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-md z-30">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              className="h-8 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Sections</span>
+            </button>
+
+            <div className="h-4 w-[1px] bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
+
+            {/* Section Eyebrow & Title */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono uppercase font-bold text-[#9D61FF] bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+                {section.eyebrow}
+              </span>
+              <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <span>{section.name}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditName(section.name);
+                    setEditEyebrow(section.eyebrow);
+                    setEditDesc(section.description);
+                    setEditHeaderOpen(true);
+                  }}
+                  className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  title="Edit Section Title"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              </h1>
+            </div>
+          </div>
+
+          {/* Global Actions */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-slate-400 dark:text-zinc-500 hidden md:block">
+              {section.canvasRows?.length || 0} rows &middot;{" "}
+              {section.canvasRows?.reduce(
+                (acc, r) => acc + r.cells.reduce((cAcc, c) => cAcc + 1 + (c.stackedCells?.length || 0), 0),
+                0
+              ) || 0}{" "}
+              blocks
+            </span>
+
+            {/* Undo / Redo Toolbar Buttons */}
+            <div className="flex items-center gap-0.5 border-r border-slate-200 dark:border-zinc-800 pr-2 mr-1">
+              <button
+                type="button"
+                onClick={handleUndo}
+                disabled={!canUndo}
+                className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                  canUndo
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                    : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+                }`}
+                title="Undo (Ctrl+Z)"
+              >
+                <Undo2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleRedo}
+                disabled={!canRedo}
+                className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
+                  canRedo
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                    : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
+                }`}
+                title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
+              >
+                <Redo2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Clean Preview Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsPreview(!isPreview)}
+              className={`h-8 px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                isPreview
+                  ? "bg-[#9D61FF] text-white border-transparent shadow-sm"
+                  : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
+              }`}
+              title="Toggle Clean Preview Mode"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isPreview ? "Exit Preview" : "Preview"}</span>
+            </button>
+
+            {/* Save to Library */}
+            <button
+              type="button"
+              onClick={() => {
+                dispatch(showGlobalToast({ message: "Section saved to Library!", type: "success" }));
+                onBack();
+              }}
+              className="h-8 px-4 rounded-xl glow-btn-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm text-white"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save to Library</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Canva Adaptive Contextual Properties Ribbon ── */}
       <CanvasContextRibbon
@@ -1497,11 +1642,11 @@ export default function SectionCanvasEditor({
             onSelectWatermark={handleSelectWatermark}
             onAddWatermarkElement={handleAddWatermarkElement}
             watermarkConfig={watermarkConfig}
-            onUpdateWatermarkConfig={handleUpdateWatermarkConfig}
-            reportSections={computedReportSections}
+            reportSections={isReportFrame ? computedReportSections : undefined}
             activeReportSectionKey={activeReportSectionKey}
             onSelectReportSection={handleSelectReportSection}
             onAddSectionRows={handleAddSectionRows}
+            showReportSections={isReportFrame}
           />
         )}
 
