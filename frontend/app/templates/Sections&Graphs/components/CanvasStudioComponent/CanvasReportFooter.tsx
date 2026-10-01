@@ -38,48 +38,55 @@ export function CanvasReportFooter({
 
   return (
     <footer
-      className="relative z-20 flex-shrink-0 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-7 py-2.5 text-[#1836a0]"
+      className={`relative z-20 flex-shrink-0 mt-auto flex items-center justify-between border-t ${
+        paperTone === "dark"
+          ? "border-zinc-800/80 bg-[#0c1017] text-white"
+          : "border-slate-200/80 bg-white text-slate-900"
+      } px-7 py-2.5`}
       style={{ backgroundColor: getPaperToneColor(paperTone) }}
     >
-      <div className={`min-w-0 ${leftZ}`}>
+      {/* Left: Company & Websites */}
+      <div className={`min-w-0 flex flex-col justify-center ${leftZ}`}>
         <CanvasInlineEditableText
-          value={footerValues.company}
+          value={footerValues.company || "AYANTRAI PRIVATE LIMITED"}
           html={footerValues.companyHtml}
           isEditing={editingFooterValue === "company"}
-          defaultFontSize={14}
+          defaultFontSize={9.5}
           toolbarPosition="top"
-          className="text-sm font-bold text-[#1836a0]"
-          title="Double-click to format company name (Word style)"
+          className="text-[9.5px] font-bold text-slate-800 dark:text-zinc-200 tracking-wider uppercase leading-tight cursor-text"
+          title="Double-click to edit company name"
           onDoubleClick={() => open("company")}
           onSave={(plain, html) => onSave("company", plain, html)}
           onCancel={onCancel}
         />
         <CanvasInlineEditableText
-          value={footerValues.websites}
+          value={footerValues.websites || "www.ayantrai.com  |  www.sitesafe.ai"}
           html={footerValues.websitesHtml}
           isEditing={editingFooterValue === "websites"}
-          defaultFontSize={12}
+          defaultFontSize={8}
           toolbarPosition="top"
-          className="mt-1 text-xs font-semibold text-[#1836a0]"
-          title="Double-click to format website links (Word style)"
+          className="text-[8px] font-medium text-slate-500 dark:text-zinc-400 leading-tight mt-0.5 cursor-text"
+          title="Double-click to edit website links"
           onDoubleClick={() => open("websites")}
           onSave={(plain, html) => onSave("websites", plain, html)}
           onCancel={onCancel}
         />
       </div>
 
-      <div className="h-[2px] w-full bg-[#1836a0]/60" />
+      {/* Center: Accent divider bar */}
+      <div className="h-[1.5px] w-28 bg-slate-300 dark:bg-zinc-700 mx-4 flex-shrink-0" />
 
-      <div className={`min-w-0 ${rightZ}`}>
+      {/* Right: Safety Quote */}
+      <div className={`min-w-0 text-right flex-shrink-0 ${rightZ}`}>
         <CanvasInlineEditableText
-          value={footerValues.quote}
+          value={footerValues.quote || "“Every Worker Returns Home Safe”"}
           html={footerValues.quoteHtml}
           isEditing={editingFooterValue === "quote"}
-          defaultFontSize={14}
+          defaultFontSize={9}
           toolbarPosition="top"
           toolbarAlign="right"
-          className="text-right text-sm font-semibold text-[#1836a0]"
-          title="Double-click to format safety quote (Word style)"
+          className="text-[9px] font-semibold italic text-slate-700 dark:text-zinc-300 text-right leading-tight cursor-text"
+          title="Double-click to edit safety quote"
           onDoubleClick={() => open("quote")}
           onSave={(plain, html) => onSave("quote", plain, html)}
           onCancel={onCancel}

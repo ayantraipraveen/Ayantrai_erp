@@ -244,13 +244,13 @@ export function CanvasStudio({
   const [editingFooterValue, setEditingFooterValue] = useState<"company" | "websites" | "quote" | null>(null);
 
   const headerValues = headerValuesBySection[section.id] || {
-    taglinePrimary: "Visibility for Every Worker;",
+    taglinePrimary: "Visibility for Every Worker,",
     taglinePrimaryHtml: "",
     taglineSecondary: "Intelligence for Every Site.",
     taglineSecondaryHtml: "",
     title: "Monthly Report",
     titleHtml: "",
-    period: "01 Sept 2025 - 30 Sept 2025",
+    period: "01 Sept 2025 – 30 Sept 2025",
     periodHtml: "",
   };
   const headerTitleFormat = headerTitleFormatsBySection[section.id] || DEFAULT_HEADER_TITLE_FORMAT;

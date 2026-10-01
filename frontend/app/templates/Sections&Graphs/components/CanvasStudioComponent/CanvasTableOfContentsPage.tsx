@@ -110,7 +110,7 @@ export function CanvasTableOfContentsPage({
               alt="Sitesafe"
               width={96}
               height={32}
-              className="object-contain object-left max-h-10 w-auto"
+              className="object-contain object-left max-h-12 w-auto"
               priority
             />
           </div>
