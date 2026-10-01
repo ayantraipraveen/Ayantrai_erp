@@ -54,11 +54,13 @@ export const templatesReducers = {
         blocks: TemplateBlock[];
         status?: "draft" | "pending" | "active" | "rejected";
         coverPageData?: CoverPageData;
+        tableOfContentsData?: import("../../types/reportModuleTypes").TableOfContentsData;
         backCoverData?: BackCoverData;
         category?: string;
         frequency?: string;
         complianceStandards?: string[];
         hasAuditHash?: boolean;
+        canvasSectionId?: string;
       }>
     ) => {
       const idx = state.templates.findIndex((t: ReportTemplate) => t.id === action.payload.id);
@@ -76,11 +78,13 @@ export const templatesReducers = {
           status: action.payload.status || (existing.status === "rejected" ? "pending" : existing.status),
           version: newVer,
           coverPageData: action.payload.coverPageData || existing.coverPageData,
+          tableOfContentsData: action.payload.tableOfContentsData || existing.tableOfContentsData,
           backCoverData: action.payload.backCoverData || existing.backCoverData,
           category: action.payload.category || existing.category,
           frequency: action.payload.frequency || existing.frequency,
           complianceStandards: action.payload.complianceStandards || existing.complianceStandards,
           hasAuditHash: action.payload.hasAuditHash !== undefined ? action.payload.hasAuditHash : existing.hasAuditHash,
+          canvasSectionId: action.payload.canvasSectionId || existing.canvasSectionId,
         };
         state.activityLogs.unshift({
           id: `act-${Date.now()}`,

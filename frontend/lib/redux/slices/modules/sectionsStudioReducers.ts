@@ -85,6 +85,7 @@ export const sectionsStudioReducers = {
         keyInsights?: LibraryKeyInsightItem[];
         canvasRows?: CanvasRow[];
         coverPageData?: CoverPageData;
+        tableOfContentsData?: import("../../types/reportModuleTypes").TableOfContentsData;
         backCoverData?: BackCoverData;
         watermarkId?: string;
       }>
@@ -103,6 +104,7 @@ export const sectionsStudioReducers = {
         keyInsights: action.payload.keyInsights || [],
         canvasRows: action.payload.canvasRows || [],
         coverPageData: action.payload.coverPageData,
+        tableOfContentsData: action.payload.tableOfContentsData,
         backCoverData: action.payload.backCoverData,
         watermarkId: action.payload.watermarkId,
       };
