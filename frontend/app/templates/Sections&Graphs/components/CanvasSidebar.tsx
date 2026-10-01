@@ -859,6 +859,29 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
   },
 ];
 
+export const TWO_ZONE_CHART_PRESET: LibraryChartCard = {
+  id: "preset-two-zone-chart",
+  title: "Zone A vs Zone B Telemetry",
+  chartType: "multi-line",
+  dataSourceField: "zone_telemetry_feed",
+  description: "Comparative two-zone continuous sensor telemetry (Zone A vs Zone B).",
+  color: "#9D61FF",
+  colors: ["#9D61FF", "#10B981"],
+  series: [
+    { id: "s1", name: "Zone A (Actual)", color: "#9D61FF", data: [85, 94, 96, 92, 88] },
+    { id: "s2", name: "Zone B (Target)", color: "#10B981", data: [78, 88, 91, 84, 80] },
+  ],
+
+  dataPoints: [
+    { id: "p1", label: "08:00", value: 85, secondaryValue: 78 },
+    { id: "p2", label: "12:00", value: 94, secondaryValue: 88 },
+    { id: "p3", label: "16:00", value: 96, secondaryValue: 91 },
+    { id: "p4", label: "20:00", value: 92, secondaryValue: 84 },
+    { id: "p5", label: "24:00", value: 88, secondaryValue: 80 },
+  ],
+  options: { showValues: true, showGridLines: true, showLegend: true },
+};
+
 export function CanvasSidebar({
   onAddBlock,
   sectionCharts = [],
@@ -882,7 +905,8 @@ export function CanvasSidebar({
   // Filter 25 chart types
   const filteredChartTypes = CHART_TYPE_OPTIONS.filter((opt) =>
     opt.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    opt.id.toLowerCase().includes(searchQuery.toLowerCase())
+    opt.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (searchQuery.toLowerCase().includes("zone") && (opt.id === "multi-line" || opt.id === "grouped-bar" || opt.id === "geo-map"))
   );
 
   // Filter added charts in this section
@@ -1136,6 +1160,73 @@ export function CanvasSidebar({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* ── FEATURED TWO-ZONE TELEMETRY CHART PRESET ── */}
+          {(selectedCategory === "charts" || selectedCategory === "all") &&
+            (!searchQuery || "two-zone chart zone a vs zone b telemetry comparison".includes(searchQuery.toLowerCase())) && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-[10px] font-mono uppercase font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5" />
+                    Two-Zone Telemetry Chart
+                  </span>
+                  <span className="text-[9px] font-mono text-purple-600 dark:text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded font-bold">
+                    Preset
+                  </span>
+                </div>
+
+                <div
+                  draggable={true}
+                  onDragStart={(e) => handleBlockDragStart(e, { blockType: "chart", customChart: TWO_ZONE_CHART_PRESET })}
+                  className="group relative rounded-2xl border border-emerald-400/40 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/80 p-2.5 transition-all duration-200 space-y-2 cursor-grab active:cursor-grabbing hover:shadow-lg"
+                  title="Drag anywhere on report to place, or click Add to Canvas"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors truncate">
+                        Two-Zone Chart (Zone A vs B)
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-bold flex-shrink-0">
+                      Multi-Line
+                    </span>
+                  </div>
+
+                  <div
+                    onClick={() => setPreviewingChart(TWO_ZONE_CHART_PRESET)}
+                    className="rounded-xl overflow-hidden cursor-pointer hover:opacity-90 hover:scale-[1.01] transition-transform"
+                    title="Click to expand full live preview"
+                  >
+                    <MiniChartPreview type="multi-line" />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-0.5 border-t border-emerald-400/20 text-[10px]">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviewingChart(TWO_ZONE_CHART_PRESET);
+                      }}
+                      className="flex items-center gap-1 text-slate-500 hover:text-emerald-600 font-medium cursor-pointer"
+                    >
+                      <Eye className="w-3 h-3 text-emerald-500" />
+                      <span>Preview</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onAddBlock({ blockType: "chart", customChart: TWO_ZONE_CHART_PRESET })}
+                      className="flex items-center gap-1 text-white bg-emerald-600 hover:bg-emerald-700 font-bold cursor-pointer px-2.5 py-1 rounded-lg shadow-xs hover:scale-105 active:scale-95 transition-all"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Add to Canvas</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
           )}
 
           {/* ── ALL 25 CHART VISUALIZATION TYPES ── */}

@@ -233,7 +233,7 @@ export default function ChartRenderer({
       ? "text-xs"
       : "text-[10px] sm:text-[11px]";
 
-  const legendGapClass = isUltraCompact ? "gap-1.5 py-0.5" : isCompact ? "gap-2.5 pt-0.5" : "gap-4 sm:gap-5 pt-1";
+  const legendGapClass = isUltraCompact ? "gap-x-2 gap-y-0.5 py-0.5" : isCompact ? "gap-x-2.5 gap-y-1 pt-0.5" : "gap-x-3.5 gap-y-1 sm:gap-x-4 sm:gap-y-1.5 pt-1";
   const legendDotClass = isUltraCompact ? "w-1.5 h-1.5" : isCompact ? "w-2 h-2" : "w-2.5 h-2.5";
   const chartWrapperClass = "w-full h-full min-h-0 flex-1 flex flex-col justify-center items-center overflow-hidden";
 
@@ -759,13 +759,13 @@ export default function ChartRenderer({
         <div className={chartWrapperClass}>
           {/* Nomenclature / Legend */}
           {d.showLegend && (
-            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
+            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap max-w-full px-2`}>
               {activeSeries.map((s, sIdx) => {
                 const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
                 return (
-                  <div key={s.id || sIdx} className="flex items-center gap-1.5">
-                    <span className={`${legendDotClass} rounded-xs shadow-2xs flex-shrink-0`} style={{ backgroundColor: sColor }} />
-                    <span className="text-slate-600 dark:text-zinc-300 font-semibold">{s.name || `Series ${sIdx + 1}`}</span>
+                  <div key={s.id || sIdx} className="flex items-center gap-1.5 min-w-0 max-w-[140px] sm:max-w-none flex-shrink-0">
+                    <span className={`${legendDotClass} rounded-full shadow-2xs flex-shrink-0`} style={{ backgroundColor: sColor }} />
+                    <span className="text-slate-600 dark:text-zinc-300 font-semibold truncate">{s.name || `Series ${sIdx + 1}`}</span>
                   </div>
                 );
               })}
@@ -874,11 +874,11 @@ export default function ChartRenderer({
       return (
         <div className={chartWrapperClass}>
           {d.showLegend && (
-            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
+            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap max-w-full px-2`}>
               {seriesInfo.map((sData, sIdx) => (
-                <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
-                  <span className={`${legendDotClass} rounded-xs shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
-                  <span className="text-slate-600 dark:text-zinc-300 font-semibold">{sData.name}</span>
+                <div key={sData.s.id || sIdx} className="flex items-center gap-1.5 min-w-0 max-w-[140px] sm:max-w-none flex-shrink-0">
+                  <span className={`${legendDotClass} rounded-full shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
+                  <span className="text-slate-600 dark:text-zinc-300 font-semibold truncate">{sData.name}</span>
                 </div>
               ))}
             </div>
@@ -997,11 +997,11 @@ export default function ChartRenderer({
       return (
         <div className={chartWrapperClass}>
           {d.showLegend && (
-            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
+            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap max-w-full px-2`}>
               {allSeriesData.map((sData, sIdx) => (
-                <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
-                  <span className={`${legendDotClass} rounded-xs shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
-                  <span className="text-slate-600 dark:text-zinc-300 font-semibold">{sData.name}</span>
+                <div key={sData.s.id || sIdx} className="flex items-center gap-1.5 min-w-0 max-w-[140px] sm:max-w-none flex-shrink-0">
+                  <span className={`${legendDotClass} rounded-full shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
+                  <span className="text-slate-600 dark:text-zinc-300 font-semibold truncate">{sData.name}</span>
                 </div>
               ))}
             </div>
