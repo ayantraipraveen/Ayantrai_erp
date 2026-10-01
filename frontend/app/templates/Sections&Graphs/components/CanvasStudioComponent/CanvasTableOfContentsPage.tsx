@@ -252,32 +252,16 @@ export function CanvasTableOfContentsPage({
               )}
             </div>
 
-            {/* Handwritten script note (top-right of headline) matching reference */}
-            <div className="absolute right-0 top-0.5 text-right pointer-events-none select-none -rotate-[10deg] origin-top-right">
-              <div
-                className="text-[15px] font-bold text-[#6F95EB] leading-[1.05] tracking-tight"
-                style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
-              >
-                <div>Every</div>
-                <div>Worker</div>
-                <div>Returns</div>
-                <div>Home Safe</div>
-              </div>
-              {/* Hand-drawn underline stroke */}
-              <svg
-                width="74"
-                height="6"
-                viewBox="0 0 74 6"
-                fill="none"
-                className="mt-0.5 ml-auto"
-              >
-                <path
-                  d="M2 3.5 C24 1.8, 52 4.2, 72 2"
-                  stroke="#6F95EB"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                />
-              </svg>
+            {/* Handwritten script note graphic (top-right of headline) matching reference */}
+            <div className="absolute right-0 -top-1 w-[88px] h-[88px] pointer-events-none select-none">
+              <Image
+                src="/images/toc-quote-script.png"
+                alt="Every Worker Returns Home Safe"
+                width={88}
+                height={88}
+                priority
+                className="object-contain w-full h-full"
+              />
             </div>
           </div>
 
