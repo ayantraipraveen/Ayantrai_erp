@@ -7,15 +7,12 @@ import {
   Sparkles,
   Layers,
   Building,
-  ShieldCheck,
   FileText,
   BarChart2,
-  CheckCircle2,
   ArrowRight,
   ArrowLeft,
   Stamp,
   Sliders,
-  Fingerprint,
   Loader2,
   Calendar,
 } from "lucide-react";
@@ -45,11 +42,6 @@ const CATEGORY_OPTIONS: { id: TemplateCategory; label: string; subtext: string }
   { id: "shift", label: "Daily Shift Handover", subtext: "Muster & permit log" },
 ];
 
-const COMPLIANCE_STANDARDS = [
-  { id: "iso-45001", label: "ISO 45001:2018 (OHSMS)" },
-  { id: "osha-1926", label: "OSHA Construction (1926)" },
-  { id: "statutory-audit", label: "Statutory Geotechnical Audit" },
-];
 
 /**
  * Dedicated Route for Template Blueprint Creation & Studio (/templates/create).
@@ -173,11 +165,6 @@ function CreateTemplatePageContent() {
     );
   };
 
-  const toggleStandard = (id: string) => {
-    setSelectedStandards((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
 
   // Convert chosen library sections to Blueprint TemplateBlock[]
   const buildTemplateBlocks = (): TemplateBlock[] => {
@@ -549,74 +536,14 @@ function CreateTemplatePageContent() {
           </div>
         </div>
 
-        {/* Card 2: Regulatory Standards & Security Governance */}
-        <div className="p-5 sm:p-6 rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] space-y-4 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-zinc-800/80 pb-3">
-            <div className="flex items-center gap-2.5 text-slate-900 dark:text-white font-bold text-sm">
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-500">
-                <ShieldCheck className="w-4 h-4" />
-              </div>
-              <span>2. Regulatory Standards &amp; Security Governance</span>
-            </div>
-            <span className="text-[11px] font-mono text-emerald-500 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-              Tamper-Evident Active
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2.5 flex-wrap">
-            {COMPLIANCE_STANDARDS.map((std) => {
-              const isSelected = selectedStandards.includes(std.id);
-              return (
-                <button
-                  key={std.id}
-                  type="button"
-                  onClick={() => toggleStandard(std.id)}
-                  className={`px-3.5 py-2 rounded-xl border text-xs flex items-center gap-2 transition-all cursor-pointer ${
-                    isSelected
-                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold"
-                      : "border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  <CheckCircle2 className={`w-3.5 h-3.5 ${isSelected ? "text-emerald-500" : "text-slate-300"}`} />
-                  <span>{std.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Cryptographic Hash Toggle */}
-          <div className="flex items-center justify-between p-4 rounded-2xl border border-purple-500/20 bg-purple-500/5">
-            <div className="flex items-center gap-3">
-              <Fingerprint className="w-5 h-5 text-[#9D61FF]" />
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white">
-                  SHA-256 Cryptographic Audit Hash Protection
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
-                  Generates an immutable verification hash on the Cover Page &amp; Back Cover QR code for statutory compliance audits.
-                </div>
-              </div>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer ml-3 flex-shrink-0">
-              <input
-                type="checkbox"
-                checked={attachAuditHash}
-                onChange={(e) => setAttachAuditHash(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-10 h-5.5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-[#9D61FF]"></div>
-            </label>
-          </div>
-        </div>
-
-        {/* Card 3: Cover Page & Presentation Architecture */}
+        {/* Card 2: Cover Page & Presentation Architecture */}
         <div className="p-5 sm:p-6 rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] space-y-5 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-zinc-800/80 pb-3">
             <div className="flex items-center gap-2.5 text-slate-900 dark:text-white font-bold text-sm">
               <div className="p-2 rounded-xl bg-sky-500/10 text-sky-500">
                 <Sliders className="w-4 h-4" />
               </div>
-              <span>3. Cover Page &amp; Document Presentation</span>
+              <span>2. Cover Page &amp; Document Presentation</span>
             </div>
             <span className="text-xs font-mono text-slate-400">Fixed Page 1 in Studio</span>
           </div>
@@ -696,14 +623,14 @@ function CreateTemplatePageContent() {
           </div>
         </div>
 
-        {/* Card 4: Blueprint Sections Library Picker */}
+        {/* Card 3: Blueprint Sections Library Picker */}
         <div className="p-5 sm:p-6 rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] space-y-4 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-zinc-800/80 pb-3">
             <div className="flex items-center gap-2.5 text-slate-900 dark:text-white font-bold text-sm">
               <div className="p-2 rounded-xl bg-purple-500/10 text-[#9D61FF]">
                 <Layers className="w-4 h-4" />
               </div>
-              <span>4. Blueprint Sections &amp; Telemetry Modules</span>
+              <span>3. Blueprint Sections &amp; Telemetry Modules</span>
             </div>
             <div className="text-xs font-mono px-3 py-1 rounded-full bg-purple-500/15 text-[#9D61FF] font-bold">
               {selectedSectionIds.length} of {librarySections.length} Selected
