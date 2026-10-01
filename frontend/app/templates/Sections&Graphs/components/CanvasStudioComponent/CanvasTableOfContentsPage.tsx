@@ -264,7 +264,7 @@ export function CanvasTableOfContentsPage({
           </div>
 
           {/* 7 Content Items */}
-          <div className="flex flex-col flex-1 justify-between mt-2">
+          <div className="flex flex-col flex-1 mt-8">
             {items.map((item, idx) => {
               const numKey = item.number || String(idx + 1).padStart(2, "0");
               const palette = COLOR_MAP[numKey] || COLOR_MAP["01"];
@@ -273,7 +273,7 @@ export function CanvasTableOfContentsPage({
               return (
                 <div
                   key={item.id || idx}
-                  className="flex items-center justify-between py-2 border-b border-slate-100 last:border-b-0 group"
+                  className="flex items-center justify-between py-1 border-b border-slate-100 last:border-b-0 group"
                 >
                   <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
                     {/* Number Badge */}
