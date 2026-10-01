@@ -210,15 +210,6 @@ export interface ChartSeriesItem {
 }
 
 export const MULTI_SERIES_CHART_CONFIG: Partial<Record<GraphType, ChartSeriesItem[]>> = {
-  "bar": [
-    { id: "s1", label: "Series 1", defaultColor: "#9D61FF" },
-  ],
-  "line": [
-    { id: "s1", label: "Line 1", defaultColor: "#9D61FF" },
-  ],
-  "area": [
-    { id: "s1", label: "Area 1", defaultColor: "#9D61FF" },
-  ],
   "multi-line": [
     { id: "zoneA", label: "Line 1", defaultColor: "#9D61FF" },
     { id: "zoneB", label: "Line 2", defaultColor: "#10B981" },
@@ -231,21 +222,11 @@ export const MULTI_SERIES_CHART_CONFIG: Partial<Record<GraphType, ChartSeriesIte
     { id: "volume", label: "Volume (Bars)", defaultColor: "#3B82F6" },
     { id: "trend", label: "Trend (Line)", defaultColor: "#F43F5E" },
   ],
-  "stacked-horizontal": [
-    { id: "safe", label: "Safe Hours", defaultColor: "#10B981" },
-    { id: "violations", label: "Violations", defaultColor: "#F43F5E" },
-  ],
   "stacked-bar": [
     { id: "civil", label: "Civil", defaultColor: "#9D61FF" },
     { id: "ppe", label: "PPE", defaultColor: "#10B981" },
     { id: "safety", label: "Safety", defaultColor: "#F59E0B" },
     { id: "risk", label: "Risk", defaultColor: "#F43F5E" },
-  ],
-  "horizontal-bar": [
-    { id: "civil", label: "Civil", defaultColor: "#F97316" },
-    { id: "mech", label: "Mechanical", defaultColor: "#10B981" },
-    { id: "elec", label: "Electrical", defaultColor: "#F59E0B" },
-    { id: "fab", label: "Fabrication", defaultColor: "#F43F5E" },
   ],
   "donut": [
     { id: "helmets", label: "Smart Helmets", defaultColor: "#3B82F6" },

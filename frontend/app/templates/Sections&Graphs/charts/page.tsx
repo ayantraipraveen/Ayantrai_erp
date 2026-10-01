@@ -39,16 +39,6 @@ export default function SectionsGraphsChartsPage() {
   };
 
   const handleSaveChart = () => {
-    if (!chartTitle.trim()) {
-      dispatch(
-        showGlobalToast({
-          message: "Please enter a chart title before saving.",
-          type: "warning",
-        })
-      );
-      return;
-    }
-
     const finalColors = chartColors && chartColors.length > 0 ? chartColors : [chartColor];
     const targetSection = librarySections[0];
 

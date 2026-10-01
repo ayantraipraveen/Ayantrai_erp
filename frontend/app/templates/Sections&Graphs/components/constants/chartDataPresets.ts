@@ -44,16 +44,13 @@ export function getChartEditorMode(chartType: GraphType): ChartEditorMode {
       return "gauge";
     case "kpi-card":
       return "kpi-card";
-    case "bar":
-    case "line":
-    case "area":
-    case "horizontal-bar":
     case "multi-line":
     case "grouped-bar":
     case "combo":
     case "stacked-bar":
-    case "stacked-horizontal":
       return "multi-series";
+    case "stacked-horizontal":
+      return "stacked-horizontal";
     case "funnel":
       return "funnel";
     case "radar":
@@ -73,6 +70,10 @@ export function getChartEditorMode(chartType: GraphType): ChartEditorMode {
       return "waterfall";
     case "sparkline":
       return "sparkline";
+    case "bar":
+    case "horizontal-bar":
+    case "line":
+    case "area":
     default:
       return "standard";
   }

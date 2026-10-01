@@ -366,7 +366,7 @@ export default function SectionCanvasEditor({
   };
 
   const handleSaveChart = () => {
-    if (!chartTitle.trim() || !editingChartCellMeta || !editingChart) return;
+    if (!editingChartCellMeta || !editingChart) return;
     const finalColors = chartColors && chartColors.length > 0 ? chartColors : [chartColor];
     dispatch(
       updateChartInCell({
@@ -1065,7 +1065,7 @@ export default function SectionCanvasEditor({
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn bg-white dark:bg-[#07090d] relative">
       {/* Fullscreen Telemetry Studio Overlay (keeps CanvasStudio mounted so page and scroll position are preserved) */}
       {chartModalOpen && chartEditorFullscreen && editingChart && editingChartCellMeta && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-[#07090d] animate-fadeIn">
+        <div className="fixed inset-0 z-[100000] flex flex-col bg-white dark:bg-[#07090d] animate-fadeIn">
           <ChartEditorPanel
             editingChart={editingChart}
             chartTitle={chartTitle}
@@ -1209,8 +1209,8 @@ export default function SectionCanvasEditor({
 
       {/* ── Canva Adaptive Contextual Properties Ribbon ── */}
       <CanvasContextRibbon
-        selectedCell={activeCell}
-        selectedRowId={selectedRowId}
+        selectedCell={chartModalOpen ? null : activeCell}
+        selectedRowId={chartModalOpen ? null : selectedRowId}
         sectionName={section.name}
         sectionEyebrow={section.eyebrow}
         onUpdateColSpan={handleUpdateColSpan}
@@ -1281,8 +1281,8 @@ export default function SectionCanvasEditor({
         {/* Canva Central Desk with Floating Artboard */}
         <CanvasStudio
           section={section}
-          selectedCellId={selectedCellId}
-          selectedRowId={selectedRowId}
+          selectedCellId={chartModalOpen ? null : selectedCellId}
+          selectedRowId={chartModalOpen ? null : selectedRowId}
           onSelectCell={(cellId, rowId) => {
             setSelectedCellId(cellId);
             setSelectedRowId(rowId);

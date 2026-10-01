@@ -315,7 +315,14 @@ export default function ChartEditorPanel({
     const newColor = DEFAULT_SERIES_PALETTE[newIdx % DEFAULT_SERIES_PALETTE.length];
     const newSeries: ChartSeriesConfig = {
       id: `series_${Date.now()}`,
-      name: chartType === "multi-line" ? `Line ${newIdx + 1}` : `Series ${newIdx + 1}`,
+      name:
+        chartType === "multi-line"
+          ? `Line ${newIdx + 1}`
+          : chartType === "stacked-bar"
+          ? `Stack ${newIdx + 1}`
+          : chartType === "combo"
+          ? `Trend ${newIdx} (Line)`
+          : `Series ${newIdx + 1}`,
       color: newColor,
       data: currentDataPoints.map((pt) => getPointSeriesValue(pt, newIdx)),
     };
@@ -566,13 +573,13 @@ export default function ChartEditorPanel({
         <div className="flex-shrink-0 flex gap-4 px-6 py-3.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/40 dark:bg-zinc-900/30">
           <div className="flex-1">
             <label className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wide block mb-1">
-              Chart Title *
+              Chart Title (Optional)
             </label>
             <input
               type="text"
               value={chartTitle}
               onChange={(e) => setChartTitle(e.target.value)}
-              placeholder="e.g. PPE Compliance by Work Zone"
+              placeholder="e.g. PPE Compliance by Work Zone (Optional)"
               className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-[#9D61FF]"
             />
           </div>
@@ -1096,7 +1103,15 @@ export default function ChartEditorPanel({
                     {/* Header Controls */}
                     <div className="flex items-center justify-between pb-1">
                       <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Categories & Series Columns
+                        {chartType === "multi-line"
+                          ? "Time Points & Data Lines"
+                          : chartType === "grouped-bar"
+                          ? "Categories & Grouped Series"
+                          : chartType === "stacked-bar"
+                          ? "Categories & Stack Layers"
+                          : chartType === "combo"
+                          ? "Categories & Combo Metrics"
+                          : "Categories & Series Columns"}
                       </span>
                       <button
                         type="button"
@@ -1105,7 +1120,17 @@ export default function ChartEditorPanel({
                         title="Add another dynamic series"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>{chartType === "multi-line" ? "Add Line" : "Add Series"}</span>
+                        <span>
+                          {chartType === "multi-line"
+                            ? "Add Line"
+                            : chartType === "grouped-bar"
+                            ? "Add Series"
+                            : chartType === "stacked-bar"
+                            ? "Add Stack"
+                            : chartType === "combo"
+                            ? "Add Trend Line"
+                            : "Add Series"}
+                        </span>
                       </button>
                     </div>
 
@@ -1113,7 +1138,9 @@ export default function ChartEditorPanel({
                       <div className="space-y-1.5" style={{ minWidth: `${Math.max(480, 160 + currentSeriesList.length * 110)}px` }}>
                         {/* Table Header with Editable Series Names */}
                         <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2 py-1">
-                          <div className="w-36 flex-shrink-0">Category</div>
+                          <div className="w-36 flex-shrink-0">
+                            {chartType === "multi-line" || chartType === "combo" ? "Time / Period" : "Category / Group"}
+                          </div>
                           {currentSeriesList.map((s, sIdx) => {
                             const sColor = chartColors[sIdx] || s.color || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
                             return (
@@ -1203,7 +1230,13 @@ export default function ChartEditorPanel({
                       className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add Category Row</span>
+                      <span>
+                        {chartType === "multi-line"
+                          ? "Add Time Point"
+                          : chartType === "combo"
+                          ? "Add Period Row"
+                          : "Add Category Row"}
+                      </span>
                     </button>
                   </div>
                 )}
@@ -2108,17 +2141,31 @@ export default function ChartEditorPanel({
                       <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
                         <span className="col-span-1 text-center">#</span>
                         <span className="col-span-5">
-                          {editorMode === "radar"
-                            ? "Audit Dimension"
-                            : editorMode === "treemap"
-                              ? "Category / Hazard"
-                              : "Label / Category"}
+                          {chartType === "radar"
+                            ? "Audit Dimension / Axis"
+                            : chartType === "treemap"
+                            ? "Category / Hazard"
+                            : chartType === "line" || chartType === "area"
+                            ? "Time / Period (X-Axis)"
+                            : chartType === "bar" || chartType === "horizontal-bar"
+                            ? "Category / Bar Label"
+                            : "Label / Category"}
                         </span>
                         <span className="col-span-3 text-center">
-                          {editorMode === "waterfall" ? "Net Change" : "Value"}
+                          {chartType === "radar"
+                            ? "Actual Score"
+                            : chartType === "treemap"
+                            ? "Share / Size (%)"
+                            : chartType === "line"
+                            ? "Line Value"
+                            : chartType === "area"
+                            ? "Area Value"
+                            : chartType === "bar" || chartType === "horizontal-bar"
+                            ? "Bar Value"
+                            : "Value"}
                         </span>
                         <span className="col-span-2 text-center">
-                          {editorMode === "radar" ? "Target" : "Benchmark"}
+                          {chartType === "radar" ? "Target Score" : "Target (Opt.)"}
                         </span>
                         <span className="col-span-1 text-center"></span>
                       </div>
@@ -2137,7 +2184,15 @@ export default function ChartEditorPanel({
                                 type="text"
                                 value={pt.label}
                                 onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
-                                placeholder="Label"
+                                placeholder={
+                                  chartType === "line" || chartType === "area"
+                                    ? "e.g. Jan / 08:00"
+                                    : chartType === "radar"
+                                    ? "e.g. PPE / Response"
+                                    : chartType === "treemap"
+                                    ? "e.g. Civil / Electrical"
+                                    : "e.g. Zone A"
+                                }
                                 className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
                               />
                             </div>
@@ -2190,7 +2245,17 @@ export default function ChartEditorPanel({
                         className="w-full py-2 px-3 border border-dashed border-[#9D61FF]/40 rounded-xl text-xs font-bold text-[#9D61FF] hover:bg-[#9D61FF]/10 transition-colors flex items-center justify-center gap-1.5 cursor-pointer mt-2"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Add Data Point</span>
+                        <span>
+                          {chartType === "bar" || chartType === "horizontal-bar"
+                            ? "Add Bar / Category"
+                            : chartType === "line" || chartType === "area"
+                            ? "Add Time Point"
+                            : chartType === "radar"
+                            ? "Add Dimension"
+                            : chartType === "treemap"
+                            ? "Add Item"
+                            : "Add Data Point"}
+                        </span>
                       </button>
                     </div>
                   )}
@@ -2677,7 +2742,7 @@ export default function ChartEditorPanel({
               <ChartRenderer
                 chart={{
                   id: editingChart?.id || "preview",
-                  title: chartTitle || "Preview Chart",
+                  title: chartTitle,
                   chartType: chartType,
                   dataSourceField: editingChart?.dataSourceField || "custom_telemetry_feed",
                   description: chartDesc || "Chart description preview",
@@ -2720,8 +2785,7 @@ export default function ChartEditorPanel({
             <button
               type="button"
               onClick={onSave}
-              disabled={!chartTitle.trim()}
-              className="px-5 py-2.5 rounded-xl bg-[#9D61FF] text-white text-sm font-bold disabled:opacity-50 hover:bg-purple-600 transition-colors cursor-pointer shadow-md shadow-purple-500/20"
+              className="px-5 py-2.5 rounded-xl bg-[#9D61FF] text-white text-sm font-bold hover:bg-purple-600 transition-colors cursor-pointer shadow-md shadow-purple-500/20"
             >
               Save Chart
             </button>

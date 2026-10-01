@@ -260,14 +260,44 @@ export default function ChartRenderer({
       const d = resolveChartData(chartColors, ["08:00", "12:00", "16:00", "20:00", "24:00"], [88, 94, 96, 99, 100], 100, "%");
       const n = d.categories.length;
       const yRange = (d.yMax - d.yMin) || 1;
-      const points = d.values.map((v, i) => {
-        const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
-        const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
-        const cy = 110 - norm * 96;
-        return { cx, cy, val: v, label: d.categories[i] };
+
+      const activeSeries = (chart.series && chart.series.length > 0)
+        ? chart.series
+        : (d.allSeriesValues && d.allSeriesValues.length > 1)
+        ? d.allSeriesValues.map((vals, sIdx) => ({
+            id: `s${sIdx + 1}`,
+            name: `Line ${sIdx + 1}`,
+            color: chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length],
+            data: vals,
+          }))
+        : [
+            { id: "s1", name: chart.series?.[0]?.name || "Line 1", color: c0, data: d.values },
+          ];
+
+      const dashPatterns = ["none", "4 2", "2 2", "6 2 2 2", "5 3", "1 2"];
+
+      const allSeriesData = activeSeries.map((s, sIdx) => {
+        const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+        const vals = (d.allSeriesValues && d.allSeriesValues[sIdx]) || (sIdx === 0 ? d.values : sIdx === 1 ? (d.secondaryValues || []) : s.data || []);
+        const points = vals.map((v, i) => {
+          const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+          const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
+          const cy = 110 - norm * 96;
+          return { cx, cy, val: v, label: d.categories[i] };
+        });
+        const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
+        const areaPath = points.length > 0 ? `${path} L ${points[points.length - 1].cx.toFixed(1)} 110 L ${points[0].cx.toFixed(1)} 110 Z` : "";
+        return {
+          s,
+          sColor,
+          vals,
+          points,
+          path,
+          areaPath,
+          name: s.name || `Line ${sIdx + 1}`,
+          dash: activeSeries.length > 1 ? dashPatterns[sIdx % dashPatterns.length] : "none",
+        };
       });
-      const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
-      const areaD = `${pathD} L ${points[points.length - 1].cx.toFixed(1)} 110 L ${points[0].cx.toFixed(1)} 110 Z`;
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
         y: 110 - r * 96,
@@ -278,6 +308,16 @@ export default function ChartRenderer({
 
       return (
         <div className={chartWrapperClass}>
+          {d.showLegend && activeSeries.length > 1 && (
+            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
+              {allSeriesData.map((sData, sIdx) => (
+                <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sData.sColor }} />
+                  <span className="text-slate-600 dark:text-zinc-300 font-semibold">{sData.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full h-full flex-1 max-h-full overflow-visible">
             <defs>
               <linearGradient id={`grad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
@@ -305,25 +345,40 @@ export default function ChartRenderer({
               </g>
             ))}
             {/* X ticks */}
-            {points.map((p, i) => (
-              <g key={i}>
-                <line x1={p.cx} y1="110" x2={p.cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={p.cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
-              </g>
-            ))}
-            {/* Area fill */}
-            <path d={areaD} fill={`url(#grad-${chart.id})`} />
-            {/* Line */}
-            <path d={pathD} fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
-            {/* Points */}
-            {points.map((pt, i) => (
-              <g key={i}>
-                <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
-                {d.showValues && (
-                  <text x={pt.cx} y={pt.cy - 6} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={c0}>
-                    {formatDataValue(pt.val, d.unit, n > 6)}
-                  </text>
-                )}
+            {d.categories.map((cat, i) => {
+              const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+              return (
+                <g key={i}>
+                  <line x1={cx} y1="110" x2={cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
+                </g>
+              );
+            })}
+            {/* Single series area fill */}
+            {activeSeries.length === 1 && allSeriesData[0]?.areaPath && (
+              <path d={allSeriesData[0].areaPath} fill={`url(#grad-${chart.id})`} />
+            )}
+            {/* Lines & Markers */}
+            {allSeriesData.map((sData, sIdx) => (
+              <g key={sData.s.id || sIdx}>
+                <path
+                  d={sData.path}
+                  fill="none"
+                  stroke={sData.sColor}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray={sData.dash === "none" ? undefined : sData.dash}
+                />
+                {sData.points.map((pt, pIdx) => (
+                  <g key={pIdx}>
+                    <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={sData.sColor} strokeWidth="2" />
+                    {d.showValues && (
+                      <text x={pt.cx} y={pt.cy - 6} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={sData.sColor}>
+                        {formatDataValue(pt.val, d.unit, n > 6)}
+                      </text>
+                    )}
+                  </g>
+                ))}
               </g>
             ))}
             {d.xAxisTitle && (
@@ -553,77 +608,134 @@ export default function ChartRenderer({
 
     case "horizontal-bar": {
       const d = resolveChartData(
-        [c0, c1, c2, c3, c4],
+        chartColors,
         ["Civil", "Mechanical", "Electrical", "Fabrication"],
         [93, 88, 90, 85],
         100,
         "%"
       );
       const yRange = (d.yMax - d.yMin) || 1;
+      const activeSeries = (chart.series && chart.series.length > 0)
+        ? chart.series
+        : (d.allSeriesValues && d.allSeriesValues.length > 1)
+        ? d.allSeriesValues.map((vals, sIdx) => ({
+            id: `s${sIdx + 1}`,
+            name: `Series ${sIdx + 1}`,
+            color: chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length],
+            data: vals,
+          }))
+        : [
+            { id: "s1", name: chart.series?.[0]?.name || "Series 1", color: c0, data: d.values },
+          ];
 
       return (
         <div className="w-full h-full min-h-0 flex flex-col justify-center py-1 gap-2 text-xs overflow-hidden">
-          {d.values.map((v, i) => {
-            const pct = Math.max(0, Math.min(100, ((v - d.yMin) / yRange) * 100));
-            const col = d.pointColors?.[i] || [c0, c1, c2, c3, c4][i % 5];
-            const label = d.categories[i] || `Item ${i + 1}`;
-            return (
-              <div key={i} className="flex items-center gap-2 sm:gap-3">
-                <span className={`w-20 sm:w-24 text-right font-medium text-slate-700 dark:text-zinc-300 truncate ${legendTextClass}`} title={label}>
-                  {label}
-                </span>
-                <div className="flex-1 h-5 sm:h-6 bg-slate-100 dark:bg-zinc-800 rounded-r-md flex items-center">
-                  <div
-                    className="h-full flex items-center justify-end pr-2 rounded-r-md transition-all"
-                    style={{ width: `${pct}%`, backgroundColor: col }}
-                  >
-                    {d.showValues && (
-                      <span className="text-[10px] font-bold text-white shadow-sm whitespace-nowrap">
-                        {v}{d.unit}
-                      </span>
-                    )}
+          {d.showLegend && activeSeries.length > 1 && (
+            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap mb-1`}>
+              {activeSeries.map((s, sIdx) => {
+                const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+                return (
+                  <div key={s.id || sIdx} className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sColor }} />
+                    <span className="text-slate-600 dark:text-zinc-300 font-semibold">{s.name || `Series ${sIdx + 1}`}</span>
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          )}
+          {d.categories.map((cat, i) => (
+            <div key={i} className="flex items-center gap-2 sm:gap-3">
+              <span className={`w-20 sm:w-24 text-right font-medium text-slate-700 dark:text-zinc-300 truncate ${legendTextClass}`} title={cat}>
+                {cat}
+              </span>
+              <div className="flex-1 flex flex-col gap-1">
+                {activeSeries.map((s, sIdx) => {
+                  const vals = (d.allSeriesValues && d.allSeriesValues[sIdx]) || (sIdx === 0 ? d.values : sIdx === 1 ? (d.secondaryValues || []) : s.data || []);
+                  const v = vals[i] ?? 0;
+                  const pct = Math.max(0, Math.min(100, ((v - d.yMin) / yRange) * 100));
+                  const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+                  return (
+                    <div key={s.id || sIdx} className="w-full h-4 sm:h-5 bg-slate-100 dark:bg-zinc-800 rounded-r-md flex items-center">
+                      <div
+                        className="h-full flex items-center justify-end pr-2 rounded-r-md transition-all"
+                        style={{ width: `${pct}%`, backgroundColor: sColor }}
+                      >
+                        {d.showValues && (
+                          <span className="text-[9px] sm:text-[10px] font-bold text-white shadow-sm whitespace-nowrap">
+                            {v}{d.unit}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       );
     }
 
     case "stacked-horizontal": {
       const d = resolveChartData(
-        [c0, c1],
+        chartColors,
         ["Hours without Violations", "Hours with Violations"],
         [17330, 1420],
         20000,
         "hrs"
       );
-      const v0 = d.values[0] ?? 17330;
-      const v1 = d.values[1] ?? (chart.dataPoints?.[0]?.secondaryValue ?? 1420);
-      const total = v0 + v1 || 1;
-      const p0 = ((v0 / total) * 100).toFixed(1);
-      const p1 = ((v1 / total) * 100).toFixed(1);
-      const label0 = d.categories[0] || "Safe Hours";
-      const label1 = d.categories[1] || "Violations";
+
+      const activeSeries = (chart.series && chart.series.length > 0)
+        ? chart.series
+        : [
+            { id: "s1", name: d.categories[0] || "Safe Hours", color: c0 },
+            { id: "s2", name: d.categories[1] || "Violations", color: c1 },
+          ];
+
+      const seriesVals = activeSeries.map((s, sIdx) => {
+        const vals = (d.allSeriesValues && d.allSeriesValues[sIdx]) || (sIdx === 0 ? d.values : sIdx === 1 ? (d.secondaryValues || []) : []);
+        return vals[0] ?? (sIdx === 0 ? 17330 : 1420);
+      });
+
+      const total = seriesVals.reduce((sum, v) => sum + v, 0) || 1;
+      const seriesSegments = activeSeries.map((s, sIdx) => {
+        const val = seriesVals[sIdx] ?? 0;
+        const pct = Math.max(0, (val / total) * 100);
+        const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+        return {
+          s,
+          sColor,
+          val,
+          pct: pct.toFixed(1),
+          name: s.name || `Series ${sIdx + 1}`,
+        };
+      });
 
       return (
         <div className="w-full h-full min-h-0 flex flex-col justify-center py-2 text-xs overflow-hidden">
           <div className="flex items-center justify-between mb-2 px-1">
-            <span className={`font-semibold text-slate-700 dark:text-zinc-300 ${legendTextClass}`}>{chart.title || "Total Operational Hours"}</span>
+            <span className={`font-semibold text-slate-700 dark:text-zinc-300 ${legendTextClass}`}>{chart.title || "Total Operational Distribution"}</span>
             <span className={`font-bold text-slate-900 dark:text-white ${legendTextClass}`}>{total.toLocaleString()} {d.unit}</span>
           </div>
           <div className="w-full h-8 sm:h-10 flex rounded-lg overflow-hidden shadow-sm mb-3">
-            <div className="flex items-center justify-center text-white font-bold text-xs" style={{ width: `${p0}%`, backgroundColor: c0 }}>
-              {p0}% {label0}
-            </div>
-            <div className="flex items-center justify-center text-white font-bold text-xs" style={{ width: `${p1}%`, backgroundColor: c1 }}>
-              {p1}%
-            </div>
+            {seriesSegments.map((seg, sIdx) => (
+              <div
+                key={seg.s.id || sIdx}
+                className="flex items-center justify-center text-white font-bold text-xs truncate px-1 transition-all"
+                style={{ width: `${seg.pct}%`, backgroundColor: seg.sColor }}
+                title={`${seg.name}: ${seg.pct}% (${seg.val.toLocaleString()} ${d.unit})`}
+              >
+                {parseFloat(seg.pct) >= 10 ? `${seg.pct}% ${seg.name}` : parseFloat(seg.pct) >= 5 ? `${seg.pct}%` : ""}
+              </div>
+            ))}
           </div>
-          <div className={`flex justify-between ${legendTextClass} font-mono text-slate-500 px-1`}>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: c0 }} /> {label0} ({v0.toLocaleString()})</div>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: c1 }} /> {label1} ({v1.toLocaleString()})</div>
+          <div className={`flex flex-wrap justify-between gap-2 ${legendTextClass} font-mono text-slate-500 px-1`}>
+            {seriesSegments.map((seg, sIdx) => (
+              <div key={seg.s.id || sIdx} className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: seg.sColor }} />
+                <span>{seg.name} ({seg.val.toLocaleString()})</span>
+              </div>
+            ))}
           </div>
         </div>
       );
@@ -641,6 +753,15 @@ export default function ChartRenderer({
       const yRange = (d.yMax - d.yMin) || 1;
       const bw = Math.min(32, Math.max(12, (360 / n) * 0.5));
 
+      const activeSeries = (chart.series && chart.series.length > 0)
+        ? chart.series
+        : [
+            { id: "s1", name: "Civil", color: c0 },
+            { id: "s2", name: "PPE", color: c1 },
+            { id: "s3", name: "Safety", color: c2 },
+            { id: "s4", name: "Risk", color: c3 },
+          ];
+
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
         y: 110 - r * 96,
         label: formatYTick(d.yMin + r * yRange, d.unit),
@@ -651,14 +772,19 @@ export default function ChartRenderer({
       return (
         <div className={chartWrapperClass}>
           {/* Nomenclature / Legend */}
-          <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
-            {[{ c: c0, l: chart.series?.[0]?.name || "Civil" }, { c: c1, l: chart.series?.[1]?.name || "PPE" }, { c: c2, l: chart.series?.[2]?.name || "Safety" }, { c: c3, l: chart.series?.[3]?.name || "Risk" }].map((lg, i) => (
-              <div key={i} className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: lg.c }} />
-                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{lg.l}</span>
-              </div>
-            ))}
-          </div>
+          {d.showLegend && (
+            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
+              {activeSeries.map((s, sIdx) => {
+                const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+                return (
+                  <div key={s.id || sIdx} className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sColor }} />
+                    <span className="text-slate-600 dark:text-zinc-300 font-semibold">{s.name || `Series ${sIdx + 1}`}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
             {/* Y-axis */}
@@ -680,26 +806,34 @@ export default function ChartRenderer({
               </g>
             ))}
             {d.categories.map((cat, i) => {
-              // Read all 4 stacked series values directly from dataPoints
-              const pt = chart.dataPoints?.[i];
-              const h1 = pt?.value ?? d.values[i] ?? 30;
-              const h2 = pt?.secondaryValue ?? (d.secondaryValues?.[i] ?? 35);
-              const h3 = pt?.tertiaryValue ?? 15;
-              const h4 = pt?.quaternaryValue ?? 10;
-              const totalVal = h1 + h2 + h3 + h4;
-              const scaleH = (v: number) => Math.max(1, (v / (totalVal || 1)) * 96);
-              const sh1 = scaleH(h1);
-              const sh2 = scaleH(h2);
-              const sh3 = scaleH(h3);
-              const sh4 = scaleH(h4);
               const x = 56 + ((i + 0.5) / n) * 360;
+              let accumulatedH = 0;
+              const seriesSegs = activeSeries.map((s, sIdx) => {
+                const vals = (d.allSeriesValues && d.allSeriesValues[sIdx]) || (sIdx === 0 ? d.values : sIdx === 1 ? (d.secondaryValues || []) : []);
+                const val = vals[i] ?? 0;
+                const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+                return { s, sColor, val };
+              });
+              const totalVal = seriesSegs.reduce((sum, seg) => sum + seg.val, 0) || 1;
 
               return (
                 <g key={i}>
-                  <rect x={x - bw / 2} y={110 - sh1} width={bw} height={sh1} fill={c0} />
-                  <rect x={x - bw / 2} y={110 - sh1 - sh2} width={bw} height={sh2} fill={c1} />
-                  <rect x={x - bw / 2} y={110 - sh1 - sh2 - sh3} width={bw} height={sh3} fill={c2} />
-                  <rect x={x - bw / 2} y={110 - sh1 - sh2 - sh3 - sh4} width={bw} height={sh4} fill={c3} />
+                  {seriesSegs.map((seg, sIdx) => {
+                    const sh = Math.max(1, (seg.val / totalVal) * 96);
+                    const y = 110 - accumulatedH - sh;
+                    accumulatedH += sh;
+                    return (
+                      <rect
+                        key={sIdx}
+                        x={x - bw / 2}
+                        y={y}
+                        width={bw}
+                        height={sh}
+                        fill={seg.sColor}
+                        rx={sIdx === seriesSegs.length - 1 ? 2 : 0}
+                      />
+                    );
+                  })}
                   <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
                   <text x={x} y={124} fontSize={svgTickSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{cat}</text>
                 </g>
@@ -1308,8 +1442,8 @@ export default function ChartRenderer({
               return <circle key={i} cx={x} cy={y} r="3" fill={c1} />;
             })}
             {/* Legend */}
-            <rect x="52" y="10" width="7" height="7" fill={c0} rx="1" /><text x="62" y="16" fontSize={svgTickSize} fill="currentColor" fillOpacity="0.6">Volume</text>
-            <line x1="110" y1="14" x2="122" y2="14" stroke={c1} strokeWidth="2" /><text x="125" y="16" fontSize={svgTickSize} fill="currentColor" fillOpacity="0.6">Trend</text>
+            <rect x="52" y="10" width="7" height="7" fill={c0} rx="1" /><text x="62" y="16" fontSize={svgTickSize} fill="currentColor" fillOpacity="0.6">{chart.series?.[0]?.name || "Volume"}</text>
+            <line x1="110" y1="14" x2="122" y2="14" stroke={c1} strokeWidth="2" /><text x="125" y="16" fontSize={svgTickSize} fill="currentColor" fillOpacity="0.6">{chart.series?.[1]?.name || "Trend"}</text>
           </svg>
         </div>
       );
