@@ -98,19 +98,18 @@ function CreateTemplatePageContent() {
   // Build default Cover Page Data
   const buildCoverData = useCallback((): CoverPageData => {
     return {
-      reportType: templateName.trim(),
-      subtitle: "WORKFORCE INSIGHTS\nFOR A SAFER TOMORROW",
-      reportingPeriod: "01 September 2025 – 30 September 2025",
-      projectSite: selectedSite?.name || "ABC Infrastructure Project",
-      preparedFor: "Project Head & Statutory Safety Committee",
-      preparedBy: "AyantrAI – Sitesafe Team",
+      reportType: existingTemplate?.coverPageData?.reportType || "Monthly Report",
+      subtitle: existingTemplate?.coverPageData?.subtitle || "WORKFORCE INSIGHTS\nFOR A SAFER TOMORROW",
+      reportingPeriod: existingTemplate?.coverPageData?.reportingPeriod || "01 September 2025 – 30 September 2025",
+      projectSite: selectedSite?.name || existingTemplate?.coverPageData?.projectSite || "ABC Infrastructure Project",
+      preparedFor: existingTemplate?.coverPageData?.preparedFor || "Project Head",
+      preparedBy: existingTemplate?.coverPageData?.preparedBy || "AyantrAI – Sitesafe Team",
       eyebrow: "STATUTORY COMPLIANCE & GEOTECHNICAL AUDIT",
       classification: "CONFIDENTIAL",
       classificationBadgeColor: "#ef4444",
       reportCode: activeBlueprintId,
-      organizationLogoUrl: "/images/sitesafe-logo.svg",
     };
-  }, [templateName, selectedSite, activeBlueprintId]);
+  }, [existingTemplate, selectedSite, activeBlueprintId]);
 
   // Initialize Canvas Studio directly on mount
   useEffect(() => {
