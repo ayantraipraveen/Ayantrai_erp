@@ -160,25 +160,23 @@ export function CanvasBackCoverPage({
         <div className="relative z-10 h-full w-full p-6 flex flex-col justify-between">
           {/* Top Brand Bar: Logo & Tagline on Left, BUILD MONITOR PREVENT on Right */}
           <div className="flex items-start justify-between">
-            {/* Left: AyantrAI Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 relative flex items-center justify-center flex-shrink-0">
+            {/* Left: Official AyantrAI Logo & Tagline */}
+            <div className="flex flex-col items-start">
+              <div className="relative h-6 w-36 flex items-center">
                 <Image
-                  src="/images/ayantrai-brand-logo.png"
+                  src="/images/ayantrai-horizontal-dark.png"
                   alt="AyantrAI"
-                  width={32}
-                  height={32}
-                  className="object-contain brightness-0 invert"
+                  width={144}
+                  height={25}
+                  className="object-contain object-left max-h-6 w-auto"
+                  priority
                 />
               </div>
-              <div className="flex flex-col">
-                <span className="text-[17px] font-black tracking-tight text-white leading-none">
-                  Ayantr<span className="text-[#38BDF8]">AI</span>
-                </span>
-                <span className="text-[6.5px] font-bold tracking-[0.22em] text-[#38BDF8] uppercase mt-0.5">
-                  AI FOR A SAFER TOMORROW
-                </span>
-              </div>
+              <EditableText
+                field="heroBrandTagline"
+                className="text-[6.5px] font-bold tracking-[0.22em] text-[#38BDF8] uppercase mt-0.5"
+                placeholder="AI FOR A SAFER TOMORROW"
+              />
             </div>
 
             {/* Right: BUILD MONITOR PREVENT with vertical divider */}
@@ -347,41 +345,47 @@ export function CanvasBackCoverPage({
               Our Capabilities
             </div>
 
-            <div className="grid grid-cols-4 gap-2 pt-1">
+            <div className="flex items-center justify-between pt-1">
               {/* Cap 1: AI & IoT Solutions */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-1">
-                  <Cpu className="w-4 h-4" />
+              <div className="flex flex-col items-center text-center flex-1">
+                <div className="text-[#1A56DB] mb-1">
+                  <Cpu className="w-4 h-4 stroke-[1.75]" />
                 </div>
                 <span className="text-[7px] font-bold text-slate-700 leading-tight">
                   AI & IoT<br />Solutions
                 </span>
               </div>
 
+              <div className="h-7 w-px bg-slate-200" />
+
               {/* Cap 2: Real-time Insights */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-1">
-                  <Cloud className="w-4 h-4" />
+              <div className="flex flex-col items-center text-center flex-1">
+                <div className="text-[#1A56DB] mb-1">
+                  <Cloud className="w-4 h-4 stroke-[1.75]" />
                 </div>
                 <span className="text-[7px] font-bold text-slate-700 leading-tight">
                   Real-time Insights<br /><span className="text-slate-400 font-normal">(2–5 min delay)</span>
                 </span>
               </div>
 
+              <div className="h-7 w-px bg-slate-200" />
+
               {/* Cap 3: Scalable Platform */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-1">
-                  <TrendingUp className="w-4 h-4" />
+              <div className="flex flex-col items-center text-center flex-1">
+                <div className="text-[#1A56DB] mb-1">
+                  <TrendingUp className="w-4 h-4 stroke-[1.75]" />
                 </div>
                 <span className="text-[7px] font-bold text-slate-700 leading-tight">
                   Scalable<br />Platform
                 </span>
               </div>
 
+              <div className="h-7 w-px bg-slate-200" />
+
               {/* Cap 4: Built for Real-World */}
-              <div className="flex flex-col items-center text-center">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-1">
-                  <HardHat className="w-4 h-4" />
+              <div className="flex flex-col items-center text-center flex-1">
+                <div className="text-[#1A56DB] mb-1">
+                  <HardHat className="w-4 h-4 stroke-[1.75]" />
                 </div>
                 <span className="text-[7px] font-bold text-slate-700 leading-tight">
                   Built for<br />Real-World Environments

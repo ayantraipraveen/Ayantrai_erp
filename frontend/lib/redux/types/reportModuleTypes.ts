@@ -586,6 +586,7 @@ export interface BackCoverData {
   thankYouSubtext?: string;
   flagHeading?: string;
   footerTagline?: string;
+  heroBrandTagline?: string;
 }
 
 export const DEFAULT_BACK_COVER_DATA: BackCoverData = {
@@ -595,6 +596,7 @@ export const DEFAULT_BACK_COVER_DATA: BackCoverData = {
   websiteUrl: "www.ayantrai.com  |  www.sitesafe.ai",
   email: "hello@ayantrai.com",
   location: "Noida, Uttar Pradesh, India",
+  heroBrandTagline: "AI FOR A SAFER TOMORROW",
   heroEyebrow: "TECHNOLOGY THAT PROTECTS\nTHE PEOPLE WHO BUILD OUR TOMORROW",
   heroTitle: "Safer People\nStronger Industries",
   heroDescription: "At AyantrAI, we build AI and IoT solutions that make workplaces safer, smarter and more productive. Our flagship product, Sitesafe, helps organisations ensure PPE compliance, monitor workforce safety and enable data-driven decisions across industrial environments.",
