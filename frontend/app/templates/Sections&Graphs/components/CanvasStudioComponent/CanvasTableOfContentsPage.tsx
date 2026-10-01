@@ -101,7 +101,7 @@ export function CanvasTableOfContentsPage({
       }}
     >
       {/* ── 1. TOP RUNNING HEADER (Height = 56px, Pinned to top: 0) ── */}
-      <header className="absolute top-0 left-0 right-0 h-[56px] px-8 border-b border-slate-100 flex items-center justify-between z-20 bg-white">
+      <header className="absolute top-0 left-0 right-0 h-[56px] px-7 border-b border-slate-100 flex items-center justify-between z-20 bg-white">
         {/* Left: Sitesafe Shield Logo & Subtitle */}
         <div className="flex items-center gap-3">
           <div className="h-8 w-24 relative flex items-center">
@@ -110,7 +110,7 @@ export function CanvasTableOfContentsPage({
               alt="Sitesafe"
               width={96}
               height={32}
-              className="object-contain object-left max-h-8 w-auto"
+              className="object-contain object-left max-h-10 w-auto"
               priority
             />
           </div>
@@ -121,8 +121,8 @@ export function CanvasTableOfContentsPage({
           </div>
         </div>
 
-        {/* Center/Right: Monthly Report & Date */}
-        <div className="flex items-center gap-3 pr-18">
+        {/* Center/Right: Monthly Report & Date (clear of angled badge) */}
+        <div className="flex items-center gap-3 pr-22">
           <div className="flex flex-col items-end">
             <span className="text-[12px] font-bold text-[#0E1C4E] leading-tight">
               Monthly Report
@@ -168,8 +168,8 @@ export function CanvasTableOfContentsPage({
       {/* ── 2. MIDDLE CONTENT AREA (Exact height = 701px between Header and Footer) ── */}
       <div className="absolute top-[56px] bottom-[85px] left-0 right-0 overflow-hidden">
         
-        {/* ── LEFT HERO CARD (Flush with left sheet boundary x=0, rounded right corners) ── */}
-        <div className="absolute top-2.5 left-0 bottom-2.5 w-[184px] rounded-r-2xl overflow-hidden shadow-sm flex flex-col justify-end">
+        {/* ── LEFT HERO CARD (Flush with left sheet boundary x=0, spans full height, rounded right corners) ── */}
+        <div className="absolute top-0 left-0 bottom-0 w-[184px] rounded-r-2xl overflow-hidden shadow-sm flex flex-col justify-end">
           <Image
             src="/images/toc-sidebar-hero-clean.png"
             alt="Safer People Stronger Industries"
@@ -252,14 +252,32 @@ export function CanvasTableOfContentsPage({
               )}
             </div>
 
-            {/* Handwritten script note (top-right of headline) */}
-            <div className="absolute right-0 top-1 text-right pointer-events-none select-none">
-              <span className="inline-block text-[11px] font-bold italic text-[#5B88EE] -rotate-6 font-serif tracking-tight leading-[1.2]">
-                Every<br />
-                Worker<br />
-                Returns<br />
-                Home Safe
-              </span>
+            {/* Handwritten script note (top-right of headline) matching reference */}
+            <div className="absolute right-0 top-0.5 text-right pointer-events-none select-none -rotate-[10deg] origin-top-right">
+              <div
+                className="text-[15px] font-bold text-[#6F95EB] leading-[1.05] tracking-tight"
+                style={{ fontFamily: "'Caveat', cursive, sans-serif" }}
+              >
+                <div>Every</div>
+                <div>Worker</div>
+                <div>Returns</div>
+                <div>Home Safe</div>
+              </div>
+              {/* Hand-drawn underline stroke */}
+              <svg
+                width="74"
+                height="6"
+                viewBox="0 0 74 6"
+                fill="none"
+                className="mt-0.5 ml-auto"
+              >
+                <path
+                  d="M2 3.5 C24 1.8, 52 4.2, 72 2"
+                  stroke="#6F95EB"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
           </div>
 
@@ -391,14 +409,6 @@ export function CanvasTableOfContentsPage({
           </span>
         </div>
       </footer>
-
-      {/* Edit Hint Badge */}
-      {!activeIsPreview && (
-        <div className="absolute top-2.5 right-20 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-md text-[#1E2B58] text-[8px] font-bold px-2.5 py-1 rounded-full shadow-sm border border-slate-200/80 pointer-events-none">
-          <Edit3 className="w-2.5 h-2.5 text-[#9D61FF]" />
-          <span>TABLE OF CONTENTS — Double-click any text to edit in-place</span>
-        </div>
-      )}
     </div>
   );
 }
