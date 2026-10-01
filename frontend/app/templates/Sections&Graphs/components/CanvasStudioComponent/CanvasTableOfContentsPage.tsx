@@ -252,16 +252,19 @@ export function CanvasTableOfContentsPage({
               )}
             </div>
 
-            {/* Handwritten script note graphic (top-right of headline) matching reference */}
-            <div className="absolute right-0 -top-1 w-[88px] h-[88px] pointer-events-none select-none">
-              <Image
-                src="/images/toc-quote-script.png"
-                alt="Every Worker Returns Home Safe"
-                width={88}
-                height={88}
-                priority
-                className="object-contain w-full h-full"
-              />
+            {/* Handwritten script note (top-right of headline) matching reference */}
+            <div className="absolute right-0 -top-1 pointer-events-none select-none text-right">
+              <div
+                className="text-[#1A38D6] font-bold text-[14px] leading-snug tracking-tight italic"
+                style={{
+                  fontFamily: "'Segoe Script', 'Brush Script MT', 'Caveat', cursive, sans-serif",
+                  transform: "rotate(-7deg)",
+                  transformOrigin: "bottom right",
+                }}
+              >
+                Every Worker<br />Returns Home Safe
+                <div className="h-[2px] w-24 bg-[#1A38D6] ml-auto mt-0.5 rounded-full" />
+              </div>
             </div>
           </div>
 
