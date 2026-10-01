@@ -16,6 +16,8 @@ import {
   CanvasBadgeStrip,
   CanvasBadgeItem,
   GraphType,
+  CoverPageData,
+  BackCoverData,
 } from "../../types/reportModuleTypes";
 
 /**
@@ -82,6 +84,9 @@ export const sectionsStudioReducers = {
         charts?: LibraryChartCard[];
         keyInsights?: LibraryKeyInsightItem[];
         canvasRows?: CanvasRow[];
+        coverPageData?: CoverPageData;
+        backCoverData?: BackCoverData;
+        watermarkId?: string;
       }>
     ) => {
       const newId = action.payload.id || `sec-custom-${Date.now()}`;
@@ -97,6 +102,9 @@ export const sectionsStudioReducers = {
         charts: action.payload.charts || [],
         keyInsights: action.payload.keyInsights || [],
         canvasRows: action.payload.canvasRows || [],
+        coverPageData: action.payload.coverPageData,
+        backCoverData: action.payload.backCoverData,
+        watermarkId: action.payload.watermarkId,
       };
       state.librarySections.unshift(newSec);
       state.selectedLibrarySectionId = newSec.id;

@@ -39,7 +39,7 @@ export function CanvasCoverPage({
 
   const startEdit = (field: keyof CoverPageData) => {
     if (activeIsPreview) return;
-    setEditing({ field, value: data[field] });
+    setEditing({ field, value: String(data[field] ?? "") });
   };
 
   const commitEdit = () => {

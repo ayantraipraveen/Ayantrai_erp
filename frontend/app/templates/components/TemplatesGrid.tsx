@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   Building,
   FileText,
@@ -333,13 +334,12 @@ export default function TemplatesGrid() {
 
                     {/* Edit */}
                     <Tooltip content="Edit template" position="top">
-                      <button
-                        type="button"
-                        onClick={() => setEditingTemplate(template)}
+                      <Link
+                        href={`/templates/create?templateId=${template.id}`}
                         className="h-6 w-6 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-500 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center justify-center cursor-pointer"
                       >
                         <Edit3 className="w-3 h-3" />
-                      </button>
+                      </Link>
                     </Tooltip>
 
                     {/* Duplicate */}

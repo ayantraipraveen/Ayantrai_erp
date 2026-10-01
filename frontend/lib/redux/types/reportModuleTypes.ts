@@ -85,6 +85,13 @@ export interface ReportTemplate {
   rejection_reason?: string;
   remarks?: string;
   version: string;
+  category?: string;
+  frequency?: string;
+  complianceStandards?: string[];
+  hasAuditHash?: boolean;
+  coverPageData?: CoverPageData;
+  backCoverData?: BackCoverData;
+  canvasSectionId?: string;
 }
 export interface ApproveTemplatePayload {
   templateId: string;
@@ -543,6 +550,11 @@ export interface CoverPageData {
   projectSite: string;
   preparedFor: string;
   preparedBy: string;
+  eyebrow?: string;
+  classification?: string;
+  classificationBadgeColor?: string;
+  reportCode?: string;
+  organizationLogoUrl?: string;
 }
 
 export const DEFAULT_COVER_PAGE_DATA: CoverPageData = {

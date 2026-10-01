@@ -7,6 +7,7 @@ export { default as TemplatesTable } from "./TemplatesTable";
 export { default as TemplatesGrid } from "./TemplatesGrid";
 export { default as TemplateReviewModal } from "./TemplateReviewModal";
 export { default as TemplateBuilderDrawer } from "./TemplateBuilderDrawer";
+export { default as TemplateDetailsPlanningModal } from "./TemplateDetailsPlanningModal";
 export { default as DeleteTemplateModal } from "./DeleteTemplateModal";
 
 // ============================================================================

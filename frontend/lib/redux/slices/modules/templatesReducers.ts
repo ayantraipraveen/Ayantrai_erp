@@ -10,6 +10,8 @@ import {
   RejectTemplatePayload,
   TemplateGraphConfig,
   GeneratedReport,
+  CoverPageData,
+  BackCoverData,
 } from "../../types/reportModuleTypes";
 import { sampleContent } from "../../mockData/mockGovernance";
 
@@ -51,6 +53,12 @@ export const templatesReducers = {
         site_name: string;
         blocks: TemplateBlock[];
         status?: "draft" | "pending" | "active" | "rejected";
+        coverPageData?: CoverPageData;
+        backCoverData?: BackCoverData;
+        category?: string;
+        frequency?: string;
+        complianceStandards?: string[];
+        hasAuditHash?: boolean;
       }>
     ) => {
       const idx = state.templates.findIndex((t: ReportTemplate) => t.id === action.payload.id);
@@ -67,6 +75,12 @@ export const templatesReducers = {
           blocks: action.payload.blocks,
           status: action.payload.status || (existing.status === "rejected" ? "pending" : existing.status),
           version: newVer,
+          coverPageData: action.payload.coverPageData || existing.coverPageData,
+          backCoverData: action.payload.backCoverData || existing.backCoverData,
+          category: action.payload.category || existing.category,
+          frequency: action.payload.frequency || existing.frequency,
+          complianceStandards: action.payload.complianceStandards || existing.complianceStandards,
+          hasAuditHash: action.payload.hasAuditHash !== undefined ? action.payload.hasAuditHash : existing.hasAuditHash,
         };
         state.activityLogs.unshift({
           id: `act-${Date.now()}`,

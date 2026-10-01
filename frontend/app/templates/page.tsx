@@ -7,7 +7,6 @@ import {
   TemplatesTable,
   TemplatesGrid,
   TemplateReviewModal,
-  TemplateBuilderDrawer,
   DeleteTemplateModal,
 } from "./components";
 
@@ -35,7 +34,6 @@ export default function TemplatesPage() {
       </div>
 
       <TemplateReviewModal />
-      <TemplateBuilderDrawer />
       <DeleteTemplateModal />
     </div>
   );

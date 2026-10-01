@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { Search, X, Building, Filter, List, LayoutGrid, Plus, Layers } from "lucide-react";
 import { Tooltip, CustomDropdown, DateRangeFilter } from "../../Component";
 import { useTemplates } from "./TemplatesContext";
@@ -150,14 +151,13 @@ export default function TemplateFilterToolbar() {
             </Tooltip>
           </div>
           {/* Primary Action Button */}
-          <button
-            type="button"
-            onClick={() => setBuilderOpen(true)}
+          <Link
+            href="/templates/create"
             className="h-9 px-4 rounded-xl glow-btn-primary font-bold text-xs cursor-pointer flex items-center justify-center gap-2 flex-shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Create Template</span>
-          </button>
+          </Link>
         </div>
       </div>
     </div>
