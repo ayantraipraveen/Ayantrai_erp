@@ -301,7 +301,7 @@ export function CanvasBackCoverPage({
         <div className="flex flex-col justify-between py-0.5">
           {/* Top: Our Products */}
           <div>
-            <div className="text-[10px] font-black text-[#0B1546] mb-1">
+            <div className="text-[10.5px] font-extrabold text-[#0B1546] mb-1.5">
               Our Products
             </div>
             <div className="bg-white rounded-xl border border-blue-100/80 shadow-xs p-2.5 flex items-center justify-between gap-2.5">
@@ -345,20 +345,21 @@ export function CanvasBackCoverPage({
               </div>
 
               {/* Right: Blue Arrow */}
-              <div className="w-4 h-4 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                <ArrowRight className="w-2.5 h-2.5" />
-              </div>
+              <ArrowRight className="w-3.5 h-3.5 text-[#1A56DB] flex-shrink-0" strokeWidth={2.2} />
             </div>
           </div>
 
           {/* Bottom: Our Capabilities */}
           <div>
-            <div className="text-[10px] font-black text-[#0B1546] mb-1">
+            <div className="text-[10.5px] font-extrabold text-[#0B1546] mb-1.5">
               Our Capabilities
             </div>
             <div className="flex items-center justify-between pt-0.5">
+              {/* Far Left Divider */}
+              <div className="h-6 w-px bg-slate-200/80" />
+
               {/* Cap 1: AI & IoT Solutions */}
-              <div className="flex flex-col items-center text-center flex-1">
+              <div className="flex flex-col items-center text-center flex-1 px-1">
                 <div className="text-[#1A56DB] mb-1 flex items-center justify-center h-4">
                   <svg className="w-4 h-4 text-[#1A56DB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -371,10 +372,10 @@ export function CanvasBackCoverPage({
                 </span>
               </div>
 
-              <div className="h-6 w-px bg-slate-200" />
+              <div className="h-6 w-px bg-slate-200/80" />
 
               {/* Cap 2: Real-time Insights */}
-              <div className="flex flex-col items-center text-center flex-1">
+              <div className="flex flex-col items-center text-center flex-1 px-1">
                 <div className="text-[#1A56DB] mb-1 flex items-center justify-center h-4">
                   <Cloud className="w-4 h-4 stroke-[1.8]" />
                 </div>
@@ -383,22 +384,28 @@ export function CanvasBackCoverPage({
                 </span>
               </div>
 
-              <div className="h-6 w-px bg-slate-200" />
+              <div className="h-6 w-px bg-slate-200/80" />
 
-              {/* Cap 3: Scalable Platform */}
-              <div className="flex flex-col items-center text-center flex-1">
+              {/* Cap 3: Scalable Platform (Bar Chart with Rising Arrow) */}
+              <div className="flex flex-col items-center text-center flex-1 px-1">
                 <div className="text-[#1A56DB] mb-1 flex items-center justify-center h-4">
-                  <TrendingUp className="w-4 h-4 stroke-[1.8]" />
+                  <svg className="w-4 h-4 text-[#1A56DB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 20v-3" />
+                    <path d="M10 20v-7" />
+                    <path d="M15 20v-11" />
+                    <path d="M13 4h7v7" />
+                    <path d="m20 4-8 8" />
+                  </svg>
                 </div>
                 <span className="text-[6.8px] font-bold text-slate-700 leading-tight">
                   Scalable<br />Platform
                 </span>
               </div>
 
-              <div className="h-6 w-px bg-slate-200" />
+              <div className="h-6 w-px bg-slate-200/80" />
 
               {/* Cap 4: Built for Real-World */}
-              <div className="flex flex-col items-center text-center flex-1">
+              <div className="flex flex-col items-center text-center flex-1 px-1">
                 <div className="text-[#1A56DB] mb-1 flex items-center justify-center h-4">
                   <HardHat className="w-4 h-4 stroke-[1.8]" />
                 </div>
@@ -415,14 +422,14 @@ export function CanvasBackCoverPage({
           <div>
             <EditableText
               field="qrHeading"
-              className="text-[10px] font-black text-[#0B1546] leading-tight block"
+              className="text-[10.5px] font-extrabold text-[#0B1546] leading-tight block"
               placeholder="View the Full Report Online"
             />
             <EditableText
               field="qrSubtext"
               multiline
               as="p"
-              className="text-[6.8px] text-slate-500 leading-tight mt-1 block max-w-[150px] mx-auto"
+              className="text-[7px] text-slate-500 leading-tight mt-1 block max-w-[155px] mx-auto"
               placeholder="Scan the QR code to access the digital version of this report."
             />
           </div>
@@ -439,7 +446,7 @@ export function CanvasBackCoverPage({
           </div>
 
           {/* Scan Button Pill */}
-          <div className="bg-[#0B1A48] text-white px-3 py-1 rounded-full flex items-center gap-1.5 text-[7px] font-bold tracking-wider uppercase shadow-xs">
+          <div className="bg-[#0B1A48] text-white px-3.5 py-1 rounded-full flex items-center gap-1.5 text-[7px] font-bold tracking-wider uppercase shadow-xs">
             <Scan className="w-2.5 h-2.5 text-cyan-400" />
             <span>SCAN TO VIEW REPORT</span>
           </div>
@@ -449,7 +456,7 @@ export function CanvasBackCoverPage({
             Or visit{" "}
             <EditableText
               field="qrUrl"
-              className="text-[#1A38D6] font-bold hover:underline"
+              className="text-[#1A56DB] font-bold hover:underline"
               placeholder="https://reports.sitesafe.ai"
             />
           </div>
