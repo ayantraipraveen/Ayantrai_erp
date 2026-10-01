@@ -210,17 +210,26 @@ export interface ChartSeriesItem {
 }
 
 export const MULTI_SERIES_CHART_CONFIG: Partial<Record<GraphType, ChartSeriesItem[]>> = {
+  "bar": [
+    { id: "s1", label: "Series 1", defaultColor: "#9D61FF" },
+  ],
+  "line": [
+    { id: "s1", label: "Line 1", defaultColor: "#9D61FF" },
+  ],
+  "area": [
+    { id: "s1", label: "Area 1", defaultColor: "#9D61FF" },
+  ],
   "multi-line": [
-    { id: "zoneA", label: "Line 1 (Zone A)", defaultColor: "#9D61FF" },
-    { id: "zoneB", label: "Line 2 (Zone B)", defaultColor: "#10B981" },
+    { id: "zoneA", label: "Line 1", defaultColor: "#9D61FF" },
+    { id: "zoneB", label: "Line 2", defaultColor: "#10B981" },
   ],
   "grouped-bar": [
-    { id: "actual", label: "Series 1 (Actual)", defaultColor: "#9D61FF" },
-    { id: "target", label: "Series 2 (Target)", defaultColor: "#F43F5E" },
+    { id: "actual", label: "Series 1", defaultColor: "#9D61FF" },
+    { id: "target", label: "Series 2", defaultColor: "#F43F5E" },
   ],
   "combo": [
-    { id: "volume", label: "Bars (Volume)", defaultColor: "#3B82F6" },
-    { id: "trend", label: "Line (Trend)", defaultColor: "#F43F5E" },
+    { id: "volume", label: "Volume (Bars)", defaultColor: "#3B82F6" },
+    { id: "trend", label: "Trend (Line)", defaultColor: "#F43F5E" },
   ],
   "stacked-horizontal": [
     { id: "safe", label: "Safe Hours", defaultColor: "#10B981" },
@@ -293,7 +302,7 @@ export const getChartSeriesConfig = (chartType: GraphType, primaryColor = "#9D61
   if (custom && custom.length > 0) {
     return custom.map((item, idx) => (idx === 0 ? { ...item, defaultColor: primaryColor } : item));
   }
-  return [{ id: "primary", label: "Chart Color", defaultColor: primaryColor }];
+  return [{ id: "primary", label: "Series 1", defaultColor: primaryColor }];
 };
 
 
