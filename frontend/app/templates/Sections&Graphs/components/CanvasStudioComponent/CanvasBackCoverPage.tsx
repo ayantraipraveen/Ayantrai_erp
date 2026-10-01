@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Globe, Mail, MapPin, Edit3, CheckCircle } from "lucide-react";
+import { Globe, Mail, MapPin,Edit3, CheckCircle } from "lucide-react";
 import {
   BackCoverData,
   DEFAULT_BACK_COVER_DATA,

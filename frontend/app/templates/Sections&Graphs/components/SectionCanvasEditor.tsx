@@ -1,15 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import {
-  ArrowLeft,
-  AlertCircle,
-  Edit2,
-  Eye,
-  Save,
-  Undo2,
-  Redo2,
-} from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   CanvasRow,
@@ -86,6 +77,7 @@ import {
   CanvasTableOfContentsPage,
   CanvasBackCoverPage,
 } from "./CanvasStudioComponent";
+import { AlertCircle, ArrowLeft, Edit2, Eye, Redo2, Save, Undo2 } from "lucide-react";
 
 export { PALETTE_RAMPS } from "./constants/chartTypes";
 

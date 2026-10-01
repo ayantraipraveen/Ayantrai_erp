@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import {
   BarChart2,
   Users,
@@ -11,8 +10,6 @@ import {
   FileText,
   Target,
   Layers,
-  Edit3,
-  Sparkles,
 } from "lucide-react";
 import {
   TableOfContentsData,
