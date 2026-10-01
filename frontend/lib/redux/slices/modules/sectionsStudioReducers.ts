@@ -1162,5 +1162,47 @@ export const sectionsStudioReducers = {
     },
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Cover Page & Back Cover Reducers
+    updateCoverPageData: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        data: Partial<import("../../types/reportModuleTypes").CoverPageData>;
+      }>
+    ) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.coverPageData = { ...(sec.coverPageData || {
+          reportType: "Monthly Report",
+          subtitle: "WORKFORCE INSIGHTS\nFOR A SAFER TOMORROW",
+          reportingPeriod: "01 September 2025 – 30 September 2025",
+          projectSite: "ABC Infrastructure Project",
+          preparedFor: "Project Head",
+          preparedBy: "AyantrAI – Sitesafe Team",
+        }), ...action.payload.data };
+        sec.updatedAt = "Just now";
+      }
+    },
+    updateBackCoverData: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        data: Partial<import("../../types/reportModuleTypes").BackCoverData>;
+      }>
+    ) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
+      if (sec) {
+        sec.backCoverData = { ...(sec.backCoverData || {
+          thankYouTitle: "Thank You",
+          thankYouMessage: "for being a part of our safety journey.",
+          companyName: "AyantrAI Private Limited",
+          websiteUrl: "www.ayantrai.com  |  www.sitesafe.ai",
+          email: "hello@ayantrai.com",
+          location: "Noida, Uttar Pradesh, India",
+        }), ...action.payload.data };
+        sec.updatedAt = "Just now";
+      }
+    },
+
     // Global Universal Toast Reducers
 };

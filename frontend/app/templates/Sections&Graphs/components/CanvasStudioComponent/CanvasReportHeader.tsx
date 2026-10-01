@@ -52,7 +52,7 @@ export function CanvasReportHeader({
       style={{ backgroundColor: paperTone === "dark" ? "#0f172a" : undefined }}
     >
       <div className="relative grid min-h-[50px] grid-cols-[minmax(0,85px)_minmax(0,1.5fr)_minmax(0,1.2fr)_48px] items-stretch gap-0 px-0 py-0 overflow-visible">
-        <div className="flex min-w-0 flex-col justify-center px-1.5 py-0.5">
+        <div className="flex min-w-0 flex-col justify-center px-1 py-0">
           <Image
             src="/sitesafe-header-logo.svg"
             alt="Sitesafe by AyantrAI"
@@ -64,7 +64,7 @@ export function CanvasReportHeader({
         </div>
 
         <div className={`min-w-0 flex flex-col justify-center ${taglineZ}`}>
-          <div className="flex flex-col gap-0.5 border-l-2 border-[#2454d8] pl-2.5 px-3 py-2">
+          <div className="flex flex-col gap-0 border-l-2 border-[#2454d8] pl-2 px-2 py-1">
             <CanvasInlineEditableText
               value={headerValues.taglinePrimary}
               html={headerValues.taglinePrimaryHtml}
@@ -92,7 +92,7 @@ export function CanvasReportHeader({
           </div>
         </div>
 
-        <div className={`min-w-0 flex flex-col justify-center px-2 py-2 ${titleZ}`}>
+        <div className={`min-w-0 flex flex-col justify-center px-1.5 py-1 ${titleZ}`}>
           <div className="relative" style={editingHeaderValue !== "title" ? headerTitleTextStyle : undefined}>
             <CanvasInlineEditableText
               value={headerValues.title}
@@ -121,7 +121,7 @@ export function CanvasReportHeader({
             onSave={(plain, html) => onSave("period", plain, html)}
             onCancel={onCancel}
           />
-          <div className="mt-1 h-0.5 w-10 rounded-full bg-[#2454d8]" />
+          <div className="mt-0.5 h-0.5 w-8 rounded-full bg-[#2454d8]" />
         </div>
 
         {/* Page Badge - flush right, full height */}

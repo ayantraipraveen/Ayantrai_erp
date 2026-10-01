@@ -38,7 +38,7 @@ export function CanvasReportFooter({
 
   return (
     <footer
-      className="relative z-20 flex-shrink-0 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-4 pb-2"
+      className="relative z-20 flex-shrink-0 mt-auto grid grid-cols-[1.1fr_1fr_1.1fr] items-center gap-6 border-t border-slate-200/80 dark:border-zinc-800/60 px-0 pt-1 pb-.5"
       style={{ backgroundColor: getPaperToneColor(paperTone) }}
     >
       <div className={`min-w-0 ${leftZ}`}>

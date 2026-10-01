@@ -57,6 +57,8 @@ import {
   ChartAxisConfig,
   ChartCustomizationOptions,
   ChartSeriesConfig,
+  updateCoverPageData,
+  updateBackCoverData,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasSidebar, SidebarAddBlockEvent } from "./CanvasSidebar";
 import {
@@ -78,6 +80,8 @@ import {
   KeyInsightModal,
   BadgeStripModal,
 } from "./SectionCanvasModals";
+import { CanvasCoverPage } from "./CanvasStudioComponent/CanvasCoverPage";
+import { CanvasBackCoverPage } from "./CanvasStudioComponent/CanvasBackCoverPage";
 
 export { PALETTE_RAMPS } from "./constants/chartTypes";
 
@@ -1441,10 +1445,26 @@ export default function SectionCanvasEditor({
             setEditDesc(section.description);
             setEditHeaderOpen(true);
           }}
+          beforeContent={
+            <CanvasCoverPage
+              coverPageData={section.coverPageData}
+              activeIsPreview={isPreview}
+              onUpdate={(data) => dispatch(updateCoverPageData({ sectionId, data }))}
+            />
+          }
+          afterContent={
+            <CanvasBackCoverPage
+              backCoverData={section.backCoverData}
+              activeIsPreview={isPreview}
+              onUpdate={(data) => dispatch(updateBackCoverData({ sectionId, data }))}
+            />
+          }
         />
       </div>
 
+
       {/* ── Dialog Modals (Secondary Deep Configuration) ── */}
+
       <EditSectionHeaderModal
         isOpen={editHeaderOpen}
         onClose={() => setEditHeaderOpen(false)}

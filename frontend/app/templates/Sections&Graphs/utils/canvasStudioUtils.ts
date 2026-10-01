@@ -1,3 +1,4 @@
+import React from "react";
 import {
   CanvasRow,
   CanvasRowStyle,
@@ -142,6 +143,10 @@ export interface CanvasStudioProps {
   onReorderStacked?: (rowId: string, parentCellId: string, direction: "up" | "down", index: number) => void;
   activeViewPageIndex?: number;
   onViewPageIndexChange?: (pageIdx: number) => void;
+  /** Rendered before the first content page inside the scroll desk (e.g. Cover Page) */
+  beforeContent?: React.ReactNode;
+  /** Rendered after the last content page inside the scroll desk (e.g. Back Cover) */
+  afterContent?: React.ReactNode;
 }
 
 export interface HeaderTitleFormat {

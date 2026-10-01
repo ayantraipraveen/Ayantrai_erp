@@ -193,6 +193,8 @@ export const {
   setSelectedWatermarkId,
   setDefaultWatermark,
   assignWatermarkToSections,
+  updateCoverPageData,
+  updateBackCoverData,
 } = reportModuleSlice.actions;
 
 export default reportModuleSlice.reducer;

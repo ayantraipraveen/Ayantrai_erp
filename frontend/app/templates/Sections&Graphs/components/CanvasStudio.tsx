@@ -117,6 +117,8 @@ export function CanvasStudio({
   onReorderStacked,
   activeViewPageIndex: externalActiveViewPageIndex,
   onViewPageIndexChange,
+  beforeContent,
+  afterContent,
 }: CanvasStudioProps) {
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
@@ -1038,6 +1040,13 @@ export function CanvasStudio({
               : `${Math.round(activePageWidth * Math.max(1, activeZoom))}px`,
           }}
         >
+          {/* Before Content Slot — e.g. Cover Page */}
+          {beforeContent && (
+            <div className="flex flex-col items-center pb-4">
+              {beforeContent}
+            </div>
+          )}
+
           <SortableContext
             items={rows.map((r) => r.id)}
             strategy={verticalListSortingStrategy}
@@ -1436,6 +1445,13 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
               );
             })}
           </SortableContext>
+
+          {/* After Content Slot — e.g. Back Cover Page */}
+          {afterContent && (
+            <div className="flex flex-col items-center pt-4">
+              {afterContent}
+            </div>
+          )}
         </div>
       </div>
 

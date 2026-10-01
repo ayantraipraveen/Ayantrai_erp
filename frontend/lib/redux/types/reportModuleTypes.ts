@@ -536,6 +536,42 @@ export interface SectionTitleStyle {
   letterSpacing?: string;
 }
 
+export interface CoverPageData {
+  reportType: string;
+  subtitle: string;
+  reportingPeriod: string;
+  projectSite: string;
+  preparedFor: string;
+  preparedBy: string;
+}
+
+export const DEFAULT_COVER_PAGE_DATA: CoverPageData = {
+  reportType: "Monthly Report",
+  subtitle: "WORKFORCE INSIGHTS\nFOR A SAFER TOMORROW",
+  reportingPeriod: "01 September 2025 – 30 September 2025",
+  projectSite: "ABC Infrastructure Project",
+  preparedFor: "Project Head",
+  preparedBy: "AyantrAI – Sitesafe Team",
+};
+
+export interface BackCoverData {
+  thankYouTitle: string;
+  thankYouMessage: string;
+  companyName: string;
+  websiteUrl: string;
+  email: string;
+  location: string;
+}
+
+export const DEFAULT_BACK_COVER_DATA: BackCoverData = {
+  thankYouTitle: "Thank You",
+  thankYouMessage: "for being a part of our safety journey.",
+  companyName: "AyantrAI Private Limited",
+  websiteUrl: "www.ayantrai.com  |  www.sitesafe.ai",
+  email: "hello@ayantrai.com",
+  location: "Noida, Uttar Pradesh, India",
+};
+
 export interface LibrarySection {
   id: string;
   name: string;
@@ -557,6 +593,9 @@ export interface LibrarySection {
   // New canvas layout (row-based Canva-like editor)
   canvasRows?: CanvasRow[];
   watermarkId?: string;
+  // Fixed first/last page data
+  coverPageData?: CoverPageData;
+  backCoverData?: BackCoverData;
 }
 
 export interface WatermarkItem {
