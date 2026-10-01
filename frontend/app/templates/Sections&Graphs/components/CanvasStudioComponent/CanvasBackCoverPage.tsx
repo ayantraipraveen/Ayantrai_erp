@@ -296,157 +296,162 @@ export function CanvasBackCoverPage({
       </div>
 
       {/* ── 2. MIDDLE SECTION: CARDS & CAPABILITIES (Height = 265px) ── */}
-      <div className="w-full h-[265px] px-6 py-3.5 bg-[#FAFBFD] flex flex-col justify-between box-border">
-        {/* Top Product Card: Sitesafe */}
-        <div>
-          <div className="text-[9.5px] font-black uppercase tracking-wider text-[#0B1546] mb-1.5">
-            Our Products
-          </div>
-          <div className="bg-white rounded-xl border border-blue-100 shadow-xs p-2.5 flex items-center justify-between gap-3">
-            {/* Left: Yellow 3D Helmet & Brand */}
-            <div className="flex items-center gap-2.5 flex-shrink-0">
-              <div className="w-10 h-9 relative flex items-center justify-center flex-shrink-0">
-                <Image
-                  src="/images/sitesafe-helmet-3d.png"
-                  alt="Sitesafe Helmet"
-                  width={42}
-                  height={36}
-                  className="object-contain"
+      <div className="w-full h-[265px] px-6 py-3 bg-[#FAFBFD] grid grid-cols-[1.58fr_1fr] gap-3.5 items-stretch box-border">
+        {/* Left Column: Our Products & Our Capabilities */}
+        <div className="flex flex-col justify-between py-0.5">
+          {/* Top: Our Products */}
+          <div>
+            <div className="text-[10px] font-black text-[#0B1546] mb-1">
+              Our Products
+            </div>
+            <div className="bg-white rounded-xl border border-blue-100/80 shadow-xs p-2.5 flex items-center justify-between gap-2.5">
+              {/* Left: Yellow 3D Helmet & Brand */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="w-9 h-8 relative flex items-center justify-center flex-shrink-0">
+                  <Image
+                    src="/images/sitesafe-helmet-3d.png"
+                    alt="Sitesafe Helmet"
+                    width={38}
+                    height={32}
+                    className="object-contain"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <EditableText
+                    field="productTitle"
+                    className="text-[13px] font-black text-[#0B1546] leading-none block"
+                    placeholder="Sitesafe"
+                  />
+                  <EditableText
+                    field="productTagline"
+                    className="text-[6.8px] font-semibold text-slate-500 mt-0.5 block"
+                    placeholder="Smart PPE. Safer Sites."
+                  />
+                </div>
+              </div>
+
+              {/* Vertical Divider */}
+              <div className="h-7 w-px bg-slate-200 flex-shrink-0" />
+
+              {/* Center: Description */}
+              <div className="flex-1 min-w-0">
+                <EditableText
+                  field="productDescription"
+                  multiline
+                  as="p"
+                  className="text-[6.8px] text-slate-600 leading-snug block"
+                  placeholder="AI + IoT powered safety and workforce management platform for construction, manufacturing, mining and industrial sites."
                 />
               </div>
-              <div className="flex flex-col">
-                <EditableText
-                  field="productTitle"
-                  className="text-[15px] font-black text-[#0B1546] leading-none block"
-                  placeholder="Sitesafe"
-                />
-                <EditableText
-                  field="productTagline"
-                  className="text-[7.5px] font-semibold text-slate-500 mt-0.5 block"
-                  placeholder="Smart PPE. Safer Sites."
-                />
+
+              {/* Right: Blue Arrow */}
+              <div className="w-4 h-4 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                <ArrowRight className="w-2.5 h-2.5" />
               </div>
             </div>
-
-            {/* Vertical Divider */}
-            <div className="h-8 w-px bg-slate-200 flex-shrink-0" />
-
-            {/* Center: Description */}
-            <div className="flex-1 min-w-0">
-              <EditableText
-                field="productDescription"
-                multiline
-                rows={2}
-                className="text-[7.5px] text-slate-600 leading-snug block"
-                placeholder="AI + IoT powered safety and workforce management platform for construction, manufacturing, mining and industrial sites."
-              />
-            </div>
-
-            {/* Right: Blue Arrow */}
-            <div className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-              <ArrowRight className="w-3 h-3" />
-            </div>
           </div>
-        </div>
 
-        {/* Bottom Split: Our Capabilities (Left) & QR Code Card (Right) */}
-        <div className="grid grid-cols-[1.55fr_1fr] gap-3 mt-1.5 items-stretch flex-1 min-h-0">
-          {/* Left Column: Our Capabilities */}
-          <div className="flex flex-col justify-between py-0.5">
-            <div className="text-[9.5px] font-black uppercase tracking-wider text-[#0B1546]">
+          {/* Bottom: Our Capabilities */}
+          <div>
+            <div className="text-[10px] font-black text-[#0B1546] mb-1">
               Our Capabilities
             </div>
-
-            <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center justify-between pt-0.5">
               {/* Cap 1: AI & IoT Solutions */}
               <div className="flex flex-col items-center text-center flex-1">
-                <div className="text-[#1A56DB] mb-1">
-                  <Cpu className="w-4 h-4 stroke-[1.75]" />
+                <div className="text-[#1A56DB] mb-1 flex items-center justify-center h-4">
+                  <svg className="w-4 h-4 text-[#1A56DB]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2" />
+                    <path d="M2 9h2M2 15h2M20 9h2M20 15h2M9 2v2M15 2v2M9 20v2M15 20v2" />
+                    <text x="12" y="14.5" textAnchor="middle" fontSize="6.5" fontWeight="900" fill="currentColor" stroke="none">AI</text>
+                  </svg>
                 </div>
-                <span className="text-[7px] font-bold text-slate-700 leading-tight">
+                <span className="text-[6.8px] font-bold text-slate-700 leading-tight">
                   AI & IoT<br />Solutions
                 </span>
               </div>
 
-              <div className="h-7 w-px bg-slate-200" />
+              <div className="h-6 w-px bg-slate-200" />
 
               {/* Cap 2: Real-time Insights */}
               <div className="flex flex-col items-center text-center flex-1">
-                <div className="text-[#1A56DB] mb-1">
-                  <Cloud className="w-4 h-4 stroke-[1.75]" />
+                <div className="text-[#1A56DB] mb-1 flex items-center justify-center h-4">
+                  <Cloud className="w-4 h-4 stroke-[1.8]" />
                 </div>
-                <span className="text-[7px] font-bold text-slate-700 leading-tight">
+                <span className="text-[6.8px] font-bold text-slate-700 leading-tight">
                   Real-time Insights<br /><span className="text-slate-400 font-normal">(2–5 min delay)</span>
                 </span>
               </div>
 
-              <div className="h-7 w-px bg-slate-200" />
+              <div className="h-6 w-px bg-slate-200" />
 
               {/* Cap 3: Scalable Platform */}
               <div className="flex flex-col items-center text-center flex-1">
-                <div className="text-[#1A56DB] mb-1">
-                  <TrendingUp className="w-4 h-4 stroke-[1.75]" />
+                <div className="text-[#1A56DB] mb-1 flex items-center justify-center h-4">
+                  <TrendingUp className="w-4 h-4 stroke-[1.8]" />
                 </div>
-                <span className="text-[7px] font-bold text-slate-700 leading-tight">
+                <span className="text-[6.8px] font-bold text-slate-700 leading-tight">
                   Scalable<br />Platform
                 </span>
               </div>
 
-              <div className="h-7 w-px bg-slate-200" />
+              <div className="h-6 w-px bg-slate-200" />
 
               {/* Cap 4: Built for Real-World */}
               <div className="flex flex-col items-center text-center flex-1">
-                <div className="text-[#1A56DB] mb-1">
-                  <HardHat className="w-4 h-4 stroke-[1.75]" />
+                <div className="text-[#1A56DB] mb-1 flex items-center justify-center h-4">
+                  <HardHat className="w-4 h-4 stroke-[1.8]" />
                 </div>
-                <span className="text-[7px] font-bold text-slate-700 leading-tight">
+                <span className="text-[6.8px] font-bold text-slate-700 leading-tight">
                   Built for<br />Real-World Environments
                 </span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right Column: View the Full Report Online Card */}
-          <div className="bg-[#EEF4FF] rounded-xl border border-blue-100/80 p-2.5 flex flex-col items-center text-center justify-between shadow-xs">
-            <div>
-              <EditableText
-                field="qrHeading"
-                className="text-[9px] font-extrabold text-[#0B1546] leading-tight block"
-                placeholder="View the Full Report Online"
-              />
-              <EditableText
-                field="qrSubtext"
-                className="text-[6.8px] text-slate-500 leading-tight mt-0.5 block"
-                placeholder="Scan the QR code to access the digital version of this report."
-              />
-            </div>
+        {/* Right Column: View the Full Report Online Card (Spans full height!) */}
+        <div className="bg-[#EEF4FF] rounded-2xl border border-blue-200/60 p-3 flex flex-col items-center text-center justify-between shadow-xs">
+          <div>
+            <EditableText
+              field="qrHeading"
+              className="text-[10px] font-black text-[#0B1546] leading-tight block"
+              placeholder="View the Full Report Online"
+            />
+            <EditableText
+              field="qrSubtext"
+              multiline
+              as="p"
+              className="text-[6.8px] text-slate-500 leading-tight mt-1 block max-w-[150px] mx-auto"
+              placeholder="Scan the QR code to access the digital version of this report."
+            />
+          </div>
 
-            {/* QR Code Graphic */}
-            <div className="relative w-16 h-16 bg-white p-1 rounded-lg border border-blue-200/60 shadow-xs my-0.5">
-              <Image
-                src="/images/back-cover-qr.png"
-                alt="Scan to View Report"
-                fill
-                priority
-                className="object-contain p-0.5"
-              />
-            </div>
+          {/* QR Code Graphic Card with official AyantrAI purple mark */}
+          <div className="relative w-20 h-20 bg-white p-1.5 rounded-xl border border-blue-100 shadow-xs my-1">
+            <Image
+              src="/images/ayantrai-back-cover-qr.png"
+              alt="Scan to View Report"
+              fill
+              priority
+              className="object-contain p-0.5"
+            />
+          </div>
 
-            {/* Scan Button Pill */}
-            <div className="bg-[#0B1A48] text-white px-2 py-0.5 rounded-full flex items-center gap-1 text-[7px] font-bold tracking-wider uppercase shadow-xs">
-              <Scan className="w-2.5 h-2.5 text-cyan-400" />
-              <span>SCAN TO VIEW REPORT</span>
-            </div>
+          {/* Scan Button Pill */}
+          <div className="bg-[#0B1A48] text-white px-3 py-1 rounded-full flex items-center gap-1.5 text-[7px] font-bold tracking-wider uppercase shadow-xs">
+            <Scan className="w-2.5 h-2.5 text-cyan-400" />
+            <span>SCAN TO VIEW REPORT</span>
+          </div>
 
-            {/* Link Text */}
-            <div className="text-[6.5px] text-slate-500 leading-tight mt-0.5">
-              Or visit{" "}
-              <EditableText
-                field="qrUrl"
-                className="text-[#1A38D6] font-bold hover:underline"
-                placeholder="https://reports.sitesafe.ai"
-              />
-            </div>
+          {/* Link Text */}
+          <div className="text-[6.8px] text-slate-500 leading-tight">
+            Or visit{" "}
+            <EditableText
+              field="qrUrl"
+              className="text-[#1A38D6] font-bold hover:underline"
+              placeholder="https://reports.sitesafe.ai"
+            />
           </div>
         </div>
       </div>
