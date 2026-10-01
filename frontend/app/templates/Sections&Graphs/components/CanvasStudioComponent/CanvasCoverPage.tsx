@@ -85,103 +85,106 @@ export function CanvasCoverPage({
         maxHeight: "842px",
       }}
     >
-      {/* ── 1. RIGHT HERO GRAPHIC (Flush with top & banner, 0 ghosting on left) ── */}
+      {/* ── 1. RIGHT HERO GRAPHIC (Flush with top & banner at y=652px, 0 ghosting) ── */}
       <div
-        className="absolute top-0 right-0 pointer-events-none z-0"
-        style={{ width: "383px", height: "724px" }}
+        className="absolute top-0 left-0 w-[595px] h-[652px] pointer-events-none z-0"
       >
         <Image
-          src="/images/cover-hero-cropped.png"
+          src="/images/cover-hero-fullpage.png"
           alt="Hero visual"
           fill
           priority
-          className="object-cover object-right-bottom"
+          className="object-cover"
         />
       </div>
 
-      {/* ── 2. BOTTOM STAT BANNER (100% Code & Tailwind CSS Layout, No Image) ── */}
+      {/* ── 2. BOTTOM STAT BANNER (100% Code & Tailwind CSS Layout, No Image) ──
+          Exact PDF proportions: height = 105px, from y=652px to y=757px (bottom: 85px)
+      */}
       <div
-        className="absolute left-0 right-0 z-10 flex items-center px-4 bg-[#102249]"
-        style={{ bottom: "46px", height: "72px" }}
+        className="absolute left-0 right-0 z-10 flex items-center px-6 bg-[#0E1E3F]"
+        style={{ bottom: "85px", height: "105px" }}
       >
         {/* Metric 1: Higher Compliance */}
         <div className="flex-1 min-w-0 flex flex-col items-center justify-center text-center">
-          <Shield className="w-[18px] h-[18px] text-white stroke-[1.8] mb-1.5" />
-          <span className="text-[7.5px] font-bold text-white tracking-[0.14em] leading-tight uppercase">
+          <Shield className="w-5 h-5 text-white stroke-[1.8] mb-2" />
+          <span className="text-[8.5px] font-bold text-white tracking-[0.14em] leading-tight uppercase">
             HIGHER<br />COMPLIANCE
           </span>
         </div>
 
         {/* Divider 1 */}
-        <div className="h-7 w-[1px] bg-white/20 flex-shrink-0" />
+        <div className="h-10 w-[1px] bg-white/20 flex-shrink-0" />
 
         {/* Metric 2: Safer Workforce */}
         <div className="flex-1 min-w-0 flex flex-col items-center justify-center text-center">
-          <Users className="w-[18px] h-[18px] text-white stroke-[1.8] mb-1.5" />
-          <span className="text-[7.5px] font-bold text-white tracking-[0.14em] leading-tight uppercase">
+          <Users className="w-5 h-5 text-white stroke-[1.8] mb-2" />
+          <span className="text-[8.5px] font-bold text-white tracking-[0.14em] leading-tight uppercase">
             SAFER<br />WORKFORCE
           </span>
         </div>
 
         {/* Divider 2 */}
-        <div className="h-7 w-[1px] bg-white/20 flex-shrink-0" />
+        <div className="h-10 w-[1px] bg-white/20 flex-shrink-0" />
 
         {/* Metric 3: Data-Driven Decisions */}
         <div className="flex-1 min-w-0 flex flex-col items-center justify-center text-center">
-          <BarChart3 className="w-[18px] h-[18px] text-white stroke-[1.8] mb-1.5" />
-          <span className="text-[7.5px] font-bold text-white tracking-[0.14em] leading-tight uppercase">
+          <BarChart3 className="w-5 h-5 text-white stroke-[1.8] mb-2" />
+          <span className="text-[8.5px] font-bold text-white tracking-[0.14em] leading-tight uppercase">
             DATA-DRIVEN<br />DECISIONS
           </span>
         </div>
 
         {/* Divider 3 */}
-        <div className="h-7 w-[1px] bg-white/20 flex-shrink-0" />
+        <div className="h-10 w-[1px] bg-white/20 flex-shrink-0" />
 
         {/* Metric 4: A Stronger Tomorrow */}
         <div className="flex-1 min-w-0 flex flex-col items-center justify-center text-center">
-          <Leaf className="w-[18px] h-[18px] text-white stroke-[1.8] mb-1.5" />
-          <span className="text-[7.5px] font-bold text-white tracking-[0.14em] leading-tight uppercase">
+          <Leaf className="w-5 h-5 text-white stroke-[1.8] mb-2" />
+          <span className="text-[8.5px] font-bold text-white tracking-[0.14em] leading-tight uppercase">
             A STRONGER<br />TOMORROW
           </span>
         </div>
 
         {/* Right Geometric Facet Wedge (matches the slant in the reference) */}
-        <div className="absolute right-0 top-0 bottom-0 w-8 overflow-hidden pointer-events-none">
-          <svg viewBox="0 0 32 72" preserveAspectRatio="none" className="w-full h-full">
-            <polygon points="6,0 32,0 32,72 16,72" fill="#3B5CD7" opacity="0.6" />
-            <polygon points="16,0 32,0 32,72 24,72" fill="#6B8AF6" opacity="0.85" />
+        <div className="absolute right-0 top-0 bottom-0 w-12 overflow-hidden pointer-events-none">
+          <svg viewBox="0 0 48 105" preserveAspectRatio="none" className="w-full h-full">
+            <polygon points="12,0 48,0 48,105 24,105" fill="#3B5CD7" opacity="0.6" />
+            <polygon points="26,0 48,0 48,105 38,105" fill="#6B8AF6" opacity="0.85" />
           </svg>
         </div>
       </div>
 
-      {/* ── 3. BOTTOM FOOTER STRIP (Consistent HTML/CSS with all report pages) ── */}
+      {/* ── 3. BOTTOM FOOTER STRIP (Consistent HTML/CSS with all report pages) ──
+          Exact PDF proportions: height = 85px, from y=757px to y=842px (bottom: 0)
+      */}
       <footer
-        className="absolute left-0 right-0 bottom-0 z-20 bg-white border-t border-slate-200 px-8 flex items-center justify-between"
-        style={{ height: "46px" }}
+        className="absolute left-0 right-0 bottom-0 z-20 bg-white border-t border-slate-200/80 px-9 flex items-center justify-between"
+        style={{ height: "85px" }}
       >
         {/* Left: Company & Websites */}
         <div className="min-w-0 flex flex-col justify-center">
-          <span className="text-[9px] font-bold text-[#1836a0] tracking-wider uppercase leading-tight">
+          <span className="text-[9.5px] font-bold text-slate-800 tracking-wider uppercase leading-tight">
             AYANTRAI PRIVATE LIMITED
           </span>
-          <span className="text-[7.5px] font-semibold text-[#1836a0]/80 leading-tight mt-0.5">
+          <span className="text-[8px] font-medium text-slate-500 leading-tight mt-1">
             www.ayantrai.com&nbsp;&nbsp;|&nbsp;&nbsp;www.sitesafe.ai
           </span>
         </div>
 
         {/* Center: Accent divider bar */}
-        <div className="h-[2px] w-28 bg-[#1836a0]/50 mx-4 flex-shrink-0" />
+        <div className="h-[1.5px] w-32 bg-slate-300 mx-4 flex-shrink-0" />
 
         {/* Right: Safety Quote */}
         <div className="text-right flex-shrink-0">
-          <span className="text-[8.5px] font-semibold italic text-[#1836a0]">
+          <span className="text-[9px] font-semibold italic text-slate-700">
             &ldquo;Every Worker Returns Home Safe&rdquo;
           </span>
         </div>
       </footer>
 
       {/* ── 4. TOP-LEFT BRANDING LOGOS (Locked Position) ── */}
-      <div className="absolute left-[34px] top-[26px] z-20 flex items-center gap-3">
+      <div className="absolute left-[36px] top-[30px] z-20 flex items-center gap-3">
         {/* Logo 1: AyantrAI */}
         <div className="relative h-11 w-24 flex items-center">
           <Image
@@ -189,13 +192,13 @@ export function CanvasCoverPage({
             alt="AyantrAI"
             width={96}
             height={44}
-            className="object-contain object-left max-h-11 w-auto"
+            className="object-contain object-left max-h-15 w-auto"
             priority
           />
         </div>
 
         {/* Divider line */}
-        <div className="w-[1.5px] h-8 bg-slate-300 mx-0.5" />
+        <div className="w-[1.5px] h-15 bg-slate-300 mx-0.5" />
 
         {/* Logo 2: Sitesafe (using the user's provided shield logo!) */}
         <div className="relative h-12 w-28 flex items-center">
@@ -204,16 +207,16 @@ export function CanvasCoverPage({
             alt="Sitesafe - People Safer. Sites Smarter."
             width={112}
             height={48}
-            className="object-contain object-left max-h-12 w-auto"
+            className="object-contain object-left max-h-15 w-auto"
             priority
           />
         </div>
       </div>
 
-      {/* ── 5. TITLE BLOCK (Locked Position: top 160px, zero layout shift) ── */}
+      {/* ── 5. TITLE BLOCK (Locked Position: top 175px, zero layout shift) ── */}
       <div
-        className="absolute left-[34px] top-[160px] z-20"
-        style={{ width: "260px" }}
+        className="absolute left-[36px] top-[175px] z-20"
+        style={{ width: "245px" }}
       >
         {isTitleEditing ? (
           <textarea
@@ -229,13 +232,13 @@ export function CanvasCoverPage({
               }
               if (e.key === "Escape") cancelEdit();
             }}
-            className="w-full bg-blue-50/60 border-b-2 border-[#1E2B58] outline-none resize-none p-0 m-0 text-[#1E2B58] font-black text-[38px] leading-[0.98] tracking-tight block"
+            className="w-full bg-blue-50/60 border-b-2 border-[#1E2B58] outline-none resize-none p-0 m-0 text-[#1E2B58] font-black text-[42px] leading-[0.95] tracking-tight block"
             placeholder="Monthly&#10;Report"
           />
         ) : (
           <div
             onDoubleClick={() => startEdit("reportType")}
-            className={`font-black text-[#1E2B58] text-[38px] leading-[0.98] tracking-tight whitespace-pre-line cursor-text transition-colors ${
+            className={`font-black text-[#1E2B58] text-[42px] leading-[0.95] tracking-tight whitespace-pre-line cursor-text transition-colors ${
               !activeIsPreview ? "hover:bg-blue-50/50 rounded -mx-1 px-1" : ""
             }`}
             title={activeIsPreview ? undefined : "Double-click to edit title"}
@@ -245,13 +248,13 @@ export function CanvasCoverPage({
         )}
       </div>
 
-      {/* ── 6. SOLID NAVY HORIZONTAL ACCENT LINE (Locked Position: top 256px) ── */}
-      <div className="absolute left-[34px] top-[256px] z-20 w-14 h-[3.5px] bg-[#1E2B58] rounded-full pointer-events-none" />
+      {/* ── 6. SOLID NAVY HORIZONTAL ACCENT LINE (Locked Position: top 276px) ── */}
+      <div className="absolute left-[36px] top-[276px] z-20 w-14 h-[3.5px] bg-[#1E2B58] rounded-full pointer-events-none" />
 
-      {/* ── 7. SUBTITLE BLOCK (Locked Position: top 272px, zero layout shift) ── */}
+      {/* ── 7. SUBTITLE BLOCK (Locked Position: top 294px, zero layout shift) ── */}
       <div
-        className="absolute left-[34px] top-[272px] z-20"
-        style={{ width: "260px" }}
+        className="absolute left-[36px] top-[294px] z-20"
+        style={{ width: "245px" }}
       >
         {isSubtitleEditing ? (
           <textarea
@@ -283,15 +286,15 @@ export function CanvasCoverPage({
         )}
       </div>
 
-      {/* ── 8. METADATA ROWS (Locked Position: top 335px, zero layout shift, no truncation) ── */}
+      {/* ── 8. METADATA ROWS (Locked Position: top 355px, zero layout shift, no truncation) ── */}
       <div
-        className="absolute left-[34px] top-[335px] z-20 flex flex-col gap-3"
-        style={{ width: "310px" }}
+        className="absolute left-[36px] top-[355px] z-20 flex flex-col gap-3.5"
+        style={{ width: "320px" }}
       >
         {metaRows.map(({ icon: Icon, label, field }) => {
           const isRowEditing = editing?.field === field;
           return (
-            <div key={field} className="h-[36px] flex items-center gap-3 relative group">
+            <div key={field} className="h-[38px] flex items-center gap-3 relative group">
               {/* Ice-blue circular pill */}
               <div
                 className="w-8 h-8 rounded-full bg-[#E5EDF8] flex items-center justify-center flex-shrink-0 text-[#1E2B58] shadow-sm pointer-events-none"
@@ -301,7 +304,7 @@ export function CanvasCoverPage({
 
               {/* Text Area (Fixed height, inline identical typography editor) */}
               <div className="flex-1 min-w-0 h-full flex flex-col justify-center">
-                <div className="text-[8px] font-medium text-slate-500 uppercase tracking-wide leading-none mb-1 pointer-events-none">
+                <div className="text-[8.5px] font-medium text-slate-500 leading-none mb-1 pointer-events-none">
                   {label}
                 </div>
 
@@ -315,13 +318,13 @@ export function CanvasCoverPage({
                       if (e.key === "Enter") commitEdit();
                       if (e.key === "Escape") cancelEdit();
                     }}
-                    className="w-full bg-blue-50/60 border-b border-[#1E2B58] outline-none p-0 m-0 text-[11px] font-bold text-[#1E2B58] leading-tight"
+                    className="w-full bg-blue-50/60 border-b border-[#1E2B58] outline-none p-0 m-0 text-[11.5px] font-bold text-[#1E2B58] leading-tight"
                     placeholder={label}
                   />
                 ) : (
                   <div
                     onDoubleClick={() => startEdit(field)}
-                    className={`text-[11px] font-bold text-[#1E2B58] leading-tight whitespace-nowrap cursor-text transition-colors ${
+                    className={`text-[11.5px] font-bold text-[#1E2B58] leading-tight whitespace-nowrap cursor-text transition-colors ${
                       !activeIsPreview
                         ? "hover:bg-blue-50/50 rounded -mx-0.5 px-0.5"
                         : ""
