@@ -167,8 +167,7 @@ export function CanvasTableOfContentsPage({
         
         {/* ── LEFT HERO CARD (Worker in high-vis vest & sunset crane) ── */}
         <div
-          className="relative rounded-2xl overflow-hidden shadow-md flex-shrink-0"
-          style={{ width: "162px", height: "720px" }}
+          className="relative rounded-2xl overflow-hidden shadow-md flex-shrink-0 w-[162px] h-full"
         >
           <Image
             src="/images/toc-sidebar-hero-clean.png"
@@ -369,18 +368,29 @@ export function CanvasTableOfContentsPage({
 
       </div>
 
-      {/* ── BOTTOM RUNNING FOOTER ── */}
-      <footer className="relative z-20 h-[48px] px-8 border-t border-slate-100 flex items-center justify-between text-[8px] bg-white">
-        <div>
-          <span className="font-bold text-[#1D58BA] tracking-wider uppercase">AyantrAI Private Limited</span>
-          <span className="mx-2 text-slate-300">|</span>
-          <span className="text-slate-500 font-medium">People&nbsp;&nbsp;|&nbsp;&nbsp;Technology&nbsp;&nbsp;|&nbsp;&nbsp;Safer Tomorrow</span>
+      {/* ── BOTTOM RUNNING FOOTER (Exact match with Cover Page) ── */}
+      <footer
+        className="relative z-20 bg-white border-t border-slate-200/80 px-9 flex items-center justify-between flex-shrink-0"
+        style={{ height: "85px" }}
+      >
+        {/* Left: Company & Websites */}
+        <div className="min-w-0 flex flex-col justify-center">
+          <span className="text-[9.5px] font-bold text-slate-800 tracking-wider uppercase leading-tight">
+            AYANTRAI PRIVATE LIMITED
+          </span>
+          <span className="text-[8px] font-medium text-slate-500 leading-tight mt-1">
+            www.ayantrai.com&nbsp;&nbsp;|&nbsp;&nbsp;www.sitesafe.ai
+          </span>
         </div>
 
-        <div className="h-[1.5px] w-28 bg-[#1D58BA]/40" />
+        {/* Center: Accent divider bar */}
+        <div className="h-[1.5px] w-32 bg-slate-300 mx-4 flex-shrink-0" />
 
-        <div className="italic text-[#1D58BA] font-semibold">
-          &ldquo;Every Worker Returns Home Safe&rdquo;
+        {/* Right: Safety Quote */}
+        <div className="text-right flex-shrink-0">
+          <span className="text-[9px] font-semibold italic text-slate-700">
+            &ldquo;Every Worker Returns Home Safe&rdquo;
+          </span>
         </div>
       </footer>
 
