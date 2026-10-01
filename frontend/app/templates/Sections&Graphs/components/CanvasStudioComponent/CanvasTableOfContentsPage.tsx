@@ -490,13 +490,7 @@ export function CanvasTableOfContentsPage({
         </div>
       </footer>
 
-      {/* Editor Hint Pill (Editor only) */}
-      {!activeIsPreview && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 bg-white/95 backdrop-blur text-[#0f2044] text-[8px] font-bold px-2.5 py-1 rounded-full shadow border border-slate-200 pointer-events-none">
-          <Edit3 className="w-2.5 h-2.5 text-blue-600" />
-          TABLE OF CONTENTS — double-click text to edit
-        </div>
-      )}
+      
     </div>
   );
 }
