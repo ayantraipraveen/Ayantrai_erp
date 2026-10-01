@@ -34,6 +34,7 @@ export default function ChartRenderer({
   const c2 = chartColors[2] || "#F59E0B";
   const c3 = chartColors[3] || "#F43F5E";
   const c4 = chartColors[4] || "#06B6D4";
+  const DEFAULT_SERIES_PALETTE = [c0, c1, c2, c3, c4, "#8B5CF6", "#EC4899", "#14B8A6", "#F97316", "#06B6D4"];
 
   const effectiveRows = gridRows ?? chart.gridRows;
   const effectiveCols = gridCols ?? chart.gridCols;
@@ -42,6 +43,7 @@ export default function ChartRenderer({
     categories: string[];
     values: number[];
     secondaryValues?: number[];
+    allSeriesValues?: number[][];
     pointColors?: string[];
     yMin: number;
     yMax: number;
@@ -68,7 +70,20 @@ export default function ChartRenderer({
     let categories = fallbackCategories;
     let values = fallbackValues;
     let secondaryValues: number[] | undefined = undefined;
+    let allSeriesValues: number[][] | undefined = undefined;
     let pointColors: string[] | undefined = undefined;
+
+    const getPtSeriesVal = (p: ChartDataPoint, sIdx: number): number => {
+      if (sIdx === 0) return p.value ?? 0;
+      if (sIdx === 1) return p.secondaryValue ?? 0;
+      if (sIdx === 2) return p.tertiaryValue ?? 0;
+      if (sIdx === 3) return p.quaternaryValue ?? 0;
+      if (p.rowValues && p.rowValues[sIdx] !== undefined) {
+        const v = p.rowValues[sIdx];
+        return typeof v === "number" ? v : parseFloat(v as string) || 0;
+      }
+      return 0;
+    };
 
     if (hasPoints && chart.dataPoints) {
       categories = chart.dataPoints.map((p, i) => p.label || `Item ${i + 1}`);
@@ -79,6 +94,23 @@ export default function ChartRenderer({
       if (chart.dataPoints.some((p) => p.color)) {
         pointColors = chart.dataPoints.map((p, i) => p.color || palette[i % palette.length]);
       }
+
+      // Determine series count from chart.series or dataPoints rowValues / values
+      let sCount = chart.series?.length || 1;
+      if (chart.dataPoints.some((p) => p.rowValues && p.rowValues.length > sCount)) {
+        sCount = Math.max(...chart.dataPoints.map((p) => p.rowValues?.length || 0));
+      } else if (chart.dataPoints.some((p) => p.quaternaryValue !== undefined)) {
+        sCount = Math.max(sCount, 4);
+      } else if (chart.dataPoints.some((p) => p.tertiaryValue !== undefined)) {
+        sCount = Math.max(sCount, 3);
+      } else if (chart.dataPoints.some((p) => p.secondaryValue !== undefined)) {
+        sCount = Math.max(sCount, 2);
+      }
+
+      allSeriesValues = [];
+      for (let s = 0; s < sCount; s++) {
+        allSeriesValues.push(chart.dataPoints.map((p) => getPtSeriesVal(p, s)));
+      }
     } else if (hasSeries && chart.series) {
       if (chart.xAxis?.labels && chart.xAxis.labels.length > 0) {
         categories = chart.xAxis.labels;
@@ -87,18 +119,18 @@ export default function ChartRenderer({
       if (chart.series.length > 1) {
         secondaryValues = chart.series[1]?.data;
       }
+      allSeriesValues = chart.series.map((s) => s.data || []);
     } else if (chart.xAxis?.labels && chart.xAxis.labels.length > 0) {
       categories = chart.xAxis.labels;
     }
 
+    const flatVals = allSeriesValues ? allSeriesValues.flat() : [...values, ...(secondaryValues || [])];
     const rawMax = Math.max(
-      ...values,
-      ...(secondaryValues || []),
+      ...flatVals,
       hasCustomData ? 1 : fallbackYMax
     );
     const rawMin = Math.min(
-      ...values,
-      ...(secondaryValues || [0]),
+      ...flatVals,
       0
     );
 
@@ -689,10 +721,28 @@ export default function ChartRenderer({
         100,
         "%"
       );
-      const secVals = d.secondaryValues || [40, 60, 55, 20, 50];
       const n = d.categories.length;
       const yRange = (d.yMax - d.yMin) || 1;
-      const bw = Math.min(18, Math.max(8, (360 / n) * 0.38));
+
+      // Dynamic series definitions: read from chart.series or fallback
+      const activeSeries = (chart.series && chart.series.length > 0)
+        ? chart.series
+        : [
+            { id: "s1", name: "Series 1 (Actual)", color: c0, data: d.values },
+            { id: "s2", name: "Series 2 (Target)", color: c1, data: d.secondaryValues || [40, 60, 55, 20, 50] },
+          ];
+
+      const numSeries = activeSeries.length;
+      const seriesInfo = activeSeries.map((s, sIdx) => {
+        const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+        const vals = (d.allSeriesValues && d.allSeriesValues[sIdx]) || (sIdx === 0 ? d.values : sIdx === 1 ? (d.secondaryValues || []) : s.data || []);
+        return { s, sColor, vals, name: s.name || `Series ${sIdx + 1}` };
+      });
+
+      const totalSlotWidth = Math.min(84, Math.max(20, (360 / n) * 0.78));
+      const barGap = numSeries > 3 ? 1 : 2;
+      const bw = Math.max(3, Math.min(22, (totalSlotWidth - (numSeries - 1) * barGap) / numSeries));
+      const groupWidth = numSeries * bw + (numSeries - 1) * barGap;
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
         y: 110 - r * 96,
@@ -705,14 +755,12 @@ export default function ChartRenderer({
         <div className={chartWrapperClass}>
           {d.showLegend && (
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c0 }} />
-                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{chart.series?.[0]?.name || "Primary / Actual"}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c1 }} />
-                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{chart.series?.[1]?.name || "Target / Prior"}</span>
-              </div>
+              {seriesInfo.map((sData, sIdx) => (
+                <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sData.sColor }} />
+                  <span className="text-slate-600 dark:text-zinc-300 font-semibold">{sData.name}</span>
+                </div>
+              ))}
             </div>
           )}
 
@@ -735,21 +783,37 @@ export default function ChartRenderer({
                 <text x="43" y={g.y + 2.5} fontSize={svgTickSize} textAnchor="end" fill="currentColor" fillOpacity="0.5">{g.label}</text>
               </g>
             ))}
-            {d.values.map((v1, i) => {
-              const v2 = secVals[i] ?? 0;
-              const x = 56 + ((i + 0.5) / n) * 360;
-              const h1 = Math.max(2, Math.min(96, ((v1 - d.yMin) / yRange) * 96));
-              const h2 = Math.max(2, Math.min(96, ((v2 - d.yMin) / yRange) * 96));
+            {d.categories.map((cat, i) => {
+              const xCenter = 56 + ((i + 0.5) / n) * 360;
+              const startX = xCenter - groupWidth / 2;
 
               return (
                 <g key={i}>
-                  <rect x={x - bw - 1} y={110 - h1} width={bw} height={h1} fill={c0} rx="2" />
-                  <rect x={x + 1} y={110 - h2} width={bw} height={h2} fill={c1} rx="2" />
-                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{d.categories[i]}</text>
-                  {d.showValues && (
-                    <text x={x - bw / 2 - 1} y={110 - h1 - 3} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={c0}>{v1}</text>
-                  )}
+                  {seriesInfo.map((sData, sIdx) => {
+                    const val = sData.vals[i] ?? 0;
+                    const h = Math.max(2, Math.min(96, ((val - d.yMin) / yRange) * 96));
+                    const bx = startX + sIdx * (bw + barGap);
+
+                    return (
+                      <React.Fragment key={sIdx}>
+                        <rect x={bx} y={110 - h} width={bw} height={h} fill={sData.sColor} rx="2" />
+                        {d.showValues && (
+                          <text
+                            x={bx + bw / 2}
+                            y={110 - h - 3}
+                            fontSize={numSeries > 3 ? 7 : svgValueSize}
+                            fontWeight="bold"
+                            textAnchor="middle"
+                            fill={sData.sColor}
+                          >
+                            {val}
+                          </text>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                  <line x1={xCenter} y1="110" x2={xCenter} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={xCenter} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
                 </g>
               );
             })}
@@ -769,26 +833,39 @@ export default function ChartRenderer({
         100,
         "%"
       );
-      const secVals = d.secondaryValues || [78, 88, 91, 84, 80];
       const n = d.categories.length;
       const yRange = (d.yMax - d.yMin) || 1;
 
-      const points1 = d.values.map((v, i) => {
-        const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
-        const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
-        const cy = 110 - norm * 96;
-        return { cx, cy, val: v, label: d.categories[i] };
-      });
+      // Extract dynamic series list
+      const activeSeries = (chart.series && chart.series.length > 0)
+        ? chart.series
+        : [
+            { id: "s1", name: "Line 1 (Actual)", color: c0, data: d.values },
+            { id: "s2", name: "Line 2 (Target)", color: c1, data: d.secondaryValues || [78, 88, 91, 84, 80] },
+          ];
 
-      const points2 = secVals.map((v, i) => {
-        const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
-        const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
-        const cy = 110 - norm * 96;
-        return { cx, cy, val: v, label: d.categories[i] };
-      });
+      const dashPatterns = ["none", "4 2", "2 2", "6 2 2 2", "5 3", "1 2"];
 
-      const path1 = points1.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
-      const path2 = points2.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
+      const allSeriesData = activeSeries.map((s, sIdx) => {
+        const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+        const vals = (d.allSeriesValues && d.allSeriesValues[sIdx]) || (sIdx === 0 ? d.values : sIdx === 1 ? (d.secondaryValues || []) : s.data || []);
+        const points = vals.map((v, i) => {
+          const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+          const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
+          const cy = 110 - norm * 96;
+          return { cx, cy, val: v, label: d.categories[i] };
+        });
+        const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
+        return {
+          s,
+          sColor,
+          vals,
+          points,
+          path,
+          name: s.name || `Line ${sIdx + 1}`,
+          dash: dashPatterns[sIdx % dashPatterns.length],
+        };
+      });
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
         y: 110 - r * 96,
@@ -801,14 +878,12 @@ export default function ChartRenderer({
         <div className={chartWrapperClass}>
           {d.showLegend && (
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c0 }} />
-                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{chart.series?.[0]?.name || "Line 1 (Actual)"}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: c1 }} />
-                <span className="text-slate-600 dark:text-zinc-300 font-semibold">{chart.series?.[1]?.name || "Line 2 (Target)"}</span>
-              </div>
+              {allSeriesData.map((sData, sIdx) => (
+                <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sData.sColor }} />
+                  <span className="text-slate-600 dark:text-zinc-300 font-semibold">{sData.name}</span>
+                </div>
+              ))}
             </div>
           )}
           <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
@@ -831,21 +906,38 @@ export default function ChartRenderer({
               </g>
             ))}
             {/* X ticks */}
-            {points1.map((p, i) => (
-              <g key={i}>
-                <line x1={p.cx} y1="110" x2={p.cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={p.cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
+            {d.categories.map((cat, i) => {
+              const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
+              return (
+                <g key={i}>
+                  <line x1={cx} y1="110" x2={cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
+                </g>
+              );
+            })}
+            {/* Dynamic Lines & Markers for all series */}
+            {allSeriesData.map((sData, sIdx) => (
+              <g key={sData.s.id || sIdx}>
+                <path
+                  d={sData.path}
+                  fill="none"
+                  stroke={sData.sColor}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeDasharray={sData.dash === "none" ? undefined : sData.dash}
+                />
+                {sData.points.map((p, pIdx) => (
+                  <circle
+                    key={pIdx}
+                    cx={p.cx}
+                    cy={p.cy}
+                    r="3"
+                    fill="#fff"
+                    stroke={sData.sColor}
+                    strokeWidth="2"
+                  />
+                ))}
               </g>
-            ))}
-            {/* Line 1 */}
-            <path d={path1} fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
-            {points1.map((p, i) => (
-              <circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
-            ))}
-            {/* Line 2 */}
-            <path d={path2} fill="none" stroke={c1} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="4 2" />
-            {points2.map((p, i) => (
-              <circle key={i} cx={p.cx} cy={p.cy} r="3" fill="#fff" stroke={c1} strokeWidth="2" />
             ))}
             {d.xAxisTitle && (
               <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>

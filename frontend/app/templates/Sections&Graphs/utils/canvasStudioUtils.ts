@@ -140,6 +140,8 @@ export interface CanvasStudioProps {
   onStackCellBelow?: (rowId: string, targetCellId: string, cell: CanvasCell) => void;
   onUnstackCell?: (rowId: string, cellId: string) => void;
   onReorderStacked?: (rowId: string, parentCellId: string, direction: "up" | "down", index: number) => void;
+  activeViewPageIndex?: number;
+  onViewPageIndexChange?: (pageIdx: number) => void;
 }
 
 export interface HeaderTitleFormat {

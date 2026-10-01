@@ -117,6 +117,7 @@ export default function SectionCanvasEditor({
   // ── Studio Viewport & Artboard State ─────────────────────────────────────────
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  const [canvasActivePageIndex, setCanvasActivePageIndex] = useState<number>(0);
   const [paperTone, setPaperTone] = useState<string>("white");
   const [sectionTextColor, setSectionTextColor] = useState<string | undefined>(undefined);
   const [showGrid, setShowGrid] = useState(true);
@@ -348,9 +349,18 @@ export default function SectionCanvasEditor({
   });
 
   const handleCloseChartEditor = () => {
+    const targetCellId = editingChartCellMeta?.cell?.id;
     setChartModalOpen(false);
     setEditingChartCellMeta(null);
     dispatch(setChartEditorFullscreen(false));
+    if (targetCellId) {
+      setTimeout(() => {
+        const cellEl = document.getElementById(`canvas-cell-${targetCellId}`);
+        if (cellEl) {
+          cellEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }, 100);
+    }
   };
 
   const handleSaveChart = () => {
@@ -657,6 +667,8 @@ export default function SectionCanvasEditor({
           break;
         case "chart":
           if (cell.chart) {
+            setSelectedCellId(cell.id);
+            setSelectedRowId(rowId);
             setEditingChart(cell.chart);
             setEditingChartCellMeta({ cell, rowId });
             setChartTitle(cell.chart.title);
@@ -969,6 +981,7 @@ export default function SectionCanvasEditor({
   // ── Keyboard Shortcuts (Canva Feel) ─────────────────────────────────────────
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (chartModalOpen) return;
       const activeTag = document.activeElement?.tagName.toLowerCase();
       const isInput = activeTag === "input" || activeTag === "textarea" || activeTag === "select";
 
@@ -1028,40 +1041,6 @@ export default function SectionCanvasEditor({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPreview, selectedCellId, selectedRowId, handleDeleteActive, handleDuplicateActive, handleUndo, handleRedo]);
 
-  // Fullscreen Telemetry Studio Guard
-  if (chartModalOpen && chartEditorFullscreen && editingChart && editingChartCellMeta) {
-    return (
-      <ChartEditorPanel
-        editingChart={editingChart}
-        chartTitle={chartTitle}
-        setChartTitle={setChartTitle}
-        chartType={chartType}
-        setChartType={setChartType}
-        chartDesc={chartDesc}
-        setChartDesc={setChartDesc}
-        chartColor={chartColor}
-        setChartColor={setChartColor}
-        chartColors={chartColors}
-        setChartColors={setChartColors}
-        gridRows={gridRows}
-        setGridRows={setGridRows}
-        gridCols={gridCols}
-        setGridCols={setGridCols}
-        chartDataPoints={chartDataPoints}
-        setChartDataPoints={setChartDataPoints}
-        chartXAxis={chartXAxis}
-        setChartXAxis={setChartXAxis}
-        chartYAxis={chartYAxis}
-        setChartYAxis={setChartYAxis}
-        chartOptions={chartOptions}
-        setChartOptions={setChartOptions}
-        onSave={handleSaveChart}
-        onClose={handleCloseChartEditor}
-      />
-    );
-  }
-
-
   if (!section) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
@@ -1079,7 +1058,40 @@ export default function SectionCanvasEditor({
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn bg-white dark:bg-[#07090d]">
+    <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn bg-white dark:bg-[#07090d] relative">
+      {/* Fullscreen Telemetry Studio Overlay (keeps CanvasStudio mounted so page and scroll position are preserved) */}
+      {chartModalOpen && chartEditorFullscreen && editingChart && editingChartCellMeta && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-[#07090d] animate-fadeIn">
+          <ChartEditorPanel
+            editingChart={editingChart}
+            chartTitle={chartTitle}
+            setChartTitle={setChartTitle}
+            chartType={chartType}
+            setChartType={setChartType}
+            chartDesc={chartDesc}
+            setChartDesc={setChartDesc}
+            chartColor={chartColor}
+            setChartColor={setChartColor}
+            chartColors={chartColors}
+            setChartColors={setChartColors}
+            gridRows={gridRows}
+            setGridRows={setGridRows}
+            gridCols={gridCols}
+            setGridCols={setGridCols}
+            chartDataPoints={chartDataPoints}
+            setChartDataPoints={setChartDataPoints}
+            chartXAxis={chartXAxis}
+            setChartXAxis={setChartXAxis}
+            chartYAxis={chartYAxis}
+            setChartYAxis={setChartYAxis}
+            chartOptions={chartOptions}
+            setChartOptions={setChartOptions}
+            onSave={handleSaveChart}
+            onClose={handleCloseChartEditor}
+          />
+        </div>
+      )}
+
       {/* ── Global Canva Studio Header ── */}
       <div className="flex-shrink-0 flex items-center justify-between gap-3 flex-wrap px-4 sm:px-6 py-2 border-b border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-[#0b0e14]/95 backdrop-blur-md z-30">
         <div className="flex items-center gap-3">
@@ -1306,6 +1318,8 @@ export default function SectionCanvasEditor({
           onStackCellBelow={handleStackCellBelow}
           onUnstackCell={handleUnstackCell}
           onReorderStacked={handleReorderStacked}
+          activeViewPageIndex={canvasActivePageIndex}
+          onViewPageIndexChange={setCanvasActivePageIndex}
           onEditHeader={() => {
             setEditName(section.name);
             setEditEyebrow(section.eyebrow);

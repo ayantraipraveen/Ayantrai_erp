@@ -115,6 +115,8 @@ export function CanvasStudio({
   onStackCellBelow,
   onUnstackCell,
   onReorderStacked,
+  activeViewPageIndex: externalActiveViewPageIndex,
+  onViewPageIndexChange,
 }: CanvasStudioProps) {
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
@@ -127,11 +129,45 @@ export function CanvasStudio({
     return partitionCanvasPages(rows, marginConfig, pageNumber, activePageHeight);
   }, [rows, marginConfig, pageNumber, activePageHeight]);
 
-  const [activeViewPageIndex, setActiveViewPageIndex] = useState<number>(0);
+  const [internalActiveViewPageIndex, setInternalActiveViewPageIndex] = useState<number>(externalActiveViewPageIndex ?? 0);
+  const activeViewPageIndex = externalActiveViewPageIndex !== undefined ? externalActiveViewPageIndex : internalActiveViewPageIndex;
+
+  const setActiveViewPageIndex = useCallback(
+    (idxOrUpdater: number | ((prev: number) => number)) => {
+      const nextIdx =
+        typeof idxOrUpdater === "function"
+          ? idxOrUpdater(activeViewPageIndex)
+          : idxOrUpdater;
+      if (nextIdx !== activeViewPageIndex) {
+        if (onViewPageIndexChange) {
+          onViewPageIndexChange(nextIdx);
+        } else {
+          setInternalActiveViewPageIndex(nextIdx);
+        }
+      }
+    },
+    [onViewPageIndexChange, activeViewPageIndex]
+  );
+
   const prevPagesLengthRef = useRef(pages.length);
   const deskScrollRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScrollingRef = useRef<boolean>(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-scroll to initial active page if initialized > 0 on mount
+  const hasInitialScrolledRef = useRef(false);
+  useEffect(() => {
+    if (!hasInitialScrolledRef.current && activeViewPageIndex > 0) {
+      hasInitialScrolledRef.current = true;
+      const timer = setTimeout(() => {
+        const targetEl = document.getElementById(`canvas-page-${activeViewPageIndex}`);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [activeViewPageIndex]);
 
   // Auto-scroll to newly created page if page count increases
   useEffect(() => {
@@ -143,14 +179,14 @@ export function CanvasStudio({
       }, 120);
     }
     prevPagesLengthRef.current = pages.length;
-  }, [pages.length]);
+  }, [pages.length, setActiveViewPageIndex]);
 
   // Keep activeViewPageIndex clamped within valid bounds if page count changes
   useEffect(() => {
     if (activeViewPageIndex >= pages.length) {
       setActiveViewPageIndex(Math.max(0, pages.length - 1));
     }
-  }, [pages.length, activeViewPageIndex]);
+  }, [pages.length, activeViewPageIndex, setActiveViewPageIndex]);
 
   // Clean up any pending scroll timeouts on unmount
   useEffect(() => {
@@ -376,7 +412,7 @@ export function CanvasStudio({
     }
 
     setActiveViewPageIndex((prev) => (prev !== bestIndex ? bestIndex : prev));
-  }, [pages.length]);
+  }, [pages.length, setActiveViewPageIndex]);
 
   // Re-check active page on zoom change
   useEffect(() => {
