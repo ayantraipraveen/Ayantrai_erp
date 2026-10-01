@@ -32,10 +32,10 @@ export default function AuthFooter({
 }: AuthFooterProps) {
   return (
     <footer
-      className={`relative z-10 w-full border-t border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0c1017]/90 flex-shrink-0 transition-colors ${className}`}
+      className={`relative z-10 w-full h-7 border-t border-slate-200 dark:border-zinc-800/80 bg-white/90 dark:bg-[#0c1017]/90 flex-shrink-0 transition-colors ${className}`}
     >
       <div
-        className={`${maxWidthClassName} mx-auto px-4 sm:px-8 xl:px-14 py-2 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 dark:text-zinc-500 gap-1 text-center sm:text-left`}
+        className={`${maxWidthClassName} mx-auto h-full px-4 sm:px-8 xl:px-14 py-0 flex flex-row items-center justify-between text-[11px] text-slate-500 dark:text-zinc-500 text-center sm:text-left`}
       >
         <div className="flex flex-wrap items-center justify-center sm:justify-start">
           <span>

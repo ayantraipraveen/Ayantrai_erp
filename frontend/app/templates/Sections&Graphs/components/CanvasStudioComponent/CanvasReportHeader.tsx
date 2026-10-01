@@ -48,17 +48,17 @@ export function CanvasReportHeader({
 
   return (
     <div
-      className="relative z-30 min-h-[110px] border-b border-slate-200/80 overflow-visible"
+      className="relative z-30 min-h-[48px] border-b border-slate-200/80 overflow-hidden"
       style={{ backgroundColor: paperTone === "dark" ? "#0f172a" : undefined }}
     >
-      <div className="relative grid min-h-[110px] grid-cols-[minmax(0,105px)_minmax(0,1.5fr)_minmax(0,1.2fr)_65px] items-stretch gap-0 px-0 py-0 overflow-visible">
-        <div className="flex min-w-0 flex-col justify-center px-2 py-1">
+      <div className="relative grid min-h-[50px] grid-cols-[minmax(0,85px)_minmax(0,1.5fr)_minmax(0,1.2fr)_48px] items-stretch gap-0 px-0 py-0 overflow-visible">
+        <div className="flex min-w-0 flex-col justify-center px-1.5 py-0.5">
           <Image
             src="/sitesafe-header-logo.svg"
             alt="Sitesafe by AyantrAI"
             width={1254}
             height={1254}
-            className="h-[95px] w-[95px] object-contain object-left"
+            className="h-[82px] w-[92px] object-contain object-left"
             priority
           />
         </div>
@@ -126,8 +126,8 @@ export function CanvasReportHeader({
 
         {/* Page Badge - flush right, full height */}
         <div className="flex flex-col items-center justify-center border-l-2 border-[#2454d8] bg-[#18344f] text-white [clip-path:polygon(0_0,100%_0,100%_100%,28%_100%,0_76%)]">
-          <span className="text-[9px] font-semibold">Page</span>
-          <span className="text-[20px] font-black leading-none">{String(pageNumber).padStart(2, "0")}</span>
+          <span className="text-[8px] font-semibold">Page</span>
+          <span className="text-[17px] font-black leading-none">{String(pageNumber).padStart(2, "0")}</span>
         </div>
       </div>
     </div>
