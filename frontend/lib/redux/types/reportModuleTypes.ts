@@ -574,6 +574,18 @@ export interface BackCoverData {
   websiteUrl: string;
   email: string;
   location: string;
+  heroEyebrow?: string;
+  heroTitle?: string;
+  heroDescription?: string;
+  productTitle?: string;
+  productTagline?: string;
+  productDescription?: string;
+  qrHeading?: string;
+  qrSubtext?: string;
+  qrUrl?: string;
+  thankYouSubtext?: string;
+  flagHeading?: string;
+  footerTagline?: string;
 }
 
 export const DEFAULT_BACK_COVER_DATA: BackCoverData = {
@@ -583,6 +595,18 @@ export const DEFAULT_BACK_COVER_DATA: BackCoverData = {
   websiteUrl: "www.ayantrai.com  |  www.sitesafe.ai",
   email: "hello@ayantrai.com",
   location: "Noida, Uttar Pradesh, India",
+  heroEyebrow: "TECHNOLOGY THAT PROTECTS\nTHE PEOPLE WHO BUILD OUR TOMORROW",
+  heroTitle: "Safer People\nStronger Industries",
+  heroDescription: "At AyantrAI, we build AI and IoT solutions that make workplaces safer, smarter and more productive. Our flagship product, Sitesafe, helps organisations ensure PPE compliance, monitor workforce safety and enable data-driven decisions across industrial environments.",
+  productTitle: "Sitesafe",
+  productTagline: "Smart PPE. Safer Sites.",
+  productDescription: "AI + IoT powered safety and workforce management platform for construction, manufacturing, mining and industrial sites.",
+  qrHeading: "View the Full Report Online",
+  qrSubtext: "Scan the QR code to access the digital version of this report.",
+  qrUrl: "https://reports.sitesafe.ai",
+  thankYouSubtext: "Together, we can create workplaces where every worker returns home safe, every day.",
+  flagHeading: "INNOVATION\nFOR A SAFER\nTOMORROW",
+  footerTagline: "People  |  Technology  |  Safer Tomorrow",
 };
 
 export interface TableOfContentsItem {
@@ -602,6 +626,12 @@ export interface TableOfContentsData {
   sidebarTagline?: string;
   reportingPeriod?: string;
   projectSite?: string;
+  reportTitle?: string;
+  headerSubtitle?: string;
+  scriptQuote?: string;
+  footerCompany?: string;
+  footerWebsite?: string;
+  footerQuote?: string;
   items: TableOfContentsItem[];
 }
 
@@ -612,6 +642,12 @@ export const DEFAULT_TOC_DATA: TableOfContentsData = {
   sidebarTagline: "AI + IoT for a safer,\nsmarter tomorrow.",
   reportingPeriod: "01 Sept 2025 – 30 Sept 2025",
   projectSite: "ABC Infrastructure Project",
+  reportTitle: "Monthly Report",
+  headerSubtitle: "Visibility for Every Worker,\nIntelligence for Every Site.",
+  scriptQuote: "Every Worker\nReturns Home Safe",
+  footerCompany: "AYANTRAI PRIVATE LIMITED",
+  footerWebsite: "www.ayantrai.com  |  www.sitesafe.ai",
+  footerQuote: "“Every Worker Returns Home Safe”",
   items: [
     { id: "toc-1", number: "01", title: "Key Metrics", description: "Overall performance summary and key highlights for the reporting period.", pageRange: "3", iconType: "chart", color: "#3b82f6" },
     { id: "toc-2", number: "02", title: "Attendance Trends", description: "Workforce attendance overview, trends and department-wise analysis.", pageRange: "4 – 7", iconType: "users", color: "#10b981" },
@@ -620,6 +656,7 @@ export const DEFAULT_TOC_DATA: TableOfContentsData = {
     { id: "toc-5", number: "05", title: "Unit Analysis", description: "Device utilisation, operating hours and unit-wise performance.", pageRange: "16", iconType: "box", color: "#f59e0b" },
     { id: "toc-6", number: "06", title: "Operational Review", description: "Key observations, insights and operational remarks.", pageRange: "17", iconType: "file", color: "#2563eb" },
     { id: "toc-7", number: "07", title: "Improvement and Action Plan", description: "Focus areas, action items and targets for the next reporting period.", pageRange: "18", iconType: "target", color: "#6366f1" },
+    { id: "toc-8", number: "08", title: "Critical Alerts Analysis", description: "Detailed breakdown of high-severity alerts, causes and response metrics for management review.", pageRange: "19", iconType: "target", color: "#8b5cf6" },
   ],
 };
 

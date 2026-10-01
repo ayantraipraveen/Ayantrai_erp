@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import {
   TableOfContentsData,
+  TableOfContentsItem,
   DEFAULT_TOC_DATA,
 } from "@/lib/redux/types/reportModuleTypes";
 
@@ -62,14 +63,14 @@ export function CanvasTableOfContentsPage({
 
   const [editing, setEditing] = useState<EditingField | null>(null);
 
-  const startEditMeta = (field: string, initialVal: string) => {
+  const startEditMeta = (field: keyof TableOfContentsData, initialVal?: string) => {
     if (activeIsPreview) return;
-    setEditing({ type: "meta", field, value: initialVal });
+    setEditing({ type: "meta", field, value: String(initialVal ?? data[field] ?? "") });
   };
 
-  const startEditItem = (itemId: string, field: string, initialVal: string) => {
+  const startEditItem = (itemId: string, field: keyof TableOfContentsItem, initialVal?: string) => {
     if (activeIsPreview) return;
-    setEditing({ type: "item", itemId, field, value: initialVal });
+    setEditing({ type: "item", itemId, field, value: String(initialVal ?? "") });
   };
 
   const commitEdit = () => {
@@ -87,6 +88,144 @@ export function CanvasTableOfContentsPage({
 
   const cancelEdit = () => {
     setEditing(null);
+  };
+
+  // Reusable meta text editor
+  const EditableMetaText = ({
+    field,
+    className = "",
+    placeholder = "",
+    multiline = false,
+    rows = 2,
+    as = "span",
+    style,
+  }: {
+    field: keyof TableOfContentsData;
+    className?: string;
+    placeholder?: string;
+    multiline?: boolean;
+    rows?: number;
+    as?: "span" | "div" | "h1" | "p";
+    style?: React.CSSProperties;
+  }) => {
+    const isActive = editing?.type === "meta" && editing.field === field;
+    const content = String(data[field] ?? placeholder);
+
+    if (isActive) {
+      return multiline ? (
+        <textarea
+          autoFocus
+          rows={rows}
+          value={editing.value}
+          onChange={(e) => setEditing({ ...editing, value: e.target.value })}
+          onBlur={commitEdit}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") cancelEdit();
+          }}
+          className={`bg-blue-50/90 text-slate-900 border-b-2 border-[#1A38D6] outline-none resize-none px-0.5 rounded-xs ${className}`}
+          placeholder={placeholder}
+          style={style}
+        />
+      ) : (
+        <input
+          autoFocus
+          value={editing.value}
+          onChange={(e) => setEditing({ ...editing, value: e.target.value })}
+          onBlur={commitEdit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitEdit();
+            if (e.key === "Escape") cancelEdit();
+          }}
+          className={`bg-blue-50/90 text-slate-900 border-b-2 border-[#1A38D6] outline-none px-0.5 rounded-xs ${className}`}
+          placeholder={placeholder}
+          style={style}
+        />
+      );
+    }
+
+    const Tag = as;
+    return (
+      <Tag
+        className={`${
+          !activeIsPreview
+            ? "hover:bg-blue-50/60 hover:ring-1 hover:ring-blue-300/60 rounded px-0.5 cursor-text transition-all"
+            : ""
+        } ${className}`}
+        style={style}
+        onDoubleClick={() => startEditMeta(field, content)}
+        title={activeIsPreview ? undefined : "Double-click to edit"}
+      >
+        {content || placeholder}
+      </Tag>
+    );
+  };
+
+  // Reusable item text editor
+  const EditableItemText = ({
+    itemId,
+    field,
+    className = "",
+    placeholder = "",
+    multiline = false,
+    rows = 2,
+    as = "span",
+  }: {
+    itemId: string;
+    field: keyof TableOfContentsItem;
+    className?: string;
+    placeholder?: string;
+    multiline?: boolean;
+    rows?: number;
+    as?: "span" | "div";
+  }) => {
+    const isActive = editing?.type === "item" && editing.itemId === itemId && editing.field === field;
+    const item = items.find((it) => it.id === itemId);
+    const content = String(item?.[field] ?? placeholder);
+
+    if (isActive) {
+      return multiline ? (
+        <textarea
+          autoFocus
+          rows={rows}
+          value={editing.value}
+          onChange={(e) => setEditing({ ...editing, value: e.target.value })}
+          onBlur={commitEdit}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") cancelEdit();
+          }}
+          className={`bg-blue-50/90 text-slate-900 border-b-2 border-[#1A38D6] outline-none resize-none px-0.5 rounded-xs ${className}`}
+          placeholder={placeholder}
+        />
+      ) : (
+        <input
+          autoFocus
+          value={editing.value}
+          onChange={(e) => setEditing({ ...editing, value: e.target.value })}
+          onBlur={commitEdit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitEdit();
+            if (e.key === "Escape") cancelEdit();
+          }}
+          className={`bg-blue-50/90 text-slate-900 border-b-2 border-[#1A38D6] outline-none px-0.5 rounded-xs ${className}`}
+          placeholder={placeholder}
+        />
+      );
+    }
+
+    const Tag = as;
+    return (
+      <Tag
+        className={`${
+          !activeIsPreview
+            ? "hover:bg-blue-50/60 hover:ring-1 hover:ring-blue-300/60 rounded px-0.5 cursor-text transition-all"
+            : ""
+        } ${className}`}
+        onDoubleClick={() => startEditItem(itemId, field, content)}
+        title={activeIsPreview ? undefined : "Double-click to edit"}
+      >
+        {content || placeholder}
+      </Tag>
+    );
   };
 
   return (
@@ -115,40 +254,30 @@ export function CanvasTableOfContentsPage({
             />
           </div>
           <div className="h-4 w-px bg-slate-200" />
-          <div className="flex flex-col text-[8.5px] italic text-[#1D58BA] font-medium leading-tight">
-            <span>Visibility for Every Worker,</span>
-            <span>Intelligence for Every Site.</span>
-          </div>
+          <EditableMetaText
+            field="headerSubtitle"
+            multiline
+            rows={2}
+            as="div"
+            className="text-[8.5px] italic text-[#1D58BA] font-medium leading-tight whitespace-pre-line"
+            placeholder={"Visibility for Every Worker,\nIntelligence for Every Site."}
+          />
         </div>
 
         {/* Center/Right: Monthly Report & Date (clear of angled badge) */}
         <div className="flex items-center gap-3 pr-22">
           <div className="flex flex-col items-end">
-            <span className="text-[12px] font-bold text-[#0E1C4E] leading-tight">
-              Monthly Report
-            </span>
+            <EditableMetaText
+              field="reportTitle"
+              className="text-[12px] font-bold text-[#0E1C4E] leading-tight"
+              placeholder="Monthly Report"
+            />
             <div className="h-[2px] w-8 bg-[#1A38D6] rounded-full mt-0.5" />
-            <div
-              className="text-[9px] font-medium text-slate-500 mt-0.5 cursor-text"
-              onDoubleClick={() => startEditMeta("reportingPeriod", data.reportingPeriod || "01 Sept 2025 – 30 Sept 2025")}
-              title={activeIsPreview ? undefined : "Double-click to edit"}
-            >
-              {editing?.type === "meta" && editing.field === "reportingPeriod" ? (
-                <input
-                  autoFocus
-                  value={editing.value}
-                  onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-                  onBlur={commitEdit}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") commitEdit();
-                    if (e.key === "Escape") cancelEdit();
-                  }}
-                  className="bg-blue-50 border-b border-[#1A38D6] text-[9px] outline-none text-right px-0.5"
-                />
-              ) : (
-                <span>{data.reportingPeriod || "01 Sept 2025 – 30 Sept 2025"}</span>
-              )}
-            </div>
+            <EditableMetaText
+              field="reportingPeriod"
+              className="text-[9px] font-medium text-slate-500 mt-0.5 text-right block"
+              placeholder="01 Sept 2025 – 30 Sept 2025"
+            />
           </div>
 
           {/* Thin vertical divider before Page badge */}
@@ -170,6 +299,7 @@ export function CanvasTableOfContentsPage({
         
         {/* ── LEFT HERO CARD (Flush with left sheet boundary x=0, spans full height, rounded right corners) ── */}
         <div className="absolute top-0 left-0 bottom-0 w-[184px] rounded-r-2xl overflow-hidden shadow-sm flex flex-col justify-end">
+          {/* Background image without text */}
           <Image
             src="/images/toc-sidebar-hero-clean.png"
             alt="Safer People Stronger Industries"
@@ -178,40 +308,29 @@ export function CanvasTableOfContentsPage({
             className="object-cover object-bottom"
           />
 
-          {/* Editable Overlay for Sidebar Title & Tagline (if user wants to customize) */}
-          <div className="relative z-10 p-3 pt-6 flex flex-col justify-end text-white">
-            <div
-              className="cursor-text"
-              onDoubleClick={() => startEditMeta("sidebarTitle", data.sidebarTitle || "Safer People\nStronger\nIndustries")}
-              title={activeIsPreview ? undefined : "Double-click to edit"}
-            >
-              {editing?.type === "meta" && editing.field === "sidebarTitle" ? (
-                <textarea
-                  autoFocus
-                  rows={3}
-                  value={editing.value}
-                  onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-                  onBlur={commitEdit}
-                  className="w-full bg-blue-950/80 border-b border-cyan-400 outline-none text-sm font-extrabold text-white leading-tight resize-none"
-                />
-              ) : null}
-            </div>
+          {/* Real Text Overlay for Sidebar Title & Tagline with double-click in-place editing! */}
+          <div className="relative z-10 p-4 pb-6 flex flex-col justify-end text-white">
+            <EditableMetaText
+              field="sidebarTitle"
+              multiline
+              rows={3}
+              as="div"
+              className="text-[16px] font-black text-white leading-[1.08] tracking-tight whitespace-pre-line drop-shadow-md"
+              placeholder={"Safer People\nStronger\nIndustries"}
+            />
 
-            <div
-              className="mt-1 cursor-text"
-              onDoubleClick={() => startEditMeta("sidebarTagline", data.sidebarTagline || "AI + IoT for a safer, smarter tomorrow.")}
-              title={activeIsPreview ? undefined : "Double-click to edit"}
-            >
-              {editing?.type === "meta" && editing.field === "sidebarTagline" ? (
-                <input
-                  autoFocus
-                  value={editing.value}
-                  onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-                  onBlur={commitEdit}
-                  className="w-full bg-blue-950/80 border-b border-cyan-400 outline-none text-[9.5px] text-white leading-tight"
-                />
-              ) : null}
-            </div>
+            {/* Accent divider line */}
+            <div className="w-8 h-[2.5px] bg-[#1A38D6] rounded-full my-2 shadow-xs" />
+
+            {/* Tagline: AI + IoT for a safer, smarter tomorrow. */}
+            <EditableMetaText
+              field="sidebarTagline"
+              multiline
+              rows={2}
+              as="div"
+              className="text-[9.5px] font-medium text-slate-200 leading-snug whitespace-pre-line drop-shadow-md"
+              placeholder={"AI + IoT for a safer,\nsmarter tomorrow."}
+            />
           </div>
         </div>
 
@@ -229,40 +348,40 @@ export function CanvasTableOfContentsPage({
             </div>
 
             {/* Contents */}
-            <h1 className="text-[40px] font-black text-[#0A1646] leading-[0.92] tracking-tight mt-0.5">
-              Contents
-            </h1>
+            <EditableMetaText
+              field="title"
+              as="h1"
+              className="text-[40px] font-black text-[#0A1646] leading-[0.92] tracking-tight mt-0.5 block"
+              placeholder="Contents"
+            />
 
             {/* Subtitle */}
-            <div
-              className="text-[10px] font-medium text-slate-500 leading-snug max-w-[270px] mt-1.5 cursor-text"
-              onDoubleClick={() => startEditMeta("subtitle", data.subtitle)}
-              title={activeIsPreview ? undefined : "Double-click to edit subtitle"}
-            >
-              {editing?.type === "meta" && editing.field === "subtitle" ? (
-                <input
-                  autoFocus
-                  value={editing.value}
-                  onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-                  onBlur={commitEdit}
-                  className="w-full bg-blue-50/80 border-b border-[#1A38D6] outline-none text-[10px] text-slate-800"
-                />
-              ) : (
-                <span>{data.subtitle}</span>
-              )}
-            </div>
+            <EditableMetaText
+              field="subtitle"
+              multiline
+              rows={2}
+              as="div"
+              className="text-[10px] font-medium text-slate-500 leading-snug max-w-[270px] mt-1.5 block"
+              placeholder="A complete overview of workforce safety, device utilisation and operational performance."
+            />
 
             {/* Handwritten script note (top-right of headline) matching reference */}
-            <div className="absolute right-0 -top-1 pointer-events-none select-none text-right">
+            <div className="absolute right-0 -top-1 text-right">
               <div
-                className="text-[#1A38D6] font-bold text-[14px] leading-snug tracking-tight italic"
                 style={{
                   fontFamily: "'Segoe Script', 'Brush Script MT', 'Caveat', cursive, sans-serif",
                   transform: "rotate(-7deg)",
                   transformOrigin: "bottom right",
                 }}
               >
-                Every Worker<br />Returns Home Safe
+                <EditableMetaText
+                  field="scriptQuote"
+                  multiline
+                  rows={2}
+                  as="div"
+                  className="text-[#1A38D6] font-bold text-[14px] leading-snug tracking-tight italic whitespace-pre-line"
+                  placeholder={"Every Worker\nReturns Home Safe"}
+                />
                 <div className="h-[2px] w-24 bg-[#1A38D6] ml-auto mt-0.5 rounded-full" />
               </div>
             </div>
@@ -285,7 +404,12 @@ export function CanvasTableOfContentsPage({
                     <div
                       className={`w-9 h-9 rounded-xl ${palette.bg} ${palette.text} font-black text-xs flex items-center justify-center flex-shrink-0 font-mono shadow-xs`}
                     >
-                      {numKey}
+                      <EditableItemText
+                        itemId={item.id}
+                        field="number"
+                        className="font-mono text-center"
+                        placeholder={numKey}
+                      />
                     </div>
 
                     {/* Circular Icon */}
@@ -297,70 +421,33 @@ export function CanvasTableOfContentsPage({
 
                     {/* Title & Description (Natural 2-line wrap matching reference PDF) */}
                     <div className="flex-1 min-w-0">
-                      <div
-                        className="text-[12.5px] font-bold text-[#0E1B46] leading-tight cursor-text hover:text-[#1A38D6] transition-colors"
-                        onDoubleClick={() => startEditItem(item.id, "title", item.title)}
-                        title={activeIsPreview ? undefined : "Double-click to edit"}
-                      >
-                        {editing?.type === "item" && editing.itemId === item.id && editing.field === "title" ? (
-                          <input
-                            autoFocus
-                            value={editing.value}
-                            onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-                            onBlur={commitEdit}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") commitEdit();
-                              if (e.key === "Escape") cancelEdit();
-                            }}
-                            className="w-full bg-blue-50/80 border-b border-[#1A38D6] outline-none text-[12.5px] font-bold text-slate-900"
-                          />
-                        ) : (
-                          item.title
-                        )}
-                      </div>
-
-                      <div
-                        className="text-[9.5px] text-[#64748B] leading-tight mt-0.5 cursor-text"
-                        onDoubleClick={() => startEditItem(item.id, "description", item.description)}
-                        title={activeIsPreview ? undefined : "Double-click to edit"}
-                      >
-                        {editing?.type === "item" && editing.itemId === item.id && editing.field === "description" ? (
-                          <textarea
-                            autoFocus
-                            rows={2}
-                            value={editing.value}
-                            onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-                            onBlur={commitEdit}
-                            className="w-full bg-blue-50/80 border-b border-[#1A38D6] outline-none text-[9.5px] text-slate-700 resize-none leading-tight"
-                          />
-                        ) : (
-                          item.description
-                        )}
-                      </div>
+                      <EditableItemText
+                        itemId={item.id}
+                        field="title"
+                        as="div"
+                        className="text-[12.5px] font-bold text-[#0E1B46] leading-tight block"
+                        placeholder="Title"
+                      />
+                      <EditableItemText
+                        itemId={item.id}
+                        field="description"
+                        multiline
+                        rows={2}
+                        as="div"
+                        className="text-[9.5px] text-[#64748B] leading-tight mt-0.5 block"
+                        placeholder="Description"
+                      />
                     </div>
                   </div>
 
                   {/* Page Number (Bold right-aligned) */}
-                  <div
-                    className="text-[13px] font-bold text-[#0E1B46] px-1 py-0.5 rounded cursor-text flex-shrink-0 text-right min-w-[36px]"
-                    onDoubleClick={() => startEditItem(item.id, "pageRange", item.pageRange)}
-                    title={activeIsPreview ? undefined : "Double-click to edit page range"}
-                  >
-                    {editing?.type === "item" && editing.itemId === item.id && editing.field === "pageRange" ? (
-                      <input
-                        autoFocus
-                        value={editing.value}
-                        onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-                        onBlur={commitEdit}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") commitEdit();
-                          if (e.key === "Escape") cancelEdit();
-                        }}
-                        className="w-12 bg-blue-50/80 border-b border-[#1A38D6] text-center outline-none text-[13px] font-bold"
-                      />
-                    ) : (
-                      item.pageRange
-                    )}
+                  <div className="px-1 py-0.5 flex-shrink-0 text-right min-w-[36px]">
+                    <EditableItemText
+                      itemId={item.id}
+                      field="pageRange"
+                      className="text-[13px] font-bold text-[#0E1B46] text-right block font-mono"
+                      placeholder="1"
+                    />
                   </div>
                 </div>
               );
@@ -378,12 +465,16 @@ export function CanvasTableOfContentsPage({
       >
         {/* Left: Company & Websites */}
         <div className="min-w-0 flex flex-col justify-center">
-          <span className="text-[9.5px] font-bold text-slate-800 tracking-wider uppercase leading-tight">
-            AYANTRAI PRIVATE LIMITED
-          </span>
-          <span className="text-[8px] font-medium text-slate-500 leading-tight mt-1">
-            www.ayantrai.com&nbsp;&nbsp;|&nbsp;&nbsp;www.sitesafe.ai
-          </span>
+          <EditableMetaText
+            field="footerCompany"
+            className="text-[9.5px] font-bold text-slate-800 tracking-wider uppercase leading-tight block"
+            placeholder="AYANTRAI PRIVATE LIMITED"
+          />
+          <EditableMetaText
+            field="footerWebsite"
+            className="text-[8px] font-medium text-slate-500 leading-tight mt-1 block"
+            placeholder="www.ayantrai.com  |  www.sitesafe.ai"
+          />
         </div>
 
         {/* Center: Accent divider bar */}
@@ -391,12 +482,21 @@ export function CanvasTableOfContentsPage({
 
         {/* Right: Safety Quote */}
         <div className="text-right flex-shrink-0">
-          <span className="text-[9px] font-semibold italic text-slate-700">
-            &ldquo;Every Worker Returns Home Safe&rdquo;
-          </span>
+          <EditableMetaText
+            field="footerQuote"
+            className="text-[9px] font-semibold italic text-slate-700 block"
+            placeholder="“Every Worker Returns Home Safe”"
+          />
         </div>
       </footer>
+
+      {/* Editor Hint Pill (Editor only) */}
+      {!activeIsPreview && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 bg-white/95 backdrop-blur text-[#0f2044] text-[8px] font-bold px-2.5 py-1 rounded-full shadow border border-slate-200 pointer-events-none">
+          <Edit3 className="w-2.5 h-2.5 text-blue-600" />
+          TABLE OF CONTENTS — double-click text to edit
+        </div>
+      )}
     </div>
   );
 }
-

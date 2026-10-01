@@ -18,6 +18,7 @@ import {
   Scan,
   Heart,
   Settings,
+  Edit3,
 } from "lucide-react";
 import {
   BackCoverData,
@@ -54,31 +55,47 @@ export function CanvasBackCoverPage({
     setEditing(null);
   };
 
+  const cancelEdit = () => {
+    setEditing(null);
+  };
+
   const val = (field: keyof BackCoverData) =>
     editing?.field === field ? editing.value : data[field];
 
   const EditableText = ({
     field,
-    className,
-    placeholder,
+    className = "",
+    placeholder = "",
     multiline = false,
+    rows = 2,
+    as = "span",
+    style,
   }: {
     field: keyof BackCoverData;
     className?: string;
     placeholder?: string;
     multiline?: boolean;
+    rows?: number;
+    as?: "span" | "div" | "h1" | "p";
+    style?: React.CSSProperties;
   }) => {
     const isActive = editing?.field === field;
+    const content = String(val(field) ?? placeholder);
+
     if (isActive) {
       return multiline ? (
         <textarea
           autoFocus
-          rows={2}
+          rows={rows}
           value={editing!.value}
           onChange={(e) => setEditing({ field, value: e.target.value })}
           onBlur={commitEdit}
-          className={`bg-white/20 border-b border-cyan-400 outline-none resize-none ${className}`}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") cancelEdit();
+          }}
+          className={`bg-white/20 border-b-2 border-cyan-400 outline-none resize-none px-0.5 rounded-xs ${className}`}
           placeholder={placeholder}
+          style={style}
         />
       ) : (
         <input
@@ -86,21 +103,31 @@ export function CanvasBackCoverPage({
           value={editing!.value}
           onChange={(e) => setEditing({ field, value: e.target.value })}
           onBlur={commitEdit}
-          className={`bg-white/20 border-b border-cyan-400 outline-none ${className}`}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commitEdit();
+            if (e.key === "Escape") cancelEdit();
+          }}
+          className={`bg-white/20 border-b-2 border-cyan-400 outline-none px-0.5 rounded-xs ${className}`}
           placeholder={placeholder}
+          style={style}
         />
       );
     }
+
+    const Tag = as;
     return (
-      <span
+      <Tag
         className={`${
-          !activeIsPreview ? "hover:bg-white/10 rounded px-0.5 cursor-text transition-colors" : ""
+          !activeIsPreview
+            ? "hover:bg-white/15 hover:ring-1 hover:ring-cyan-300/60 rounded px-0.5 cursor-text transition-all"
+            : ""
         } ${className}`}
+        style={style}
         onDoubleClick={() => startEdit(field)}
         title={activeIsPreview ? undefined : "Double-click to edit"}
       >
-        {val(field) || placeholder}
-      </span>
+        {content || placeholder}
+      </Tag>
     );
   };
 
@@ -166,22 +193,36 @@ export function CanvasBackCoverPage({
           {/* Middle Headline Block */}
           <div className="max-w-[310px] mt-1">
             {/* Eyebrow */}
-            <div className="text-[7.5px] font-bold text-slate-300 tracking-[0.16em] uppercase leading-tight mb-1">
-              TECHNOLOGY THAT PROTECTS<br />THE PEOPLE WHO BUILD OUR TOMORROW
-            </div>
+            <EditableText
+              field="heroEyebrow"
+              multiline
+              rows={2}
+              as="div"
+              className="text-[7.5px] font-bold text-slate-300 tracking-[0.16em] uppercase leading-tight mb-1 whitespace-pre-line block"
+              placeholder={"TECHNOLOGY THAT PROTECTS\nTHE PEOPLE WHO BUILD OUR TOMORROW"}
+            />
 
             {/* Main Title */}
-            <h1 className="text-[27px] font-black text-white leading-[0.98] tracking-tight">
-              Safer People<br />
-              <span className="text-[#38BDF8]">Stronger Industries</span>
-            </h1>
+            <EditableText
+              field="heroTitle"
+              multiline
+              rows={2}
+              as="h1"
+              className="text-[27px] font-black text-white leading-[0.98] tracking-tight whitespace-pre-line block"
+              placeholder={"Safer People\nStronger Industries"}
+            />
 
             {/* Description */}
-            <p className="text-[8px] text-slate-300 leading-snug mt-2">
-              At AyantrAI, we build AI and IoT solutions that make workplaces safer, smarter and more productive.
-              Our flagship product, <strong className="text-white font-bold">Sitesafe</strong>, helps organisations
-              ensure PPE compliance, monitor workforce safety and enable data-driven decisions across industrial environments.
-            </p>
+            <EditableText
+              field="heroDescription"
+              multiline
+              rows={3}
+              as="p"
+              className="text-[8px] text-slate-300 leading-snug mt-2 block"
+              placeholder={
+                "At AyantrAI, we build AI and IoT solutions that make workplaces safer, smarter and more productive. Our flagship product, Sitesafe, helps organisations ensure PPE compliance, monitor workforce safety and enable data-driven decisions across industrial environments."
+              }
+            />
           </div>
 
           {/* Bottom 4 Feature Badges (Horizontal Row) */}
@@ -264,12 +305,16 @@ export function CanvasBackCoverPage({
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-[15px] font-black text-[#0B1546] leading-none">
-                  Sitesafe
-                </span>
-                <span className="text-[7.5px] font-semibold text-slate-500 mt-0.5">
-                  Smart PPE. Safer Sites.
-                </span>
+                <EditableText
+                  field="productTitle"
+                  className="text-[15px] font-black text-[#0B1546] leading-none block"
+                  placeholder="Sitesafe"
+                />
+                <EditableText
+                  field="productTagline"
+                  className="text-[7.5px] font-semibold text-slate-500 mt-0.5 block"
+                  placeholder="Smart PPE. Safer Sites."
+                />
               </div>
             </div>
 
@@ -277,8 +322,14 @@ export function CanvasBackCoverPage({
             <div className="h-8 w-px bg-slate-200 flex-shrink-0" />
 
             {/* Center: Description */}
-            <div className="flex-1 min-w-0 text-[7.5px] text-slate-600 leading-snug">
-              AI + IoT powered safety and workforce management platform for construction, manufacturing, mining and industrial sites.
+            <div className="flex-1 min-w-0">
+              <EditableText
+                field="productDescription"
+                multiline
+                rows={2}
+                className="text-[7.5px] text-slate-600 leading-snug block"
+                placeholder="AI + IoT powered safety and workforce management platform for construction, manufacturing, mining and industrial sites."
+              />
             </div>
 
             {/* Right: Blue Arrow */}
@@ -342,12 +393,16 @@ export function CanvasBackCoverPage({
           {/* Right Column: View the Full Report Online Card */}
           <div className="bg-[#EEF4FF] rounded-xl border border-blue-100/80 p-2.5 flex flex-col items-center text-center justify-between shadow-xs">
             <div>
-              <div className="text-[9px] font-extrabold text-[#0B1546] leading-tight">
-                View the Full Report Online
-              </div>
-              <div className="text-[6.8px] text-slate-500 leading-tight mt-0.5">
-                Scan the QR code to access the digital version of this report.
-              </div>
+              <EditableText
+                field="qrHeading"
+                className="text-[9px] font-extrabold text-[#0B1546] leading-tight block"
+                placeholder="View the Full Report Online"
+              />
+              <EditableText
+                field="qrSubtext"
+                className="text-[6.8px] text-slate-500 leading-tight mt-0.5 block"
+                placeholder="Scan the QR code to access the digital version of this report."
+              />
             </div>
 
             {/* QR Code Graphic */}
@@ -370,14 +425,11 @@ export function CanvasBackCoverPage({
             {/* Link Text */}
             <div className="text-[6.5px] text-slate-500 leading-tight mt-0.5">
               Or visit{" "}
-              <a
-                href="https://reports.sitesafe.ai"
-                target="_blank"
-                rel="noreferrer"
+              <EditableText
+                field="qrUrl"
                 className="text-[#1A38D6] font-bold hover:underline"
-              >
-                https://reports.sitesafe.ai
-              </a>
+                placeholder="https://reports.sitesafe.ai"
+              />
             </div>
           </div>
         </div>
@@ -408,13 +460,17 @@ export function CanvasBackCoverPage({
             />
             <EditableText
               field="thankYouMessage"
-              className="text-[10px] font-medium text-slate-200 mt-0.5 leading-snug"
+              className="text-[10px] font-medium text-slate-200 mt-0.5 leading-snug block"
               placeholder="for being a part of our safety journey."
             />
             <div className="h-[2px] w-8 bg-[#1A38D6] rounded-full my-1.5" />
-            <div className="text-[7.5px] text-slate-300 leading-tight">
-              Together, we can create workplaces where every worker returns home safe, every day.
-            </div>
+            <EditableText
+              field="thankYouSubtext"
+              multiline
+              rows={2}
+              className="text-[7.5px] text-slate-300 leading-tight block"
+              placeholder="Together, we can create workplaces where every worker returns home safe, every day."
+            />
           </div>
 
           {/* Center: 3 Safety Badges in Vertical Stack */}
@@ -445,9 +501,13 @@ export function CanvasBackCoverPage({
           <div className="flex items-center gap-3 pr-2">
             <div className="h-14 w-px bg-white/30" />
             <div className="flex flex-col">
-              <div className="text-[8px] font-black uppercase tracking-widest text-white leading-tight">
-                INNOVATION<br />FOR A SAFER<br />TOMORROW
-              </div>
+              <EditableText
+                field="flagHeading"
+                multiline
+                rows={3}
+                className="text-[8px] font-black uppercase tracking-widest text-white leading-tight block"
+                placeholder={"INNOVATION\nFOR A SAFER\nTOMORROW"}
+              />
               {/* Indian Tricolor Bar */}
               <div className="flex h-[3px] w-12 rounded-full overflow-hidden mt-2">
                 <div className="flex-1 bg-[#FF9933]" />
@@ -465,12 +525,14 @@ export function CanvasBackCoverPage({
         <div className="flex flex-col justify-center min-w-0 pr-4">
           <EditableText
             field="companyName"
-            className="text-[10px] font-black text-[#0B1546] tracking-wider uppercase leading-tight"
+            className="text-[10px] font-black text-[#0B1546] tracking-wider uppercase leading-tight block"
             placeholder="AyantrAI Private Limited"
           />
-          <div className="text-[7.5px] font-medium text-slate-500 leading-tight mt-0.5">
-            People&nbsp;&nbsp;|&nbsp;&nbsp;Technology&nbsp;&nbsp;|&nbsp;&nbsp;Safer Tomorrow
-          </div>
+          <EditableText
+            field="footerTagline"
+            className="text-[7.5px] font-medium text-slate-500 leading-tight mt-0.5 block"
+            placeholder="People  |  Technology  |  Safer Tomorrow"
+          />
         </div>
 
         {/* Divider 1 */}
@@ -561,7 +623,6 @@ export function CanvasBackCoverPage({
         </div>
       </footer>
 
-     
     </div>
   );
 }
