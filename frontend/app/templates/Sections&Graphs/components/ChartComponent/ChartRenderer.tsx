@@ -189,70 +189,53 @@ export default function ChartRenderer({
     return null;
   };
 
-  // Unified responsive scale across all chart types (same responsive flow as heatmap + custom font size)
-  const isCompact = (height !== undefined && height < 240) || fontSize === "xs" || (customFontSize !== undefined && customFontSize <= 11);
-  const isLarge = (height !== undefined && height > 340 && fontSize !== "xs" && fontSize !== "sm") || fontSize === "lg" || fontSize === "xl" || (customFontSize !== undefined && customFontSize >= 16);
+  // Proportional scale factor continuous based on container height (reference: 240px)
+  const heightRatio = height !== undefined
+    ? Math.min(1.35, Math.max(0.52, height / 240))
+    : 1;
 
   // Custom font size scale factor (relative to standard 14px base)
   const customScale = customFontSize !== undefined && customFontSize > 0 ? customFontSize / 14 : undefined;
 
-  // Dynamic SVG font sizes based on selected fontSize & height & custom
-  const svgTickSize = customScale
-    ? +(6.5 * customScale).toFixed(1)
-    : fontSize === "xs"
-    ? 5.2
-    : fontSize === "sm" || isCompact
-    ? 5.8
-    : fontSize === "lg"
-    ? 7.5
-    : fontSize === "xl" || isLarge
-    ? 8.2
-    : 6.5;
+  // Unified responsive scale across all chart types
+  const isUltraCompact = heightRatio < 0.65;
+  const isCompact = heightRatio < 0.85 || fontSize === "xs" || (customFontSize !== undefined && customFontSize <= 11);
+  const isLarge = (height !== undefined && height > 340 && fontSize !== "xs" && fontSize !== "sm") || fontSize === "lg" || fontSize === "xl" || (customFontSize !== undefined && customFontSize >= 16);
 
-  const svgValueSize = customScale
-    ? +(7.0 * customScale).toFixed(1)
-    : fontSize === "xs"
-    ? 5.6
-    : fontSize === "sm" || isCompact
-    ? 6.3
-    : fontSize === "lg"
-    ? 8.0
-    : fontSize === "xl" || isLarge
-    ? 8.8
-    : 7.0;
+  // Effective scale combines custom toolbar font scale and container height ratio
+  const effectiveScale = customScale ? customScale * Math.min(1.15, Math.max(0.7, heightRatio)) : heightRatio;
 
-  const svgTitleSize = customScale
-    ? +(7.0 * customScale).toFixed(1)
-    : fontSize === "xs"
-    ? 5.8
-    : fontSize === "sm" || isCompact
-    ? 6.4
-    : fontSize === "lg"
-    ? 8.0
-    : fontSize === "xl" || isLarge
-    ? 8.8
-    : 7.0;
+  // Dynamic SVG font sizes scaled proportionally with container
+  const baseTick = fontSize === "xs" ? 5.2 : fontSize === "sm" ? 5.8 : fontSize === "lg" ? 7.5 : fontSize === "xl" ? 8.2 : 6.5;
+  const svgTickSize = +(baseTick * effectiveScale).toFixed(1);
+
+  const baseVal = fontSize === "xs" ? 5.6 : fontSize === "sm" ? 6.2 : fontSize === "lg" ? 8.0 : fontSize === "xl" ? 8.8 : 7.0;
+  const svgValueSize = +(baseVal * effectiveScale).toFixed(1);
+
+  const baseTitle = fontSize === "xs" ? 5.8 : fontSize === "sm" ? 6.4 : fontSize === "lg" ? 8.0 : fontSize === "xl" ? 8.8 : 7.0;
+  const svgTitleSize = +(baseTitle * effectiveScale).toFixed(1);
 
   // Dynamic Tailwind text classes for HTML-rendered charts & legends
   const legendTextClass =
     customFontSize !== undefined
       ? customFontSize <= 10
-        ? "text-[9px]"
+        ? "text-[8px]"
         : customFontSize <= 12
-        ? "text-[10px]"
+        ? "text-[9px]"
         : customFontSize >= 16
         ? "text-xs sm:text-sm"
-        : "text-[11px]"
-      : fontSize === "xs"
+        : "text-[10px]"
+      : isUltraCompact
+      ? "text-[8px]"
+      : isCompact
       ? "text-[9px]"
-      : fontSize === "sm" || isCompact
-      ? "text-[10px]"
       : fontSize === "lg" || fontSize === "xl" || isLarge
       ? "text-xs"
-      : "text-[11px]";
+      : "text-[10px] sm:text-[11px]";
 
-  const legendGapClass = isCompact ? "gap-2.5 pt-0.5" : "gap-4 sm:gap-5 pt-1";
-  const chartWrapperClass = "w-full h-full min-h-0 flex flex-col justify-center items-center overflow-hidden";
+  const legendGapClass = isUltraCompact ? "gap-1.5 py-0.5" : isCompact ? "gap-2.5 pt-0.5" : "gap-4 sm:gap-5 pt-1";
+  const legendDotClass = isUltraCompact ? "w-1.5 h-1.5" : isCompact ? "w-2 h-2" : "w-2.5 h-2.5";
+  const chartWrapperClass = "w-full h-full min-h-0 flex-1 flex flex-col justify-center items-center overflow-hidden";
 
   const renderChart = () => {
     switch (chart.chartType) {
@@ -282,11 +265,11 @@ export default function ChartRenderer({
         const points = vals.map((v, i) => {
           const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
           const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
-          const cy = 110 - norm * 96;
+          const cy = 114 - norm * 88;
           return { cx, cy, val: v, label: d.categories[i] };
         });
         const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
-        const areaPath = points.length > 0 ? `${path} L ${points[points.length - 1].cx.toFixed(1)} 110 L ${points[0].cx.toFixed(1)} 110 Z` : "";
+        const areaPath = points.length > 0 ? `${path} L ${points[points.length - 1].cx.toFixed(1)} 114 L ${points[0].cx.toFixed(1)} 114 Z` : "";
         return {
           s,
           sColor,
@@ -300,7 +283,7 @@ export default function ChartRenderer({
       });
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 110 - r * 96,
+        y: 114 - r * 88,
         label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
 
@@ -312,13 +295,13 @@ export default function ChartRenderer({
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
               {allSeriesData.map((sData, sIdx) => (
                 <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sData.sColor }} />
+                  <span className={`${legendDotClass} rounded-xs shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
                   <span className="text-slate-600 dark:text-zinc-300 font-semibold">{sData.name}</span>
                 </div>
               ))}
             </div>
           )}
-          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full h-full flex-1 max-h-full overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 160" : "0 0 440 144"} preserveAspectRatio="xMidYMid meet" className="w-full h-full flex-1 max-h-full max-w-full block overflow-visible">
             <defs>
               <linearGradient id={`grad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={c0} stopOpacity="0.35" />
@@ -326,12 +309,12 @@ export default function ChartRenderer({
               </linearGradient>
             </defs>
             {/* Y-axis */}
-            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* Y-axis Header / Unit */}
             {yHeader && (
-              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="10" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
@@ -349,8 +332,8 @@ export default function ChartRenderer({
               const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
               return (
                 <g key={i}>
-                  <line x1={cx} y1="110" x2={cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
+                  <line x1={cx} y1="114" x2={cx} y2="118" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={cx} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
                 </g>
               );
             })}
@@ -373,7 +356,7 @@ export default function ChartRenderer({
                   <g key={pIdx}>
                     <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={sData.sColor} strokeWidth="2" />
                     {d.showValues && (
-                      <text x={pt.cx} y={pt.cy - 6} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={sData.sColor}>
+                      <text x={pt.cx} y={pt.cy - 5} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={sData.sColor}>
                         {formatDataValue(pt.val, d.unit, n > 6)}
                       </text>
                     )}
@@ -382,7 +365,7 @@ export default function ChartRenderer({
               </g>
             ))}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
+              <text x="238" y="150" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -424,17 +407,20 @@ export default function ChartRenderer({
       const primaryVal = d.values[0] ?? 0;
       const primaryPct = Math.round((primaryVal / sum) * 100);
 
+      const isUltraCompactDonut = isUltraCompact || (height !== undefined && height < 170);
       const isCompactDonut = isCompact || (height !== undefined && height < 220);
-      const donutSizeClass = isCompactDonut
+      const donutSizeClass = isUltraCompactDonut
+        ? "w-20 h-20 sm:w-24 sm:h-24"
+        : isCompactDonut
         ? "w-28 h-28 sm:w-32 sm:h-32"
         : isLarge
         ? "w-44 h-44 sm:w-52 sm:h-52"
         : "w-36 h-36 sm:w-40 sm:h-40";
 
       return (
-        <div className={`w-full h-full min-h-0 flex items-center justify-center ${isCompact ? "gap-3 sm:gap-6" : isLarge ? "gap-8 sm:gap-12" : "gap-5 sm:gap-8"} py-1 overflow-hidden`}>
+        <div className={`w-full h-full min-h-0 flex items-center justify-center ${isUltraCompact ? "gap-2 sm:gap-4" : isCompact ? "gap-3 sm:gap-6" : isLarge ? "gap-8 sm:gap-12" : "gap-5 sm:gap-8"} py-1 overflow-hidden`}>
           <div className={`relative ${donutSizeClass} flex items-center justify-center flex-shrink-0`}>
-            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90 overflow-visible">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" className="w-full h-full -rotate-90 overflow-visible">
               {segments.map((seg, i) => (
                 <circle
                   key={i}
@@ -451,10 +437,10 @@ export default function ChartRenderer({
             </svg>
             {!isPie && (
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className={`${isCompact ? "text-base sm:text-lg" : isLarge ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-black font-mono text-slate-900 dark:text-white leading-none`}>
+                <span className={`${isUltraCompact ? "text-sm sm:text-base" : isCompact ? "text-base sm:text-lg" : isLarge ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl"} font-black font-mono text-slate-900 dark:text-white leading-none`}>
                   {primaryPct}%
                 </span>
-                <span className={`${isCompact ? "text-[8px]" : "text-[9px] sm:text-[10px]"} font-bold uppercase tracking-wider text-slate-400 mt-0.5 truncate max-w-[80px] text-center`}>
+                <span className={`${isUltraCompact ? "text-[7px]" : isCompact ? "text-[8px]" : "text-[9px] sm:text-[10px]"} font-bold uppercase tracking-wider text-slate-400 mt-0.5 truncate max-w-[80px] text-center`}>
                   {d.categories[0] || "Compliant"}
                 </span>
               </div>
@@ -462,10 +448,10 @@ export default function ChartRenderer({
           </div>
 
           {/* Legend */}
-          <div className={`space-y-1.5 sm:space-y-2 ${legendTextClass} font-medium`}>
+          <div className={`space-y-1 sm:space-y-1.5 ${legendTextClass} font-medium`}>
             {segments.map((seg, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-2xs" style={{ backgroundColor: seg.color }} />
+              <div key={i} className="flex items-center gap-1.5 sm:gap-2">
+                <div className={`${legendDotClass} rounded-full flex-shrink-0 shadow-2xs`} style={{ backgroundColor: seg.color }} />
                 <span className="text-slate-700 dark:text-zinc-300">
                   {seg.label}: <b className="font-bold">{seg.val}{d.unit} ({seg.pct}%)</b>
                 </span>
@@ -763,7 +749,7 @@ export default function ChartRenderer({
           ];
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 110 - r * 96,
+        y: 114 - r * 88,
         label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
 
@@ -778,7 +764,7 @@ export default function ChartRenderer({
                 const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
                 return (
                   <div key={s.id || sIdx} className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sColor }} />
+                    <span className={`${legendDotClass} rounded-xs shadow-2xs flex-shrink-0`} style={{ backgroundColor: sColor }} />
                     <span className="text-slate-600 dark:text-zinc-300 font-semibold">{s.name || `Series ${sIdx + 1}`}</span>
                   </div>
                 );
@@ -786,13 +772,13 @@ export default function ChartRenderer({
             </div>
           )}
 
-          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 160" : "0 0 440 144"} preserveAspectRatio="xMidYMid meet" className="w-full h-full flex-1 max-h-full max-w-full block overflow-visible">
             {/* Y-axis */}
-            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {yHeader && (
-              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="10" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
@@ -819,8 +805,8 @@ export default function ChartRenderer({
               return (
                 <g key={i}>
                   {seriesSegs.map((seg, sIdx) => {
-                    const sh = Math.max(1, (seg.val / totalVal) * 96);
-                    const y = 110 - accumulatedH - sh;
+                    const sh = Math.max(1, (seg.val / totalVal) * 88);
+                    const y = 114 - accumulatedH - sh;
                     accumulatedH += sh;
                     return (
                       <rect
@@ -834,13 +820,13 @@ export default function ChartRenderer({
                       />
                     );
                   })}
-                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={124} fontSize={svgTickSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{cat}</text>
+                  <line x1={x} y1="114" x2={x} y2="118" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={130} fontSize={svgTickSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{cat}</text>
                 </g>
               );
             })}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
+              <text x="238" y="150" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -879,7 +865,7 @@ export default function ChartRenderer({
       const groupWidth = numSeries * bw + (numSeries - 1) * barGap;
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 110 - r * 96,
+        y: 114 - r * 88,
         label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
 
@@ -891,20 +877,20 @@ export default function ChartRenderer({
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
               {seriesInfo.map((sData, sIdx) => (
                 <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sData.sColor }} />
+                  <span className={`${legendDotClass} rounded-xs shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
                   <span className="text-slate-600 dark:text-zinc-300 font-semibold">{sData.name}</span>
                 </div>
               ))}
             </div>
           )}
 
-          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 160" : "0 0 440 144"} preserveAspectRatio="xMidYMid meet" className="w-full h-full flex-1 max-h-full max-w-full block overflow-visible">
             {/* Y-axis */}
-            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {yHeader && (
-              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="10" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
@@ -925,17 +911,17 @@ export default function ChartRenderer({
                 <g key={i}>
                   {seriesInfo.map((sData, sIdx) => {
                     const val = sData.vals[i] ?? 0;
-                    const h = Math.max(2, Math.min(96, ((val - d.yMin) / yRange) * 96));
+                    const h = Math.max(2, Math.min(88, ((val - d.yMin) / yRange) * 88));
                     const bx = startX + sIdx * (bw + barGap);
 
                     return (
                       <React.Fragment key={sIdx}>
-                        <rect x={bx} y={110 - h} width={bw} height={h} fill={sData.sColor} rx="2" />
+                        <rect x={bx} y={114 - h} width={bw} height={h} fill={sData.sColor} rx="2" />
                         {d.showValues && (
                           <text
                             x={bx + bw / 2}
-                            y={110 - h - 3}
-                            fontSize={numSeries > 3 ? 7 : svgValueSize}
+                            y={114 - h - 3}
+                            fontSize={numSeries > 3 ? +(svgValueSize * 0.9).toFixed(1) : svgValueSize}
                             fontWeight="bold"
                             textAnchor="middle"
                             fill={sData.sColor}
@@ -946,13 +932,13 @@ export default function ChartRenderer({
                       </React.Fragment>
                     );
                   })}
-                  <line x1={xCenter} y1="110" x2={xCenter} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={xCenter} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
+                  <line x1={xCenter} y1="114" x2={xCenter} y2="118" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={xCenter} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
                 </g>
               );
             })}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
+              <text x="238" y="150" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -986,7 +972,7 @@ export default function ChartRenderer({
         const points = vals.map((v, i) => {
           const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
           const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
-          const cy = 110 - norm * 96;
+          const cy = 114 - norm * 88;
           return { cx, cy, val: v, label: d.categories[i] };
         });
         const path = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
@@ -1002,7 +988,7 @@ export default function ChartRenderer({
       });
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 110 - r * 96,
+        y: 114 - r * 88,
         label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
 
@@ -1014,19 +1000,19 @@ export default function ChartRenderer({
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
               {allSeriesData.map((sData, sIdx) => (
                 <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sData.sColor }} />
+                  <span className={`${legendDotClass} rounded-xs shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
                   <span className="text-slate-600 dark:text-zinc-300 font-semibold">{sData.name}</span>
                 </div>
               ))}
             </div>
           )}
-          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 160" : "0 0 440 144"} preserveAspectRatio="xMidYMid meet" className="w-full h-full flex-1 max-h-full max-w-full block overflow-visible">
             {/* Y-axis */}
-            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
-            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {yHeader && (
-              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="10" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
@@ -1044,8 +1030,8 @@ export default function ChartRenderer({
               const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
               return (
                 <g key={i}>
-                  <line x1={cx} y1="110" x2={cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
+                  <line x1={cx} y1="114" x2={cx} y2="118" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={cx} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
                 </g>
               );
             })}
@@ -1074,7 +1060,7 @@ export default function ChartRenderer({
               </g>
             ))}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
+              <text x="238" y="150" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -1092,18 +1078,18 @@ export default function ChartRenderer({
       const yRange = (d.yMax - d.yMin) || 1;
 
       return (
-        <div className="w-full h-full min-h-0 flex flex-col justify-center gap-2.5 text-xs px-2 py-1 overflow-hidden">
+        <div className={`w-full h-full min-h-0 flex flex-col justify-center ${isUltraCompact ? "gap-1" : isCompact ? "gap-1.5" : "gap-2.5"} text-xs px-2 py-1 overflow-hidden`}>
           {d.values.map((v, i) => {
             const pct = Math.max(0, Math.min(100, ((v - d.yMin) / yRange) * 100));
             const col = d.pointColors?.[i] || [c0, c1, c2, c3, c4][i % 5];
             const label = d.categories[i] || `Metric ${i + 1}`;
             return (
-              <div key={i} className="space-y-1">
+              <div key={i} className="space-y-0.5 sm:space-y-1">
                 <div className="flex justify-between font-bold text-slate-700 dark:text-zinc-300">
                   <span className={legendTextClass}>{label}</span>
                   <span className={legendTextClass}>{formatDataValue(v, d.unit)}</span>
                 </div>
-                <div className="w-full h-4 sm:h-5 bg-slate-100 dark:bg-zinc-800 rounded-lg overflow-hidden flex">
+                <div className={`w-full ${isUltraCompact ? "h-2.5" : isCompact ? "h-3 sm:h-3.5" : "h-4 sm:h-5"} bg-slate-100 dark:bg-zinc-800 rounded-lg overflow-hidden flex`}>
                   <div className="h-full rounded-lg transition-all" style={{ width: `${pct}%`, backgroundColor: col }} />
                 </div>
               </div>
@@ -1120,14 +1106,14 @@ export default function ChartRenderer({
       const points = d.values.map((v, i) => {
         const cx = 56 + (n > 1 ? (i / (n - 1)) * 360 : 180);
         const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
-        const cy = 110 - norm * 96;
+        const cy = 114 - norm * 88;
         return { cx, cy, val: v, label: d.categories[i] };
       });
       const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.cx.toFixed(1)} ${p.cy.toFixed(1)}`).join(" ");
-      const areaD = `${pathD} L ${points[points.length - 1].cx.toFixed(1)} 110 L ${points[0].cx.toFixed(1)} 110 Z`;
+      const areaD = `${pathD} L ${points[points.length - 1].cx.toFixed(1)} 114 L ${points[0].cx.toFixed(1)} 114 Z`;
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 110 - r * 96,
+        y: 114 - r * 88,
         label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
 
@@ -1135,17 +1121,17 @@ export default function ChartRenderer({
 
       return (
         <div className={chartWrapperClass}>
-          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
+          <svg viewBox={d.xAxisTitle ? "0 0 440 160" : "0 0 440 144"} preserveAspectRatio="xMidYMid meet" className="w-full h-full flex-1 max-h-full max-w-full block overflow-visible">
             <defs>
               <linearGradient id={`areagrad-${chart.id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={c0} stopOpacity="0.5" />
                 <stop offset="100%" stopColor={c0} stopOpacity="0.03" />
               </linearGradient>
             </defs>
-            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {yHeader && (
-              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="10" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
@@ -1159,8 +1145,8 @@ export default function ChartRenderer({
             ))}
             {points.map((p, i) => (
               <g key={i}>
-                <line x1={p.cx} y1="110" x2={p.cx} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                <text x={p.cx} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
+                <line x1={p.cx} y1="114" x2={p.cx} y2="118" stroke="currentColor" strokeOpacity="0.3" />
+                <text x={p.cx} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{p.label}</text>
               </g>
             ))}
             <path d={areaD} fill={`url(#areagrad-${chart.id})`} />
@@ -1169,7 +1155,7 @@ export default function ChartRenderer({
               <circle key={i} cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
             ))}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
+              <text x="238" y="150" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -1240,23 +1226,26 @@ export default function ChartRenderer({
       const endY = 50 - 40 * Math.sin(rad);
       const pathGauge = `M 10 50 A 40 40 0 0 1 ${endX.toFixed(1)} ${endY.toFixed(1)}`;
 
+      const gaugeWClass = isUltraCompact ? "w-28 sm:w-32" : isCompact ? "w-36 sm:w-44" : "w-48 sm:w-56";
+      const valSizeClass = isUltraCompact ? "text-lg sm:text-xl" : isCompact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl";
+
       return (
         <div className="w-full h-full min-h-0 flex flex-col items-center justify-center relative overflow-hidden py-1">
-          <svg viewBox="0 0 100 56" className="w-48 sm:w-56 h-auto overflow-visible">
+          <svg viewBox="0 0 100 56" preserveAspectRatio="xMidYMid meet" className={`${gaugeWClass} h-auto max-h-full max-w-full block overflow-visible`}>
             <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="12" strokeLinecap="round" />
             <path d={pathGauge} fill="none" stroke={c0} strokeWidth="12" strokeLinecap="round" />
           </svg>
-          <div className="text-center -mt-3">
-            <div className="font-black text-2xl sm:text-3xl text-slate-800 dark:text-white leading-none">
+          <div className="text-center -mt-2 sm:-mt-3">
+            <div className={`font-black ${valSizeClass} text-slate-800 dark:text-white leading-none`}>
               {primaryVal}{d.unit}
             </div>
             {targetVal !== undefined && (
-              <div className="text-[10px] font-mono text-slate-400 mt-1">
+              <div className={`${isUltraCompact ? "text-[8px]" : "text-[10px]"} font-mono text-slate-400 mt-0.5`}>
                 Target: {targetVal}{d.unit}
               </div>
             )}
             {d.categories[0] && (
-              <div className="text-[10px] font-mono text-[#9D61FF] font-bold uppercase mt-0.5">
+              <div className={`${isUltraCompact ? "text-[8px]" : "text-[10px]"} font-mono text-[#9D61FF] font-bold uppercase mt-0.5`}>
                 {d.categories[0]}
               </div>
             )}
@@ -1280,11 +1269,11 @@ export default function ChartRenderer({
 
       return (
         <div className={chartWrapperClass}>
-          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
-            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+          <svg viewBox="0 0 440 144" preserveAspectRatio="xMidYMid meet" className="w-full h-full flex-1 max-h-full max-w-full block overflow-visible">
+            <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {[0, 25, 50, 75, 100].map((v, i) => {
-              const y = 110 - (v / 100) * 96;
+              const y = 114 - (v / 100) * 88;
               return (
                 <g key={i}>
                   <line x1="45" y1={y} x2="425" y2={y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
@@ -1296,8 +1285,8 @@ export default function ChartRenderer({
               const x = 48 + (v / 100) * 360;
               return (
                 <g key={i}>
-                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{v}</text>
+                  <line x1={x} y1="114" x2={x} y2="118" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{v}</text>
                 </g>
               );
             })}
@@ -1305,7 +1294,7 @@ export default function ChartRenderer({
               const rawX = typeof pt.x === "number" ? pt.x : parseFloat(String(pt.x)) || (i * 20 + 20);
               const rawY = typeof pt.y === "number" ? pt.y : pt.value ?? (i * 15 + 30);
               const cx = 48 + Math.max(0, Math.min(100, rawX) / 100) * 360;
-              const cy = 110 - Math.max(0, Math.min(100, rawY) / 100) * 96;
+              const cy = 114 - Math.max(0, Math.min(100, rawY) / 100) * 88;
               const r = isBubble ? Math.max(6, Math.min(26, pt.size ?? 16)) : 4.5;
               const pCol = pt.color || c0;
 
@@ -1400,11 +1389,11 @@ export default function ChartRenderer({
 
       return (
         <div className={chartWrapperClass}>
-          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
-            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+          <svg viewBox="0 0 440 144" preserveAspectRatio="xMidYMid meet" className="w-full h-full flex-1 max-h-full max-w-full block overflow-visible">
+            <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {[0, 25, 50, 75, 100].map((v, i) => {
-              const y = 110 - (v / 100) * 96;
+              const y = 114 - (v / 100) * 88;
               return (
                 <g key={i}>
                   <line x1="45" y1={y} x2="425" y2={y} stroke="currentColor" strokeOpacity="0.07" strokeDasharray="3 3" />
@@ -1415,12 +1404,12 @@ export default function ChartRenderer({
             {/* Bars for Series 1 */}
             {d.values.map((v, i) => {
               const x = 56 + ((i + 0.5) / n) * 360;
-              const h = Math.max(3, ((v - d.yMin) / yRange) * 96);
+              const h = Math.max(3, ((v - d.yMin) / yRange) * 88);
               return (
                 <g key={i}>
-                  <rect x={x - 16} y={110 - h} width="32" height={h} fill={c0} opacity="0.8" rx="2" />
-                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{d.categories[i]}</text>
+                  <rect x={x - 16} y={114 - h} width="32" height={h} fill={c0} opacity="0.8" rx="2" />
+                  <line x1={x} y1="114" x2={x} y2="118" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{d.categories[i]}</text>
                 </g>
               );
             })}
@@ -1428,7 +1417,7 @@ export default function ChartRenderer({
             <path
               d={secVals.map((v, i) => {
                 const x = 56 + ((i + 0.5) / n) * 360;
-                const y = 110 - Math.max(3, ((v - d.yMin) / yRange) * 96);
+                const y = 114 - Math.max(3, ((v - d.yMin) / yRange) * 88);
                 return `${i === 0 ? "M" : "L"} ${x} ${y}`;
               }).join(" ")}
               fill="none"
@@ -1438,7 +1427,7 @@ export default function ChartRenderer({
             />
             {secVals.map((v, i) => {
               const x = 56 + ((i + 0.5) / n) * 360;
-              const y = 110 - Math.max(3, ((v - d.yMin) / yRange) * 96);
+              const y = 114 - Math.max(3, ((v - d.yMin) / yRange) * 88);
               return <circle key={i} cx={x} cy={y} r="3" fill={c1} />;
             })}
             {/* Legend */}
@@ -1462,9 +1451,9 @@ export default function ChartRenderer({
 
       return (
         <div className={chartWrapperClass}>
-          <svg viewBox="0 0 440 138" className="w-full flex-1 overflow-visible">
-            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+          <svg viewBox="0 0 440 144" preserveAspectRatio="xMidYMid meet" className="w-full h-full flex-1 max-h-full max-w-full block overflow-visible">
+            <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {pts.map((p, i) => {
               const x = 60 + i * 72;
               const isNeg = p.value < 0;
@@ -1475,8 +1464,8 @@ export default function ChartRenderer({
               return (
                 <g key={i}>
                   <rect x={x} y={y} width="52" height={h} fill={barColor} rx="2" />
-                  <line x1={x + 26} y1="110" x2={x + 26} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x + 26} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.7">{p.label}</text>
+                  <line x1={x + 26} y1="114" x2={x + 26} y2="118" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x + 26} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.7">{p.label}</text>
                 </g>
               );
             })}
@@ -1524,19 +1513,19 @@ export default function ChartRenderer({
           ];
 
       return (
-        <div className="w-full h-full min-h-0 grid grid-cols-2 gap-2.5 p-1 auto-rows-fr overflow-hidden">
+        <div className={`w-full h-full min-h-0 grid grid-cols-2 ${isUltraCompact ? "gap-1.5 p-0.5" : isCompact ? "gap-2 p-1" : "gap-2.5 p-1"} auto-rows-fr overflow-hidden`}>
           {kpis.slice(0, 4).map((k, i) => (
             <div
               key={i}
-              className="flex flex-col justify-between bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-xl p-3 sm:p-4 border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs hover:border-[#9D61FF]/40 transition-all min-h-0 overflow-hidden"
+              className={`flex flex-col justify-between bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-xl ${isUltraCompact ? "p-1.5" : isCompact ? "p-2 sm:p-2.5" : "p-3 sm:p-4"} border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs hover:border-[#9D61FF]/40 transition-all min-h-0 overflow-hidden`}
             >
-              <span className={`text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider truncate`}>
+              <span className={`${isUltraCompact ? "text-[8px]" : "text-[10px] sm:text-xs"} font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider truncate`}>
                 {k.label}
               </span>
-              <div className="font-black text-xl sm:text-2xl text-slate-900 dark:text-white leading-tight my-auto truncate">
+              <div className={`font-black ${isUltraCompact ? "text-sm sm:text-base" : isCompact ? "text-base sm:text-xl" : "text-xl sm:text-2xl"} text-slate-900 dark:text-white leading-tight my-auto truncate`}>
                 {k.status || k.value}
               </div>
-              <span className="font-bold text-[10px] sm:text-xs flex items-center gap-1" style={{ color: k.color || [c3, c0, c1, c2][i % 4] }}>
+              <span className={`font-bold ${isUltraCompact ? "text-[8px]" : "text-[10px] sm:text-xs"} flex items-center gap-1`} style={{ color: k.color || [c3, c0, c1, c2][i % 4] }}>
                 {k.trendDirection === "down" ? "↓" : "↑"} {k.trend || "+0%"}
               </span>
             </div>
@@ -1698,7 +1687,7 @@ export default function ChartRenderer({
       const bw = Math.min(36, Math.max(12, (360 / n) * 0.65));
 
       const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 110 - r * 96,
+        y: 114 - r * 88,
         label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
 
@@ -1706,11 +1695,11 @@ export default function ChartRenderer({
 
       return (
         <div className={chartWrapperClass}>
-          <svg viewBox={d.xAxisTitle ? "0 0 440 148" : "0 0 440 138"} className="w-full flex-1 overflow-visible">
-            <line x1="48" y1="12" x2="48" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            <line x1="48" y1="110" x2="425" y2="110" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+          <svg viewBox={d.xAxisTitle ? "0 0 440 160" : "0 0 440 144"} preserveAspectRatio="xMidYMid meet" className="w-full h-full flex-1 max-h-full max-w-full block overflow-visible">
+            <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+            <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {yHeader && (
-              <text x="48" y="7" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
+              <text x="48" y="10" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
             )}
@@ -1725,26 +1714,26 @@ export default function ChartRenderer({
             {d.values.map((v, i) => {
               const x = 56 + ((i + 0.5) / n) * 360;
               const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
-              const barH = Math.max(3, norm * 96);
+              const barH = Math.max(3, norm * 88);
               const barColor = d.pointColors?.[i] || c0;
 
               return (
                 <g key={i}>
-                  <rect x={x - bw / 2} y={110 - barH} width={bw} height={barH} rx="4" fill={barColor} />
+                  <rect x={x - bw / 2} y={114 - barH} width={bw} height={barH} rx="4" fill={barColor} />
                   {d.showValues && (
-                    <text x={x} y={110 - barH - 4} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={barColor}>
+                    <text x={x} y={114 - barH - 4} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={barColor}>
                       {formatDataValue(v, d.unit, n > 6)}
                     </text>
                   )}
-                  <line x1={x} y1="110" x2={x} y2="114" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={124} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">
+                  <line x1={x} y1="114" x2={x} y2="118" stroke="currentColor" strokeOpacity="0.3" />
+                  <text x={x} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">
                     {d.categories[i]}
                   </text>
                 </g>
               );
             })}
             {d.xAxisTitle && (
-              <text x="238" y="141" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
+              <text x="238" y="150" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>
@@ -1756,8 +1745,8 @@ export default function ChartRenderer({
   if (typeof height === "number") {
     return (
       <div
-        style={{ height: `${height}px`, minHeight: `${height}px` }}
-        className="w-full flex items-center justify-center overflow-hidden [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full"
+        style={{ height: `${height}px`, maxHeight: "100%" }}
+        className="w-full h-full min-h-0 flex-1 flex items-center justify-center overflow-hidden [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full"
       >
         {renderChart()}
       </div>
@@ -1765,7 +1754,7 @@ export default function ChartRenderer({
   }
 
   return (
-    <div className="w-full h-full min-h-0 max-h-full flex items-center justify-center overflow-hidden [&>div]:!min-h-[140px] [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full">
+    <div className="w-full h-full min-h-0 max-h-full flex-1 flex items-center justify-center overflow-hidden [&>div]:!min-h-[60px] [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full">
       {renderChart()}
     </div>
   );

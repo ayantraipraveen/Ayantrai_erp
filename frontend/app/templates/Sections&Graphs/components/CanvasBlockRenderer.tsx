@@ -281,43 +281,64 @@ function ChartBlock({
   const customHeight = cell.customHeight;
   const style = cell.style || {};
 
-  // Dynamic font sizing
+  // Dynamic responsive scaling based on customHeight and customWidth
+  const isUltraCompact = customHeight !== undefined && customHeight < 200;
+  const isCompact = (customHeight !== undefined && customHeight < 280) || isUltraCompact;
+
   const fontSize = style.fontSize || "base";
-  const titleSizeClass =
-    fontSize === "xs"
-      ? "text-xs font-bold"
-      : fontSize === "sm"
-      ? "text-sm font-bold"
-      : fontSize === "lg"
-      ? "text-base sm:text-lg font-bold"
-      : fontSize === "xl"
-      ? "text-lg sm:text-xl font-bold"
-      : "text-sm sm:text-base font-bold";
+  const titleSizeClass = isUltraCompact
+    ? "text-xs font-bold leading-tight"
+    : isCompact
+    ? "text-xs sm:text-sm font-bold leading-snug"
+    : fontSize === "xs"
+    ? "text-xs font-bold"
+    : fontSize === "sm"
+    ? "text-sm font-bold"
+    : fontSize === "lg"
+    ? "text-base sm:text-lg font-bold"
+    : fontSize === "xl"
+    ? "text-lg sm:text-xl font-bold"
+    : "text-sm sm:text-base font-bold";
 
   const subtitleSizeClass =
-    fontSize === "xs" || fontSize === "sm"
+    isUltraCompact || fontSize === "xs" || fontSize === "sm"
       ? "text-[9px]"
+      : isCompact
+      ? "text-[9.5px]"
       : fontSize === "lg" || fontSize === "xl"
       ? "text-xs"
       : "text-[10px]";
 
-  const descSizeClass =
-    fontSize === "xs"
-      ? "text-[10px]"
-      : fontSize === "sm"
-      ? "text-[11px]"
-      : fontSize === "lg"
-      ? "text-xs sm:text-sm"
-      : fontSize === "xl"
-      ? "text-sm"
-      : "text-[11px] sm:text-xs";
+  const descSizeClass = isUltraCompact
+    ? "text-[9px] leading-tight line-clamp-1"
+    : isCompact
+    ? "text-[10px] leading-snug line-clamp-1"
+    : fontSize === "xs"
+    ? "text-[10px] line-clamp-2"
+    : fontSize === "sm"
+    ? "text-[11px] line-clamp-2"
+    : fontSize === "lg"
+    ? "text-xs sm:text-sm line-clamp-2"
+    : fontSize === "xl"
+    ? "text-sm line-clamp-2"
+    : "text-[11px] sm:text-xs leading-relaxed line-clamp-2";
 
   const hasTitle = Boolean(chart.title && chart.title.trim());
-  // Compact spacing & generous chart viewport allocation
-  const isCompact = customHeight !== undefined && customHeight < 300;
-  const pClass = isCompact ? "p-3 space-y-1.5" : "p-4 space-y-2";
-  const overhead = (chart.description ? 35 : 0) + (hasTitle ? 28 : 0) + (isCompact ? 16 : 24);
-  const chartAreaHeight = customHeight ? Math.max(160, customHeight - overhead) : undefined;
+  const pClass = isUltraCompact
+    ? "p-2 gap-1"
+    : isCompact
+    ? "p-2.5 sm:p-3 gap-1.5"
+    : "p-4 gap-2";
+
+  // Compute accurate overhead budget so child NEVER overflows the card
+  const padOverhead = isUltraCompact ? 16 : isCompact ? 22 : 32;
+  const titleOverhead = hasTitle ? (isUltraCompact ? 18 : isCompact ? 22 : 28) : 0;
+  const descOverhead = chart.description ? (isUltraCompact ? 16 : isCompact ? 20 : 30) : 0;
+  const totalOverhead = padOverhead + titleOverhead + descOverhead;
+
+  const chartAreaHeight = customHeight
+    ? Math.max(50, customHeight - totalOverhead)
+    : undefined;
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [localTitle, setLocalTitle] = useState(chart.title || "");
@@ -437,7 +458,7 @@ function ChartBlock({
           <p
             onDoubleClick={() => !isPreview && setIsEditingDesc(true)}
             title={!isPreview ? "Double click to edit description / caption" : undefined}
-            className={`${descSizeClass} text-slate-500 dark:text-zinc-400 pt-1.5 border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 line-clamp-2 ${
+            className={`${descSizeClass} text-slate-500 dark:text-zinc-400 ${isCompact ? "pt-1" : "pt-1.5"} border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 ${
               !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
             }`}
           >
