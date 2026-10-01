@@ -17,7 +17,11 @@ import {
   CanvasBadgeItem,
   GraphType,
   CoverPageData,
+  DEFAULT_COVER_PAGE_DATA,
+  TableOfContentsData,
+  DEFAULT_TABLE_OF_CONTENTS_DATA,
   BackCoverData,
+  DEFAULT_BACK_COVER_DATA,
 } from "../../types/reportModuleTypes";
 
 /**
@@ -1192,19 +1196,16 @@ export const sectionsStudioReducers = {
       state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
-        data: Partial<import("../../types/reportModuleTypes").CoverPageData>;
+        data: Partial<CoverPageData>;
       }>
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
-        sec.coverPageData = { ...(sec.coverPageData || {
-          reportType: "Monthly Report",
-          subtitle: "WORKFORCE INSIGHTS\nFOR A SAFER TOMORROW",
-          reportingPeriod: "01 September 2025 – 30 September 2025",
-          projectSite: "ABC Infrastructure Project",
-          preparedFor: "Project Head",
-          preparedBy: "AyantrAI – Sitesafe Team",
-        }), ...action.payload.data };
+        sec.coverPageData = {
+          ...DEFAULT_COVER_PAGE_DATA,
+          ...(sec.coverPageData || {}),
+          ...action.payload.data,
+        };
         sec.updatedAt = "Just now";
       }
     },
@@ -1212,18 +1213,16 @@ export const sectionsStudioReducers = {
       state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
-        data: Partial<import("../../types/reportModuleTypes").TableOfContentsData>;
+        data: Partial<TableOfContentsData>;
       }>
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
-        sec.tableOfContentsData = { ...(sec.tableOfContentsData || {
-          title: "Contents",
-          subtitle: "A complete overview of workforce safety, device utilisation and operational performance.",
-          sidebarTitle: "Safer People\nStronger Industries",
-          sidebarTagline: "AI + IoT for a safer,\nsmarter tomorrow.",
-          items: [],
-        }), ...action.payload.data };
+        sec.tableOfContentsData = {
+          ...DEFAULT_TABLE_OF_CONTENTS_DATA,
+          ...(sec.tableOfContentsData || {}),
+          ...action.payload.data,
+        };
         sec.updatedAt = "Just now";
       }
     },
@@ -1231,19 +1230,16 @@ export const sectionsStudioReducers = {
       state: ReportModuleState,
       action: PayloadAction<{
         sectionId: string;
-        data: Partial<import("../../types/reportModuleTypes").BackCoverData>;
+        data: Partial<BackCoverData>;
       }>
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec) {
-        sec.backCoverData = { ...(sec.backCoverData || {
-          thankYouTitle: "Thank You",
-          thankYouMessage: "for being a part of our safety journey.",
-          companyName: "AyantrAI Private Limited",
-          websiteUrl: "www.ayantrai.com  |  www.sitesafe.ai",
-          email: "hello@ayantrai.com",
-          location: "Noida, Uttar Pradesh, India",
-        }), ...action.payload.data };
+        sec.backCoverData = {
+          ...DEFAULT_BACK_COVER_DATA,
+          ...(sec.backCoverData || {}),
+          ...action.payload.data,
+        };
         sec.updatedAt = "Just now";
       }
     },

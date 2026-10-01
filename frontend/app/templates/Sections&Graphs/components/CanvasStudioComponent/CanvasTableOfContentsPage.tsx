@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import {
   BarChart2,
@@ -96,7 +96,6 @@ export function CanvasTableOfContentsPage({
     className = "",
     placeholder = "",
     multiline = false,
-    rows = 2,
     as = "span",
     style,
   }: {
@@ -108,54 +107,67 @@ export function CanvasTableOfContentsPage({
     as?: "span" | "div" | "h1" | "p";
     style?: React.CSSProperties;
   }) => {
-    const isActive = editing?.type === "meta" && editing.field === field;
+    const isEditing = editing?.type === "meta" && editing.field === field;
     const content = String(data[field] ?? placeholder);
-
-    if (isActive) {
-      return multiline ? (
-        <textarea
-          autoFocus
-          rows={rows}
-          value={editing.value}
-          onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-          onBlur={commitEdit}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") cancelEdit();
-          }}
-          className={`bg-blue-50/90 text-slate-900 border-b-2 border-[#1A38D6] outline-none resize-none px-0.5 rounded-xs ${className}`}
-          placeholder={placeholder}
-          style={style}
-        />
-      ) : (
-        <input
-          autoFocus
-          value={editing.value}
-          onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-          onBlur={commitEdit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commitEdit();
-            if (e.key === "Escape") cancelEdit();
-          }}
-          className={`bg-blue-50/90 text-slate-900 border-b-2 border-[#1A38D6] outline-none px-0.5 rounded-xs ${className}`}
-          placeholder={placeholder}
-          style={style}
-        />
-      );
-    }
-
     const Tag = as;
+    const elementRef = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+      if (isEditing && elementRef.current) {
+        elementRef.current.focus();
+        const range = document.createRange();
+        range.selectNodeContents(elementRef.current);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    }, [isEditing]);
+
+    const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
+      if (!isEditing) return;
+      const text = e.currentTarget.innerText;
+      onUpdate?.({ [field]: text });
+      setEditing(null);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (elementRef.current) {
+          elementRef.current.innerText = content;
+        }
+        setEditing(null);
+      } else if (!multiline && e.key === "Enter") {
+        e.preventDefault();
+        e.currentTarget.blur();
+      } else if (multiline && e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        e.currentTarget.blur();
+      }
+    };
+
     return (
       <Tag
-        className={`${
-          !activeIsPreview
-            ? "hover:bg-blue-50/60 hover:ring-1 hover:ring-blue-300/60 rounded px-0.5 cursor-text transition-all"
+        ref={elementRef as any}
+        contentEditable={isEditing && !activeIsPreview}
+        suppressContentEditableWarning
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          if (!activeIsPreview) startEditMeta(field, content);
+        }}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className={`${className} ${
+          isEditing
+            ? "outline-none ring-1.5 ring-blue-500 bg-blue-50/40 rounded-xs px-0.5 cursor-text select-text"
+            : !activeIsPreview
+            ? "hover:ring-1 hover:ring-blue-300/50 hover:bg-blue-50/30 rounded-xs px-0.5 cursor-text"
             : ""
-        } ${className}`}
+        }`}
         style={style}
-        onDoubleClick={() => startEditMeta(field, content)}
         title={activeIsPreview ? undefined : "Double-click to edit"}
       >
-        {content || placeholder}
+        {content}
       </Tag>
     );
   };
@@ -167,8 +179,8 @@ export function CanvasTableOfContentsPage({
     className = "",
     placeholder = "",
     multiline = false,
-    rows = 2,
     as = "span",
+    style,
   }: {
     itemId: string;
     field: keyof TableOfContentsItem;
@@ -177,53 +189,73 @@ export function CanvasTableOfContentsPage({
     multiline?: boolean;
     rows?: number;
     as?: "span" | "div";
+    style?: React.CSSProperties;
   }) => {
-    const isActive = editing?.type === "item" && editing.itemId === itemId && editing.field === field;
+    const isEditing = editing?.type === "item" && editing.itemId === itemId && editing.field === field;
     const item = items.find((it) => it.id === itemId);
     const content = String(item?.[field] ?? placeholder);
-
-    if (isActive) {
-      return multiline ? (
-        <textarea
-          autoFocus
-          rows={rows}
-          value={editing.value}
-          onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-          onBlur={commitEdit}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") cancelEdit();
-          }}
-          className={`bg-blue-50/90 text-slate-900 border-b-2 border-[#1A38D6] outline-none resize-none px-0.5 rounded-xs ${className}`}
-          placeholder={placeholder}
-        />
-      ) : (
-        <input
-          autoFocus
-          value={editing.value}
-          onChange={(e) => setEditing({ ...editing, value: e.target.value })}
-          onBlur={commitEdit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commitEdit();
-            if (e.key === "Escape") cancelEdit();
-          }}
-          className={`bg-blue-50/90 text-slate-900 border-b-2 border-[#1A38D6] outline-none px-0.5 rounded-xs ${className}`}
-          placeholder={placeholder}
-        />
-      );
-    }
-
     const Tag = as;
+    const elementRef = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+      if (isEditing && elementRef.current) {
+        elementRef.current.focus();
+        const range = document.createRange();
+        range.selectNodeContents(elementRef.current);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    }, [isEditing]);
+
+    const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
+      if (!isEditing) return;
+      const text = e.currentTarget.innerText;
+      const nextItems = items.map((it) =>
+        it.id === itemId ? { ...it, [field]: text } : it
+      );
+      onUpdate?.({ items: nextItems });
+      setEditing(null);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (elementRef.current) {
+          elementRef.current.innerText = content;
+        }
+        setEditing(null);
+      } else if (!multiline && e.key === "Enter") {
+        e.preventDefault();
+        e.currentTarget.blur();
+      } else if (multiline && e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        e.currentTarget.blur();
+      }
+    };
+
     return (
       <Tag
-        className={`${
-          !activeIsPreview
-            ? "hover:bg-blue-50/60 hover:ring-1 hover:ring-blue-300/60 rounded px-0.5 cursor-text transition-all"
+        ref={elementRef as any}
+        contentEditable={isEditing && !activeIsPreview}
+        suppressContentEditableWarning
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          if (!activeIsPreview) startEditItem(itemId, field, content);
+        }}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className={`${className} ${
+          isEditing
+            ? "outline-none ring-1.5 ring-blue-500 bg-blue-50/40 rounded-xs px-0.5 cursor-text select-text"
+            : !activeIsPreview
+            ? "hover:ring-1 hover:ring-blue-300/50 hover:bg-blue-50/30 rounded-xs px-0.5 cursor-text"
             : ""
-        } ${className}`}
-        onDoubleClick={() => startEditItem(itemId, field, content)}
+        }`}
+        style={style}
         title={activeIsPreview ? undefined : "Double-click to edit"}
       >
-        {content || placeholder}
+        {content}
       </Tag>
     );
   };

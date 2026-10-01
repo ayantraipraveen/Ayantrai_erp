@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import {
   Globe,
@@ -67,7 +67,6 @@ export function CanvasBackCoverPage({
     className = "",
     placeholder = "",
     multiline = false,
-    rows = 2,
     as = "span",
     style,
   }: {
@@ -79,54 +78,67 @@ export function CanvasBackCoverPage({
     as?: "span" | "div" | "h1" | "p";
     style?: React.CSSProperties;
   }) => {
-    const isActive = editing?.field === field;
-    const content = String(val(field) ?? placeholder);
-
-    if (isActive) {
-      return multiline ? (
-        <textarea
-          autoFocus
-          rows={rows}
-          value={editing!.value}
-          onChange={(e) => setEditing({ field, value: e.target.value })}
-          onBlur={commitEdit}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") cancelEdit();
-          }}
-          className={`bg-white/20 border-b-2 border-cyan-400 outline-none resize-none px-0.5 rounded-xs ${className}`}
-          placeholder={placeholder}
-          style={style}
-        />
-      ) : (
-        <input
-          autoFocus
-          value={editing!.value}
-          onChange={(e) => setEditing({ field, value: e.target.value })}
-          onBlur={commitEdit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commitEdit();
-            if (e.key === "Escape") cancelEdit();
-          }}
-          className={`bg-white/20 border-b-2 border-cyan-400 outline-none px-0.5 rounded-xs ${className}`}
-          placeholder={placeholder}
-          style={style}
-        />
-      );
-    }
-
+    const isEditing = editing?.field === field;
     const Tag = as;
+    const currentValue = String(data[field] ?? placeholder);
+    const elementRef = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+      if (isEditing && elementRef.current) {
+        elementRef.current.focus();
+        const range = document.createRange();
+        range.selectNodeContents(elementRef.current);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    }, [isEditing]);
+
+    const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
+      if (!isEditing) return;
+      const text = e.currentTarget.innerText;
+      onUpdate?.({ [field]: text });
+      setEditing(null);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (elementRef.current) {
+          elementRef.current.innerText = currentValue;
+        }
+        setEditing(null);
+      } else if (!multiline && e.key === "Enter") {
+        e.preventDefault();
+        e.currentTarget.blur();
+      } else if (multiline && e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        e.currentTarget.blur();
+      }
+    };
+
     return (
       <Tag
-        className={`${
-          !activeIsPreview
-            ? "hover:bg-white/15 hover:ring-1 hover:ring-cyan-300/60 rounded px-0.5 cursor-text transition-all"
+        ref={elementRef as any}
+        contentEditable={isEditing && !activeIsPreview}
+        suppressContentEditableWarning
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          if (!activeIsPreview) startEdit(field);
+        }}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className={`${className} ${
+          isEditing
+            ? "outline-none ring-1.5 ring-cyan-400 bg-cyan-400/10 rounded-xs px-0.5 cursor-text select-text"
+            : !activeIsPreview
+            ? "hover:ring-1 hover:ring-cyan-300/40 hover:bg-white/10 rounded-xs px-0.5 cursor-text"
             : ""
-        } ${className}`}
+        }`}
         style={style}
-        onDoubleClick={() => startEdit(field)}
         title={activeIsPreview ? undefined : "Double-click to edit"}
       >
-        {content || placeholder}
+        {currentValue}
       </Tag>
     );
   };

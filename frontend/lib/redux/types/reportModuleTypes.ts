@@ -662,6 +662,8 @@ export const DEFAULT_TOC_DATA: TableOfContentsData = {
   ],
 };
 
+export const DEFAULT_TABLE_OF_CONTENTS_DATA: TableOfContentsData = DEFAULT_TOC_DATA;
+
 export interface LibrarySection {
   id: string;
   name: string;
