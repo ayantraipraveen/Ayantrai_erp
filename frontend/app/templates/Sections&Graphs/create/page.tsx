@@ -65,6 +65,7 @@ function CreateSectionStudioContent() {
       <SectionCanvasEditor
         sectionId={activeSectionId}
         onBack={handleBack}
+        showReportFrame={false}
       />
     </div>
   );

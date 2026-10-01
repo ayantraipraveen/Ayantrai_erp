@@ -354,6 +354,7 @@ function CreateTemplatePageContent() {
           <SectionCanvasEditor
             sectionId={activeSectionId}
             onBack={() => router.push("/templates")}
+            showReportFrame={true}
           />
         ) : (
           <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-50/50 dark:bg-[#07090d]">

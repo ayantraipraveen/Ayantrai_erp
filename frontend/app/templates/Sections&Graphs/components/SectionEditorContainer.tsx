@@ -78,6 +78,7 @@ export function SectionEditorContainer({ sectionId, onBack }: SectionEditorConta
       <SectionCanvasEditor
         sectionId={section.id}
         onBack={handleBack}
+        showReportFrame={false}
       />
     </div>
   );

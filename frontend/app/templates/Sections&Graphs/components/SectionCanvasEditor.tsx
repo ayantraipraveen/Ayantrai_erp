@@ -84,16 +84,25 @@ export { PALETTE_RAMPS } from "./constants/chartTypes";
 interface SectionCanvasEditorProps {
   sectionId: string;
   onBack: () => void;
+  showReportFrame?: boolean;
 }
 
 export default function SectionCanvasEditor({
   sectionId,
   onBack,
+  showReportFrame,
 }: SectionCanvasEditorProps) {
   const dispatch = useAppDispatch();
   const librarySections = useAppSelector((s) => s.reportModule.librarySections || []);
   const section = librarySections.find((s) => s.id === sectionId);
   const chartEditorFullscreen = useAppSelector((s) => s.reportModule.chartEditorFullscreen);
+
+  // When true: displays Cover Page, Table of Contents, and Back Cover Page (Full Blueprint/Template Studio).
+  // When false: hides Cover Page, Table of Contents, and Back Cover Page (Individual Section Studio).
+  const isReportFrame =
+    showReportFrame !== undefined
+      ? showReportFrame
+      : (sectionId.startsWith("tpl-canvas-") || sectionId.startsWith("tpl-"));
 
   // ── Document Watermark Studio State ─────────────────────────────────────────
   const [uploadedWatermarks, setUploadedWatermarks] = useState<UploadedSvgWatermark[]>([]);
@@ -264,24 +273,26 @@ export default function SectionCanvasEditor({
   const [activeReportSectionKey, setActiveReportSectionKey] = useState<string>("cover");
 
   const computedReportSections = useMemo<ReportOutlineItem[]>(() => {
-    const list: ReportOutlineItem[] = [
-      {
+    const list: ReportOutlineItem[] = [];
+
+    if (isReportFrame) {
+      list.push({
         id: "outline-cover",
         key: "cover",
         title: "Cover Page",
         subtitle: section?.coverPageData?.reportType || "Monthly Report",
         type: "cover",
         pageNumber: 1,
-      },
-      {
+      });
+      list.push({
         id: "outline-toc",
         key: "toc",
         title: "Table of Contents",
         subtitle: "Executive Summary & Section Index",
         type: "toc",
         pageNumber: 2,
-      },
-    ];
+      });
+    }
 
     const rows = section?.canvasRows || [];
     let currentSecIndex = 1;
@@ -300,29 +311,31 @@ export default function SectionCanvasEditor({
       }
     });
 
-    if (list.length === 2) {
+    if (list.length === (isReportFrame ? 2 : 0)) {
       list.push({
         id: `outline-main`,
         key: `section-main`,
         title: section?.name || "Report Telemetry & Analysis",
         subtitle: section?.eyebrow || "Workforce and inspection metrics",
         type: "section",
-        pageNumber: 3,
+        pageNumber: isReportFrame ? 3 : 1,
         rowsCount: rows.length,
       });
     }
 
-    list.push({
-      id: "outline-back-cover",
-      key: "back-cover",
-      title: "Back Cover Page",
-      subtitle: "Document Closure & Sign-off",
-      type: "back-cover",
-      pageNumber: list.length + 1,
-    });
+    if (isReportFrame) {
+      list.push({
+        id: "outline-back-cover",
+        key: "back-cover",
+        title: "Back Cover Page",
+        subtitle: "Document Closure & Sign-off",
+        type: "back-cover",
+        pageNumber: list.length + 1,
+      });
+    }
 
     return list;
-  }, [section?.coverPageData, section?.canvasRows, section?.name, section?.eyebrow]);
+  }, [isReportFrame, section?.coverPageData, section?.canvasRows, section?.name, section?.eyebrow]);
 
   const handleSelectReportSection = useCallback((key: string) => {
     setActiveReportSectionKey(key);
@@ -1549,31 +1562,35 @@ export default function SectionCanvasEditor({
             setEditHeaderOpen(true);
           }}
           beforeContent={
-            <div className="space-y-6">
-              <div id="canvas-cover-page" className="transition-all duration-300 rounded-2xl">
-                <CanvasCoverPage
-                  coverPageData={section.coverPageData}
-                  activeIsPreview={isPreview}
-                  onUpdate={(data) => dispatch(updateCoverPageData({ sectionId, data }))}
-                />
+            isReportFrame ? (
+              <div className="space-y-6">
+                <div id="canvas-cover-page" className="transition-all duration-300 rounded-2xl">
+                  <CanvasCoverPage
+                    coverPageData={section?.coverPageData}
+                    activeIsPreview={isPreview}
+                    onUpdate={(data) => dispatch(updateCoverPageData({ sectionId, data }))}
+                  />
+                </div>
+                <div id="canvas-toc-page" className="transition-all duration-300 rounded-2xl">
+                  <CanvasTableOfContentsPage
+                    tocData={section?.tableOfContentsData}
+                    activeIsPreview={isPreview}
+                    onUpdate={(data) => dispatch(updateTableOfContentsData({ sectionId, data }))}
+                  />
+                </div>
               </div>
-              <div id="canvas-toc-page" className="transition-all duration-300 rounded-2xl">
-                <CanvasTableOfContentsPage
-                  tocData={section.tableOfContentsData}
-                  activeIsPreview={isPreview}
-                  onUpdate={(data) => dispatch(updateTableOfContentsData({ sectionId, data }))}
-                />
-              </div>
-            </div>
+            ) : undefined
           }
           afterContent={
-            <div id="canvas-back-cover-page" className="transition-all duration-300 rounded-2xl">
-              <CanvasBackCoverPage
-                backCoverData={section.backCoverData}
-                activeIsPreview={isPreview}
-                onUpdate={(data) => dispatch(updateBackCoverData({ sectionId, data }))}
-              />
-            </div>
+            isReportFrame ? (
+              <div id="canvas-back-cover-page" className="transition-all duration-300 rounded-2xl">
+                <CanvasBackCoverPage
+                  backCoverData={section?.backCoverData}
+                  activeIsPreview={isPreview}
+                  onUpdate={(data) => dispatch(updateBackCoverData({ sectionId, data }))}
+                />
+              </div>
+            ) : undefined
           }
         />
       </div>

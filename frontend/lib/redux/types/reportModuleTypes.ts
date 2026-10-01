@@ -634,6 +634,7 @@ export interface LibrarySection {
   descriptionHtml?: string;
   type: "core" | "custom";
   icon?: string;
+  isTemplate?: boolean;
   updatedAt: string;
   headerSpacing?: "compact" | "normal" | "spacious";
   sectionStyle?: CanvasSectionStyle;

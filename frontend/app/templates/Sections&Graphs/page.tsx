@@ -44,6 +44,7 @@ export default function SectionsGraphsPage() {
           <SectionCanvasEditor
             sectionId={selectedLibrarySectionId}
             onBack={() => dispatch(setSelectedLibrarySectionId(null))}
+            showReportFrame={false}
           />
         ) : (
           <SectionListView
