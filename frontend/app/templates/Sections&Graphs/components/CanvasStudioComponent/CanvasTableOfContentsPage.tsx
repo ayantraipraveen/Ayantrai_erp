@@ -6,7 +6,7 @@ import {
   BarChart2,
   Users,
   AlertTriangle,
-  UserCheck,
+  UserCog,
   Box,
   FileText,
   Target,
@@ -35,7 +35,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   chart: BarChart2,
   users: Users,
   alert: AlertTriangle,
-  supervisor: UserCheck,
+  supervisor: UserCog,
   box: Box,
   file: FileText,
   target: Target,
@@ -92,7 +92,7 @@ export function CanvasTableOfContentsPage({
   return (
     <div
       id="canvas-toc-page"
-      className="relative bg-white text-slate-900 overflow-hidden flex flex-col select-none shadow-2xl mx-auto"
+      className="relative bg-white text-slate-900 overflow-hidden select-none shadow-2xl mx-auto"
       style={{
         width: "595px",
         height: "842px",
@@ -100,9 +100,9 @@ export function CanvasTableOfContentsPage({
         maxHeight: "842px",
       }}
     >
-      {/* ── TOP RUNNING HEADER ── */}
-      <div className="relative z-20 h-[56px] px-8 border-b border-slate-100 flex items-center justify-between">
-        {/* Left: Sitesafe Logo & Subtitle */}
+      {/* ── 1. TOP RUNNING HEADER (Height = 56px, Pinned to top: 0) ── */}
+      <header className="absolute top-0 left-0 right-0 h-[56px] px-8 border-b border-slate-100 flex items-center justify-between z-20 bg-white">
+        {/* Left: Sitesafe Shield Logo & Subtitle */}
         <div className="flex items-center gap-3">
           <div className="h-8 w-24 relative flex items-center">
             <Image
@@ -122,7 +122,7 @@ export function CanvasTableOfContentsPage({
         </div>
 
         {/* Center/Right: Monthly Report & Date */}
-        <div className="flex items-center gap-4 pr-16">
+        <div className="flex items-center gap-3 pr-18">
           <div className="flex flex-col items-end">
             <span className="text-[12px] font-bold text-[#0E1C4E] leading-tight">
               Monthly Report
@@ -150,25 +150,26 @@ export function CanvasTableOfContentsPage({
               )}
             </div>
           </div>
+
+          {/* Thin vertical divider before Page badge */}
+          <div className="h-5 w-px bg-slate-200 ml-1" />
         </div>
 
-        {/* Far Right: Angled Page Badge Tab */}
+        {/* Far Right: Angled Page Badge Tab (Matches PDF polygon slant) */}
         <div
-          className="absolute top-0 right-0 h-14 w-16 bg-[#102347] text-white flex flex-col items-center justify-center pl-2 pr-3 shadow-sm"
-          style={{ clipPath: "polygon(22% 0, 100% 0, 100% 100%, 0 100%)" }}
+          className="absolute top-0 right-0 h-14 w-18 bg-[#0F1E3D] text-white flex flex-col items-center justify-center pl-3 pr-2.5 shadow-sm"
+          style={{ clipPath: "polygon(22% 0, 100% 0, 100% 100%, 0% 100%)" }}
         >
-          <span className="text-[7.5px] font-semibold uppercase tracking-wider text-slate-300 leading-none">Page</span>
-          <span className="text-[16px] font-black leading-none text-white font-mono mt-0.5">02</span>
+          <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-300 leading-none">Page</span>
+          <span className="text-[17px] font-black leading-none text-white font-mono mt-0.5">02</span>
         </div>
-      </div>
+      </header>
 
-      {/* ── MAIN BODY: 2-COLUMN LAYOUT ── */}
-      <div className="flex-1 flex px-6 pt-3 pb-2 gap-4 relative z-10 overflow-hidden">
+      {/* ── 2. MIDDLE CONTENT AREA (Exact height = 701px between Header and Footer) ── */}
+      <div className="absolute top-[56px] bottom-[85px] left-0 right-0 overflow-hidden">
         
-        {/* ── LEFT HERO CARD (Worker in high-vis vest & sunset crane) ── */}
-        <div
-          className="relative rounded-2xl overflow-hidden shadow-md flex-shrink-0 w-[162px] h-full"
-        >
+        {/* ── LEFT HERO CARD (Flush with left sheet boundary x=0, rounded right corners) ── */}
+        <div className="absolute top-2.5 left-0 bottom-2.5 w-[184px] rounded-r-2xl overflow-hidden shadow-sm flex flex-col justify-end">
           <Image
             src="/images/toc-sidebar-hero-clean.png"
             alt="Safer People Stronger Industries"
@@ -178,7 +179,7 @@ export function CanvasTableOfContentsPage({
           />
 
           {/* Editable Overlay for Sidebar Title & Tagline (if user wants to customize) */}
-          <div className="absolute inset-x-0 bottom-0 p-3 pt-6 flex flex-col justify-end text-white">
+          <div className="relative z-10 p-3 pt-6 flex flex-col justify-end text-white">
             <div
               className="cursor-text"
               onDoubleClick={() => startEditMeta("sidebarTitle", data.sidebarTitle || "Safer People\nStronger\nIndustries")}
@@ -215,7 +216,7 @@ export function CanvasTableOfContentsPage({
         </div>
 
         {/* ── RIGHT COLUMN: HEADLINE & 7 CONTENT ROWS ── */}
-        <div className="flex-1 flex flex-col justify-between py-1 min-w-0 pr-1">
+        <div className="absolute top-2.5 bottom-2.5 left-[198px] right-6 flex flex-col justify-between py-1 min-w-0">
           
           {/* Title Block */}
           <div className="relative">
@@ -223,18 +224,18 @@ export function CanvasTableOfContentsPage({
             <div className="w-12 h-[3.5px] bg-[#1A38D6] rounded-full mb-1.5" />
 
             {/* TABLE OF */}
-            <div className="text-[12px] font-black tracking-[0.14em] uppercase text-[#0B1546] leading-tight">
+            <div className="text-[12px] font-black tracking-[0.16em] uppercase text-[#0B1546] leading-tight">
               TABLE OF
             </div>
 
             {/* Contents */}
-            <h1 className="text-[44px] font-black text-[#0A1646] leading-[0.92] tracking-tight mt-0.5">
+            <h1 className="text-[40px] font-black text-[#0A1646] leading-[0.92] tracking-tight mt-0.5">
               Contents
             </h1>
 
             {/* Subtitle */}
             <div
-              className="text-[10px] font-medium text-slate-500 leading-normal max-w-xs mt-1.5 cursor-text"
+              className="text-[10px] font-medium text-slate-500 leading-snug max-w-[270px] mt-1.5 cursor-text"
               onDoubleClick={() => startEditMeta("subtitle", data.subtitle)}
               title={activeIsPreview ? undefined : "Double-click to edit subtitle"}
             >
@@ -253,7 +254,7 @@ export function CanvasTableOfContentsPage({
 
             {/* Handwritten script note (top-right of headline) */}
             <div className="absolute right-0 top-1 text-right pointer-events-none select-none">
-              <span className="inline-block text-[11px] font-bold italic text-[#5B88EE] -rotate-6 font-serif tracking-tight">
+              <span className="inline-block text-[11px] font-bold italic text-[#5B88EE] -rotate-6 font-serif tracking-tight leading-[1.2]">
                 Every<br />
                 Worker<br />
                 Returns<br />
@@ -263,7 +264,7 @@ export function CanvasTableOfContentsPage({
           </div>
 
           {/* 7 Content Items */}
-          <div className="flex flex-col gap-1 mt-2 flex-1 justify-between">
+          <div className="flex flex-col flex-1 justify-between mt-2">
             {items.map((item, idx) => {
               const numKey = item.number || String(idx + 1).padStart(2, "0");
               const palette = COLOR_MAP[numKey] || COLOR_MAP["01"];
@@ -272,9 +273,9 @@ export function CanvasTableOfContentsPage({
               return (
                 <div
                   key={item.id || idx}
-                  className="flex items-center justify-between py-2 border-b border-slate-100/90 group"
+                  className="flex items-center justify-between py-2 border-b border-slate-100 last:border-b-0 group"
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0 pr-3">
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
                     {/* Number Badge */}
                     <div
                       className={`w-9 h-9 rounded-xl ${palette.bg} ${palette.text} font-black text-xs flex items-center justify-center flex-shrink-0 font-mono shadow-xs`}
@@ -289,10 +290,10 @@ export function CanvasTableOfContentsPage({
                       <IconComp className="w-4 h-4 stroke-[2]" />
                     </div>
 
-                    {/* Title & Description */}
+                    {/* Title & Description (Natural 2-line wrap matching reference PDF) */}
                     <div className="flex-1 min-w-0">
                       <div
-                        className="text-[12px] font-bold text-[#0E1B46] leading-tight cursor-text hover:text-[#1A38D6] transition-colors truncate"
+                        className="text-[12.5px] font-bold text-[#0E1B46] leading-tight cursor-text hover:text-[#1A38D6] transition-colors"
                         onDoubleClick={() => startEditItem(item.id, "title", item.title)}
                         title={activeIsPreview ? undefined : "Double-click to edit"}
                       >
@@ -306,7 +307,7 @@ export function CanvasTableOfContentsPage({
                               if (e.key === "Enter") commitEdit();
                               if (e.key === "Escape") cancelEdit();
                             }}
-                            className="w-full bg-blue-50/80 border-b border-[#1A38D6] outline-none text-[12px] font-bold text-slate-900"
+                            className="w-full bg-blue-50/80 border-b border-[#1A38D6] outline-none text-[12.5px] font-bold text-slate-900"
                           />
                         ) : (
                           item.title
@@ -314,21 +315,18 @@ export function CanvasTableOfContentsPage({
                       </div>
 
                       <div
-                        className="text-[9px] text-[#64748B] leading-tight mt-0.5 cursor-text truncate"
+                        className="text-[9.5px] text-[#64748B] leading-tight mt-0.5 cursor-text"
                         onDoubleClick={() => startEditItem(item.id, "description", item.description)}
                         title={activeIsPreview ? undefined : "Double-click to edit"}
                       >
                         {editing?.type === "item" && editing.itemId === item.id && editing.field === "description" ? (
-                          <input
+                          <textarea
                             autoFocus
+                            rows={2}
                             value={editing.value}
                             onChange={(e) => setEditing({ ...editing, value: e.target.value })}
                             onBlur={commitEdit}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") commitEdit();
-                              if (e.key === "Escape") cancelEdit();
-                            }}
-                            className="w-full bg-blue-50/80 border-b border-[#1A38D6] outline-none text-[9px] text-slate-700"
+                            className="w-full bg-blue-50/80 border-b border-[#1A38D6] outline-none text-[9.5px] text-slate-700 resize-none leading-tight"
                           />
                         ) : (
                           item.description
@@ -368,9 +366,9 @@ export function CanvasTableOfContentsPage({
 
       </div>
 
-      {/* ── BOTTOM RUNNING FOOTER (Exact match with Cover Page) ── */}
+      {/* ── 3. BOTTOM RUNNING FOOTER (Exact match with Cover Page, pinned to bottom: 0) ── */}
       <footer
-        className="relative z-20 bg-white border-t border-slate-200/80 px-9 flex items-center justify-between flex-shrink-0"
+        className="absolute bottom-0 left-0 right-0 z-20 bg-white border-t border-slate-200/80 px-9 flex items-center justify-between"
         style={{ height: "85px" }}
       >
         {/* Left: Company & Websites */}
