@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   X,
   Activity,
@@ -25,6 +25,7 @@ import {
   ChartDataPoint,
   ChartAxisConfig,
   ChartCustomizationOptions,
+  ChartSeriesConfig,
 } from "@/lib/redux/slices/reportModuleSlice";
 import ChartRenderer from "./ChartRenderer";
 import {
@@ -42,6 +43,19 @@ import {
 } from "../constants/chartDataPresets";
 
 const COMMON_UNITS = ["%", "workers", "ppm", "hrs", "pts", "deg", "cases", "dB", "None"];
+
+const DEFAULT_SERIES_PALETTE = [
+  "#9D61FF",
+  "#10B981",
+  "#F59E0B",
+  "#F43F5E",
+  "#06B6D4",
+  "#3B82F6",
+  "#8B5CF6",
+  "#EC4899",
+  "#14B8A6",
+  "#F97316",
+];
 
 interface ChartEditorPanelProps {
   editingChart: LibraryChartCard | null;
@@ -66,6 +80,8 @@ interface ChartEditorPanelProps {
   setChartXAxis?: React.Dispatch<React.SetStateAction<ChartAxisConfig>>;
   chartYAxis?: ChartAxisConfig;
   setChartYAxis?: React.Dispatch<React.SetStateAction<ChartAxisConfig>>;
+  chartSeries?: ChartSeriesConfig[];
+  setChartSeries?: React.Dispatch<React.SetStateAction<ChartSeriesConfig[]>>;
   chartOptions?: ChartCustomizationOptions;
   setChartOptions?: React.Dispatch<React.SetStateAction<ChartCustomizationOptions>>;
   onSave?: () => void;
@@ -103,6 +119,8 @@ export default function ChartEditorPanel({
   setChartYAxis,
   chartOptions,
   setChartOptions,
+  chartSeries,
+  setChartSeries,
   onSave,
   onClose,
   hideTitleAndCaption = false,
@@ -172,7 +190,50 @@ export default function ChartEditorPanel({
     setInputColsText(null);
   };
 
-  const seriesConfig = getChartSeriesConfig(chartType, chartColor);
+  const editorMode = getChartEditorMode(chartType);
+  const defaultBaseConfig = getChartSeriesConfig(chartType, chartColor);
+
+  // Dynamic Series Configuration State (for multi-series charts like grouped-bar, multi-line, etc.)
+  const [internalSeries, setInternalSeries] = useState<ChartSeriesConfig[]>(() => {
+    if (editingChart?.series && editingChart.series.length > 0) {
+      return editingChart.series;
+    }
+    return defaultBaseConfig.map((s, idx) => ({
+      id: s.id || `s-${idx + 1}`,
+      name: s.label || `Series ${idx + 1}`,
+      color: chartColors[idx] || s.defaultColor,
+      data: [],
+    }));
+  });
+
+  const currentSeriesList: ChartSeriesConfig[] =
+    chartSeries !== undefined && chartSeries.length > 0 ? chartSeries : internalSeries;
+
+  const changeSeriesList = (next: ChartSeriesConfig[] | ((prev: ChartSeriesConfig[]) => ChartSeriesConfig[])) => {
+    if (typeof next === "function") {
+      setInternalSeries((prev) => {
+        const resolved = next(prev);
+        if (setChartSeries) setChartSeries(resolved);
+        return resolved;
+      });
+    } else {
+      setInternalSeries(next);
+      if (setChartSeries) setChartSeries(next);
+    }
+  };
+
+  // Harmonized series config combining default metadata with dynamic series items
+  const seriesConfig = useMemo(() => {
+    if (currentSeriesList.length > 0 && (editorMode === "multi-series" || currentSeriesList.length > 1)) {
+      return currentSeriesList.map((s, idx) => ({
+        id: s.id || `s-${idx + 1}`,
+        label: s.name || `Series ${idx + 1}`,
+        defaultColor: s.color || chartColors[idx] || DEFAULT_SERIES_PALETTE[idx % DEFAULT_SERIES_PALETTE.length],
+      }));
+    }
+    return defaultBaseConfig;
+  }, [currentSeriesList, editorMode, defaultBaseConfig, chartColors]);
+
   const [activeSeriesIndex, setActiveSeriesIndex] = useState(0);
 
   // Keep active series within valid range when chartType changes
@@ -196,6 +257,10 @@ export default function ChartEditorPanel({
         }
         return next;
       });
+      // Also update color in currentSeriesList
+      changeSeriesList((prev) =>
+        prev.map((s, idx) => (idx === safeActiveIndex ? { ...s, color: newColor } : s))
+      );
     }
   };
 
@@ -207,16 +272,129 @@ export default function ChartEditorPanel({
     if (newColors[0]) {
       setChartColor(newColors[0]);
     }
+    changeSeriesList((prev) =>
+      prev.map((s, idx) => ({
+        ...s,
+        color: newColors[idx] || s.color,
+      }))
+    );
+  };
+
+  const getPointSeriesValue = (pt: ChartDataPoint, sIdx: number): number => {
+    if (sIdx === 0) return pt.value ?? 0;
+    if (sIdx === 1) return pt.secondaryValue ?? 0;
+    if (sIdx === 2) return pt.tertiaryValue ?? 0;
+    if (sIdx === 3) return pt.quaternaryValue ?? 0;
+    if (pt.rowValues && pt.rowValues[sIdx] !== undefined) {
+      const v = pt.rowValues[sIdx];
+      return typeof v === "number" ? v : parseFloat(v as string) || 0;
+    }
+    return 0;
+  };
+
+  const handleUpdatePointSeries = (pointIdx: number, sIdx: number, val: number) => {
+    const updated = [...currentDataPoints];
+    const pt = { ...updated[pointIdx] };
+    if (sIdx === 0) pt.value = val;
+    else if (sIdx === 1) pt.secondaryValue = val;
+    else if (sIdx === 2) pt.tertiaryValue = val;
+    else if (sIdx === 3) pt.quaternaryValue = val;
+
+    const rowVals = pt.rowValues ? [...pt.rowValues] : [];
+    while (rowVals.length <= sIdx) {
+      rowVals.push(0);
+    }
+    rowVals[sIdx] = val;
+    pt.rowValues = rowVals;
+    updated[pointIdx] = pt;
+    changeDataPoints(updated);
+  };
+
+  const handleAddSeries = () => {
+    const newIdx = currentSeriesList.length;
+    const newColor = DEFAULT_SERIES_PALETTE[newIdx % DEFAULT_SERIES_PALETTE.length];
+    const newSeries: ChartSeriesConfig = {
+      id: `series_${Date.now()}`,
+      name: chartType === "multi-line" ? `Line ${newIdx + 1}` : `Series ${newIdx + 1}`,
+      color: newColor,
+      data: currentDataPoints.map((pt) => getPointSeriesValue(pt, newIdx)),
+    };
+    const nextSeriesList = [...currentSeriesList, newSeries];
+    changeSeriesList(nextSeriesList);
+
+    // Add color to chartColors
+    setChartColors((prev) => {
+      const next = [...prev];
+      next[newIdx] = newColor;
+      return next;
+    });
+
+    // Initialize values for all existing data points for this series
+    const updatedPts = currentDataPoints.map((pt) => {
+      const rowVals = pt.rowValues ? [...pt.rowValues] : [];
+      while (rowVals.length < newIdx) {
+        rowVals.push(0);
+      }
+      rowVals[newIdx] = 0;
+      const updatedPt = { ...pt, rowValues: rowVals };
+      if (newIdx === 1 && updatedPt.secondaryValue === undefined) updatedPt.secondaryValue = 0;
+      if (newIdx === 2 && updatedPt.tertiaryValue === undefined) updatedPt.tertiaryValue = 0;
+      if (newIdx === 3 && updatedPt.quaternaryValue === undefined) updatedPt.quaternaryValue = 0;
+      return updatedPt;
+    });
+    changeDataPoints(updatedPts);
+    setActiveSeriesIndex(newIdx);
+  };
+
+  const handleRemoveSeries = (sIdx: number) => {
+    if (currentSeriesList.length <= 1) return;
+    const nextSeriesList = currentSeriesList.filter((_, i) => i !== sIdx);
+    changeSeriesList(nextSeriesList);
+
+    // Remove from chartColors
+    setChartColors((prev) => prev.filter((_, i) => i !== sIdx));
+
+    // Update data points row values
+    const updatedPts = currentDataPoints.map((pt) => {
+      const oldVals: number[] = [];
+      for (let i = 0; i < currentSeriesList.length; i++) {
+        oldVals.push(getPointSeriesValue(pt, i));
+      }
+      const newVals = oldVals.filter((_, i) => i !== sIdx);
+      const updatedPt: ChartDataPoint = {
+        ...pt,
+        value: newVals[0] ?? 0,
+        secondaryValue: newVals[1],
+        tertiaryValue: newVals[2],
+        quaternaryValue: newVals[3],
+        rowValues: newVals,
+      };
+      return updatedPt;
+    });
+    changeDataPoints(updatedPts);
+
+    if (activeSeriesIndex >= nextSeriesList.length) {
+      setActiveSeriesIndex(Math.max(0, nextSeriesList.length - 1));
+    }
+  };
+
+  const handleRenameSeries = (sIdx: number, newName: string) => {
+    const nextSeriesList = currentSeriesList.map((s, i) => (i === sIdx ? { ...s, name: newName } : s));
+    changeSeriesList(nextSeriesList);
   };
 
   // ── Data Point Handlers ──────────────────────────────────────────────────
   const handleAddPoint = () => {
     const nextIdx = currentDataPoints.length + 1;
+    const initialRowVals = currentSeriesList.map((_, i) => (i === 0 ? 60 : i === 1 ? 50 : 40));
     const newPoint: ChartDataPoint = {
       id: `pt_${Date.now()}`,
       label: `Category ${nextIdx}`,
-      value: 60,
-      secondaryValue: 50,
+      value: initialRowVals[0] ?? 60,
+      secondaryValue: initialRowVals[1] ?? 50,
+      tertiaryValue: initialRowVals[2],
+      quaternaryValue: initialRowVals[3],
+      rowValues: initialRowVals,
     };
     changeDataPoints([...currentDataPoints, newPoint]);
   };
@@ -258,7 +436,6 @@ export default function ChartEditorPanel({
   };
 
   // ── Mode-Specific Handlers ───────────────────────────────────────────────
-  const editorMode = getChartEditorMode(chartType);
   const chartPresets = getChartTypePresets(chartType, chartColor);
 
   // Heatmap Matrix Handlers
@@ -913,95 +1090,111 @@ export default function ChartEditorPanel({
                   </div>
                 )}
 
-                {/* 4. MULTI-SERIES EDITOR (multi-line, grouped-bar, combo, stacked-bar) */}
+                {/* 4. MULTI-SERIES DYNAMIC SPREADSHEET EDITOR (multi-line, grouped-bar, combo, stacked-bar, etc.) */}
                 {editorMode === "multi-series" && (
                   <div className="space-y-2">
-                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2">
-                      <span className="col-span-4">Category</span>
-                      <span className="col-span-3 text-center truncate">
-                        {seriesConfig[0]?.label || "Series 1"}
+                    {/* Header Controls */}
+                    <div className="flex items-center justify-between pb-1">
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
+                        Categories & Series Columns
                       </span>
-                      <span className="col-span-3 text-center truncate">
-                        {seriesConfig[1]?.label || "Series 2"}
-                      </span>
-                      {seriesConfig.length >= 3 && (
-                        <span className="col-span-1 text-center truncate">
-                          {seriesConfig[2]?.label || "S3"}
-                        </span>
-                      )}
-                      <span className="col-span-1 text-center"></span>
+                      <button
+                        type="button"
+                        onClick={handleAddSeries}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#9D61FF]/10 hover:bg-[#9D61FF]/20 text-[#9D61FF] border border-[#9D61FF]/30 transition-colors cursor-pointer"
+                        title="Add another dynamic series"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{chartType === "multi-line" ? "Add Line" : "Add Series"}</span>
+                      </button>
                     </div>
 
-                    <div className="space-y-1.5">
-                      {currentDataPoints.map((pt, idx) => (
-                        <div
-                          key={pt.id || idx}
-                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
-                        >
-                          <div className="col-span-4">
-                            <input
-                              type="text"
-                              value={pt.label}
-                              onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
-                              placeholder="e.g. Jan"
-                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
-                            />
-                          </div>
-                          <div className="col-span-3">
-                            <input
-                              type="number"
-                              value={pt.value}
-                              onChange={(e) =>
-                                handleUpdatePoint(idx, "value", parseFloat(e.target.value) || 0)
-                              }
-                              placeholder="0"
-                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-[#9D61FF] text-center focus:outline-none focus:border-[#9D61FF]"
-                            />
-                          </div>
-                          <div className="col-span-3">
-                            <input
-                              type="number"
-                              value={pt.secondaryValue ?? 0}
-                              onChange={(e) =>
-                                handleUpdatePoint(
-                                  idx,
-                                  "secondaryValue",
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              placeholder="0"
-                              className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-emerald-600 dark:text-emerald-400 text-center focus:outline-none focus:border-[#9D61FF]"
-                            />
-                          </div>
-                          {seriesConfig.length >= 3 && (
-                            <div className="col-span-1">
+                    <div className="overflow-x-auto custom-scrollbar pb-2">
+                      <div className="space-y-1.5" style={{ minWidth: `${Math.max(480, 160 + currentSeriesList.length * 110)}px` }}>
+                        {/* Table Header with Editable Series Names */}
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-wider px-2 py-1">
+                          <div className="w-36 flex-shrink-0">Category</div>
+                          {currentSeriesList.map((s, sIdx) => {
+                            const sColor = chartColors[sIdx] || s.color || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+                            return (
+                              <div
+                                key={s.id || sIdx}
+                                className="flex-1 min-w-[100px] flex items-center gap-1.5 bg-slate-100/70 dark:bg-zinc-800/60 px-2 py-1 rounded-lg border border-slate-200/60 dark:border-zinc-700/60"
+                              >
+                                <span
+                                  className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-2xs"
+                                  style={{ backgroundColor: sColor }}
+                                />
+                                <input
+                                  type="text"
+                                  value={s.name}
+                                  onChange={(e) => handleRenameSeries(sIdx, e.target.value)}
+                                  placeholder={`Series ${sIdx + 1}`}
+                                  className="w-full bg-transparent text-xs font-semibold text-slate-800 dark:text-zinc-200 focus:outline-none focus:text-[#9D61FF] truncate"
+                                  title="Click to rename this series"
+                                />
+                                {currentSeriesList.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveSeries(sIdx)}
+                                    className="text-slate-400 hover:text-rose-500 transition-colors cursor-pointer p-0.5"
+                                    title="Delete this series"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                          <div className="w-8 flex-shrink-0 text-center" />
+                        </div>
+
+                        {/* Data Rows */}
+                        {currentDataPoints.map((pt, idx) => (
+                          <div
+                            key={pt.id || idx}
+                            className="flex items-center gap-2 p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                          >
+                            <div className="w-36 flex-shrink-0">
                               <input
-                                type="number"
-                                value={pt.tertiaryValue ?? 0}
-                                onChange={(e) =>
-                                  handleUpdatePoint(
-                                    idx,
-                                    "tertiaryValue",
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                placeholder="0"
-                                className="w-full px-1 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-amber-500 text-center focus:outline-none focus:border-[#9D61FF]"
+                                type="text"
+                                value={pt.label}
+                                onChange={(e) => handleUpdatePoint(idx, "label", e.target.value)}
+                                placeholder="e.g. Jan"
+                                className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-medium focus:outline-none focus:border-[#9D61FF]"
                               />
                             </div>
-                          )}
-                          <div className="col-span-1 flex items-center justify-center">
-                            <button
-                              type="button"
-                              disabled={currentDataPoints.length <= 1}
-                              onClick={() => handleDeletePoint(idx)}
-                              className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            {currentSeriesList.map((s, sIdx) => {
+                              const val = getPointSeriesValue(pt, sIdx);
+                              const sColor = chartColors[sIdx] || s.color || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+                              return (
+                                <div key={s.id || sIdx} className="flex-1 min-w-[100px]">
+                                  <input
+                                    type="number"
+                                    value={val}
+                                    onChange={(e) =>
+                                      handleUpdatePointSeries(idx, sIdx, parseFloat(e.target.value) || 0)
+                                    }
+                                    placeholder="0"
+                                    className="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950 font-bold font-mono text-center focus:outline-none focus:border-[#9D61FF]"
+                                    style={{ color: sColor }}
+                                  />
+                                </div>
+                              );
+                            })}
+                            <div className="w-8 flex-shrink-0 flex items-center justify-center">
+                              <button
+                                type="button"
+                                disabled={currentDataPoints.length <= 1}
+                                onClick={() => handleDeletePoint(idx)}
+                                className="p-1 rounded text-slate-400 hover:text-rose-500 disabled:opacity-30 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
 
                     <button
@@ -2250,7 +2443,7 @@ export default function ChartEditorPanel({
                     const sColor = chartColors[idx] || s.defaultColor;
                     return (
                       <button
-                        key={s.id}
+                        key={s.id || idx}
                         type="button"
                         onClick={() => setActiveSeriesIndex(idx)}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer border ${isSelected
@@ -2266,6 +2459,15 @@ export default function ChartEditorPanel({
                       </button>
                     );
                   })}
+                  <button
+                    type="button"
+                    onClick={handleAddSeries}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-[#9D61FF] bg-[#9D61FF]/10 hover:bg-[#9D61FF]/20 border border-[#9D61FF]/30 transition-colors cursor-pointer"
+                    title="Add another dynamic series"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add</span>
+                  </button>
                 </div>
 
                 {/* Harmonized Theme Presets for all series at once */}
@@ -2486,6 +2688,10 @@ export default function ChartEditorPanel({
                   dataPoints: currentDataPoints,
                   xAxis: currentXAxis,
                   yAxis: currentYAxis,
+                  series: currentSeriesList.map((s, idx) => ({
+                    ...s,
+                    color: chartColors[idx] || s.color || DEFAULT_SERIES_PALETTE[idx % DEFAULT_SERIES_PALETTE.length],
+                  })),
                   options: currentOptions,
                 }}
                 color={chartColor}

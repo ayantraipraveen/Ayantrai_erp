@@ -56,6 +56,7 @@ import {
   ChartDataPoint,
   ChartAxisConfig,
   ChartCustomizationOptions,
+  ChartSeriesConfig,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasSidebar, SidebarAddBlockEvent } from "./CanvasSidebar";
 import {
@@ -342,6 +343,7 @@ export default function SectionCanvasEditor({
   const [chartDataPoints, setChartDataPoints] = useState<ChartDataPoint[]>([]);
   const [chartXAxis, setChartXAxis] = useState<ChartAxisConfig>({});
   const [chartYAxis, setChartYAxis] = useState<ChartAxisConfig>({});
+  const [chartSeries, setChartSeries] = useState<ChartSeriesConfig[]>([]);
   const [chartOptions, setChartOptions] = useState<ChartCustomizationOptions>({
     showValues: true,
     showGridLines: true,
@@ -384,6 +386,7 @@ export default function SectionCanvasEditor({
           dataPoints: chartDataPoints && chartDataPoints.length > 0 ? chartDataPoints : undefined,
           xAxis: Object.keys(chartXAxis).length > 0 ? chartXAxis : undefined,
           yAxis: Object.keys(chartYAxis).length > 0 ? chartYAxis : undefined,
+          series: chartSeries && chartSeries.length > 0 ? chartSeries : undefined,
           options: chartOptions,
         },
       })
@@ -682,6 +685,7 @@ export default function SectionCanvasEditor({
             setChartDataPoints(cell.chart.dataPoints || []);
             setChartXAxis(cell.chart.xAxis || {});
             setChartYAxis(cell.chart.yAxis || {});
+            setChartSeries(cell.chart.series || []);
             setChartOptions(cell.chart.options || { showValues: true, showGridLines: true, showLegend: true });
             setChartModalOpen(true);
             dispatch(setChartEditorFullscreen(true));
@@ -1086,6 +1090,8 @@ export default function SectionCanvasEditor({
             setChartYAxis={setChartYAxis}
             chartOptions={chartOptions}
             setChartOptions={setChartOptions}
+            chartSeries={chartSeries}
+            setChartSeries={setChartSeries}
             onSave={handleSaveChart}
             onClose={handleCloseChartEditor}
           />
