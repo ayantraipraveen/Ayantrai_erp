@@ -4,11 +4,6 @@ import React, { useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   ReportTemplate,
-  TemplateBlock,
-  TemplateBlockType,
-  TemplateGraphConfig,
-  addTemplate,
-  updateTemplate,
   duplicateTemplate,
   updateTemplateRemark,
   approveTemplate,
@@ -24,20 +19,10 @@ import {
   setTemplatePageSize,
   resetTemplateFilters,
   setTemplateSelectedId,
-  setTemplateEditingId,
   setTemplateReviewModalOpen,
-  setTemplateBuilderOpen,
-  setTemplateSectionsModalOpen,
   setTemplateDeleteConfirmId,
   setTemplateToastMessage,
-  addGlobalSection,
-  updateGlobalSection,
-  deleteGlobalSection,
-  addGraphToGlobalSection,
-  updateGraphInGlobalSection,
-  deleteGraphFromGlobalSection,
   showGlobalToast,
-  GraphType,
 } from "@/lib/redux/slices/reportModuleSlice";
 import {
   DropdownOption,
@@ -47,89 +32,7 @@ import {
 } from "../../Component";
 import { Building, Filter, Clock, CheckCircle2, FileText, XCircle } from "lucide-react";
 
-export const availableBlockTypes: {
-  type: TemplateBlockType;
-  title: string;
-  description: string;
-}[] = [
-  {
-    type: "key_metrics",
-    title: "Key Metrics",
-    description: "KPI summary (attendance rate, compliance rate, risk-free hours, devices deployed)",
-  },
-  {
-    type: "attendance_trends",
-    title: "Attendance Trends",
-    description: "Line chart + insight text (department-wise and vendor-wise breakdown)",
-  },
-  {
-    type: "ppe_compliance_trends",
-    title: "PPE Compliance Trends",
-    description: "Bar chart + insight text (Smart Helmet, Vest IoT Hub, Safety Boot grounding)",
-  },
-  {
-    type: "supervisory_insights",
-    title: "Supervisory Insights",
-    description: "Table (per-supervisor efficiency, response time, alert handling)",
-  },
-  {
-    type: "device_utilisation",
-    title: "Device Utilisation",
-    description: "Progress bar (operating hours vs. permissible hours)",
-  },
-  {
-    type: "operational_remarks",
-    title: "Operational Remarks",
-    description: "Text summary with environmental and shift-level observations",
-  },
-  {
-    type: "improvement_action_plan",
-    title: "Improvement & Action Plan",
-    description: "Action matrix table (area, focus, owner, target date, status)",
-  },
-];
 
-export const GRAPH_TYPES: { type: GraphType; label: string }[] = [
-  { type: "line", label: "Line Chart" },
-  { type: "multi-line", label: "Multi-line Chart" },
-  { type: "bar", label: "Vertical Bar" },
-  { type: "grouped-bar", label: "Grouped Bar" },
-  { type: "horizontal-bar", label: "Horizontal Bar" },
-  { type: "stacked-horizontal", label: "100% Stacked Horizontal" },
-  { type: "donut", label: "Donut Chart" },
-  { type: "pie", label: "Pie Chart" },
-  { type: "heatmap", label: "Calendar Heatmap" },
-  { type: "two-segment", label: "Two-Segment Progress" },
-  { type: "table", label: "Data Table" },
-  { type: "area", label: "Area Chart" },
-  { type: "stacked-bar", label: "Stacked Vertical Bar" },
-  { type: "radar", label: "Radar / Spider" },
-  { type: "gauge", label: "Gauge Chart" },
-  { type: "scatter", label: "Scatter Plot" },
-  { type: "bubble", label: "Bubble Chart" },
-  { type: "funnel", label: "Funnel Chart" },
-  { type: "sparkline", label: "Sparkline" },
-  { type: "combo", label: "Combo (Bar + Line)" },
-  { type: "waterfall", label: "Waterfall Chart" },
-  { type: "treemap", label: "Treemap" },
-  { type: "kpi-card", label: "KPI / Stat Card" },
-  { type: "timeline", label: "Timeline / Gantt" },
-  { type: "geo-map", label: "Geo/Map Chart" },
-];
-
-export const GRAPH_DATA_SOURCES: { id: string; label: string; group: string }[] = [
-  { id: "attendance_daily_shifts", label: "Muster Check-Ins (Shift 1 vs Shift 2)", group: "Attendance & Workforce" },
-  { id: "attendance_vendor_distribution", label: "Subcontractor Headcount Share", group: "Attendance & Workforce" },
-  { id: "ppe_sensor_compliance", label: "Overall 3-Point PPE Compliance Rate", group: "Connected PPE" },
-  { id: "helmet_optical_telemetry", label: "Smart Helmet Optical Telemetry & Chinstrap", group: "Connected PPE" },
-  { id: "vest_hub_battery_status", label: "Vest IoT Hub Battery & Signal Online", group: "Connected PPE" },
-  { id: "boot_grounding_checks", label: "Safety Boot Grounding & ESD Impedance", group: "Connected PPE" },
-  { id: "supervisory_response_time", label: "Supervisor Incident Response & Alert Triage", group: "Supervisory Ops" },
-  { id: "device_daily_operating_hours", label: "Sensor Operating Hours vs Permissible Limits", group: "Device Telemetry" },
-  { id: "gas_sensor_ppm_levels", label: "Geotechnical Air Quality & Toxic Gas (PPM)", group: "Environmental Sensors" },
-  { id: "action_plan_completion_rate", label: "Safety Action Plan SLA Resolution Rates", group: "Audit & Compliance" },
-  { id: "custom_telemetry_feed", label: "Custom ERP Migrated Data Stream", group: "Custom Telemetry" },
-];
 
 /**
  * Pure Redux Hook for Templates Module.
@@ -149,10 +52,7 @@ export function useTemplates() {
     templateCurrentPage: currentPage,
     templatePageSize: pageSize,
     templateSelectedId: selectedTemplateId,
-    templateEditingId: editingTemplateId,
     templateReviewModalOpen: reviewModalOpen,
-    templateBuilderOpen: builderOpen,
-    templateSectionsModalOpen: sectionsModalOpen,
     templateDeleteConfirmId: deleteConfirmId,
     templateToastMessage: toastMessage,
     globalSections,
@@ -163,12 +63,6 @@ export function useTemplates() {
     if (!selectedTemplateId) return null;
     return templates.find((t) => t.id === selectedTemplateId) || null;
   }, [templates, selectedTemplateId]);
-
-  // Editing template object derived from editingTemplateId
-  const editingTemplate = useMemo(() => {
-    if (!editingTemplateId) return null;
-    return templates.find((t) => t.id === editingTemplateId) || null;
-  }, [templates, editingTemplateId]);
 
   // Counts
   const totalCount = templates.length;
@@ -305,7 +199,6 @@ export function useTemplates() {
   const setSelectedTemplate = (tpl: ReportTemplate | null) =>
     dispatch(setTemplateSelectedId(tpl ? tpl.id : null));
   const setReviewModalOpen = (open: boolean) => dispatch(setTemplateReviewModalOpen(open));
-  const setBuilderOpen = (open: boolean) => dispatch(setTemplateBuilderOpen(open));
   const setDeleteConfirmId = (id: string | null) => dispatch(setTemplateDeleteConfirmId(id));
 
   const showToast = (
@@ -349,92 +242,9 @@ export function useTemplates() {
     showToast("Template blueprint deleted.", "error");
   };
 
-  const handleCreateTemplate = (
-    name: string,
-    desc: string,
-    siteId: string,
-    blocks: TemplateBlock[],
-    status: "pending" | "draft"
-  ): boolean => {
-    if (!name.trim()) {
-      showToast("Please provide a template title.");
-      return false;
-    }
-    const site = sites.find((s) => s.id === siteId) || sites[0];
-    const enabledBlocks = blocks.filter((b) => b.enabled);
-    if (enabledBlocks.length === 0) {
-      showToast("Please enable at least one section block.");
-      return false;
-    }
-
-    dispatch(
-      addTemplate({
-        name,
-        description: desc || "Custom block-based workforce safety template.",
-        site_id: site.id,
-        site_name: site.name,
-        blocks: enabledBlocks,
-        status,
-        created_by: activeRole === "superadmin" ? "Dr. Vikram Seth (Superadmin)" : "Vikram Seth (Site Admin)",
-      })
-    );
-
-    dispatch(setTemplateBuilderOpen(false));
-    showToast(
-      status === "pending"
-        ? "Template submitted for Superadmin approval!"
-        : "Template saved to drafts."
-    );
-    return true;
-  };
-
-  const setEditingTemplate = (tpl: ReportTemplate | null) => {
-    dispatch(setTemplateEditingId(tpl ? tpl.id : null));
-    if (tpl) {
-      dispatch(setTemplateBuilderOpen(true));
-    }
-  };
-
   const handleDuplicate = (id: string) => {
     dispatch(duplicateTemplate(id));
     showToast("Template blueprint duplicated to drafts.", "success");
-  };
-
-  const handleUpdateTemplate = (
-    id: string,
-    name: string,
-    desc: string,
-    siteId: string,
-    blocks: TemplateBlock[],
-    status?: "draft" | "pending" | "active" | "rejected"
-  ): boolean => {
-    if (!name.trim()) {
-      showToast("Please provide a template title.", "warning");
-      return false;
-    }
-    const site = sites.find((s) => s.id === siteId) || sites[0];
-    const enabledBlocks = blocks.filter((b) => b.enabled);
-    if (enabledBlocks.length === 0) {
-      showToast("Please enable at least one section block.", "warning");
-      return false;
-    }
-
-    dispatch(
-      updateTemplate({
-        id,
-        name,
-        description: desc || "Custom block-based workforce safety template.",
-        site_id: site.id,
-        site_name: site.name,
-        blocks: enabledBlocks,
-        status,
-      })
-    );
-
-    dispatch(setTemplateEditingId(null));
-    dispatch(setTemplateBuilderOpen(false));
-    showToast("Template updated successfully!", "success");
-    return true;
   };
 
   const handleResubmit = (templateId: string) => {
@@ -481,14 +291,8 @@ export function useTemplates() {
     siteBuilderOptions,
     selectedTemplate,
     setSelectedTemplate,
-    editingTemplate,
-    setEditingTemplate,
     reviewModalOpen,
     setReviewModalOpen,
-    builderOpen,
-    setBuilderOpen,
-    sectionsModalOpen,
-    setSectionsModalOpen: (open: boolean) => dispatch(setTemplateSectionsModalOpen(open)),
     globalSections,
     deleteConfirmId,
     setDeleteConfirmId,
@@ -499,33 +303,7 @@ export function useTemplates() {
     handleResubmit,
     handleDelete,
     handleDuplicate,
-    handleCreateTemplate,
-    handleUpdateTemplate,
     handleUpdateRemark,
-    handleAddGlobalSection: (sec: Omit<TemplateBlock, "id" | "order">) => {
-      dispatch(addGlobalSection(sec));
-      showToast(`Section "${sec.title}" added to catalog!`, "success");
-    },
-    handleUpdateGlobalSection: (payload: { id: string; title: string; description: string; enabled?: boolean }) => {
-      dispatch(updateGlobalSection(payload));
-      showToast("Section updated successfully!", "success");
-    },
-    handleDeleteGlobalSection: (id: string) => {
-      dispatch(deleteGlobalSection(id));
-      showToast("Section removed from catalog.", "info");
-    },
-    handleAddGraphToSection: (sectionId: string, graph: Omit<TemplateGraphConfig, "id">) => {
-      dispatch(addGraphToGlobalSection({ sectionId, graph }));
-      showToast(`Graph "${graph.title}" attached!`, "success");
-    },
-    handleUpdateGraphInSection: (sectionId: string, graph: TemplateGraphConfig) => {
-      dispatch(updateGraphInGlobalSection({ sectionId, graph }));
-      showToast("Graph updated!", "success");
-    },
-    handleDeleteGraphFromSection: (sectionId: string, graphId: string) => {
-      dispatch(deleteGraphFromGlobalSection({ sectionId, graphId }));
-      showToast("Graph removed from section.", "info");
-    },
   };
 }
 

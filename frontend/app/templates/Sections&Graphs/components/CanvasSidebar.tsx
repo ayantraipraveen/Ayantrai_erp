@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Stamp,
   Check,
@@ -918,12 +918,21 @@ export function CanvasSidebar({
 
   const reduxLibrarySections = useAppSelector((state) => state.reportModule.librarySections || []);
 
-  // Filter existing library sections
-  const filteredLibrarySections = reduxLibrarySections.filter((sec) =>
-    sec.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sec.eyebrow.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sec.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter existing library sections (deduplicated by id)
+  const filteredLibrarySections = useMemo(() => {
+    const seen = new Set<string>();
+    const query = searchQuery.toLowerCase().trim();
+    return reduxLibrarySections.filter((sec) => {
+      if (seen.has(sec.id)) return false;
+      seen.add(sec.id);
+      if (!query) return true;
+      return (
+        sec.name.toLowerCase().includes(query) ||
+        sec.eyebrow.toLowerCase().includes(query) ||
+        sec.description.toLowerCase().includes(query)
+      );
+    });
+  }, [reduxLibrarySections, searchQuery]);
 
   // State for Chart Quick Preview Dialog
   const [previewingChart, setPreviewingChart] = useState<LibraryChartCard | null>(null);
@@ -1205,14 +1214,14 @@ export function CanvasSidebar({
                 </div>
 
                 <div className="space-y-2">
-                  {filteredLibrarySections.map((libSec) => {
+                  {filteredLibrarySections.map((libSec, secIdx) => {
                     const chartsCount = libSec.charts?.length || 0;
                     const metricsCount = libSec.metricCards?.length || 0;
                     const rowsCount = libSec.canvasRows?.length || 1;
 
                     return (
                       <div
-                        key={libSec.id}
+                        key={`lib-sec-${libSec.id}-${secIdx}`}
                         className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#9D61FF]/60 hover:shadow-sm transition-all space-y-2"
                       >
                         <div className="flex items-start justify-between gap-2">

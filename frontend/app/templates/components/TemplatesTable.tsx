@@ -4,24 +4,21 @@ import React from "react";
 import Link from "next/link";
 import {
   FileText,
-  Building,
-  ShieldCheck,
   Eye,
   Edit3,
   Copy,
   Trash2,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   Layers,
   MessageSquare,
   X,
   Check,
   RotateCcw,
+  Building,
 } from "lucide-react";
 import { Tooltip, RejectionModal } from "../../Component";
 import { useTemplates } from "./TemplatesContext";
+import TemplatePagination from "./TemplatePagination";
+import TemplateRemarkModal from "./TemplateRemarkModal";
 
 /**
  * Enterprise Table — all columns fit in viewport frame.
@@ -38,7 +35,6 @@ export default function TemplatesTable() {
     totalPages,
     activeRole,
     setSelectedTemplate,
-    setEditingTemplate,
     handleDuplicate,
     setReviewModalOpen,
     setDeleteConfirmId,
@@ -50,10 +46,7 @@ export default function TemplatesTable() {
   } = useTemplates();
 
   const [remarkModalTemplate, setRemarkModalTemplate] = React.useState<any | null>(null);
-  const [remarkText, setRemarkText] = React.useState("");
-
   const [rejectModalTemplate, setRejectModalTemplate] = React.useState<any | null>(null);
-  const [customRejectReason, setCustomRejectReason] = React.useState("");
 
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
@@ -282,7 +275,6 @@ export default function TemplatesTable() {
                                 type="button"
                                 onClick={() => {
                                   setRejectModalTemplate(template);
-                                  setCustomRejectReason("");
                                 }}
                                 className="h-6 w-6 rounded-md bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 transition-all flex items-center justify-center cursor-pointer"
                               >
@@ -337,7 +329,6 @@ export default function TemplatesTable() {
                             type="button"
                             onClick={() => {
                               setRemarkModalTemplate(template);
-                              setRemarkText(template.remarks || "");
                             }}
                             className={`h-6 w-6 rounded-md border transition-all flex items-center justify-center cursor-pointer relative ${
                               template.remarks
@@ -394,164 +385,26 @@ export default function TemplatesTable() {
         </table>
       </div>
 
-      {/* Pinned Pagination */}
-      <div className="flex-shrink-0 border-t border-slate-200 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-[#0e1219]/90 px-4 sm:px-6 lg:px-7 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs select-none">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-slate-500 dark:text-zinc-400 text-[11px]">
-            Showing{" "}
-            <strong className="text-slate-900 dark:text-white">{totalFilteredCount > 0 ? startIndex + 1 : 0}</strong>
-            {" "}to{" "}
-            <strong className="text-slate-900 dark:text-white">{endIndex}</strong>
-            {" "}of{" "}
-            <strong className="text-slate-900 dark:text-white">{totalFilteredCount}</strong>
-            {" "}templates
-          </span>
-          <div className="flex items-center gap-1 text-slate-500 dark:text-zinc-400">
-            <span className="text-[10px]">Rows:</span>
-            {[5, 10, 20, 50].map((size) => (
-              <button
-                key={size}
-                type="button"
-                onClick={() => setPageSize(size)}
-                className={`h-5 px-1.5 rounded text-[10px] font-medium transition-all cursor-pointer ${
-                  pageSize === size
-                    ? "bg-[#9D61FF] text-white font-bold"
-                    : "hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400"
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Pinned Reusable Pagination */}
+      <TemplatePagination
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
+        totalPages={totalPages}
+        totalFilteredCount={totalFilteredCount}
+        startIndex={startIndex}
+        endIndex={endIndex}
+        className="flex-shrink-0 border-t border-slate-200 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-[#0e1219]/90 px-4 sm:px-6 lg:px-7 py-2.5 select-none"
+      />
 
-        <div className="flex items-center gap-1">
-          <button type="button" onClick={() => setCurrentPage(1)} disabled={currentPage <= 1}
-            className="h-7 w-7 rounded-lg border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer">
-            <ChevronsLeft className="w-3 h-3" />
-          </button>
-          <button type="button" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1}
-            className="h-7 w-7 rounded-lg border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer">
-            <ChevronLeft className="w-3 h-3" />
-          </button>
-
-          <div className="flex items-center gap-1 mx-1">
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((page) => {
-                if (totalPages <= 5) return true;
-                if (page === 1 || page === totalPages) return true;
-                return Math.abs(page - currentPage) <= 1;
-              })
-              .map((page, idx, arr) => {
-                const prev = arr[idx - 1];
-                return (
-                  <React.Fragment key={page}>
-                    {prev && page - prev > 1 && (
-                      <span className="px-1 text-slate-400 dark:text-zinc-600 font-mono text-xs">...</span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setCurrentPage(page)}
-                      className={`h-7 min-w-[28px] px-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer flex items-center justify-center ${
-                        currentPage === page
-                          ? "bg-[#9D61FF] text-white shadow-[0_0_10px_rgba(157,97,255,0.35)]"
-                          : "border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
-                      }`}
-                    >{page}</button>
-                  </React.Fragment>
-                );
-              })}
-          </div>
-
-          <button type="button" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage >= totalPages}
-            className="h-7 w-7 rounded-lg border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer">
-            <ChevronRight className="w-3 h-3" />
-          </button>
-          <button type="button" onClick={() => setCurrentPage(totalPages)} disabled={currentPage >= totalPages}
-            className="h-7 w-7 rounded-lg border border-slate-200 dark:border-zinc-800 flex items-center justify-center text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer">
-            <ChevronsRight className="w-3 h-3" />
-          </button>
-        </div>
-      </div>
-
-      {/* Remark Modal Dialog */}
-      {remarkModalTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-2xl space-y-4 text-slate-900 dark:text-white">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800/80 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
-                  <MessageSquare className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Template Remark
-                  </h3>
-                  <p className="text-[10px] font-mono text-slate-400 dark:text-zinc-500">
-                    {remarkModalTemplate.id} • {remarkModalTemplate.name}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setRemarkModalTemplate(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-slate-700 dark:text-zinc-300">
-                Operational Notes / Remarks
-              </label>
-              <textarea
-                rows={3}
-                value={remarkText}
-                onChange={(e) => setRemarkText(e.target.value)}
-                placeholder="Enter remarks, audit notes, or compliance reminders for this template..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-amber-500/80 transition-all placeholder:text-slate-400"
-              />
-            </div>
-
-            <div className="flex items-center justify-between pt-1">
-              {remarkModalTemplate.remarks ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleUpdateRemark(remarkModalTemplate.id, "");
-                    setRemarkModalTemplate(null);
-                  }}
-                  className="text-[11px] text-rose-500 hover:underline cursor-pointer"
-                >
-                  Clear remark
-                </button>
-              ) : <div />}
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRemarkModalTemplate(null)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleUpdateRemark(remarkModalTemplate.id, remarkText.trim());
-                    setRemarkModalTemplate(null);
-                  }}
-                  className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                  <span>Save Remark</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Reusable Remark Modal */}
+      <TemplateRemarkModal
+        isOpen={!!remarkModalTemplate}
+        template={remarkModalTemplate}
+        onClose={() => setRemarkModalTemplate(null)}
+        onSave={handleUpdateRemark}
+      />
 
       {/* Common Reusable Rejection Reason Modal */}
       <RejectionModal

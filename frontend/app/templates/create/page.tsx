@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState, useMemo, useEffect, useCallback } from "react";
+import React, { Suspense, useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -70,6 +70,7 @@ function CreateTemplatePageContent() {
     existingTemplate ? existingTemplate.site_id : sites[0]?.id || "SITE-01"
   );
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+  const initializedRef = useRef(false);
 
   const selectedSite = useMemo(() => {
     return sites.find((s) => s.id === selectedSiteId) || sites[0];
@@ -113,6 +114,9 @@ function CreateTemplatePageContent() {
 
   // Initialize Canvas Studio directly on mount
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     const compositeSectionId = existingTemplate?.canvasSectionId || `tpl-canvas-${activeBlueprintId}`;
     const existingSec = librarySections.find((s) => s.id === compositeSectionId);
 

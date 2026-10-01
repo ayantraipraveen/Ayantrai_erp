@@ -91,6 +91,21 @@ export const sectionsStudioReducers = {
       }>
     ) => {
       const newId = action.payload.id || `sec-custom-${Date.now()}`;
+      const existingIdx = state.librarySections.findIndex((s) => s.id === newId);
+      if (existingIdx !== -1) {
+        state.librarySections[existingIdx] = {
+          ...state.librarySections[existingIdx],
+          name: action.payload.name || state.librarySections[existingIdx].name,
+          eyebrow: action.payload.eyebrow || state.librarySections[existingIdx].eyebrow,
+          description: action.payload.description || state.librarySections[existingIdx].description,
+          canvasRows: action.payload.canvasRows || state.librarySections[existingIdx].canvasRows,
+          coverPageData: action.payload.coverPageData || state.librarySections[existingIdx].coverPageData,
+          tableOfContentsData: action.payload.tableOfContentsData || state.librarySections[existingIdx].tableOfContentsData,
+          backCoverData: action.payload.backCoverData || state.librarySections[existingIdx].backCoverData,
+        };
+        state.selectedLibrarySectionId = newId;
+        return;
+      }
       const newSec: LibrarySection = {
         id: newId,
         name: action.payload.name,

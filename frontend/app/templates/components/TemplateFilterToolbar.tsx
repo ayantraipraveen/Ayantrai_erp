@@ -2,11 +2,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { Search, X, Building, Filter, List, LayoutGrid, Plus, Layers } from "lucide-react";
+import { Search, X, Building, Filter, List, LayoutGrid, Plus } from "lucide-react";
 import { Tooltip, CustomDropdown, DateRangeFilter } from "../../Component";
 import { useTemplates } from "./TemplatesContext";
-import { useAppDispatch } from "@/lib/redux/hooks";
-import { setTemplateActiveTab } from "@/lib/redux/slices/reportModuleSlice";
 
 /**
  * Filter and action toolbar for Templates module.
@@ -15,7 +13,6 @@ import { setTemplateActiveTab } from "@/lib/redux/slices/reportModuleSlice";
  * view mode toggle, and primary create action.
  */
 export default function TemplateFilterToolbar() {
-  const dispatch = useAppDispatch();
   const {
     searchQuery,
     setSearchQuery,
@@ -31,7 +28,6 @@ export default function TemplateFilterToolbar() {
     hasActiveFilters,
     viewMode,
     setViewMode,
-    setBuilderOpen,
     filteredTemplates,
     totalCount,
   } = useTemplates();
