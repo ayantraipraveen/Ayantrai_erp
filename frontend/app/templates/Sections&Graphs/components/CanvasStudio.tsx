@@ -1223,33 +1223,33 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                       getPlacementClass={getPlacementClass}
                     />
 
+                    {/* Fixed Sitesafe Running Report Header (Edge-to-edge flush with top of A4 sheet) */}
+                    <CanvasReportHeader
+                      pageNumber={page.pageNumber}
+                      paperTone={paperTone}
+                      headerValues={headerValues}
+                      headerTitleFormat={headerTitleFormat}
+                      headerTitleTextStyle={headerTitleTextStyle}
+                      editingHeaderValue={isEditingHere ? editingHeaderValue : null}
+                      activeIsPreview={activeIsPreview}
+                      onStartEditing={openHeader}
+                      onSave={updateHeaderValueWithHtml}
+                      onCancel={() => setEditingHeaderValue(null)}
+                    />
+
                     {/* Inner Page Content with Margins */}
                     <div
                       className="relative z-10 flex-1 min-h-0 flex flex-col justify-between w-full max-w-full box-border"
                       style={{
-                        paddingTop: marginConfig.top,
+                        paddingTop: 10,
                         paddingRight: marginConfig.right,
-                        paddingBottom: marginConfig.bottom,
+                        paddingBottom: 6,
                         paddingLeft: marginConfig.left,
                         boxSizing: "border-box",
                       }}
                     >
-                      {/* Top Header (Standard across Page 1, Page 2, and all pages) */}
+                      {/* Top Content Area */}
                       <div>
-                          {/* Fixed Sitesafe Report Header */}
-                        <CanvasReportHeader
-                          pageNumber={page.pageNumber}
-                          paperTone={paperTone}
-                          headerValues={headerValues}
-                          headerTitleFormat={headerTitleFormat}
-                          headerTitleTextStyle={headerTitleTextStyle}
-                          editingHeaderValue={isEditingHere ? editingHeaderValue : null}
-                          activeIsPreview={activeIsPreview}
-                          onStartEditing={openHeader}
-                          onSave={updateHeaderValueWithHtml}
-                          onCancel={() => setEditingHeaderValue(null)}
-                        />
-
                         {/* Section-specific Header Bar */}
                         <CanvasSectionHeader
                           section={section}
@@ -1428,17 +1428,18 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                         )}
                       </div>
 
-                      {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages */}
-                      <CanvasReportFooter
-  paperTone={paperTone}
-  footerValues={footerValues}
-  editingFooterValue={isEditingHere ? editingFooterValue : null}
-  activeIsPreview={activeIsPreview}
-  onStartEditing={openFooter}
-  onSave={updateFooterValueWithHtml}
-  onCancel={() => setEditingFooterValue(null)}
-/>
                     </div>
+
+                    {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages (Edge-to-edge) */}
+                    <CanvasReportFooter
+                      paperTone={paperTone}
+                      footerValues={footerValues}
+                      editingFooterValue={isEditingHere ? editingFooterValue : null}
+                      activeIsPreview={activeIsPreview}
+                      onStartEditing={openFooter}
+                      onSave={updateFooterValueWithHtml}
+                      onCancel={() => setEditingFooterValue(null)}
+                    />
                   </div>
                 </div>
               </React.Fragment>

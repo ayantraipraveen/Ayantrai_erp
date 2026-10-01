@@ -1082,30 +1082,28 @@ export default function SectionCanvasEditor({
 
   const handleUpdateMarginConfig = useCallback(
     (patch: Partial<CanvasMarginConfig>) => {
-      setMarginConfig((current) => {
-        const next = { ...current, ...patch };
-        if (section?.id) {
-          dispatch(
-            updateSectionStyle({
-              sectionId: section.id,
-              style: {
-                marginTop: next.top,
-                marginRight: next.right,
-                marginBottom: next.bottom,
-                marginLeft: next.left,
-                margin:
-                  next.top === next.bottom && next.top === next.left && next.top === next.right
-                    ? next.top
-                    : undefined,
-                borderRadius: next.radius,
-              },
-            })
-          );
-        }
-        return next;
-      });
+      setMarginConfig((current) => ({ ...current, ...patch }));
+      if (section?.id) {
+        const next = { ...marginConfig, ...patch };
+        dispatch(
+          updateSectionStyle({
+            sectionId: section.id,
+            style: {
+              marginTop: next.top,
+              marginRight: next.right,
+              marginBottom: next.bottom,
+              marginLeft: next.left,
+              margin:
+                next.top === next.bottom && next.top === next.left && next.top === next.right
+                  ? next.top
+                  : undefined,
+              borderRadius: next.radius,
+            },
+          })
+        );
+      }
     },
-    [dispatch, section?.id]
+    [dispatch, section?.id, marginConfig]
   );
 
   const handleUpdateSectionStyle = useCallback(
