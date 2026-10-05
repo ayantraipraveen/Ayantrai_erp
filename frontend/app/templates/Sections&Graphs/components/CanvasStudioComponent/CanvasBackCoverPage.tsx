@@ -145,7 +145,7 @@ export function CanvasBackCoverPage({
 
   return (
     <div
-      className="relative bg-white overflow-hidden flex flex-col justify-between select-none shadow-2xl mx-auto"
+      className="relative bg-white overflow-hidden flex flex-col justify-between select-none mx-auto"
       style={{
         width: "595px",
         height: "842px",
@@ -239,7 +239,7 @@ export function CanvasBackCoverPage({
           <div className="flex items-center gap-4 pt-1">
             {/* Badge 1: Prevent Accidents */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-6 h-6 rounded-full border border-sky-400/50 bg-sky-500/15 flex items-center justify-center text-sky-400 shadow-xs">
+              <div className="w-6 h-6 rounded-full border border-sky-400/50 bg-sky-500/15 flex items-center justify-center text-sky-400">
                 <ShieldCheck className="w-3.5 h-3.5" />
               </div>
               <span className="text-[7px] font-semibold text-slate-200 mt-1 leading-tight text-center">
@@ -249,7 +249,7 @@ export function CanvasBackCoverPage({
 
             {/* Badge 2: Improve Productivity */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-6 h-6 rounded-full border border-sky-400/50 bg-sky-500/15 flex items-center justify-center text-sky-400 shadow-xs">
+              <div className="w-6 h-6 rounded-full border border-sky-400/50 bg-sky-500/15 flex items-center justify-center text-sky-400">
                 <BarChart3 className="w-3.5 h-3.5" />
               </div>
               <span className="text-[7px] font-semibold text-slate-200 mt-1 leading-tight text-center">
@@ -259,7 +259,7 @@ export function CanvasBackCoverPage({
 
             {/* Badge 3: Empower Workforce */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-6 h-6 rounded-full border border-sky-400/50 bg-sky-500/15 flex items-center justify-center text-sky-400 shadow-xs">
+              <div className="w-6 h-6 rounded-full border border-sky-400/50 bg-sky-500/15 flex items-center justify-center text-sky-400">
                 <Users className="w-3.5 h-3.5" />
               </div>
               <span className="text-[7px] font-semibold text-slate-200 mt-1 leading-tight text-center">
@@ -269,7 +269,7 @@ export function CanvasBackCoverPage({
 
             {/* Badge 4: Build a Safer Tomorrow */}
             <div className="flex flex-col items-center text-center">
-              <div className="w-6 h-6 rounded-full border border-sky-400/50 bg-sky-500/15 flex items-center justify-center text-sky-400 shadow-xs">
+              <div className="w-6 h-6 rounded-full border border-sky-400/50 bg-sky-500/15 flex items-center justify-center text-sky-400">
                 <Leaf className="w-3.5 h-3.5" />
               </div>
               <span className="text-[7px] font-semibold text-slate-200 mt-1 leading-tight text-center">
@@ -280,7 +280,7 @@ export function CanvasBackCoverPage({
         </div>
 
         {/* Script Quote on Right (Over worker/sunset) — in pure white real text */}
-        <div className="absolute right-6 bottom-6 pointer-events-none select-none text-right drop-shadow-md">
+        <div className="absolute right-6 bottom-6 pointer-events-none select-none text-right">
           <div
             className="text-white font-bold text-[14px] leading-snug tracking-tight italic"
             style={{
@@ -304,7 +304,7 @@ export function CanvasBackCoverPage({
             <div className="text-[10.5px] font-extrabold text-[#0B1546] mb-1.5">
               Our Products
             </div>
-            <div className="bg-white rounded-xl border border-blue-100/80 shadow-xs p-2.5 flex items-center justify-between gap-2.5">
+            <div className="bg-white rounded-xl border border-blue-100/80 p-2.5 flex items-center justify-between gap-2.5">
               {/* Left: Yellow 3D Helmet & Brand */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <div className="w-9 h-8 relative flex items-center justify-center flex-shrink-0">
@@ -418,7 +418,7 @@ export function CanvasBackCoverPage({
         </div>
 
         {/* Right Column: View the Full Report Online Card (Spans full height!) */}
-        <div className="bg-[#EEF4FF] rounded-2xl border border-blue-200/60 p-3 flex flex-col items-center text-center justify-between shadow-xs">
+        <div className="bg-[#EEF4FF] rounded-2xl border border-blue-200/60 p-3 flex flex-col items-center text-center justify-between">
           <div>
             <EditableText
               field="qrHeading"
@@ -435,7 +435,7 @@ export function CanvasBackCoverPage({
           </div>
 
           {/* QR Code Graphic Card with official AyantrAI purple mark */}
-          <div className="relative w-20 h-20 bg-white p-1.5 rounded-xl border border-blue-100 shadow-xs my-1">
+          <div className="relative w-20 h-20 bg-white p-1.5 rounded-xl border border-blue-100 my-1">
             <Image
               src="/images/ayantrai-back-cover-qr.png"
               alt="Scan to View Report"
@@ -446,7 +446,7 @@ export function CanvasBackCoverPage({
           </div>
 
           {/* Scan Button Pill */}
-          <div className="bg-[#0B1A48] text-white px-3.5 py-1 rounded-full flex items-center gap-1.5 text-[7px] font-bold tracking-wider uppercase shadow-xs">
+          <div className="bg-[#0B1A48] text-white px-3.5 py-1 rounded-full flex items-center gap-1.5 text-[7px] font-bold tracking-wider uppercase">
             <Scan className="w-2.5 h-2.5 text-cyan-400" />
             <span>SCAN TO VIEW REPORT</span>
           </div>

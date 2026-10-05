@@ -217,7 +217,7 @@ function MiniChartPreview({ type }: { type: GraphType }) {
     case "pie":
       return (
         <div className="h-7 w-full flex items-center justify-center bg-purple-500/5 rounded-lg">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#9D61FF] via-emerald-400 to-sky-400 shadow-sm" />
+          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#9D61FF] via-emerald-400 to-sky-400" />
         </div>
       );
     case "heatmap":
@@ -396,7 +396,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
       ],
     },
     preview: (
-      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1.5 shadow-2xs">
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1.5">
         <div className="flex items-center gap-1.5 pb-1 border-b border-slate-100 dark:border-zinc-800">
           <div className="w-3.5 h-3.5 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center text-[7px] font-bold">💡</div>
           <div className="text-[8px] font-bold text-blue-900 dark:text-blue-400">Key Insights</div>
@@ -467,7 +467,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
       ],
     },
     preview: (
-      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1.5 shadow-2xs">
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1.5">
         <div className="flex items-center gap-1.5 pb-1 border-b border-slate-100 dark:border-zinc-800">
           <div className="w-3.5 h-3.5 rounded-full bg-blue-500/10 text-blue-600 flex items-center justify-center text-[7px] font-bold">💡</div>
           <div className="text-[8px] font-bold text-blue-900 dark:text-blue-400">Key Insights</div>
@@ -530,7 +530,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
       ],
     },
     preview: (
-      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1 shadow-2xs">
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1">
         <div className="flex items-center gap-1.5 pb-0.5 border-b border-slate-100 dark:border-zinc-800">
           <div className="w-3 h-3 rounded bg-blue-500/10 text-blue-600 flex items-center justify-center text-[7px]">📄</div>
           <div className="text-[8px] font-bold text-blue-900 dark:text-blue-400">Key Takeaways</div>
@@ -574,7 +574,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
 <p>Overall, attendance remained stable, but continued focus on punctuality and shift discipline is recommended, especially during identified spike periods.</p>`,
     },
     preview: (
-      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1 shadow-2xs">
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 space-y-1">
         <div className="flex items-center gap-1.5 pb-0.5 border-b border-slate-100 dark:border-zinc-800">
           <div className="w-3 h-3 rounded bg-blue-500/10 text-blue-600 flex items-center justify-center text-[7px]">📑</div>
           <div className="text-[8px] font-bold text-blue-900 dark:text-blue-400">Key Insights</div>
@@ -603,7 +603,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
       },
     },
     preview: (
-      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 grid grid-cols-3 gap-1.5 items-center shadow-2xs">
+      <div className="w-full bg-white dark:bg-black/40 border border-slate-200 dark:border-zinc-800 rounded-xl p-2 grid grid-cols-3 gap-1.5 items-center">
         <div className="col-span-2 space-y-0.5 border-r border-slate-100 dark:border-zinc-800 pr-1.5">
           <div className="text-[7px] font-bold text-blue-900 dark:text-blue-400">3. Operational Remarks</div>
           <div className="text-[5.5px] text-slate-400 line-clamp-2">92.4% PPE compliance across 400 monitored workers...</div>
@@ -658,7 +658,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
       },
     },
     preview: (
-      <div className="w-full bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 dark:from-blue-950/30 dark:to-zinc-900 border border-blue-200 dark:border-blue-900/50 rounded-xl p-2 flex items-center justify-between gap-1 shadow-2xs">
+      <div className="w-full bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50 dark:from-blue-950/30 dark:to-zinc-900 border border-blue-200 dark:border-blue-900/50 rounded-xl p-2 flex items-center justify-between gap-1">
         <div className="flex items-center gap-1.5">
           <div className="w-4 h-4 rounded-full bg-blue-900 text-white flex items-center justify-center text-[7px]">⛑️</div>
           <div>
@@ -1087,7 +1087,7 @@ export function CanvasSidebar({
                   onClick={() => setSelectedCategory(cat)}
                   className={`h-7 px-2.5 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
                     selectedCategory === cat
-                      ? "bg-[#9D61FF] text-white shadow-sm"
+                      ? "bg-[#9D61FF] text-white"
                       : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 hover:text-slate-800 dark:hover:text-white"
                   }`}
                 >
@@ -1119,7 +1119,7 @@ export function CanvasSidebar({
                   onClick={() => onSelectReportSection?.("cover")}
                   className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
                     activeReportSectionKey === "cover"
-                      ? "border-blue-500 bg-blue-500/10 shadow-sm"
+                      ? "border-blue-500 bg-blue-500/10"
                       : "border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 hover:border-blue-500/60"
                   }`}
                 >
@@ -1147,7 +1147,7 @@ export function CanvasSidebar({
                   onClick={() => onSelectReportSection?.("toc")}
                   className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
                     activeReportSectionKey === "toc"
-                      ? "border-indigo-500 bg-indigo-500/10 shadow-sm"
+                      ? "border-indigo-500 bg-indigo-500/10"
                       : "border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 hover:border-indigo-500/60"
                   }`}
                 >
@@ -1218,7 +1218,7 @@ export function CanvasSidebar({
                         onClick={() => onSelectReportSection?.(sec.key)}
                         className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
                           activeReportSectionKey === sec.key
-                            ? "border-[#9D61FF] bg-purple-500/15 shadow-sm"
+                            ? "border-[#9D61FF] bg-purple-500/15"
                             : "border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/50"
                         }`}
                       >
@@ -1289,7 +1289,7 @@ export function CanvasSidebar({
                   onClick={() => onSelectReportSection?.("back-cover")}
                   className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
                     activeReportSectionKey === "back-cover"
-                      ? "border-emerald-500 bg-emerald-500/10 shadow-sm"
+                      ? "border-emerald-500 bg-emerald-500/10"
                       : "border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/60"
                   }`}
                 >
@@ -1345,7 +1345,7 @@ export function CanvasSidebar({
                           e.dataTransfer.setData("text/plain", libSec.name);
                           e.dataTransfer.effectAllowed = "copy";
                         }}
-                        className="group/sec-card p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#9D61FF]/60 hover:shadow-md transition-all space-y-2 cursor-grab active:cursor-grabbing"
+                        className="group/sec-card p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#9D61FF]/60 transition-all space-y-2 cursor-grab active:cursor-grabbing"
                         title="Drag section onto report canvas, or click button to insert after current section"
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -1386,7 +1386,7 @@ export function CanvasSidebar({
                         <button
                           type="button"
                           onClick={() => onAddSectionRows?.(resolvedRows, libSec.name)}
-                          className="w-full py-1.5 px-2.5 rounded-xl bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
+                          className="w-full py-1.5 px-2.5 rounded-xl bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98]"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Insert Section to Report</span>
@@ -1416,7 +1416,7 @@ export function CanvasSidebar({
                     key={chart.id}
                     draggable={true}
                     onDragStart={(e) => handleBlockDragStart(e, { blockType: "chart", customChart: chart })}
-                    className="group relative rounded-xl border border-sky-400/30 bg-sky-500/5 hover:bg-sky-500/10 hover:border-sky-400/60 p-2.5 transition-all duration-200 space-y-2 cursor-grab active:cursor-grabbing hover:shadow-md"
+                    className="group relative rounded-xl border border-sky-400/30 bg-sky-500/5 hover:bg-sky-500/10 hover:border-sky-400/60 p-2.5 transition-all duration-200 space-y-2 cursor-grab active:cursor-grabbing"
                     title="Drag anywhere on report to place, or click Add"
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -1497,7 +1497,7 @@ export function CanvasSidebar({
                     key={chart.id}
                     draggable={true}
                     onDragStart={(e) => handleBlockDragStart(e, { blockType: "chart", customChart: chart })}
-                    className="group relative rounded-xl border border-amber-400/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-400/60 p-2.5 transition-all duration-200 space-y-2 cursor-grab active:cursor-grabbing hover:shadow-md"
+                    className="group relative rounded-xl border border-amber-400/30 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-400/60 p-2.5 transition-all duration-200 space-y-2 cursor-grab active:cursor-grabbing"
                     title="Drag anywhere on report to place, or click Add"
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -1578,7 +1578,7 @@ export function CanvasSidebar({
                 <div
                   draggable={true}
                   onDragStart={(e) => handleBlockDragStart(e, { blockType: "chart", customChart: TWO_ZONE_CHART_PRESET })}
-                  className="group relative rounded-2xl border border-emerald-400/40 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/80 p-2.5 transition-all duration-200 space-y-2 cursor-grab active:cursor-grabbing hover:shadow-lg"
+                  className="group relative rounded-2xl border border-emerald-400/40 bg-emerald-500/5 hover:bg-emerald-500/10 hover:border-emerald-500/80 p-2.5 transition-all duration-200 space-y-2 cursor-grab active:cursor-grabbing"
                   title="Drag anywhere on report to place, or click Add to Canvas"
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -1618,7 +1618,7 @@ export function CanvasSidebar({
                     <button
                       type="button"
                       onClick={() => onAddBlock({ blockType: "chart", customChart: TWO_ZONE_CHART_PRESET })}
-                      className="flex items-center gap-1 text-white bg-emerald-600 hover:bg-emerald-700 font-bold cursor-pointer px-2.5 py-1 rounded-lg shadow-xs hover:scale-105 active:scale-95 transition-all"
+                      className="flex items-center gap-1 text-white bg-emerald-600 hover:bg-emerald-700 font-bold cursor-pointer px-2.5 py-1 rounded-lg hover:scale-105 active:scale-95 transition-all"
                     >
                       <Plus className="w-3 h-3" />
                       <span>Add to Canvas</span>
@@ -1649,7 +1649,7 @@ export function CanvasSidebar({
                       key={opt.id}
                       draggable={true}
                       onDragStart={(e) => handleBlockDragStart(e, { blockType: "chart", chartType: opt.id })}
-                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 overflow-hidden p-2.5 space-y-2 cursor-grab active:cursor-grabbing"
+                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 transition-all duration-200 overflow-hidden p-2.5 space-y-2 cursor-grab active:cursor-grabbing"
                       title="Drag anywhere on report to place, or click Add to Canvas"
                     >
                       {/* Header */}
@@ -1738,8 +1738,8 @@ export function CanvasSidebar({
                         key={wm.id}
                         className={`group relative rounded-2xl border p-3 transition-all duration-200 overflow-hidden space-y-2 ${
                           isApplied
-                            ? "border-[#8B3DFF] bg-[#8B3DFF]/10 shadow-md ring-1 ring-[#8B3DFF]"
-                            : "border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#8B3DFF]/60 hover:shadow-lg"
+                            ? "border-[#8B3DFF] bg-[#8B3DFF]/10 ring-1 ring-[#8B3DFF]"
+                            : "border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#8B3DFF]/60"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
@@ -1892,7 +1892,7 @@ export function CanvasSidebar({
                           customInsight: def.defaultInsight,
                         })
                       }
-                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 hover:shadow-lg transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden p-3 space-y-2"
+                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden p-3 space-y-2"
                       title="Drag anywhere on report to place, or click to add"
                     >
                       <div className="flex items-center justify-between">

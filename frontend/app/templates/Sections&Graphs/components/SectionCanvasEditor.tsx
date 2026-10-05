@@ -1713,7 +1713,7 @@ export default function SectionCanvasEditor({
             <button
               type="button"
               onClick={onBack}
-              className="h-8 px-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs flex-shrink-0"
+              className="h-8 px-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer flex-shrink-0"
               title="Back to Templates"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -1762,7 +1762,7 @@ export default function SectionCanvasEditor({
                 disabled={!canUndo}
                 className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                   canUndo
-                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
                     : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
                 }`}
                 title="Undo (Ctrl+Z)"
@@ -1775,7 +1775,7 @@ export default function SectionCanvasEditor({
                 disabled={!canRedo}
                 className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                   canRedo
-                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
                     : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
                 }`}
                 title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
@@ -1790,7 +1790,7 @@ export default function SectionCanvasEditor({
               onClick={() => setIsPreview(!isPreview)}
               className={`h-8 px-2.5 sm:px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                 isPreview
-                  ? "bg-[#9D61FF] text-white border-transparent shadow-sm"
+                  ? "bg-[#9D61FF] text-white border-transparent"
                   : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
               }`}
               title="Toggle Clean Preview Mode"
@@ -1819,7 +1819,7 @@ export default function SectionCanvasEditor({
             <button
               type="button"
               onClick={templateHeaderProps.onSaveDraft}
-              className="h-8 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
+              className="h-8 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <Save className="w-3.5 h-3.5 text-slate-500" />
               <span className="hidden md:inline">Save Draft</span>
@@ -1829,7 +1829,7 @@ export default function SectionCanvasEditor({
             <button
               type="button"
               onClick={templateHeaderProps.onPublish}
-              className="h-8 px-3.5 rounded-xl bg-gradient-to-r from-[#9D61FF] to-[#8035ea] hover:from-[#9254f8] hover:to-[#7227dc] text-white text-xs font-bold flex items-center gap-1.5 shadow-[0_2px_12px_rgba(157,97,255,0.35)] hover:shadow-[0_4px_20px_rgba(157,97,255,0.5)] transition-all active:scale-[0.98] cursor-pointer"
+              className="h-8 px-3.5 rounded-xl bg-gradient-to-r from-[#9D61FF] to-[#8035ea] hover:from-[#9254f8] hover:to-[#7227dc] text-white text-xs font-bold flex items-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Publish Blueprint</span>
@@ -1842,7 +1842,7 @@ export default function SectionCanvasEditor({
             <button
               type="button"
               onClick={onBack}
-              className="h-8 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+              className="h-8 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Sections</span>
@@ -1893,7 +1893,7 @@ export default function SectionCanvasEditor({
                 disabled={!canUndo}
                 className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                   canUndo
-                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
                     : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
                 }`}
                 title="Undo (Ctrl+Z)"
@@ -1906,7 +1906,7 @@ export default function SectionCanvasEditor({
                 disabled={!canRedo}
                 className={`h-8 w-8 rounded-xl border flex items-center justify-center transition-all cursor-pointer ${
                   canRedo
-                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-xs"
+                    ? "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
                     : "border-slate-100 dark:border-zinc-800/40 text-slate-300 dark:text-zinc-700 cursor-not-allowed opacity-40"
                 }`}
                 title="Redo (Ctrl+Y or Ctrl+Shift+Z)"
@@ -1921,7 +1921,7 @@ export default function SectionCanvasEditor({
               onClick={() => setIsPreview(!isPreview)}
               className={`h-8 px-3 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                 isPreview
-                  ? "bg-[#9D61FF] text-white border-transparent shadow-sm"
+                  ? "bg-[#9D61FF] text-white border-transparent"
                   : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
               }`}
               title="Toggle Clean Preview Mode"
@@ -1937,7 +1937,7 @@ export default function SectionCanvasEditor({
                 dispatch(showGlobalToast({ message: "Section saved to Library!", type: "success" }));
                 onBack();
               }}
-              className="h-8 px-4 rounded-xl glow-btn-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm text-white"
+              className="h-8 px-4 rounded-xl glow-btn-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer text-white"
             >
               <Save className="w-3.5 h-3.5" />
               <span>Save to Library</span>

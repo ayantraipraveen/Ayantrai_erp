@@ -1368,7 +1368,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                       }}
                     >
                       <div className="flex-1 border-t border-dashed border-slate-300 dark:border-zinc-700" />
-                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800/90 text-slate-500 dark:text-zinc-400 text-[10px] font-mono uppercase tracking-wider font-semibold border border-slate-200 dark:border-zinc-700 shadow-xs">
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800/90 text-slate-500 dark:text-zinc-400 text-[10px] font-mono uppercase tracking-wider font-semibold border border-slate-200 dark:border-zinc-700">
                         <Layers className="w-3 h-3 text-[#8B3DFF]" />
                         <span>Page Break &bull; Standard A4</span>
                       </div>
@@ -1404,7 +1404,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                             type="button"
                             onClick={() => handleMovePageUp(page.pageIndex)}
                             disabled={page.pageIndex === 0}
-                            className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                            className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
                             title="Move Page Up"
                           >
                             <ChevronUp className="w-3.5 h-3.5" />
@@ -1415,7 +1415,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                             type="button"
                             onClick={() => handleMovePageDown(page.pageIndex)}
                             disabled={page.pageIndex === pages.length - 1}
-                            className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                            className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
                             title="Move Page Down"
                           >
                             <ChevronDown className="w-3.5 h-3.5" />
@@ -1497,7 +1497,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                     }}
                     className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${
                      (editingHeaderValue || editingSectionField || editingFooterValue) && isEditingHere ? "overflow-visible" : "overflow-hidden"
-                    } transition-all duration-200 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_25px_50px_-12px_rgba(0,0,0,0.18),0_0_0_1px_rgba(0,0,0,0.05)] flex flex-col justify-between`}
+                    } transition-all duration-200 flex flex-col justify-between`}
                   >
                     {/* Margin Guides (if enabled) */}
                     {activeShowGuides && !activeIsPreview && (
@@ -1850,7 +1850,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
       {/* ── Complete Page Delete Confirmation Modal ── */}
       {pageToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white text-center">
+          <div className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white text-center">
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
@@ -1879,7 +1879,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
               <button
                 type="button"
                 onClick={() => handleConfirmDeletePage(pageToDelete)}
-                className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-xs font-bold transition-all shadow-md shadow-rose-500/20 cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 active:scale-95 text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Page {pageToDelete.pageNumber}</span>
@@ -1893,7 +1893,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
       {/* ── 3D Elevated Drag Overlay ── */}
       <DragOverlay dropAnimation={{ duration: 150, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
         {activeDragCell && (
-          <div className="w-[300px] max-w-full opacity-95 shadow-[0_20px_50px_rgba(0,0,0,0.35)] rounded-2xl rotate-1 scale-105 transition-transform ring-2 ring-[#8B3DFF] pointer-events-none cursor-grabbing">
+          <div className="w-[300px] max-w-full opacity-95 rounded-2xl rotate-1 scale-105 transition-transform ring-2 ring-[#8B3DFF] pointer-events-none cursor-grabbing">
             <CanvasBlockRenderer cell={activeDragCell} isPreview />
           </div>
         )}

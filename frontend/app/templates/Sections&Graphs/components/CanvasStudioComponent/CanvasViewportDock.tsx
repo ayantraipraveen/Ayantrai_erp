@@ -56,7 +56,7 @@ export function CanvasViewportDock({
   );
 
   return (
-    <div className="fixed bottom-4 right-8 z-40 flex items-center gap-1.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-2xl px-3 py-1.5 shadow-2xl backdrop-blur-md select-none text-xs">
+    <div className="fixed bottom-4 right-8 z-40 flex items-center gap-1.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-2xl px-3 py-1.5 backdrop-blur-md select-none text-xs">
       {/* Page Navigator when multi-page */}
       {pagesCount > 1 && (
         <>
@@ -182,7 +182,7 @@ export function CanvasViewportDock({
         type="button"
         onClick={onTogglePreview}
         className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
-          activeIsPreview ? "bg-[#8B3DFF] text-white shadow-sm" : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+          activeIsPreview ? "bg-[#8B3DFF] text-white" : "text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
         }`}
         title="Toggle Clean Preview Mode"
       >

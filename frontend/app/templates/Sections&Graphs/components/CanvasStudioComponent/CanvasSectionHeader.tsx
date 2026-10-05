@@ -114,7 +114,7 @@ export function CanvasSectionHeader({
                     }}
                     className={`px-1.5 py-0.5 rounded capitalize transition-colors cursor-pointer ${
                       (section.headerSpacing || "normal") === space
-                        ? "bg-white dark:bg-zinc-700 text-[#8B3DFF] font-bold shadow-xs"
+                        ? "bg-white dark:bg-zinc-700 text-[#8B3DFF] font-bold"
                         : "hover:text-slate-900 dark:hover:text-white"
                     }`}
                     title={`Set header vertical padding to ${space}`}
@@ -133,7 +133,7 @@ export function CanvasSectionHeader({
                   }}
                   className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
                     isWatermarkSelected
-                      ? "bg-purple-600 text-white shadow-xs ring-2 ring-purple-400 font-bold"
+                      ? "bg-purple-600 text-white ring-2 ring-purple-400 font-bold"
                       : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
                   }`}
                   title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}

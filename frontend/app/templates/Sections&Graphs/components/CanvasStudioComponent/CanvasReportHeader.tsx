@@ -150,7 +150,7 @@ export function CanvasReportHeader({
 
       {/* Far Right: Angled Page Badge Tab (Matches PDF polygon slant) */}
       <div
-        className="absolute top-0 right-0 h-14 w-18 bg-[#0F1E3D] text-white flex flex-col items-center justify-center pl-3 pr-2.5 shadow-sm"
+        className="absolute top-0 right-0 h-14 w-18 bg-[#0F1E3D] text-white flex flex-col items-center justify-center pl-3 pr-2.5"
         style={{ clipPath: "polygon(22% 0, 100% 0, 100% 100%, 0% 100%)" }}
       >
         <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-300 leading-none">

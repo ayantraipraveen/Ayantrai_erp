@@ -149,7 +149,7 @@ export function CanvasRuler({
       {/* ── Top-Left Corner Origin Tile (Unit Switcher) ── */}
       <div
         onClick={handleToggleUnit}
-        className={`absolute -top-6 -left-8 w-8 h-6 flex items-center justify-center border-t border-l border-r border-b ${cornerBg} font-mono text-[9px] font-bold cursor-pointer select-none hover:bg-[#9D61FF] hover:text-white transition-colors z-30 shadow-xs`}
+        className={`absolute -top-6 -left-8 w-8 h-6 flex items-center justify-center border-t border-l border-r border-b ${cornerBg} font-mono text-[9px] font-bold cursor-pointer select-none hover:bg-[#9D61FF] hover:text-white transition-colors z-30`}
         title={`Click to switch unit (px [Standard PDF: 595×842] → pt → mm [210×297] → in). Current: ${activeUnit.toUpperCase()}`}
       >
         <span className="uppercase">{activeUnit}</span>
@@ -157,7 +157,7 @@ export function CanvasRuler({
 
       {/* ── Horizontal Top Ruler (0 to 595px) ── */}
       <div
-        className={`absolute -top-6 left-0 right-0 h-6 border-t border-b border-r ${rulerBg} select-none z-30 overflow-hidden font-mono text-[8.5px] shadow-xs`}
+        className={`absolute -top-6 left-0 right-0 h-6 border-t border-b border-r ${rulerBg} select-none z-30 overflow-hidden font-mono text-[8.5px]`}
         style={{ width: `${pageWidth}px` }}
       >
         <svg
@@ -274,7 +274,7 @@ export function CanvasRuler({
 
       {/* ── Vertical Left Ruler (0 to 842px) ── */}
       <div
-        className={`absolute top-0 -left-8 bottom-0 w-8 border-l border-b border-t ${rulerBg} select-none z-30 overflow-hidden font-mono text-[8.5px] shadow-xs`}
+        className={`absolute top-0 -left-8 bottom-0 w-8 border-l border-b border-t ${rulerBg} select-none z-30 overflow-hidden font-mono text-[8.5px]`}
         style={{ height: `${pageHeight}px` }}
       >
         <svg

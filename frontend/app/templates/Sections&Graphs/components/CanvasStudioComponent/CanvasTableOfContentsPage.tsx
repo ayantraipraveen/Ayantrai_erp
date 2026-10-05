@@ -363,7 +363,7 @@ export function CanvasTableOfContentsPage({
 
         {/* Far Right: Angled Page Badge Tab (Matches PDF polygon slant) */}
         <div
-          className="absolute top-0 right-0 h-14 w-18 bg-[#0F1E3D] text-white flex flex-col items-center justify-center pl-3 pr-2.5 shadow-sm"
+          className="absolute top-0 right-0 h-14 w-18 bg-[#0F1E3D] text-white flex flex-col items-center justify-center pl-3 pr-2.5"
           style={{ clipPath: "polygon(22% 0, 100% 0, 100% 100%, 0% 100%)" }}
         >
           <span className="text-[8px] font-semibold uppercase tracking-wider text-slate-300 leading-none">Page</span>
@@ -375,7 +375,7 @@ export function CanvasTableOfContentsPage({
       <div className="absolute top-[56px] bottom-[85px] left-0 right-0 overflow-hidden">
         
         {/* ── LEFT HERO CARD (Flush with left sheet boundary x=0, spans full height, rounded right corners) ── */}
-        <div className="absolute top-0 left-0 bottom-0 w-[184px] rounded-r-2xl overflow-hidden shadow-sm flex flex-col justify-end">
+        <div className="absolute top-0 left-0 bottom-0 w-[184px] rounded-r-2xl overflow-hidden flex flex-col justify-end">
           {/* Background image without text */}
           <Image
             src="/images/toc-sidebar-hero-clean.png"
@@ -392,12 +392,12 @@ export function CanvasTableOfContentsPage({
               multiline
               rows={3}
               as="div"
-              className="text-[16px] font-black text-white leading-[1.08] tracking-tight whitespace-pre-line drop-shadow-md"
+              className="text-[16px] font-black text-white leading-[1.08] tracking-tight whitespace-pre-line"
               placeholder={"Safer People\nStronger\nIndustries"}
             />
 
             {/* Accent divider line */}
-            <div className="w-8 h-[2.5px] bg-[#1A38D6] rounded-full my-2 shadow-xs" />
+            <div className="w-8 h-[2.5px] bg-[#1A38D6] rounded-full my-2" />
 
             {/* Tagline: AI + IoT for a safer, smarter tomorrow. */}
             <EditableMetaText
@@ -405,7 +405,7 @@ export function CanvasTableOfContentsPage({
               multiline
               rows={2}
               as="div"
-              className="text-[9.5px] font-medium text-slate-200 leading-snug whitespace-pre-line drop-shadow-md"
+              className="text-[9.5px] font-medium text-slate-200 leading-snug whitespace-pre-line"
               placeholder={"AI + IoT for a safer,\nsmarter tomorrow."}
             />
           </div>

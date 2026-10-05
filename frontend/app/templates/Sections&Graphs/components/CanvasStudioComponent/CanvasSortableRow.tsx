@@ -72,7 +72,7 @@ function RowConfigPopover({
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="w-[360px] max-h-[min(540px,calc(100vh-120px))] flex flex-col rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl animate-fadeIn text-slate-800 dark:text-zinc-200 overflow-hidden"
+      className="w-[360px] max-h-[min(540px,calc(100vh-120px))] flex flex-col rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 animate-fadeIn text-slate-800 dark:text-zinc-200 overflow-hidden"
     >
       {/* Fixed Sticky Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 px-4 py-3 bg-white dark:bg-[#0c1017] flex-shrink-0">
@@ -115,7 +115,7 @@ function RowConfigPopover({
             onClick={() => setActiveTab("spacing")}
             className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === "spacing"
-                ? "bg-[#8B3DFF] text-white shadow-xs"
+                ? "bg-[#8B3DFF] text-white"
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
@@ -126,7 +126,7 @@ function RowConfigPopover({
             onClick={() => setActiveTab("appearance")}
             className={`py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               activeTab === "appearance"
-                ? "bg-[#8B3DFF] text-white shadow-xs"
+                ? "bg-[#8B3DFF] text-white"
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
@@ -190,7 +190,7 @@ function RowConfigPopover({
                 <button
                   type="button"
                   onClick={() => handleUpdate({ columnGap: Math.max(0, colGap - 4) })}
-                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer shadow-2xs"
+                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer"
                 >
                   -
                 </button>
@@ -206,7 +206,7 @@ function RowConfigPopover({
                 <button
                   type="button"
                   onClick={() => handleUpdate({ columnGap: Math.min(48, colGap + 4) })}
-                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer shadow-2xs"
+                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer"
                 >
                   +
                 </button>
@@ -243,7 +243,7 @@ function RowConfigPopover({
                 <button
                   type="button"
                   onClick={() => handleUpdate({ rowGap: Math.max(0, rowGap - 4) })}
-                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer shadow-2xs"
+                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer"
                 >
                   -
                 </button>
@@ -259,7 +259,7 @@ function RowConfigPopover({
                 <button
                   type="button"
                   onClick={() => handleUpdate({ rowGap: Math.min(48, rowGap + 4) })}
-                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer shadow-2xs"
+                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer"
                 >
                   +
                 </button>
@@ -299,7 +299,7 @@ function RowConfigPopover({
                     const next = Math.max(0, padding - 4);
                     handleUpdate({ padding: next, paddingTop: next, paddingBottom: next, paddingLeft: next, paddingRight: next });
                   }}
-                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer shadow-2xs"
+                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer"
                 >
                   -
                 </button>
@@ -321,7 +321,7 @@ function RowConfigPopover({
                     const next = Math.min(40, padding + 4);
                     handleUpdate({ padding: next, paddingTop: next, paddingBottom: next, paddingLeft: next, paddingRight: next });
                   }}
-                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer shadow-2xs"
+                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer"
                 >
                   +
                 </button>
@@ -358,7 +358,7 @@ function RowConfigPopover({
                 <button
                   type="button"
                   onClick={() => handleUpdate({ margin: Math.max(0, marginY - 4), marginTop: Math.max(0, marginY - 4), marginBottom: Math.max(0, marginY - 4) })}
-                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer shadow-2xs"
+                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer"
                 >
                   -
                 </button>
@@ -377,7 +377,7 @@ function RowConfigPopover({
                 <button
                   type="button"
                   onClick={() => handleUpdate({ margin: Math.min(32, marginY + 4), marginTop: Math.min(32, marginY + 4), marginBottom: Math.min(32, marginY + 4) })}
-                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer shadow-2xs"
+                  className="w-5 h-5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 flex items-center justify-center font-bold text-xs cursor-pointer"
                 >
                   +
                 </button>
@@ -530,7 +530,7 @@ function RowConfigPopover({
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-1.5 rounded-xl bg-[#8B3DFF] hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+          className="px-4 py-1.5 rounded-xl bg-[#8B3DFF] hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors"
         >
           Apply & Close
         </button>
@@ -619,7 +619,7 @@ export function SortableRow({
 
       {/* Row Control Strip — uses pointer-events-none wrapper to prevent layout interference */}
       {!isPreview && (
-        <div className="absolute -top-3 right-1 opacity-0 group-hover/row:opacity-100 transition-opacity z-30 flex items-center gap-0.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-md px-1 py-0.5 shadow-sm text-[9px] text-slate-500 backdrop-blur-sm">
+        <div className="absolute -top-3 right-1 opacity-0 group-hover/row:opacity-100 transition-opacity z-30 flex items-center gap-0.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-md px-1 py-0.5 text-[9px] text-slate-500 backdrop-blur-sm">
           <div
             {...attributes}
             {...listeners}
@@ -749,7 +749,7 @@ export function SortableRow({
           }}
           className={`canvas-row-cells flex flex-wrap items-stretch ${row.cells.length === 0 ? "min-h-[60px]" : "min-h-0"} transition-colors duration-100 rounded-2xl ${
             isDragOverRow && !isPreview
-              ? "ring-2 ring-[#9D61FF] bg-[#9D61FF]/10 p-2 shadow-md"
+              ? "ring-2 ring-[#9D61FF] bg-[#9D61FF]/10 p-2"
               : ""
           }`}
         >
@@ -838,7 +838,7 @@ export function SortableRow({
 
           {/* Active Row Drop Target when dragging over row */}
           {isDragOverRow && !isPreview && (
-            <div className="flex-1 min-w-[150px] min-h-[90px] rounded-2xl border-2 border-dashed border-[#9D61FF] bg-[#9D61FF]/15 flex flex-col items-center justify-center gap-1.5 text-[#8B3DFF] dark:text-[#c49aff] font-bold text-xs shadow-md animate-pulse">
+            <div className="flex-1 min-w-[150px] min-h-[90px] rounded-2xl border-2 border-dashed border-[#9D61FF] bg-[#9D61FF]/15 flex flex-col items-center justify-center gap-1.5 text-[#8B3DFF] dark:text-[#c49aff] font-bold text-xs animate-pulse">
               <Plus className="w-5 h-5" />
               <span>Drop inside this Row</span>
             </div>

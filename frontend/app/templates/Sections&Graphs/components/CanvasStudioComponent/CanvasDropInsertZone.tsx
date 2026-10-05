@@ -66,7 +66,7 @@ if (!isLastRow) return null;
       }}
       className={`group/dropzone relative w-full rounded-xl transition-all duration-200 flex items-center justify-center cursor-pointer select-none ${
         isOver
-          ? "h-12 my-2.5 bg-gradient-to-r from-purple-500/15 via-[#9D61FF]/25 to-purple-500/15 border-2 border-dashed border-[#9D61FF] shadow-[0_0_20px_rgba(157,97,255,0.4)] scale-[1.01]"
+          ? "h-12 my-2.5 bg-gradient-to-r from-purple-500/15 via-[#9D61FF]/25 to-purple-500/15 border-2 border-dashed border-[#9D61FF] scale-[1.01]"
           : "h-3 my-0.5 hover:h-8 hover:my-1.5"
       }`}
       title="Click to insert new row here, or drag a block from sidebar"
@@ -89,7 +89,7 @@ if (!isLastRow) return null;
                 onAddRow(insertIndex);
               }
             }}
-            className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#8B3DFF] hover:bg-[#7828ea] text-white text-[10.5px] font-bold shadow-md hover:shadow-lg transition-all scale-95 hover:scale-105 cursor-pointer"
+            className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#8B3DFF] hover:bg-[#7828ea] text-white text-[10.5px] font-bold transition-all scale-95 hover:scale-105 cursor-pointer"
           >
             <Plus className="w-3 h-3 stroke-[2.5]" />
             <span>New Row</span>
@@ -131,7 +131,7 @@ export function PageAddRowDropZone({
       }}
       className={`flex-1 py-2.5 rounded-xl border border-dashed transition-all flex items-center justify-center gap-1.5 cursor-pointer text-xs font-bold ${
         isOver
-          ? "border-2 border-[#9D61FF] bg-[#9D61FF]/15 text-[#8B3DFF] dark:text-[#c49aff] shadow-md scale-[1.01]"
+          ? "border-2 border-[#9D61FF] bg-[#9D61FF]/15 text-[#8B3DFF] dark:text-[#c49aff] scale-[1.01]"
           : "border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-500 hover:border-[#8B3DFF]/50 hover:text-[#8B3DFF] hover:bg-[#8B3DFF]/5"
       }`}
     >

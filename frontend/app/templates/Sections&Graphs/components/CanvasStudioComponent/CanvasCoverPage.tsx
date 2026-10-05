@@ -77,7 +77,7 @@ export function CanvasCoverPage({
 
   return (
     <div
-      className="relative overflow-hidden select-none shadow-2xl bg-white"
+      className="relative overflow-hidden select-none bg-white"
       style={{
         width: "595px",
         height: "842px",
@@ -295,7 +295,7 @@ export function CanvasCoverPage({
             <div key={field} className="h-[38px] flex items-center gap-3 relative group">
               {/* Ice-blue circular pill */}
               <div
-                className="w-8 h-8 rounded-full bg-[#E5EDF8] flex items-center justify-center flex-shrink-0 text-[#1E2B58] shadow-sm pointer-events-none"
+                className="w-8 h-8 rounded-full bg-[#E5EDF8] flex items-center justify-center flex-shrink-0 text-[#1E2B58] pointer-events-none"
               >
                 <Icon className="w-4 h-4 stroke-[2]" />
               </div>
