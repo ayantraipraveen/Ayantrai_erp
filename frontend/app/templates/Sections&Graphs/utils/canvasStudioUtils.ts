@@ -11,6 +11,7 @@ import {
   LibraryMetricCard,
   LibraryKeyInsightItem,
   LibraryChartCard,
+  CanvasCoordinateStamp,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 import { SidebarAddBlockEvent } from "../components/CanvasSidebar";
@@ -61,6 +62,7 @@ export interface SortableCellProps {
   onDropToStack?: (targetCellId: string, data: any) => void;
   activeDragCellId?: string | null;
   onAddBlockBeside?: (rowId: string, cellIndex: number, blockType: CanvasBlockType) => void;
+  onFloatCell?: (cell: CanvasCell, rowId: string) => void;
   zoom?: number;
   currentPageNumber?: number;
 }
@@ -76,6 +78,7 @@ export interface SortableRowProps {
   onEditCell: (cell: CanvasCell, rowId: string) => void;
   onDuplicateCell: (cellId: string, rowId: string) => void;
   onDeleteCell: (cellId: string, rowId: string) => void;
+  onFloatCell?: (cell: CanvasCell, rowId: string) => void;
   onColSpanChange?: (cellId: string, rowId: string, span: 1 | 2 | 3 | 4) => void;
   onWidthChange?: (cellId: string, rowId: string, customWidth: number) => void;
   onHeightChange?: (cellId: string, rowId: string, customHeight?: number) => void;
@@ -106,6 +109,8 @@ export interface CanvasStudioProps {
   selectedRowId?: string | null;
   onSelectCell?: (cellId: string | null, rowId: string | null) => void;
   onEditCell: (cell: CanvasCell, rowId: string) => void;
+  onFloatCell?: (cell: CanvasCell, rowId: string) => void;
+  onDockStampToGrid?: (stamp: CanvasCoordinateStamp) => void;
   onUpdateMetricCardInCell?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateChartInCell?: (rowId: string, cellId: string, chart: LibraryChartCard) => void;
   onUpdateInsightInCell?: (rowId: string, cellId: string, textOrInsight: string | LibraryKeyInsightItem) => void;

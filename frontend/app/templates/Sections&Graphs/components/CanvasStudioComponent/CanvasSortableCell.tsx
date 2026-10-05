@@ -20,6 +20,7 @@ import {
   Lightbulb,
   Type,
   Minus,
+  Move,
 } from "lucide-react";
 import { CanvasBlockRenderer } from "../CanvasBlockRenderer";
 import { SortableCellProps, getCellWidthStyle, getDefaultBlockHeight } from "../../utils";
@@ -35,6 +36,7 @@ export function SortableCell({
   onEdit,
   onDuplicate,
   onDelete,
+  onFloatCell,
   onColSpanChange,
   onWidthChange,
   onHeightChange,
@@ -1431,6 +1433,21 @@ export function SortableCell({
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
+
+            {/* Float Chart on Page (Freeform coordinates & 360° axis rotation) */}
+            {cell.blockType === "chart" && onFloatCell && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFloatCell(cell, rowId);
+                }}
+                className="p-1 text-slate-500 hover:text-[#8B3DFF] dark:hover:text-purple-400 transition-colors cursor-pointer rounded flex items-center gap-1"
+                title="Float Chart (detach to freeform coordinates with 360° axis rotation)"
+              >
+                <Move className="w-3.5 h-3.5 text-[#8B3DFF]" />
+              </button>
+            )}
 
             {/* Quick 1-click Stack under left card (Canva Stack) */}
             {cellIndex !== undefined && cellIndex > 0 && previousCellId && (

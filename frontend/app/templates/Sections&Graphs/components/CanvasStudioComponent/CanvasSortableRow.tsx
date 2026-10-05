@@ -550,6 +550,7 @@ export function SortableRow({
   onEditCell,
   onDuplicateCell,
   onDeleteCell,
+  onFloatCell,
   onColSpanChange,
   onWidthChange,
   onHeightChange,
@@ -790,6 +791,7 @@ export function SortableRow({
                 onEdit={onEditCell}
                 onDuplicate={onDuplicateCell}
                 onDelete={onDeleteCell}
+                onFloatCell={onFloatCell}
                 onColSpanChange={onColSpanChange}
                 onWidthChange={onWidthChange}
                 onHeightChange={onHeightChange}

@@ -36,6 +36,8 @@ import {
   setSectionCanvasRows,
   duplicateCanvasCell,
   deleteCanvasCell,
+  addRowWithCell,
+  addStampToSection,
   moveCellToStackBelow,
   updateCellColSpan,
   updateCellWidth,
@@ -44,6 +46,7 @@ import {
   updateStampInSection,
   deleteStampFromSection,
 } from "@/lib/redux/slices/reportModuleSlice";
+import { CanvasCoordinateStamp } from "@/lib/redux/types/reportModuleTypes";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
 import { CanvasRuler } from "./CanvasRuler";
 
@@ -599,6 +602,63 @@ export function CanvasStudio({
       dispatch(deleteCanvasCell({ sectionId: section.id, rowId, cellId }));
       handleSelectCell(null, null);
       dispatch(showGlobalToast({ message: "Block removed", type: "info" }));
+    },
+    [dispatch, section.id, handleSelectCell]
+  );
+
+  const handleDockStampToGrid = useCallback(
+    (stamp: CanvasCoordinateStamp) => {
+      if (stamp.elementType === "chart" && stamp.chart) {
+        const cell: CanvasCell = {
+          id: `cell-chart-${Date.now()}`,
+          colSpan: 4,
+          blockType: "chart",
+          chart: stamp.chart,
+          customHeight: stamp.height,
+        };
+        dispatch(addRowWithCell({ sectionId: section.id, cell }));
+        dispatch(deleteStampFromSection({ sectionId: section.id, stampId: stamp.id }));
+        dispatch(
+          showGlobalToast({
+            message: `"${stamp.name}" docked back into report grid rows!`,
+            type: "success",
+          })
+        );
+      }
+    },
+    [dispatch, section.id]
+  );
+
+  const handleFloatCell = useCallback(
+    (cell: CanvasCell, rowId: string) => {
+      if (cell.blockType === "chart" && cell.chart) {
+        const ts = Date.now();
+        const newCoord: CanvasCoordinateStamp = {
+          id: `coord-chart-${ts}`,
+          sourceId: cell.chart.id,
+          name: cell.chart.title,
+          pageIndex: 0,
+          x: 50,
+          y: 130,
+          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 380,
+          height: cell.customHeight || 250,
+          rotation: 0,
+          opacity: 100,
+          layer: "front",
+          elementType: "chart",
+          chart: cell.chart,
+        };
+
+        dispatch(addStampToSection({ sectionId: section.id, stamp: newCoord }));
+        dispatch(deleteCanvasCell({ sectionId: section.id, rowId, cellId: cell.id }));
+        handleSelectCell(null, null);
+        dispatch(
+          showGlobalToast({
+            message: `Detached "${cell.chart.title}" to free-floating coordinate chart with 360° axis rotation!`,
+            type: "success",
+          })
+        );
+      }
     },
     [dispatch, section.id, handleSelectCell]
   );
@@ -1349,7 +1409,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                       getPlacementClass={getPlacementClass}
                     />
 
-                    {/* Precision Coordinate-based Stamp / Sticker / Element Layer */}
+                    {/* Precision Coordinate-based Stamp / Chart / Element Layer */}
                     <CanvasStampsLayer
                       pageIndex={page.pageIndex}
                       stamps={section.stamps || []}
@@ -1359,8 +1419,9 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                       }}
                       onDeleteStamp={(stampId) => {
                         dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
-                        dispatch(showGlobalToast({ message: "Stamp removed!", type: "info" }));
+                        dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
                       }}
+                      onDockToGrid={handleDockStampToGrid}
                       selectedStampId={selectedStampId}
                       onSelectStamp={setSelectedStampId}
                       pageWidth={activePageWidth}
@@ -1527,6 +1588,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                                     onEditCell={onEditCell}
                                     onDuplicateCell={handleDuplicateCell}
                                     onDeleteCell={handleDeleteCell}
+                                    onFloatCell={handleFloatCell}
                                     onColSpanChange={handleColSpanChange}
                                     onWidthChange={handleWidthChange}
                                     onHeightChange={handleHeightChange}

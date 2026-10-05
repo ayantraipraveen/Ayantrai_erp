@@ -1,16 +1,15 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   RotateCw,
   Trash2,
   Layers,
-  Lock,
-  Unlock,
-  Move,
   Check,
+  LayoutGrid,
 } from "lucide-react";
 import { CanvasCoordinateStamp } from "@/lib/redux/types/reportModuleTypes";
+import ChartRenderer from "../ChartComponent/ChartRenderer";
 
 export interface CanvasStampsLayerProps {
   pageIndex: number;
@@ -18,6 +17,7 @@ export interface CanvasStampsLayerProps {
   activeIsPreview?: boolean;
   onUpdateStamp?: (stampId: string, patch: Partial<CanvasCoordinateStamp>) => void;
   onDeleteStamp?: (stampId: string) => void;
+  onDockToGrid?: (stamp: CanvasCoordinateStamp) => void;
   selectedStampId?: string | null;
   onSelectStamp?: (stampId: string | null) => void;
   pageWidth?: number;  // 595
@@ -25,13 +25,13 @@ export interface CanvasStampsLayerProps {
 }
 
 /**
- * Precision Coordinate-based Stamp / Sticker / Element Canvas Layer.
- * Renders 100% transparent, borderless SVG stamps positioned by exact (x, y) coordinates.
+ * Precision Coordinate-based Stamp / Chart / Element Canvas Layer.
+ * Renders SVG stamps (100% transparent, borderless) and floating charts positioned by exact (x, y) coordinates.
  * Features:
  * - Freeform drag repositioning anywhere across page
- * - 4-corner proportional resizing
+ * - 4-corner resizing (proportional for stamps, freeform for charts)
  * - Top stem handle for free 360° center-axis rotation
- * - Quick preset toolbar (rotation presets, opacity, layer front/back, delete)
+ * - Quick preset toolbar (rotation presets, opacity, layer front/back, dock-to-grid, delete)
  */
 export function CanvasStampsLayer({
   pageIndex,
@@ -39,6 +39,7 @@ export function CanvasStampsLayer({
   activeIsPreview = false,
   onUpdateStamp,
   onDeleteStamp,
+  onDockToGrid,
   selectedStampId,
   onSelectStamp,
   pageWidth = 595,
@@ -67,6 +68,7 @@ export function CanvasStampsLayer({
     x: number;
     y: number;
     aspectRatio: number;
+    isChart: boolean;
   } | null>(null);
 
   // Rotating state
@@ -104,8 +106,9 @@ export function CanvasStampsLayer({
     setResizingId(stamp.id);
     resizeCorner.current = corner;
 
-    const w = stamp.width || 120;
-    const h = stamp.height || 120;
+    const isChart = stamp.elementType === "chart" || Boolean(stamp.chart);
+    const w = stamp.width || (isChart ? 380 : 120);
+    const h = stamp.height || (isChart ? 250 : 120);
     resizeStartPos.current = {
       mouseX: e.clientX,
       mouseY: e.clientY,
@@ -114,11 +117,16 @@ export function CanvasStampsLayer({
       x: stamp.x,
       y: stamp.y,
       aspectRatio: w / Math.max(1, h),
+      isChart,
     };
   };
 
   // ── Rotate Axis Stem Handle ────────────────────────────────────────────────
-  const handleRotateStart = (e: React.MouseEvent, stamp: CanvasCoordinateStamp, element: HTMLElement) => {
+  const handleRotateStart = (
+    e: React.MouseEvent,
+    stamp: CanvasCoordinateStamp,
+    element: HTMLElement
+  ) => {
     if (activeIsPreview || stamp.locked) return;
     e.stopPropagation();
     e.preventDefault();
@@ -128,8 +136,8 @@ export function CanvasStampsLayer({
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
 
-    const rad = Math.atan2(e.clientY - centerY, e.clientX - centerX);
-    const startAngle = (rad * 180) / Math.PI;
+    const radians = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+    const startAngle = radians * (180 / Math.PI);
 
     rotateCenter.current = {
       centerX,
@@ -139,7 +147,7 @@ export function CanvasStampsLayer({
     };
   };
 
-  // ── Window Mouse Movement & Up Listeners ────────────────────────────────────
+  // ── Global Mouse Listeners for Drag, Resize & Rotate ───────────────────────
   useEffect(() => {
     if (!draggingId && !resizingId && !rotatingId) return;
 
@@ -155,7 +163,7 @@ export function CanvasStampsLayer({
 
       // 2. Resize
       if (resizingId && resizeStartPos.current && onUpdateStamp && resizeCorner.current) {
-        const { mouseX, mouseY, width, height, x, y, aspectRatio } = resizeStartPos.current;
+        const { mouseX, mouseY, width, height, x, y, aspectRatio, isChart } = resizeStartPos.current;
         const dx = e.clientX - mouseX;
         const dy = e.clientY - mouseY;
 
@@ -164,47 +172,70 @@ export function CanvasStampsLayer({
         let newX = x;
         let newY = y;
 
-        if (resizeCorner.current === "se") {
-          newW = Math.max(30, width + dx);
-          newH = Math.round(newW / aspectRatio);
-        } else if (resizeCorner.current === "sw") {
-          newW = Math.max(30, width - dx);
-          newH = Math.round(newW / aspectRatio);
-          newX = x + (width - newW);
-        } else if (resizeCorner.current === "ne") {
-          newW = Math.max(30, width + dx);
-          newH = Math.round(newW / aspectRatio);
-          newY = y + (height - newH);
-        } else if (resizeCorner.current === "nw") {
-          newW = Math.max(30, width - dx);
-          newH = Math.round(newW / aspectRatio);
-          newX = x + (width - newW);
-          newY = y + (height - newH);
+        if (isChart) {
+          // Freeform width & height resizing for charts
+          if (resizeCorner.current === "se") {
+            newW = Math.max(180, width + dx);
+            newH = Math.max(120, height + dy);
+          } else if (resizeCorner.current === "sw") {
+            newW = Math.max(180, width - dx);
+            newH = Math.max(120, height + dy);
+            newX = x + (width - newW);
+          } else if (resizeCorner.current === "ne") {
+            newW = Math.max(180, width + dx);
+            newH = Math.max(120, height - dy);
+            newY = y + (height - newH);
+          } else if (resizeCorner.current === "nw") {
+            newW = Math.max(180, width - dx);
+            newH = Math.max(120, height - dy);
+            newX = x + (width - newW);
+            newY = y + (height - newH);
+          }
+        } else {
+          // Proportional aspect-ratio resizing for stamps
+          if (resizeCorner.current === "se") {
+            newW = Math.max(30, width + dx);
+            newH = Math.round(newW / aspectRatio);
+          } else if (resizeCorner.current === "sw") {
+            newW = Math.max(30, width - dx);
+            newH = Math.round(newW / aspectRatio);
+            newX = x + (width - newW);
+          } else if (resizeCorner.current === "ne") {
+            newW = Math.max(30, width + dx);
+            newH = Math.round(newW / aspectRatio);
+            newY = y + (height - newH);
+          } else if (resizeCorner.current === "nw") {
+            newW = Math.max(30, width - dx);
+            newH = Math.round(newW / aspectRatio);
+            newX = x + (width - newW);
+            newY = y + (height - newH);
+          }
         }
 
         onUpdateStamp(resizingId, {
-          width: Math.round(newW),
-          height: Math.round(newH),
           x: Math.round(newX),
           y: Math.round(newY),
+          width: Math.round(newW),
+          height: Math.round(newH),
         });
       }
 
-      // 3. Rotate around center axis
+      // 3. Rotate on Axis
       if (rotatingId && rotateCenter.current && onUpdateStamp) {
         const { centerX, centerY, startAngle, initialRotation } = rotateCenter.current;
-        const currentAngle = (Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180) / Math.PI;
-        let delta = currentAngle - startAngle;
-        let angle = Math.round((initialRotation + delta) % 360);
-        if (angle < 0) angle += 360;
+        const currentRadians = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+        const currentAngle = currentRadians * (180 / Math.PI);
+        const deltaAngle = currentAngle - startAngle;
 
-        // Snapping within 3 degrees of 0, 90, 180, 270
-        if (Math.abs(angle - 0) < 3 || Math.abs(angle - 360) < 3) angle = 0;
-        else if (Math.abs(angle - 90) < 3) angle = 90;
-        else if (Math.abs(angle - 180) < 3) angle = 180;
-        else if (Math.abs(angle - 270) < 3) angle = 270;
+        let finalAngle = Math.round((initialRotation + deltaAngle) % 360);
+        if (finalAngle < 0) finalAngle += 360;
 
-        onUpdateStamp(rotatingId, { rotation: angle });
+        // Snap to nearest 45° or 15° when Shift is held
+        if (e.shiftKey) {
+          finalAngle = Math.round(finalAngle / 15) * 15;
+        }
+
+        onUpdateStamp(rotatingId, { rotation: finalAngle });
       }
     };
 
@@ -225,20 +256,37 @@ export function CanvasStampsLayer({
     };
   }, [draggingId, resizingId, rotatingId, onUpdateStamp]);
 
+  // Click outside to deselect
+  useEffect(() => {
+    if (!activeSelectedId) return;
+    const handleDocClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        !target?.closest(".canvas-coordinate-stamp") &&
+        !target?.closest(".stamp-toolbar-portal")
+      ) {
+        setSelected(null);
+      }
+    };
+    window.addEventListener("mousedown", handleDocClick);
+    return () => window.removeEventListener("mousedown", handleDocClick);
+  }, [activeSelectedId]);
+
   if (pageStamps.length === 0) return null;
 
   return (
-    <div
-      className="absolute inset-0 pointer-events-none select-none overflow-hidden"
-      style={{ width: `${pageWidth}px`, height: `${pageHeight}px` }}
-    >
+    <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
       {pageStamps.map((stamp) => {
         const isSelected = activeSelectedId === stamp.id && !activeIsPreview;
-        const width = stamp.width || 120;
-        const height = stamp.height || 120;
-        const opacity = (stamp.opacity ?? 100) / 100;
-        const rotation = stamp.rotation ?? 0;
+        const isDragging = draggingId === stamp.id;
+        const isResizing = resizingId === stamp.id;
+        const isRotating = rotatingId === stamp.id;
         const isBack = stamp.layer === "back";
+        const isChart = stamp.elementType === "chart" || Boolean(stamp.chart);
+        const width = stamp.width || (isChart ? 380 : 120);
+        const height = stamp.height || (isChart ? 250 : 120);
+        const rotation = stamp.rotation || 0;
+        const opacity = (stamp.opacity ?? 100) / 100;
 
         return (
           <div
@@ -246,7 +294,7 @@ export function CanvasStampsLayer({
             id={`canvas-stamp-${stamp.id}`}
             onClick={(e) => {
               e.stopPropagation();
-              if (!activeIsPreview) setSelected(stamp.id);
+              setSelected(stamp.id);
             }}
             onMouseDown={(e) => handleDragStart(e, stamp)}
             style={{
@@ -259,16 +307,57 @@ export function CanvasStampsLayer({
               transformOrigin: "center center",
               zIndex: isSelected ? 40 : isBack ? 6 : 25,
             }}
-            className={`pointer-events-auto cursor-move group/stamp transition-shadow ${
+            className={`canvas-coordinate-stamp pointer-events-auto cursor-move group/stamp transition-shadow ${
               isSelected ? "ring-2 ring-[#8B3DFF] ring-dashed" : "hover:ring-1 hover:ring-purple-300/60"
             }`}
           >
-            {/* ── Transparent SVG Content (Zero Card Background, Zero Border) ── */}
-            <div
-              style={{ opacity }}
-              className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full drop-shadow-sm select-none"
-              dangerouslySetInnerHTML={{ __html: stamp.svgContent }}
-            />
+            {/* ── Content: Floating Chart Card OR Transparent SVG Stamp ── */}
+            {isChart && stamp.chart ? (
+              <div
+                style={{ opacity }}
+                className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 shadow-lg flex flex-col justify-between overflow-hidden select-none"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-zinc-800/60 flex-shrink-0">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                      {stamp.chart.title || stamp.name}
+                    </h3>
+                    {stamp.chart.description && (
+                      <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
+                        {stamp.chart.description}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-purple-500/10 text-[#8B3DFF] font-bold flex-shrink-0">
+                    {stamp.chart.chartType}
+                  </span>
+                </div>
+
+                {/* Live Chart Renderer */}
+                <div
+                  style={{
+                    pointerEvents: isDragging || isResizing || isRotating ? "none" : "auto",
+                  }}
+                  className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-1"
+                >
+                  <ChartRenderer
+                    chart={stamp.chart}
+                    color={stamp.chart.color || stamp.chart.colors?.[0] || "#9D61FF"}
+                    colors={stamp.chart.colors}
+                    gridRows={stamp.chart.gridRows}
+                    gridCols={stamp.chart.gridCols}
+                    height={Math.max(60, height - 70)}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{ opacity }}
+                className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full drop-shadow-sm select-none"
+                dangerouslySetInnerHTML={{ __html: stamp.svgContent || "" }}
+              />
+            )}
 
             {/* ── Interactive Transform Handles (Shown when Selected) ── */}
             {isSelected && (
@@ -313,7 +402,7 @@ export function CanvasStampsLayer({
                 {/* ── Quick Floating Action Toolbar ── */}
                 <div
                   onMouseDown={(e) => e.stopPropagation()}
-                  className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/98 dark:bg-zinc-900/98 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 shadow-2xl backdrop-blur-md text-xs z-50 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100"
+                  className="stamp-toolbar-portal absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/98 dark:bg-zinc-900/98 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 shadow-2xl backdrop-blur-md text-xs z-50 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100"
                 >
                   {/* Rotation Angle Preset Display & Stepper */}
                   <div className="flex items-center gap-1 font-mono text-[11px] text-slate-700 dark:text-zinc-300 pr-1 border-r border-slate-200 dark:border-zinc-800">
@@ -383,11 +472,24 @@ export function CanvasStampsLayer({
                         ? "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"
                         : "bg-purple-100 dark:bg-purple-950/40 text-[#8B3DFF] font-bold"
                     }`}
-                    title={isBack ? "Bring stamp in front of content" : "Send stamp behind content"}
+                    title={isBack ? "Bring element in front of content" : "Send element behind content"}
                   >
                     <Layers className="w-2.5 h-2.5" />
                     <span>{isBack ? "Back" : "Front"}</span>
                   </button>
+
+                  {/* Dock to Grid (if chart) */}
+                  {isChart && onDockToGrid && (
+                    <button
+                      type="button"
+                      onClick={() => onDockToGrid(stamp)}
+                      className="px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 text-[10px] font-semibold flex items-center gap-1 cursor-pointer hover:bg-sky-100 transition-colors"
+                      title="Dock this chart back into report grid rows"
+                    >
+                      <LayoutGrid className="w-2.5 h-2.5" />
+                      <span>To Grid</span>
+                    </button>
+                  )}
 
                   {/* Done / Deselect */}
                   <button
@@ -399,13 +501,13 @@ export function CanvasStampsLayer({
                     <Check className="w-3 h-3" />
                   </button>
 
-                  {/* Delete Stamp */}
+                  {/* Delete Stamp / Chart */}
                   {onDeleteStamp && (
                     <button
                       type="button"
                       onClick={() => onDeleteStamp(stamp.id)}
                       className="p-1 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
-                      title="Delete Stamp"
+                      title={isChart ? "Delete Floating Chart" : "Delete Stamp"}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>

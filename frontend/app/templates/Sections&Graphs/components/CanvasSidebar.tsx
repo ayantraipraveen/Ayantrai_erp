@@ -31,6 +31,7 @@ import {
   Bookmark,
   TrendingUp,
   ExternalLink,
+  Move,
 } from "lucide-react";
 import {
   CanvasBlockType,
@@ -92,6 +93,7 @@ export interface CanvasSidebarProps {
   activeWatermarkId?: string | null;
   onSelectWatermark?: (watermarkId: string | null) => void;
   onAddWatermarkElement?: (watermarkId: string) => void;
+  onAddFloatingChart?: (chart: LibraryChartCard) => void;
   watermarkConfig?: WatermarkStampConfig;
   onUpdateWatermarkConfig?: (cfg: Partial<WatermarkStampConfig>) => void;
   isCollapsed?: boolean;
@@ -910,6 +912,7 @@ export function CanvasSidebar({
   activeWatermarkId,
   onSelectWatermark,
   onAddWatermarkElement,
+  onAddFloatingChart,
   watermarkConfig,
   onUpdateWatermarkConfig,
   isCollapsed,
@@ -1447,14 +1450,27 @@ export function CanvasSidebar({
                         <span>Preview</span>
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
-                        className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>Add</span>
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        {onAddFloatingChart && (
+                          <button
+                            type="button"
+                            onClick={() => onAddFloatingChart(chart)}
+                            className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-bold cursor-pointer bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-md transition-colors"
+                            title="Float on Page (freeform coordinates & 360° axis rotation)"
+                          >
+                            <Move className="w-2.5 h-2.5" />
+                            <span>Float</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
+                          className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1515,14 +1531,27 @@ export function CanvasSidebar({
                         <span>Preview</span>
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
-                        className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md"
-                      >
-                        <Plus className="w-3 h-3" />
-                        <span>Add</span>
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        {onAddFloatingChart && (
+                          <button
+                            type="button"
+                            onClick={() => onAddFloatingChart(chart)}
+                            className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-bold cursor-pointer bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-md transition-colors"
+                            title="Float on Page (freeform coordinates & 360° axis rotation)"
+                          >
+                            <Move className="w-2.5 h-2.5" />
+                            <span>Float</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
+                          className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md"
+                        >
+                          <Plus className="w-3 h-3" />
+                          <span>Add</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -1967,6 +1996,20 @@ export function CanvasSidebar({
                 >
                   Close
                 </button>
+                {onAddFloatingChart && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onAddFloatingChart(previewingChart);
+                      setPreviewingChart(null);
+                    }}
+                    className="h-9 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-colors"
+                    title="Float on Page (freeform coordinates & 360° axis rotation)"
+                  >
+                    <Move className="w-3.5 h-3.5" />
+                    <span>Float on Page</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {

@@ -977,6 +977,42 @@ export default function SectionCanvasEditor({
     [dispatch, sectionId, uploadedWatermarks, canvasActivePageIndex]
   );
 
+  const handleAddFloatingChart = useCallback(
+    (chart: LibraryChartCard) => {
+      const ts = Date.now();
+      const newCoordChart: CanvasCoordinateStamp = {
+        id: `coord-chart-${ts}`,
+        sourceId: chart.id,
+        name: chart.title,
+        pageIndex: canvasActivePageIndex,
+        x: 60,
+        y: 120,
+        width: 380,
+        height: 250,
+        rotation: 0,
+        opacity: 100,
+        layer: "front",
+        elementType: "chart",
+        chart,
+      };
+
+      dispatch(
+        addStampToSection({
+          sectionId,
+          stamp: newCoordChart,
+        })
+      );
+
+      dispatch(
+        showGlobalToast({
+          message: `"${chart.title}" placed as floating chart on Page ${canvasActivePageIndex + 1}! Drag anywhere, or use the top handle to rotate on axis.`,
+          type: "success",
+        })
+      );
+    },
+    [dispatch, sectionId, canvasActivePageIndex]
+  );
+
   // ── Cell Edit Trigger ───────────────────────────────────────────────────────
   const handleEditCell = useCallback(
     (cell: CanvasCell, rowId: string) => {
@@ -1823,6 +1859,7 @@ export default function SectionCanvasEditor({
             activeWatermarkId={watermarkConfig.watermarkId}
             onSelectWatermark={handleSelectWatermark}
             onAddWatermarkElement={handleAddWatermarkElement}
+            onAddFloatingChart={handleAddFloatingChart}
             watermarkConfig={watermarkConfig}
             reportSections={isReportFrame ? computedReportSections : undefined}
             activeReportSectionKey={activeReportSectionKey}

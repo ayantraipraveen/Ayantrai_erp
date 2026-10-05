@@ -512,7 +512,7 @@ export interface CanvasCoordinateStamp {
   id: string;
   sourceId: string;
   name: string;
-  svgContent: string;
+  svgContent?: string;
   pageIndex: number;
   x: number;
   y: number;
@@ -522,7 +522,11 @@ export interface CanvasCoordinateStamp {
   opacity: number;
   layer: "front" | "back";
   locked?: boolean;
+  elementType?: "stamp" | "chart" | "metric-card" | "text";
+  chart?: LibraryChartCard;
 }
+
+export type CanvasCoordinateElement = CanvasCoordinateStamp;
 
 export interface CanvasRow {
   id: string;
