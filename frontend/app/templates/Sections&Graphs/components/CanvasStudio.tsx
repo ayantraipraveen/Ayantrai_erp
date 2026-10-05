@@ -1597,8 +1597,7 @@ export function CanvasStudio({
                         maxHeight: `${activePageHeight}px`,
                         boxSizing: "border-box",
                       }}
-                      className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${(editingHeaderValue || editingSectionField || editingFooterValue) && isEditingHere ? "overflow-visible" : "overflow-hidden"
-                        } transition-all duration-200 flex flex-col justify-between`}
+                      className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 overflow-visible transition-all duration-200 flex flex-col justify-between`}
                     >
                       {/* Margin Guides (if enabled) */}
                       {activeShowGuides && !activeIsPreview && (
@@ -1635,10 +1634,11 @@ export function CanvasStudio({
                         getPlacementClass={getPlacementClass}
                       />
 
-                      {/* Precision Coordinate-based Stamp / Chart / Element Layer */}
+                      {/* Back-layer Stamps: render behind report content (watermarks, document seals) */}
                       <CanvasStampsLayer
                         pageIndex={page.pageIndex}
                         stamps={section.stamps || []}
+                        layerFilter="back"
                         activeIsPreview={activeIsPreview}
                         onUpdateStamp={(stampId, patch) => {
                           dispatch(updateStampInSection({ sectionId: section.id, stampId, patch }));
@@ -1990,6 +1990,41 @@ export function CanvasStudio({
                           onCancel={() => setEditingFooterValue(null)}
                         />
                       </div>
+
+                      {/* Front-layer Stamps: render above all report content (floating charts, overlays) */}
+                      <CanvasStampsLayer
+                        pageIndex={page.pageIndex}
+                        stamps={section.stamps || []}
+                        layerFilter="front"
+                        activeIsPreview={activeIsPreview}
+                        onUpdateStamp={(stampId, patch) => {
+                          dispatch(updateStampInSection({ sectionId: section.id, stampId, patch }));
+                        }}
+                        onDeleteStamp={(stampId) => {
+                          dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
+                          dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
+                        }}
+                        onBringToFront={(stampId) => {
+                          dispatch(bringStampToFront({ sectionId: section.id, stampId }));
+                          dispatch(showGlobalToast({ message: "Brought to front!", type: "info" }));
+                        }}
+                        onSendToBack={(stampId) => {
+                          dispatch(sendStampToBack({ sectionId: section.id, stampId }));
+                          dispatch(showGlobalToast({ message: "Sent to back!", type: "info" }));
+                        }}
+                        onBringForward={(stampId) => {
+                          dispatch(bringStampForward({ sectionId: section.id, stampId }));
+                        }}
+                        onSendBackward={(stampId) => {
+                          dispatch(sendStampBackward({ sectionId: section.id, stampId }));
+                        }}
+                        onDockToGrid={handleDockStampToGrid}
+                        onOpenChartEditor={onOpenChartEditor}
+                        selectedStampId={selectedStampId}
+                        onSelectStamp={setSelectedStampId}
+                        pageWidth={activePageWidth}
+                        pageHeight={activePageHeight}
+                      />
                     </div>
                 </React.Fragment>
               );

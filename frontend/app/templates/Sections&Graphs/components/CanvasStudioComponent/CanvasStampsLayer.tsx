@@ -124,6 +124,7 @@ export function CanvasStampsLayer({
   onSendBackward,
   selectedStampId,
   onSelectStamp,
+  layerFilter = "all",
 }: CanvasStampsLayerProps) {
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
   const activeSelectedId = selectedStampId !== undefined ? selectedStampId : internalSelectedId;
@@ -136,15 +137,18 @@ export function CanvasStampsLayer({
   // Layer stacking helpers
   const handleBringToFront = (stamp: CanvasCoordinateStamp, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    // Always call Redux action (onBringToFront) AND local patch (onUpdateStamp)
+    // so stamp.layer updates in Redux and re-renders with correct isBack flag.
     if (onBringToFront) {
       onBringToFront(stamp.id);
-    } else if (onUpdateStamp) {
-      const pageStamps = stamps.filter((s) => (s.pageIndex ?? 0) === pageIndex);
-      const maxZ = pageStamps.reduce((max, s) => {
+    }
+    if (onUpdateStamp) {
+      const allPageStamps = stamps.filter((s) => (s.pageIndex ?? 0) === pageIndex);
+      const maxZ = allPageStamps.reduce((max, s) => {
         const z = s.zIndex ?? (s.layer === "back" ? 6 : 25);
         return Math.max(max, z);
       }, 25);
-      onUpdateStamp(stamp.id, { layer: "front", zIndex: maxZ + 1 });
+      onUpdateStamp(stamp.id, { layer: "front", zIndex: Math.max(25, maxZ + 1) });
     }
   };
 
@@ -152,9 +156,10 @@ export function CanvasStampsLayer({
     if (e) e.stopPropagation();
     if (onSendToBack) {
       onSendToBack(stamp.id);
-    } else if (onUpdateStamp) {
-      const pageStamps = stamps.filter((s) => (s.pageIndex ?? 0) === pageIndex);
-      const backStamps = pageStamps.filter((s) => s.id !== stamp.id && s.layer === "back");
+    }
+    if (onUpdateStamp) {
+      const allPageStamps = stamps.filter((s) => (s.pageIndex ?? 0) === pageIndex);
+      const backStamps = allPageStamps.filter((s) => s.id !== stamp.id && s.layer === "back");
       const minZ = backStamps.length > 0
         ? backStamps.reduce((min, s) => Math.min(min, s.zIndex ?? 6), 6)
         : 6;
@@ -166,7 +171,8 @@ export function CanvasStampsLayer({
     if (e) e.stopPropagation();
     if (onBringForward) {
       onBringForward(stamp.id);
-    } else if (onUpdateStamp) {
+    }
+    if (onUpdateStamp) {
       const curZ = stamp.zIndex ?? (stamp.layer === "back" ? 6 : 25);
       if (stamp.layer === "back") {
         if (curZ >= 9) {
@@ -184,7 +190,8 @@ export function CanvasStampsLayer({
     if (e) e.stopPropagation();
     if (onSendBackward) {
       onSendBackward(stamp.id);
-    } else if (onUpdateStamp) {
+    }
+    if (onUpdateStamp) {
       const curZ = stamp.zIndex ?? (stamp.layer === "back" ? 6 : 25);
       if (stamp.layer !== "back") {
         if (curZ <= 20) {
@@ -234,8 +241,13 @@ export function CanvasStampsLayer({
   const [rotatingId, setRotatingId] = useState<string | null>(null);
   const rotateCenter = useRef<{ centerX: number; centerY: number; startAngle: number; initialRotation: number } | null>(null);
 
-  // Filter stamps that belong to this page
-  const pageStamps = stamps.filter((s) => (s.pageIndex ?? 0) === pageIndex);
+  // Filter stamps that belong to this page, optionally filtered by layer
+  const pageStamps = stamps.filter((s) => {
+    if ((s.pageIndex ?? 0) !== pageIndex) return false;
+    if (layerFilter === "back") return s.layer === "back";
+    if (layerFilter === "front") return s.layer !== "back";
+    return true;
+  });
 
   // ── Drag to Move ───────────────────────────────────────────────────────────
   const handleDragStart = (e: React.MouseEvent, stamp: CanvasCoordinateStamp) => {
@@ -486,8 +498,19 @@ export function CanvasStampsLayer({
 
   if (pageStamps.length === 0) return null;
 
+  // Determine wrapper z-index and overflow based on layerFilter:
+  // "back"  → z-[5]  overflow-hidden  (renders behind report rows)
+  // "front" → z-[50] overflow-visible (renders above all report rows, cells, charts)
+  // "all"   → z-[20] overflow-hidden  (legacy: same level as before)
+  const wrapperClass =
+    layerFilter === "back"
+      ? "absolute inset-0 pointer-events-none z-[5] overflow-hidden"
+      : layerFilter === "front"
+      ? "absolute inset-0 pointer-events-none z-[50] overflow-visible"
+      : "absolute inset-0 pointer-events-none z-[20] overflow-hidden";
+
   return (
-    <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+    <div className={wrapperClass}>
       {pageStamps.map((stamp) => {
         const isSelected = activeSelectedId === stamp.id && !activeIsPreview;
         const isDragging = draggingId === stamp.id;
