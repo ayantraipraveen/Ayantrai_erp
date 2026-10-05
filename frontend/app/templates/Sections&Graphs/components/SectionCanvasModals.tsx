@@ -60,7 +60,7 @@ export function EditSectionHeaderModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white">
+      <div className="w-full max-w-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
           <h3 className="text-sm font-bold">Edit Section Header</h3>
           <button
@@ -179,7 +179,7 @@ export function MetricCardModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-lg bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white">
+      <div className="w-full max-w-lg bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
           <h3 className="text-sm font-bold">
             {editingCard ? "Edit Pastel Metric Card" : "Add Pastel Metric Card"}
@@ -323,7 +323,7 @@ export function KeyInsightModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white">
+      <div className="w-full max-w-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
           <h3 className="text-sm font-bold">
             {editingInsight ? "Edit Key Insight Item" : "Add Key Insight Item"}
@@ -435,7 +435,7 @@ export function BadgeStripModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white">
+      <div className="w-full max-w-xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
           <div className="flex items-center gap-2">
@@ -467,7 +467,7 @@ export function BadgeStripModal({
               onClick={() => setActiveTabIdx(idx)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTabIdx === idx
-                  ? "bg-[#9D61FF] text-white shadow-sm"
+                  ? "bg-[#9D61FF] text-white"
                   : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -531,10 +531,10 @@ export function BadgeStripModal({
                     type="button"
                     onClick={() => updateCurrentBadge({ color: pal.id as any })}
                     className={`h-9 rounded-xl flex items-center justify-center border transition-all cursor-pointer ${pal.bg} ${pal.border} ${
-                      currentBadge.color === pal.id ? "ring-2 ring-[#9D61FF] scale-105 shadow-sm" : "opacity-80 hover:opacity-100"
+                      currentBadge.color === pal.id ? "ring-2 ring-[#9D61FF] scale-105" : "opacity-80 hover:opacity-100"
                     }`}
                   >
-                    <span className={`w-4 h-4 rounded-full ${pal.dot} shadow-xs`} />
+                    <span className={`w-4 h-4 rounded-full ${pal.dot}`} />
                   </button>
                 ))}
               </div>
@@ -556,7 +556,7 @@ export function BadgeStripModal({
                       onClick={() => updateCurrentBadge({ icon: opt.id })}
                       className={`h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                         isSelected
-                          ? "bg-[#9D61FF] text-white shadow-xs font-bold"
+                          ? "bg-[#9D61FF] text-white font-bold"
                           : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-zinc-800"
                       }`}
                       title={opt.label}
@@ -602,7 +602,7 @@ export function BadgeStripModal({
               });
               onClose();
             }}
-            className="px-4 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold transition-all cursor-pointer"
           >
             Save All Badges
           </button>

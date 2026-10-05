@@ -666,13 +666,12 @@ useEffect(() => {
               // Prevent losing focus / selection inside contentEditable
               e.stopPropagation();
             }}
-            className="portal-title-toolbar flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/98 dark:bg-zinc-900/98 text-xs select-none w-max max-w-[96vw] whitespace-nowrap shrink-0 transition-all duration-100 shadow-2xl backdrop-blur-md"
+            className="portal-title-toolbar flex items-center gap-1.5 p-1.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/98 dark:bg-zinc-900/98 text-xs select-none w-max max-w-[96vw] whitespace-nowrap shrink-0 transition-all duration-100 backdrop-blur-md"
             style={{
               position: "fixed",
               top: `${toolbarCoords.top}px`,
               left: `${toolbarCoords.left}px`,
               zIndex: 99999,
-              boxShadow: "0 14px 34px -4px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06)",
             }}
           >
         <div className="flex items-center gap-1.5 shrink-0">
@@ -686,7 +685,7 @@ useEffect(() => {
                 setFontMenuOpen(!fontMenuOpen);
                 setColorMenuOpen(false);
               }}
-              className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1.5 text-slate-800 dark:text-zinc-200 font-semibold cursor-pointer shadow-2xs shrink-0"
+              className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1.5 text-slate-800 dark:text-zinc-200 font-semibold cursor-pointer shrink-0"
               title="Font Family"
             >
               <Type className="w-3.5 h-3.5 text-[#2563eb] shrink-0" />
@@ -704,7 +703,7 @@ useEffect(() => {
                     left: fontMenuPos.left,
                     zIndex: 99999,
                   }}
-                  className="portal-title-dropdown w-52 max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#11151e] shadow-2xl p-1 animate-fadeIn select-none"
+                  className="portal-title-dropdown w-52 max-h-64 overflow-y-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#11151e] p-1 animate-fadeIn select-none"
                 >
                   <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Select Font
@@ -733,7 +732,7 @@ useEffect(() => {
           </div>
 
           {/* Font Size Stepper */}
-          <div className="flex items-center rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 px-1 py-0.5 shadow-2xs shrink-0">
+          <div className="flex items-center rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 px-1 py-0.5 shrink-0">
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
