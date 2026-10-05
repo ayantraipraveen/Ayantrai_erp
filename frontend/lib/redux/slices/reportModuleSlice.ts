@@ -125,6 +125,7 @@ export const {
   setSelectedLibrarySectionId,
   createLibrarySection,
   updateLibrarySection,
+  setSectionPageOverride,
   setSectionWatermark,
   duplicateLibrarySection,
   deleteLibrarySection,

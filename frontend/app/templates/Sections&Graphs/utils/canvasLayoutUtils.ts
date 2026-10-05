@@ -1,4 +1,4 @@
-import { CanvasRow, CanvasCell, LibrarySection } from "@/lib/redux/slices/reportModuleSlice";
+import { CanvasRow, CanvasCell, LibrarySection, PageConfigOverride } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasMarginConfig, DEFAULT_CANVAS_MARGIN } from "./canvasStyleUtils";
 
 // ─── Standard ISO A4 PDF Dimensions (595 × 842 px / pt at 72 DPI) ───────────
@@ -135,7 +135,8 @@ export function partitionCanvasPages(
   rows: CanvasRow[],
   marginConfig: CanvasMarginConfig = DEFAULT_CANVAS_MARGIN,
   startPageNumber: number = 1,
-  sheetHeight: number = A4_HEIGHT_PX
+  sheetHeight: number = A4_HEIGHT_PX,
+  pageOverrides?: Record<number, PageConfigOverride>
 ): PagePartition[] {
   const page1MarginY = (marginConfig?.top ?? 24) + (marginConfig?.bottom ?? 24);
 
@@ -148,8 +149,22 @@ export function partitionCanvasPages(
     Math.min(540, sheetHeight - page1MarginY - 110 - 75 - 70 - 35 - BOTTOM_CONTROLS_RESERVE)
   )
 );
-  const capPage1Single = standardCapacity;
-  const capPage1Multi = standardCapacity;
+
+  const getCapacityForPage = (pageIdx: number): number => {
+    let capacity = standardCapacity;
+    if (pageIdx > 0 && pageOverrides?.[pageIdx]) {
+      if (pageOverrides[pageIdx].hideReportHeader) {
+        capacity += 56;
+      }
+      if (pageOverrides[pageIdx].hideSectionTitle) {
+        capacity += 75;
+      }
+    }
+    return capacity;
+  };
+
+  const capPage1Single = getCapacityForPage(0);
+  const capPage1Multi = getCapacityForPage(0);
   const capMiddlePage = standardCapacity;
   const capLastPage = standardCapacity;
 
@@ -195,8 +210,7 @@ export function partitionCanvasPages(
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const rHeight = rowHeights[i];
-    const isFirstPage = currentPageIndex === 0;
-    const currentLimit = isFirstPage ? capPage1Multi : capMiddlePage;
+    const currentLimit = getCapacityForPage(currentPageIndex);
     const isForcedBreak = i > 0 && Boolean(row.pageBreakBefore);
 
     if (
@@ -230,7 +244,7 @@ export function partitionCanvasPages(
       isFirstPage: currentPageIndex === 0,
       isLastPage: true,
       usedHeight: currentUsedHeight,
-      maxCapacity: currentPageIndex === 0 ? capPage1Single : capLastPage,
+      maxCapacity: getCapacityForPage(currentPageIndex),
     });
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Edit2, Stamp } from "lucide-react";
+import { Edit2, Stamp, Trash2 } from "lucide-react";
 import { LibrarySection } from "@/lib/redux/slices/reportModuleSlice";
 import { UploadedSvgWatermark } from "../../watermark/utils";
 import {
@@ -27,6 +27,8 @@ export interface CanvasSectionHeaderProps {
   activeWatermark?: UploadedSvgWatermark | null;
   isWatermarkSelected: boolean;
   wmScale: number;
+  isMandatory?: boolean;
+  onDelete?: () => void;
   onStartEditing: (field: SectionField) => void;
   onFinishEditing: () => void;
   onUpdateSection: (patch: Partial<LibrarySection>) => void;
@@ -44,6 +46,8 @@ export function CanvasSectionHeader({
   activeWatermark,
   isWatermarkSelected,
   wmScale,
+  isMandatory = false,
+  onDelete,
   onStartEditing,
   onFinishEditing,
   onUpdateSection,
@@ -143,6 +147,29 @@ export function CanvasSectionHeader({
                   <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
                 </button>
               )}
+
+              {/* Mandatory on Page 1 or Delete on Next Pages */}
+              {isMandatory ? (
+                <span
+                  className="opacity-0 group-hover/section-header:opacity-100 transition-opacity text-[10px] font-mono font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 px-2 py-0.5 rounded select-none"
+                  title="Section title is mandatory on Page 1"
+                >
+                  Mandatory Title
+                </span>
+              ) : onDelete ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-1 text-[11px] font-semibold text-rose-500 hover:text-rose-700 px-2 py-0.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200/60 dark:border-rose-900/40 cursor-pointer transition-colors"
+                  title="Delete Section Title on this page completely"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span className="hidden sm:inline">Delete Title</span>
+                </button>
+              ) : null}
 
               <button
                 type="button"

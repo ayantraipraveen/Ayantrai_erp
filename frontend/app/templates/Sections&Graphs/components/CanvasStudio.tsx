@@ -20,11 +20,12 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Layers, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Layers, Trash2, ChevronUp, ChevronDown, Plus } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
   CanvasCell,
   CanvasBlockType,
+  PageConfigOverride,
   updateLibrarySection,
   addCanvasRow,
   toggleRowPageBreak,
@@ -138,10 +139,40 @@ export function CanvasStudio({
   const activePageWidth = A4_WIDTH_PX;
   const activePageHeight = A4_HEIGHT_PX;
 
+  const [pageOverrides, setPageOverrides] = useState<Record<number, PageConfigOverride>>(section.pageOverrides || {});
+
+  useEffect(() => {
+    if (section.pageOverrides) {
+      setPageOverrides(section.pageOverrides);
+    }
+  }, [section.pageOverrides]);
+
+  const patchPageOverride = useCallback(
+    (pageIdx: number, patch: Partial<PageConfigOverride>) => {
+      setPageOverrides((prev) => {
+        const next = {
+          ...prev,
+          [pageIdx]: {
+            ...prev[pageIdx],
+            ...patch,
+          },
+        };
+        dispatch(
+          updateLibrarySection({
+            id: section.id,
+            changes: { pageOverrides: next },
+          })
+        );
+        return next;
+      });
+    },
+    [dispatch, section.id]
+  );
+
   // Multi-page layout engine: partitions rows across authentic A4 sheets (calibrated for standard 842px sheet height)
   const pages = useMemo(() => {
-    return partitionCanvasPages(rows, marginConfig, pageNumber, activePageHeight);
-  }, [rows, marginConfig, pageNumber, activePageHeight]);
+    return partitionCanvasPages(rows, marginConfig, pageNumber, activePageHeight, pageOverrides);
+  }, [rows, marginConfig, pageNumber, activePageHeight, pageOverrides]);
 
   const computedTotalPages = useMemo(() => {
     return (
@@ -336,10 +367,10 @@ export function CanvasStudio({
   // Section Header Live / Inline Editing State
   const [editingSectionField, setEditingSectionField] = useState<"eyebrow" | "name" | "description" | null>(null);
   useEffect(() => {
-  if (!editingHeaderValue && !editingFooterValue && !editingSectionField) {
-    setEditingPageIndex(null);
-  }
-}, [editingHeaderValue, editingFooterValue, editingSectionField]);
+    if (!editingHeaderValue && !editingFooterValue && !editingSectionField) {
+      setEditingPageIndex(null);
+    }
+  }, [editingHeaderValue, editingFooterValue, editingSectionField]);
   const [localSectionEyebrow, setLocalSectionEyebrow] = useState(section.eyebrow);
   const [localSectionName, setLocalSectionName] = useState(section.name);
   const [localSectionDesc, setLocalSectionDesc] = useState(section.description);
@@ -1179,22 +1210,22 @@ export function CanvasStudio({
     paperTone === "slate"
       ? "bg-slate-50 text-slate-900"
       : paperTone === "paper" || paperTone === "cream"
-      ? "bg-[#faf8f5] text-slate-900"
-      : paperTone === "linen"
-      ? "bg-[#f4f1ea] text-slate-900"
-      : paperTone === "ice"
-      ? "bg-[#f0f7ff] text-slate-900"
-      : paperTone === "mint"
-      ? "bg-[#f2f9f5] text-slate-900"
-      : paperTone === "rose"
-      ? "bg-[#fff5f7] text-slate-900"
-      : paperTone === "amber"
-      ? "bg-[#fffbeb] text-slate-900"
-      : paperTone === "dark"
-      ? "bg-[#0f172a] text-white"
-      : !isCustomColor
-      ? "bg-white text-slate-900"
-      : "";
+        ? "bg-[#faf8f5] text-slate-900"
+        : paperTone === "linen"
+          ? "bg-[#f4f1ea] text-slate-900"
+          : paperTone === "ice"
+            ? "bg-[#f0f7ff] text-slate-900"
+            : paperTone === "mint"
+              ? "bg-[#f2f9f5] text-slate-900"
+              : paperTone === "rose"
+                ? "bg-[#fff5f7] text-slate-900"
+                : paperTone === "amber"
+                  ? "bg-[#fffbeb] text-slate-900"
+                  : paperTone === "dark"
+                    ? "bg-[#0f172a] text-white"
+                    : !isCustomColor
+                      ? "bg-white text-slate-900"
+                      : "";
 
   const customPaperStyle: React.CSSProperties = isCustomColor
     ? { backgroundColor: paperTone }
@@ -1312,9 +1343,9 @@ export function CanvasStudio({
         style={
           activeShowGrid
             ? {
-                backgroundImage: "radial-gradient(circle, rgba(148, 163, 184, 0.35) 1.5px, transparent 1.5px)",
-                backgroundSize: "24px 24px",
-              }
+              backgroundImage: "radial-gradient(circle, rgba(148, 163, 184, 0.35) 1.5px, transparent 1.5px)",
+              backgroundSize: "24px 24px",
+            }
             : undefined
         }
         onClick={handleCanvasClick}
@@ -1345,21 +1376,49 @@ export function CanvasStudio({
           >
             {pages.map((page, pageIdx) => {
               const isEditingHere = editingPageIndex === page.pageIndex;
+              const isFirstPage = page.pageIndex === 0;
+              const pageOverride = pageOverrides[page.pageIndex];
+              const isReportHeaderHidden = !isFirstPage && Boolean(pageOverride?.hideReportHeader);
+              const isSectionTitleHidden = !isFirstPage && Boolean(pageOverride?.hideSectionTitle);
+
+              const effectiveHeaderValues = pageOverride?.headerValues
+                ? { ...headerValues, ...pageOverride.headerValues }
+                : headerValues;
+
+              const targetSectionName = page.rows[0]?.sectionName;
+              const baseName = targetSectionName && targetSectionName !== section.name
+                ? targetSectionName
+                : section.name;
+              const baseTitleHtml = (targetSectionName && targetSectionName !== section.name ? page.rows[0]?.sectionNameHtml : undefined) || section.titleHtml;
+              const baseEyebrow = page.rows[0]?.sectionEyebrow || section.eyebrow || "STATUTORY COMPLIANCE & AUDIT";
+              const baseEyebrowHtml = page.rows[0]?.sectionEyebrowHtml || section.eyebrowHtml;
+
+              const effectiveSectionForPage = {
+                ...section,
+                name: pageOverride?.sectionName !== undefined ? pageOverride.sectionName : baseName,
+                titleHtml: pageOverride?.sectionTitleHtml !== undefined ? pageOverride.sectionTitleHtml : baseTitleHtml,
+                eyebrow: pageOverride?.sectionEyebrow !== undefined ? pageOverride.sectionEyebrow : baseEyebrow,
+                eyebrowHtml: pageOverride?.sectionEyebrowHtml !== undefined ? pageOverride.sectionEyebrowHtml : baseEyebrowHtml,
+                description: pageOverride?.sectionDescription !== undefined ? pageOverride.sectionDescription : section.description,
+                descriptionHtml: pageOverride?.sectionDescriptionHtml !== undefined ? pageOverride.sectionDescriptionHtml : section.descriptionHtml,
+              };
+
               const openHeader = (f: "taglinePrimary" | "taglineSecondary" | "title" | "period") => {
-  if (activeIsPreview) return;
-  setEditingPageIndex(page.pageIndex);
-  setEditingHeaderValue(f);
-};
-const openFooter = (f: "company" | "websites" | "quote") => {
-  if (activeIsPreview) return;
-  setEditingPageIndex(page.pageIndex);
-  setEditingFooterValue(f);
-};
-const openSection = (f: "eyebrow" | "name" | "description") => {
-  if (activeIsPreview) return;
-  setEditingPageIndex(page.pageIndex);
-  setEditingSectionField(f);
-};
+                if (activeIsPreview) return;
+                setEditingPageIndex(page.pageIndex);
+                setEditingHeaderValue(f);
+              };
+              const openFooter = (f: "company" | "websites" | "quote") => {
+                if (activeIsPreview) return;
+                setEditingPageIndex(page.pageIndex);
+                setEditingFooterValue(f);
+              };
+              const openSection = (f: "eyebrow" | "name" | "description") => {
+                if (activeIsPreview) return;
+                setEditingPageIndex(page.pageIndex);
+                setEditingSectionField(f);
+              };
+
               return (
                 <React.Fragment key={`page-${page.pageIndex}`}>
                   {/* Clean Document Page Break Divider between pages on desk */}
@@ -1400,6 +1459,44 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                         <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono bg-slate-100 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded border border-slate-200/80 dark:border-zinc-700/60">
                           A4 595×842
                         </span>
+
+                        {/* Mandatory indicator on Page 1 or quick restore buttons on Page 2+ */}
+                        {isFirstPage ? (
+                          <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 px-2 py-0.5 rounded font-semibold">
+                            Header & Title: Mandatory
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            {isReportHeaderHidden && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  patchPageOverride(page.pageIndex, { hideReportHeader: false });
+                                  dispatch(showGlobalToast({ message: `Header restored on Page ${page.pageNumber}!`, type: "success" }));
+                                }}
+                                className="h-6 px-2 rounded-lg border border-purple-200 dark:border-purple-800/60 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-[#8B3DFF] text-[10.5px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                                title={`Restore running report header on Page ${page.pageNumber}`}
+                              >
+                                <Plus className="w-3 h-3" />
+                                <span>+ Add Header</span>
+                              </button>
+                            )}
+                            {isSectionTitleHidden && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  patchPageOverride(page.pageIndex, { hideSectionTitle: false });
+                                  dispatch(showGlobalToast({ message: `Section title restored on Page ${page.pageNumber}!`, type: "success" }));
+                                }}
+                                className="h-6 px-2 rounded-lg border border-purple-200 dark:border-purple-800/60 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-[#8B3DFF] text-[10.5px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                                title={`Restore section title on Page ${page.pageNumber}`}
+                              >
+                                <Plus className="w-3 h-3" />
+                                <span>+ Add Section Title</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {pages.length > 1 && (
@@ -1488,226 +1585,295 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                     <div
                       id={`canvas-page-${page.pageIndex}`}
                       onClick={() => setActiveViewPageIndex(page.pageIndex)}
-                    style={{
-                      ...customPaperStyle,
-                      borderRadius: "2px",
-                      width: `${activePageWidth}px`,
-                      minWidth: `${activePageWidth}px`,
-                      maxWidth: `${activePageWidth}px`,
-                      height: `${activePageHeight}px`,
-                      minHeight: `${activePageHeight}px`,
-                      maxHeight: `${activePageHeight}px`,
-                      boxSizing: "border-box",
-                    }}
-                    className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${
-                     (editingHeaderValue || editingSectionField || editingFooterValue) && isEditingHere ? "overflow-visible" : "overflow-hidden"
-                    } transition-all duration-200 flex flex-col justify-between`}
-                  >
-                    {/* Margin Guides (if enabled) */}
-                    {activeShowGuides && !activeIsPreview && (
-                      <div
-                        className="absolute border border-dashed border-sky-400/40 pointer-events-none z-20"
-                        style={{
-                          top: marginConfig.top,
-                          right: marginConfig.right,
-                          bottom: marginConfig.bottom,
-                          left: marginConfig.left,
-                          borderRadius: "2px",
-                        }}
-                      />
-                    )}
-
-                    {/* Realistic Corporate Document Watermark Stamp Layer */}
-                    <WatermarkStampLayer
-                      activeWatermark={activeWatermark}
-                      wmPlacement={wmPlacement}
-                      wmOpacity={wmOpacity}
-                      wmScale={wmScale}
-                      wmRotation={wmRotation}
-                      wmXOffset={wmXOffset}
-                      wmYOffset={wmYOffset}
-                      wmLayer={wmLayer}
-                      isDarkPaper={isDarkPaper}
-                      isWatermarkSelected={isWatermarkSelected}
-                      activeIsPreview={activeIsPreview}
-                      handleWatermarkDragStart={handleWatermarkDragStart}
-                      handleWatermarkResizeStart={handleWatermarkResizeStart}
-                      onUpdateWatermarkConfig={onUpdateWatermarkConfig}
-                      onSelectWatermark={onSelectWatermark}
-                      setIsWatermarkSelected={setIsWatermarkSelected}
-                      getPlacementClass={getPlacementClass}
-                    />
-
-                    {/* Precision Coordinate-based Stamp / Chart / Element Layer */}
-                    <CanvasStampsLayer
-                      pageIndex={page.pageIndex}
-                      stamps={section.stamps || []}
-                      activeIsPreview={activeIsPreview}
-                      onUpdateStamp={(stampId, patch) => {
-                        dispatch(updateStampInSection({ sectionId: section.id, stampId, patch }));
-                      }}
-                      onDeleteStamp={(stampId) => {
-                        dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
-                        dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
-                      }}
-                      onBringToFront={(stampId) => {
-                        dispatch(bringStampToFront({ sectionId: section.id, stampId }));
-                        dispatch(showGlobalToast({ message: "Brought to front!", type: "info" }));
-                      }}
-                      onSendToBack={(stampId) => {
-                        dispatch(sendStampToBack({ sectionId: section.id, stampId }));
-                        dispatch(showGlobalToast({ message: "Sent to back!", type: "info" }));
-                      }}
-                      onBringForward={(stampId) => {
-                        dispatch(bringStampForward({ sectionId: section.id, stampId }));
-                      }}
-                      onSendBackward={(stampId) => {
-                        dispatch(sendStampBackward({ sectionId: section.id, stampId }));
-                      }}
-                      onDockToGrid={handleDockStampToGrid}
-                      onOpenChartEditor={onOpenChartEditor}
-                      selectedStampId={selectedStampId}
-                      onSelectStamp={setSelectedStampId}
-                      pageWidth={activePageWidth}
-                      pageHeight={activePageHeight}
-                    />
-
-                    {/* Fixed Sitesafe Running Report Header (Edge-to-edge flush with top of A4 sheet) */}
-                    <CanvasReportHeader
-                      pageNumber={page.pageNumber}
-                      paperTone={paperTone}
-                      headerValues={headerValues}
-                      headerTitleFormat={headerTitleFormat}
-                      headerTitleTextStyle={headerTitleTextStyle}
-                      editingHeaderValue={isEditingHere ? editingHeaderValue : null}
-                      activeIsPreview={activeIsPreview}
-                      onStartEditing={openHeader}
-                      onSave={updateHeaderValueWithHtml}
-                      onCancel={() => setEditingHeaderValue(null)}
-                    />
-
-                    {/* Inner Page Content with Margins */}
-                    <div
-                      className="relative z-10 flex-1 min-h-0 flex flex-col justify-between w-full max-w-full box-border"
                       style={{
-                        paddingTop: 10,
-                        paddingRight: marginConfig.right,
-                        paddingBottom: 6,
-                        paddingLeft: marginConfig.left,
+                        ...customPaperStyle,
+                        borderRadius: "2px",
+                        width: `${activePageWidth}px`,
+                        minWidth: `${activePageWidth}px`,
+                        maxWidth: `${activePageWidth}px`,
+                        height: `${activePageHeight}px`,
+                        minHeight: `${activePageHeight}px`,
+                        maxHeight: `${activePageHeight}px`,
                         boxSizing: "border-box",
                       }}
+                      className={`relative ${paperBgClass} border border-slate-200/90 dark:border-zinc-800 ${(editingHeaderValue || editingSectionField || editingFooterValue) && isEditingHere ? "overflow-visible" : "overflow-hidden"
+                        } transition-all duration-200 flex flex-col justify-between`}
                     >
-                      {/* Top Content Area */}
-                      <div>
-                        {/* Section-specific Header Bar */}
-                        <CanvasSectionHeader
-                          section={
-                            page.rows[0]?.sectionName && page.rows[0].sectionName !== section.name
-                              ? {
-                                  ...section,
-                                  name: page.rows[0].sectionName,
-                                  titleHtml: page.rows[0].sectionNameHtml,
-                                  eyebrow: page.rows[0].sectionEyebrow || section.eyebrow || "STATUTORY COMPLIANCE & AUDIT",
-                                  eyebrowHtml: page.rows[0].sectionEyebrowHtml || section.eyebrowHtml,
-                                }
-                              : section
-                          }
-                          paperTone={paperTone}
-                          isDarkPaper={isDarkPaper}
-                          sectionTextColor={sectionTextColor}
-                          editingSectionField={isEditingHere ? editingSectionField : null}
-                          activeIsPreview={activeIsPreview}
-                          activeWatermark={activeWatermark}
-                          isWatermarkSelected={isWatermarkSelected}
-                          wmScale={wmScale}
-                          onStartEditing={openSection}
-                          onFinishEditing={() => setEditingSectionField(null)}
-                          onUpdateSection={(patch) => {
-                            const targetSectionName = page.rows[0]?.sectionName;
-                            const isMultiSectionReport = Boolean(targetSectionName) && (section.canvasRows || []).some((r) => r.sectionName && r.sectionName !== targetSectionName);
+                      {/* Margin Guides (if enabled) */}
+                      {activeShowGuides && !activeIsPreview && (
+                        <div
+                          className="absolute border border-dashed border-sky-400/40 pointer-events-none z-20"
+                          style={{
+                            top: marginConfig.top,
+                            right: marginConfig.right,
+                            bottom: marginConfig.bottom,
+                            left: marginConfig.left,
+                            borderRadius: "2px",
+                          }}
+                        />
+                      )}
 
-                            if (targetSectionName && (isMultiSectionReport || page.rows[0]?.sectionName !== section.name)) {
-                              // Isolated update: update ONLY rows that belong to this section group
-                              const updatedRows = (section.canvasRows || []).map((row) => {
-                                if (row.sectionName === targetSectionName || page.rows.some((pr) => pr.id === row.id)) {
-                                  return {
-                                    ...row,
-                                    sectionName: patch.name !== undefined ? patch.name : row.sectionName,
-                                    sectionNameHtml: patch.titleHtml !== undefined ? patch.titleHtml : row.sectionNameHtml,
-                                    sectionEyebrow: patch.eyebrow !== undefined ? patch.eyebrow : row.sectionEyebrow,
-                                    sectionEyebrowHtml: patch.eyebrowHtml !== undefined ? patch.eyebrowHtml : row.sectionEyebrowHtml,
-                                  };
-                                }
-                                return row;
-                              });
-                              dispatch(setSectionCanvasRows({ sectionId: section.id, canvasRows: updatedRows }));
-                              dispatch(showGlobalToast({ message: "Section title updated!", type: "success" }));
+                      {/* Realistic Corporate Document Watermark Stamp Layer */}
+                      <WatermarkStampLayer
+                        activeWatermark={activeWatermark}
+                        wmPlacement={wmPlacement}
+                        wmOpacity={wmOpacity}
+                        wmScale={wmScale}
+                        wmRotation={wmRotation}
+                        wmXOffset={wmXOffset}
+                        wmYOffset={wmYOffset}
+                        wmLayer={wmLayer}
+                        isDarkPaper={isDarkPaper}
+                        isWatermarkSelected={isWatermarkSelected}
+                        activeIsPreview={activeIsPreview}
+                        handleWatermarkDragStart={handleWatermarkDragStart}
+                        handleWatermarkResizeStart={handleWatermarkResizeStart}
+                        onUpdateWatermarkConfig={onUpdateWatermarkConfig}
+                        onSelectWatermark={onSelectWatermark}
+                        setIsWatermarkSelected={setIsWatermarkSelected}
+                        getPlacementClass={getPlacementClass}
+                      />
+
+                      {/* Precision Coordinate-based Stamp / Chart / Element Layer */}
+                      <CanvasStampsLayer
+                        pageIndex={page.pageIndex}
+                        stamps={section.stamps || []}
+                        activeIsPreview={activeIsPreview}
+                        onUpdateStamp={(stampId, patch) => {
+                          dispatch(updateStampInSection({ sectionId: section.id, stampId, patch }));
+                        }}
+                        onDeleteStamp={(stampId) => {
+                          dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
+                          dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
+                        }}
+                        onBringToFront={(stampId) => {
+                          dispatch(bringStampToFront({ sectionId: section.id, stampId }));
+                          dispatch(showGlobalToast({ message: "Brought to front!", type: "info" }));
+                        }}
+                        onSendToBack={(stampId) => {
+                          dispatch(sendStampToBack({ sectionId: section.id, stampId }));
+                          dispatch(showGlobalToast({ message: "Sent to back!", type: "info" }));
+                        }}
+                        onBringForward={(stampId) => {
+                          dispatch(bringStampForward({ sectionId: section.id, stampId }));
+                        }}
+                        onSendBackward={(stampId) => {
+                          dispatch(sendStampBackward({ sectionId: section.id, stampId }));
+                        }}
+                        onDockToGrid={handleDockStampToGrid}
+                        onOpenChartEditor={onOpenChartEditor}
+                        selectedStampId={selectedStampId}
+                        onSelectStamp={setSelectedStampId}
+                        pageWidth={activePageWidth}
+                        pageHeight={activePageHeight}
+                      />
+
+                      {/* Fixed Sitesafe Running Report Header (Edge-to-edge flush with top of A4 sheet) */}
+                      {!isReportHeaderHidden ? (
+                        <CanvasReportHeader
+                          pageNumber={page.pageNumber}
+                          paperTone={paperTone}
+                          headerValues={effectiveHeaderValues}
+                          headerTitleFormat={headerTitleFormat}
+                          headerTitleTextStyle={headerTitleTextStyle}
+                          editingHeaderValue={isEditingHere ? editingHeaderValue : null}
+                          activeIsPreview={activeIsPreview}
+                          isMandatory={isFirstPage}
+                          onDelete={
+                            !isFirstPage
+                              ? () => {
+                                patchPageOverride(page.pageIndex, { hideReportHeader: true });
+                                dispatch(showGlobalToast({ message: `Header removed from Page ${page.pageNumber}!`, type: "info" }));
+                              }
+                              : undefined
+                          }
+                          onStartEditing={openHeader}
+                          onSave={(field, plain, html) => {
+                            if (isFirstPage) {
+                              updateHeaderValueWithHtml(field, plain, html);
                             } else {
-                              // Standalone single section
-                              dispatch(
-                                updateLibrarySection({
-                                  id: section.id,
-                                  ...patch,
-                                  changes: patch,
-                                })
-                              );
-                              if (patch.name !== undefined) setLocalSectionName(patch.name);
-                              if (patch.eyebrow !== undefined) setLocalSectionEyebrow(patch.eyebrow);
-                              if (patch.description !== undefined) setLocalSectionDesc(patch.description);
-                              dispatch(showGlobalToast({ message: "Section updated!", type: "success" }));
+                              patchPageOverride(page.pageIndex, {
+                                headerValues: {
+                                  ...(pageOverride?.headerValues || {}),
+                                  [field]: plain,
+                                  [`${field}Html`]: html,
+                                },
+                              });
+                              setEditingHeaderValue(null);
+                              dispatch(showGlobalToast({ message: `Page ${page.pageNumber} header updated!`, type: "success" }));
                             }
                           }}
-                          onUpdateSpacing={(space) => {
-                            dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));
-                          }}
-                          onToggleWatermarkSelect={() => setIsWatermarkSelected(!isWatermarkSelected)}
+                          onCancel={() => setEditingHeaderValue(null)}
                         />
-                      
-                        </div>
+                      ) : (
+                        !activeIsPreview && (
+                          <div className="group/restore-hdr w-full border-b border-dashed border-slate-200 dark:border-zinc-800 hover:border-purple-400 py-1 flex items-center justify-center transition-colors">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                patchPageOverride(page.pageIndex, { hideReportHeader: false });
+                                dispatch(showGlobalToast({ message: `Header restored on Page ${page.pageNumber}!`, type: "success" }));
+                              }}
+                              className="opacity-40 group-hover/restore-hdr:opacity-100 text-[10px] font-mono text-[#8B3DFF] hover:underline flex items-center gap-1 transition-opacity cursor-pointer py-0.5 px-2 rounded"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>+ Add Running Header to Page {page.pageNumber}</span>
+                            </button>
+                          </div>
+                        )
+                      )}
 
-                      {/* Canvas Rows Container for this Page */}
+                      {/* Inner Page Content with Margins */}
                       <div
-                        className="relative z-10 space-y-2 flex-1 min-h-0 overflow-visible transition-all duration-150"
+                        className="relative z-10 flex-1 min-h-0 flex flex-col justify-between w-full max-w-full box-border"
                         style={{
-                          paddingTop: section.sectionStyle?.paddingTop !== undefined ? `${section.sectionStyle.paddingTop}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "12px",
-                          paddingBottom: section.sectionStyle?.paddingBottom !== undefined ? `${section.sectionStyle.paddingBottom}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "6px",
-                          paddingLeft: section.sectionStyle?.paddingLeft !== undefined ? `${section.sectionStyle.paddingLeft}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
-                          paddingRight: section.sectionStyle?.paddingRight !== undefined ? `${section.sectionStyle.paddingRight}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
-                          backgroundColor: section.sectionStyle?.backgroundColor,
-                          borderRadius: section.sectionStyle?.borderRadius !== undefined ? (typeof section.sectionStyle.borderRadius === "number" ? `${section.sectionStyle.borderRadius}px` : section.sectionStyle.borderRadius) : undefined,
-                          borderWidth: section.sectionStyle?.borderWidth !== undefined ? `${section.sectionStyle.borderWidth}px` : undefined,
-                          borderColor: section.sectionStyle?.borderColor,
-                          borderStyle: section.sectionStyle?.borderStyle || (section.sectionStyle?.borderWidth ? "solid" : undefined),
+                          paddingTop: isReportHeaderHidden ? 20 : 10,
+                          paddingRight: marginConfig.right,
+                          paddingBottom: 6,
+                          paddingLeft: marginConfig.left,
+                          boxSizing: "border-box",
                         }}
                       >
-                        {page.rows.length === 0 ? (
-                          <div
-                            onDragOver={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              e.dataTransfer.dropEffect = "copy";
-                            }}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              try {
-                                const raw = e.dataTransfer.getData("application/json");
-                                if (!raw) return;
-                                const data = JSON.parse(raw);
-                                if (onDropBlock) onDropBlock({ ...data, insertRowAtIndex: 0 });
-                              } catch (err) {
-                                console.error("Empty canvas drop error:", err);
+                        {/* Top Content Area */}
+                        <div>
+                          {/* Section-specific Header Bar */}
+                          {!isSectionTitleHidden ? (
+                            <CanvasSectionHeader
+                              section={effectiveSectionForPage}
+                              paperTone={paperTone}
+                              isDarkPaper={isDarkPaper}
+                              sectionTextColor={sectionTextColor}
+                              editingSectionField={isEditingHere ? editingSectionField : null}
+                              activeIsPreview={activeIsPreview}
+                              activeWatermark={activeWatermark}
+                              isWatermarkSelected={isWatermarkSelected}
+                              wmScale={wmScale}
+                              isMandatory={isFirstPage}
+                              onDelete={
+                                !isFirstPage
+                                  ? () => {
+                                    patchPageOverride(page.pageIndex, { hideSectionTitle: true });
+                                    dispatch(showGlobalToast({ message: `Section title removed from Page ${page.pageNumber}!`, type: "info" }));
+                                  }
+                                  : undefined
                               }
+                              onStartEditing={openSection}
+                              onFinishEditing={() => setEditingSectionField(null)}
+                              onUpdateSection={(patch) => {
+                                if (isFirstPage) {
+                                  const targetSec = page.rows[0]?.sectionName;
+                                  const isMultiSectionReport = Boolean(targetSec) && (section.canvasRows || []).some((r) => r.sectionName && r.sectionName !== targetSec);
+
+                                  if (targetSec && (isMultiSectionReport || page.rows[0]?.sectionName !== section.name)) {
+                                    // Isolated update: update ONLY rows that belong to this section group
+                                    const updatedRows = (section.canvasRows || []).map((row) => {
+                                      if (row.sectionName === targetSec || page.rows.some((pr) => pr.id === row.id)) {
+                                        return {
+                                          ...row,
+                                          sectionName: patch.name !== undefined ? patch.name : row.sectionName,
+                                          sectionNameHtml: patch.titleHtml !== undefined ? patch.titleHtml : row.sectionNameHtml,
+                                          sectionEyebrow: patch.eyebrow !== undefined ? patch.eyebrow : row.sectionEyebrow,
+                                          sectionEyebrowHtml: patch.eyebrowHtml !== undefined ? patch.eyebrowHtml : row.sectionEyebrowHtml,
+                                        };
+                                      }
+                                      return row;
+                                    });
+                                    dispatch(setSectionCanvasRows({ sectionId: section.id, canvasRows: updatedRows }));
+                                    dispatch(showGlobalToast({ message: "Section title updated!", type: "success" }));
+                                  } else {
+                                    // Standalone single section
+                                    dispatch(
+                                      updateLibrarySection({
+                                        id: section.id,
+                                        ...patch,
+                                        changes: patch,
+                                      })
+                                    );
+                                    if (patch.name !== undefined) setLocalSectionName(patch.name);
+                                    if (patch.eyebrow !== undefined) setLocalSectionEyebrow(patch.eyebrow);
+                                    if (patch.description !== undefined) setLocalSectionDesc(patch.description);
+                                    dispatch(showGlobalToast({ message: "Section updated!", type: "success" }));
+                                  }
+                                } else {
+                                  // Isolated page override for Page 2, 3, etc.
+                                  patchPageOverride(page.pageIndex, {
+                                    sectionName: patch.name !== undefined ? patch.name : effectiveSectionForPage.name,
+                                    sectionTitleHtml: patch.titleHtml !== undefined ? patch.titleHtml : effectiveSectionForPage.titleHtml,
+                                    sectionEyebrow: patch.eyebrow !== undefined ? patch.eyebrow : effectiveSectionForPage.eyebrow,
+                                    sectionEyebrowHtml: patch.eyebrowHtml !== undefined ? patch.eyebrowHtml : effectiveSectionForPage.eyebrowHtml,
+                                    sectionDescription: patch.description !== undefined ? patch.description : effectiveSectionForPage.description,
+                                    sectionDescriptionHtml: patch.descriptionHtml !== undefined ? patch.descriptionHtml : effectiveSectionForPage.descriptionHtml,
+                                  });
+                                  dispatch(showGlobalToast({ message: `Page ${page.pageNumber} title updated!`, type: "success" }));
+                                }
+                              }}
+                              onUpdateSpacing={(space) => {
+                                dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));
+                              }}
+                              onToggleWatermarkSelect={() => setIsWatermarkSelected(!isWatermarkSelected)}
+                            />
+                          ) : (
+                            !activeIsPreview && (
+                              <div className="group/restore-title w-full border-b border-dashed border-slate-200 dark:border-zinc-800 hover:border-purple-400 py-1.5 flex items-center justify-center transition-colors mb-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    patchPageOverride(page.pageIndex, { hideSectionTitle: false });
+                                    dispatch(showGlobalToast({ message: `Section title restored on Page ${page.pageNumber}!`, type: "success" }));
+                                  }}
+                                  className="opacity-40 group-hover/restore-title:opacity-100 text-[10px] font-mono text-[#8B3DFF] hover:underline flex items-center gap-1 transition-opacity cursor-pointer py-0.5 px-2 rounded"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                  <span>+ Add Section Title to Page {page.pageNumber}</span>
+                                </button>
+                              </div>
+                            )
+                          )}
+                        </div>
+
+                        {/* Canvas Rows Container for this Page */}
+                        <div
+                          className="relative z-10 space-y-2 flex-1 min-h-0 overflow-visible transition-all duration-150"
+                            style={{
+                              paddingTop: section.sectionStyle?.paddingTop !== undefined ? `${section.sectionStyle.paddingTop}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "12px",
+                              paddingBottom: section.sectionStyle?.paddingBottom !== undefined ? `${section.sectionStyle.paddingBottom}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "6px",
+                              paddingLeft: section.sectionStyle?.paddingLeft !== undefined ? `${section.sectionStyle.paddingLeft}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
+                              paddingRight: section.sectionStyle?.paddingRight !== undefined ? `${section.sectionStyle.paddingRight}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
+                              backgroundColor: section.sectionStyle?.backgroundColor,
+                              borderRadius: section.sectionStyle?.borderRadius !== undefined ? (typeof section.sectionStyle.borderRadius === "number" ? `${section.sectionStyle.borderRadius}px` : section.sectionStyle.borderRadius) : undefined,
+                              borderWidth: section.sectionStyle?.borderWidth !== undefined ? `${section.sectionStyle.borderWidth}px` : undefined,
+                              borderColor: section.sectionStyle?.borderColor,
+                              borderStyle: section.sectionStyle?.borderStyle || (section.sectionStyle?.borderWidth ? "solid" : undefined),
                             }}
-                            className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF] hover:bg-[#9D61FF]/5 transition-all rounded-2xl text-slate-400 dark:text-zinc-600 space-y-3 cursor-copy"
                           >
-                            <p className="text-sm font-medium">Canvas is empty</p>
-                            <p className="text-xs">Drag any block from the left sidebar or click to add</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3.5">
-                            {/* Drop zone at the top of this page */}
-                            {/* {!activeIsPreview && page.rows.length > 0 && (
+                            {page.rows.length === 0 ? (
+                              <div
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  e.dataTransfer.dropEffect = "copy";
+                                }}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  try {
+                                    const raw = e.dataTransfer.getData("application/json");
+                                    if (!raw) return;
+                                    const data = JSON.parse(raw);
+                                    if (onDropBlock) onDropBlock({ ...data, insertRowAtIndex: 0 });
+                                  } catch (err) {
+                                    console.error("Empty canvas drop error:", err);
+                                  }
+                                }}
+                                className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF] hover:bg-[#9D61FF]/5 transition-all rounded-2xl text-slate-400 dark:text-zinc-600 space-y-3 cursor-copy"
+                              >
+                                <p className="text-sm font-medium">Canvas is empty</p>
+                                <p className="text-xs">Drag any block from the left sidebar or click to add</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-3.5">
+                                {/* Drop zone at the top of this page */}
+                                {/* {!activeIsPreview && page.rows.length > 0 && (
                               <DropInsertZone
                                 insertIndex={Math.max(0, rows.findIndex((r) => r.id === page.rows[0]?.id))}
                                 onAddRow={handleInsertRowAtIndex}
@@ -1716,64 +1882,64 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                               />
                             )} */}
 
-                            {page.rows.map((row,rowIdx) => {
-                              const globalRowIndex = rows.findIndex((r) => r.id === row.id);
-                              return (
-                                <React.Fragment key={row.id}>
-                                  <SortableRow
-                                    sectionId={section.id}
-                                    row={row}
-                                    selectedCellId={activeSelectedCellId}
-                                    selectedRowId={activeSelectedRowId}
-                                    isPreview={activeIsPreview}
-                                    currentPageNumber={page.pageNumber}
-                                    zoom={activeZoom}
-                                    onSelectCell={handleSelectCell}
-                                    onEditCell={onEditCell}
-                                    onDuplicateCell={handleDuplicateCell}
-                                    onDeleteCell={handleDeleteCell}
-                                    onFloatCell={handleFloatCell}
-                                    onColSpanChange={handleColSpanChange}
-                                    onWidthChange={handleWidthChange}
-                                    onHeightChange={handleHeightChange}
-                                    onUpdateMetricCard={onUpdateMetricCardInCell}
-                                    onUpdateChart={onUpdateChartInCell}
-                                    onUpdateInsight={onUpdateInsightInCell}
-                                    onUpdateTextBlock={onUpdateTextBlockInCell}
-                                    onUpdateBadgeStrip={onUpdateBadgeStripInCell}
-                                    onUpdateSingleBadge={onUpdateSingleBadgeInCell}
-                                    onAddBadge={onAddBadgeToStripInCell}
-                                    onDeleteBadge={onDeleteBadgeFromStripInCell}
-                                    onRemoveRow={handleRemoveRow}
-                                    onTogglePageBreak={handleTogglePageBreak}
-                                    onUpdateRowStyle={onUpdateRowStyle}
-                                    onDropBlock={onDropBlock}
-                                    onMoveCellToStackBelow={onMoveCellToStackBelow}
-                                    onStackCellBelow={onStackCellBelow}
-                                    onUnstackCell={onUnstackCell}
-                                    onReorderStacked={onReorderStacked}
-                                    activeDragCellId={activeDragCell?.id || null}
-                                    onAddBlockBeside={handleAddBlockBeside}
-                                  />
-                                  {/* Drop zone below this row */}
-                                  {!activeIsPreview && rowIdx === page.rows.length - 1 && (
-                                    <DropInsertZone
-                                      insertIndex={globalRowIndex + 1}
-                                      onAddRow={handleInsertRowAtIndex}
-                                      onDropBlock={onDropBlock}
-                                      label={`Drop to insert new row below row ${globalRowIndex + 1}`}
-                                    />
-                                  )}
-                                </React.Fragment>
-                              );
-                            })}
-                          </div>
-                        )}
+                                {page.rows.map((row, rowIdx) => {
+                                  const globalRowIndex = rows.findIndex((r) => r.id === row.id);
+                                  return (
+                                    <React.Fragment key={row.id}>
+                                      <SortableRow
+                                        sectionId={section.id}
+                                        row={row}
+                                        selectedCellId={activeSelectedCellId}
+                                        selectedRowId={activeSelectedRowId}
+                                        isPreview={activeIsPreview}
+                                        currentPageNumber={page.pageNumber}
+                                        zoom={activeZoom}
+                                        onSelectCell={handleSelectCell}
+                                        onEditCell={onEditCell}
+                                        onDuplicateCell={handleDuplicateCell}
+                                        onDeleteCell={handleDeleteCell}
+                                        onFloatCell={handleFloatCell}
+                                        onColSpanChange={handleColSpanChange}
+                                        onWidthChange={handleWidthChange}
+                                        onHeightChange={handleHeightChange}
+                                        onUpdateMetricCard={onUpdateMetricCardInCell}
+                                        onUpdateChart={onUpdateChartInCell}
+                                        onUpdateInsight={onUpdateInsightInCell}
+                                        onUpdateTextBlock={onUpdateTextBlockInCell}
+                                        onUpdateBadgeStrip={onUpdateBadgeStripInCell}
+                                        onUpdateSingleBadge={onUpdateSingleBadgeInCell}
+                                        onAddBadge={onAddBadgeToStripInCell}
+                                        onDeleteBadge={onDeleteBadgeFromStripInCell}
+                                        onRemoveRow={handleRemoveRow}
+                                        onTogglePageBreak={handleTogglePageBreak}
+                                        onUpdateRowStyle={onUpdateRowStyle}
+                                        onDropBlock={onDropBlock}
+                                        onMoveCellToStackBelow={onMoveCellToStackBelow}
+                                        onStackCellBelow={onStackCellBelow}
+                                        onUnstackCell={onUnstackCell}
+                                        onReorderStacked={onReorderStacked}
+                                        activeDragCellId={activeDragCell?.id || null}
+                                        onAddBlockBeside={handleAddBlockBeside}
+                                      />
+                                      {/* Drop zone below this row */}
+                                      {!activeIsPreview && rowIdx === page.rows.length - 1 && (
+                                        <DropInsertZone
+                                          insertIndex={globalRowIndex + 1}
+                                          onAddRow={handleInsertRowAtIndex}
+                                          onDropBlock={onDropBlock}
+                                          label={`Drop to insert new row below row ${globalRowIndex + 1}`}
+                                        />
+                                      )}
+                                    </React.Fragment>
+                                  );
+                                })}
+                              </div>
+                            )}
 
-                        {/* Add Row Button on this page (Hidden in preview) */}
-                        {!activeIsPreview && (
-                          <div className="flex items-center gap-2 pt-2">
-                            {/* {(() => {
+                            {/* Add Row Button on this page (Hidden in preview) */}
+                            {!activeIsPreview && (
+                              <div className="flex items-center gap-2 pt-2">
+                                {/* {(() => {
                               const lastRowOfPage = page.rows[page.rows.length - 1];
                               const pageEndInsertIndex = lastRowOfPage
                                 ? rows.findIndex((r) => r.id === lastRowOfPage.id) + 1
@@ -1789,42 +1955,42 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                             })()} */}
 
 
-                            
-                            {page.isLastPage && (
-                              <button
-                                type="button"
-                                onClick={handleAddPage}
-                                className="
+
+                                {page.isLastPage && (
+                                  <button
+                                    type="button"
+                                    onClick={handleAddPage}
+                                    className="
                                   px-3.5 py-2.5 rounded-xl border border-dashed border-[#8B3DFF]/40
                                   text-xs font-bold text-[#8B3DFF] bg-[#8B3DFF]/5
                                   hover:bg-[#8B3DFF]/10 hover:border-[#8B3DFF]
                                   transition-all flex items-center gap-1.5 cursor-pointer
                                 "
-                                title="Create a new blank A4 page"
-                              >
-                                <Layers className="w-3.5 h-3.5" />
-                                <span>+ New Page</span>
-                              </button>
+                                    title="Create a new blank A4 page"
+                                  >
+                                    <Layers className="w-3.5 h-3.5" />
+                                    <span>+ New Page</span>
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </div>
-                        )}
+
+                        </div>
+
+                        {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages (Edge-to-edge) */}
+                        <CanvasReportFooter
+                          paperTone={paperTone}
+                          footerValues={footerValues}
+                          editingFooterValue={isEditingHere ? editingFooterValue : null}
+                          activeIsPreview={activeIsPreview}
+                          onStartEditing={openFooter}
+                          onSave={updateFooterValueWithHtml}
+                          onCancel={() => setEditingFooterValue(null)}
+                        />
                       </div>
-
                     </div>
-
-                    {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages (Edge-to-edge) */}
-                    <CanvasReportFooter
-                      paperTone={paperTone}
-                      footerValues={footerValues}
-                      editingFooterValue={isEditingHere ? editingFooterValue : null}
-                      activeIsPreview={activeIsPreview}
-                      onStartEditing={openFooter}
-                      onSave={updateFooterValueWithHtml}
-                      onCancel={() => setEditingFooterValue(null)}
-                    />
-                  </div>
-                </div>
-              </React.Fragment>
+                </React.Fragment>
               );
             })}
           </SortableContext>
@@ -1846,9 +2012,9 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
         onDeleteCurrentPage={
           pages.length > 1
             ? () => {
-                const target = pages[activeViewPageIndex] || pages[0];
-                if (target) setPageToDelete(target);
-              }
+              const target = pages[activeViewPageIndex] || pages[0];
+              if (target) setPageToDelete(target);
+            }
             : undefined
         }
         activeZoom={activeZoom}
@@ -1893,7 +2059,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
               >
                 Cancel
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => handleConfirmDeletePage(pageToDelete)}
