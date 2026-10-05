@@ -267,8 +267,8 @@ function MetricCardBlock({
 
   return (
     <div
-      style={cell.customHeight ? { height: `${cell.customHeight}px`, minHeight: `${cell.customHeight}px` } : undefined}
-      className={`w-full h-full min-h-[118px] sm:min-h-[125px] rounded-xl sm:rounded-2xl border p-2.5 sm:p-3 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} ${editingField ? "relative z-50" : "relative z-10"}`}
+      style={cell.customHeight ? { minHeight: `${cell.customHeight}px` } : undefined}
+      className={`w-full h-auto min-h-[118px] sm:min-h-[125px] rounded-xl sm:rounded-2xl border p-2.5 sm:p-3 transition-all duration-200 select-none flex flex-col justify-between overflow-visible ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} ${editingField ? "relative z-50" : "relative z-10"}`}
     >
       <div>
         {/* Circular Icon Badge matching Dummy_report.pdf */}
@@ -277,7 +277,7 @@ function MetricCardBlock({
         </div>
 
         {/* Label (inline editable on double click) */}
-        <div className={`${labelFontSizeClass} font-bold text-slate-800 dark:text-zinc-200 line-clamp-2 leading-tight mb-0.5`}>
+        <div className={`${labelFontSizeClass} font-bold text-slate-800 dark:text-zinc-200 ${editingField === "label" ? "" : "line-clamp-3 sm:line-clamp-none"} leading-tight mb-0.5`}>
           {!isPreview && editingField === "label" ? (
             <DynamicTextEditor
               initialValue={card.label}
@@ -974,7 +974,7 @@ function InsightBlock({
 
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-[#f8fafc] dark:bg-[#0c1017] p-2.5 sm:p-3 space-y-1.5 overflow-hidden shadow-none"
+        className="w-full h-auto min-h-fit flex-1 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-[#f8fafc] dark:bg-[#0c1017] p-2.5 sm:p-3 space-y-1.5 overflow-visible shadow-none"
         style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center justify-between pb-1 border-b border-slate-200/80 dark:border-zinc-800">
@@ -2393,11 +2393,9 @@ export function CanvasBlockRenderer({
   };
 
   const renderedInner = renderInner();
-  const cardStyles: React.CSSProperties = {
-    maxHeight: "100%",
-  };
+  const cardStyles: React.CSSProperties = {};
   if (typeof cell.customHeight === "number") {
-    cardStyles.height = `${cell.customHeight}px`;
+    cardStyles.minHeight = `${cell.customHeight}px`;
     if (cell.customHeight < 32) {
       cardStyles.paddingTop = Math.max(0, Math.floor(cell.customHeight / 2));
       cardStyles.paddingBottom = Math.max(0, Math.floor(cell.customHeight / 2));
@@ -2431,7 +2429,7 @@ export function CanvasBlockRenderer({
 
   return (
     <div
-      className={`w-full h-full flex-1 min-h-0 flex flex-col transition-all ${fontClass} ${fontSizeClass} ${alignClass} ${bgClass} ${textColorClass}`}
+      className={`w-full h-auto min-h-fit flex-1 flex flex-col transition-all overflow-visible ${fontClass} ${fontSizeClass} ${alignClass} ${bgClass} ${textColorClass}`}
       style={{
         color: styleProps.color,
       }}

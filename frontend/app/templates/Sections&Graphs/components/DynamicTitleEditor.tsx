@@ -665,7 +665,7 @@ useEffect(() => {
       ref={containerRef}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
-      className={`relative select-text w-full ${multiline ? "h-full flex flex-col min-h-0 flex-1" : ""}`}
+      className={`relative select-text w-full ${multiline ? "h-full flex flex-col min-h-0 flex-1" : "inline-block max-w-full"}`}
     >
       {/* ── Floating Word Formatting Toolbar (React Portal: Zero Layout Shift, Zero Clipping) ── */}
       {mounted && typeof document !== "undefined" && toolbarCoords &&
@@ -1025,10 +1025,10 @@ useEffect(() => {
           borderColor: editorBorderColor || undefined,
           backgroundColor: editorBgColor || undefined,
         }}
-        className={`w-full outline-none select-text dynamic-word-editor rounded-lg transition-all ${
+        className={`w-full outline-none select-text dynamic-word-editor transition-all ${
           multiline
-            ? `min-h-[50px] p-2 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} flex-1`
-            : `min-h-[26px] px-1.5 py-0.5 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"}`
+            ? `min-h-[50px] p-2 rounded-lg border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} flex-1`
+            : `px-1 py-0 rounded ring-1 ring-[#2563eb] bg-blue-50/25 dark:bg-blue-950/25 min-h-0 max-w-full inline-block leading-tight`
         } ${className}`}
         aria-label={placeholder}
       />

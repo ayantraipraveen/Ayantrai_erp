@@ -667,11 +667,13 @@ export function SortableCell({
     opacity: isDragging ? 0.25 : 1,
     width: widthStyle,
     maxWidth: widthStyle,
-    height: typeof currentHeight === "number"
+    height: isHeightResizing && typeof currentHeight === "number"
       ? `${currentHeight + (hasStacked ? stackedExtraHeight : 0)}px`
       : undefined,
     maxHeight: isHeightResizing ? `${maxColumnHeight}px` : undefined,
-    minHeight: effectiveMinHeight ? `${effectiveMinHeight}px` : undefined,
+    minHeight: typeof currentHeight === "number"
+      ? `${currentHeight + (hasStacked ? stackedExtraHeight : 0)}px`
+      : effectiveMinHeight ? `${effectiveMinHeight}px` : undefined,
     flexShrink: 0,
     flexGrow: 0,
     boxSizing: "border-box",
@@ -802,10 +804,11 @@ export function SortableCell({
         {/* Primary Block */}
         <div
           style={{
-            maxHeight: `${maxPrimaryH}px`,
-            height: typeof currentHeight === "number" ? `${currentHeight}px` : undefined,
+            maxHeight: isHeightResizing ? `${maxPrimaryH}px` : undefined,
+            minHeight: typeof currentHeight === "number" ? `${currentHeight}px` : undefined,
+            height: isHeightResizing && typeof currentHeight === "number" ? `${currentHeight}px` : undefined,
           }}
-          className={`w-full ${hasStacked && typeof currentHeight !== "number" ? "flex-1 min-h-0" : "flex-none"} flex flex-col relative group/primary-block overflow-visible`}
+          className={`w-full ${hasStacked && typeof currentHeight !== "number" ? "flex-1 min-h-0" : "flex-1 min-h-fit"} flex flex-col relative group/primary-block overflow-visible`}
         >
           <CanvasBlockRenderer
             cell={currentHeight !== cell.customHeight ? { ...cell, customHeight: currentHeight } : cell}
