@@ -1455,7 +1455,7 @@ export function CanvasSidebar({
                           <button
                             type="button"
                             onClick={() => onAddFloatingChart(chart)}
-                            className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-bold cursor-pointer bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-md transition-colors"
+                            className="flex items-center gap-1 text-[#8B3DFF] dark:text-purple-300 hover:text-purple-700 dark:hover:text-purple-200 font-bold cursor-pointer bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 px-2 py-0.5 rounded-md transition-colors text-[10px]"
                             title="Float on Page (freeform coordinates & 360° axis rotation)"
                           >
                             <Move className="w-2.5 h-2.5" />
@@ -1465,7 +1465,7 @@ export function CanvasSidebar({
                         <button
                           type="button"
                           onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
-                          className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md"
+                          className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md text-[10px]"
                         >
                           <Plus className="w-3 h-3" />
                           <span>Add</span>
@@ -1536,7 +1536,7 @@ export function CanvasSidebar({
                           <button
                             type="button"
                             onClick={() => onAddFloatingChart(chart)}
-                            className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 font-bold cursor-pointer bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-md transition-colors"
+                            className="flex items-center gap-1 text-[#8B3DFF] dark:text-purple-300 hover:text-purple-700 dark:hover:text-purple-200 font-bold cursor-pointer bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 px-2 py-0.5 rounded-md transition-colors text-[10px]"
                             title="Float on Page (freeform coordinates & 360° axis rotation)"
                           >
                             <Move className="w-2.5 h-2.5" />
@@ -1546,7 +1546,7 @@ export function CanvasSidebar({
                         <button
                           type="button"
                           onClick={() => onAddBlock({ blockType: "chart", customChart: chart })}
-                          className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md"
+                          className="flex items-center gap-1 text-[#9D61FF] hover:text-[#8B3DFF] font-bold cursor-pointer bg-[#9D61FF]/10 px-2 py-0.5 rounded-md text-[10px]"
                         >
                           <Plus className="w-3 h-3" />
                           <span>Add</span>
@@ -1983,18 +1983,21 @@ export function CanvasSidebar({
             </div>
 
             {/* Modal Actions */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/30">
-              <span className="text-xs text-slate-400">
-                Ready to insert into section canvas
-              </span>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 px-6 py-4 border-t border-slate-100 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-zinc-900/40">
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
+                <span className="font-medium text-slate-600 dark:text-zinc-300">Ready to insert</span>
+                <span className="text-slate-300 dark:text-zinc-700 hidden sm:inline">•</span>
+                <span className="text-[11px] text-slate-400 dark:text-zinc-500 hidden sm:inline">Choose grid or freeform placement</span>
+              </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setPreviewingChart(null)}
-                  className="h-9 px-4 rounded-xl border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold cursor-pointer transition-colors"
+                  className="h-9 px-3.5 rounded-xl text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 text-xs font-semibold cursor-pointer transition-colors"
                 >
-                  Close
+                  Cancel
                 </button>
                 {onAddFloatingChart && (
                   <button
@@ -2003,10 +2006,10 @@ export function CanvasSidebar({
                       onAddFloatingChart(previewingChart);
                       setPreviewingChart(null);
                     }}
-                    className="h-9 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-colors"
-                    title="Float on Page (freeform coordinates & 360° axis rotation)"
+                    className="h-9 px-3.5 sm:px-4 rounded-xl border border-purple-400/40 dark:border-purple-600/40 bg-purple-50/80 dark:bg-purple-950/40 text-[#8B3DFF] dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-all active:scale-[0.98]"
+                    title="Place freely with 360° axis rotation and exact coordinates"
                   >
-                    <Move className="w-3.5 h-3.5" />
+                    <Move className="w-3.5 h-3.5 text-[#8B3DFF] dark:text-purple-400" />
                     <span>Float on Page</span>
                   </button>
                 )}
@@ -2020,10 +2023,10 @@ export function CanvasSidebar({
                     });
                     setPreviewingChart(null);
                   }}
-                  className="h-9 px-5 rounded-xl glow-btn-primary text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+                  className="h-9 px-4 sm:px-5 rounded-xl bg-gradient-to-r from-[#8B3DFF] to-[#6D28D9] hover:from-[#7C3AED] hover:to-[#5B21B6] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md shadow-purple-500/25 transition-all active:scale-[0.98]"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Insert This Chart into Canvas</span>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Insert to Grid</span>
                 </button>
               </div>
             </div>
