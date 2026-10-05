@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { Move, Layers, Check, Trash2 } from "lucide-react";
+import { Move, Layers, Check, Trash2, ChevronsUp, ChevronsDown } from "lucide-react";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../../watermark/utils";
 
 export interface WatermarkStampLayerProps {
@@ -177,15 +176,38 @@ export function WatermarkStampLayer({
 
                 <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
 
-                <button
-                  type="button"
-                  onClick={() => onUpdateWatermarkConfig?.({ layer: wmLayer === "back" ? "front" : "back" })}
-                  className="w-5 h-5 rounded hover:bg-purple-100 text-slate-600 flex items-center justify-center cursor-pointer"
-                  title={wmLayer === "back" ? "Bring watermark in front of page content" : "Send watermark behind page content"}
-                  aria-label={wmLayer === "back" ? "Bring watermark forward" : "Send watermark backward"}
-                >
-                  <Layers className="w-3.5 h-3.5" />
-                </button>
+                {/* Explicit Bring Front and Send Back buttons */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onUpdateWatermarkConfig?.({ layer: "front" })}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                      wmLayer === "front"
+                        ? "bg-purple-100 dark:bg-purple-950/50 text-[#8B3DFF] border border-purple-300/40"
+                        : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-transparent"
+                    }`}
+                    title="Bring Front (z-20) - Places watermark over all page content"
+                  >
+                    <ChevronsUp className="w-3 h-3 text-[#8B3DFF]" />
+                    <span>Bring Front</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => onUpdateWatermarkConfig?.({ layer: "back" })}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                      wmLayer === "back"
+                        ? "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-300/40"
+                        : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-transparent"
+                    }`}
+                    title="Send Back (z-5) - Places watermark behind all page content"
+                  >
+                    <ChevronsDown className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                    <span>Send Back</span>
+                  </button>
+                </div>
+
+                <div className="w-px h-3.5 bg-slate-200 dark:bg-zinc-800" />
 
                 <button
                   type="button"

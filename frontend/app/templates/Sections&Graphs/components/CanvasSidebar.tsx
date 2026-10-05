@@ -32,6 +32,8 @@ import {
   TrendingUp,
   ExternalLink,
   Move,
+  ChevronsUp,
+  ChevronsDown,
 } from "lucide-react";
 import {
   CanvasBlockType,
@@ -1840,15 +1842,34 @@ export function CanvasSidebar({
                             >
                               Pos: {watermarkConfig.placement ?? "center"}
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => onUpdateWatermarkConfig({ layer: watermarkConfig.layer === "front" ? "back" : "front" })}
-                              className="flex items-center gap-1 rounded-lg border border-purple-200 bg-white px-2 py-0.5 text-[10px] font-mono uppercase text-slate-700 hover:bg-purple-50 dark:border-purple-800 dark:bg-zinc-900 dark:text-zinc-300"
-                              title={watermarkConfig.layer === "front" ? "Send watermark behind page content" : "Bring watermark in front of page content"}
-                            >
-                              <Layers className="h-3 w-3" />
-                              {watermarkConfig.layer === "front" ? "Front" : "Back"}
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => onUpdateWatermarkConfig({ layer: "front" })}
+                                className={`flex items-center gap-0.5 rounded-lg border px-1.5 py-0.5 text-[9px] font-bold cursor-pointer transition-colors ${
+                                  watermarkConfig.layer === "front"
+                                    ? "bg-purple-100 dark:bg-purple-950/50 text-[#8B3DFF] border-purple-300 dark:border-purple-800"
+                                    : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-50"
+                                }`}
+                                title="Bring watermark in front of page content (z-20)"
+                              >
+                                <ChevronsUp className="h-3 w-3" />
+                                <span>Front</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onUpdateWatermarkConfig({ layer: "back" })}
+                                className={`flex items-center gap-0.5 rounded-lg border px-1.5 py-0.5 text-[9px] font-bold cursor-pointer transition-colors ${
+                                  watermarkConfig.layer === "back"
+                                    ? "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800"
+                                    : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-50"
+                                }`}
+                                title="Send watermark behind page content (z-5)"
+                              >
+                                <ChevronsDown className="h-3 w-3" />
+                                <span>Back</span>
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>

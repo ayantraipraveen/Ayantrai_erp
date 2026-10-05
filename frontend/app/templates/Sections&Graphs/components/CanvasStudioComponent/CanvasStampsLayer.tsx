@@ -10,9 +10,11 @@ import {
   SlidersHorizontal,
   Type,
   Lightbulb,
-    ArrowUp,
+  ArrowUp,
   ArrowDown,
-  } from "lucide-react";
+  ChevronsUp,
+  ChevronsDown,
+} from "lucide-react";
 import {
   CanvasCoordinateStamp,
   LibraryChartCard,
@@ -27,6 +29,10 @@ export interface CanvasStampsLayerProps {
   onDeleteStamp?: (stampId: string) => void;
   onDockToGrid?: (stamp: CanvasCoordinateStamp) => void;
   onOpenChartEditor?: (stampId: string, chart: LibraryChartCard) => void;
+  onBringToFront?: (stampId: string) => void;
+  onSendToBack?: (stampId: string) => void;
+  onBringForward?: (stampId: string) => void;
+  onSendBackward?: (stampId: string) => void;
   selectedStampId?: string | null;
   onSelectStamp?: (stampId: string | null) => void;
   pageWidth?: number;  // 595
@@ -111,6 +117,10 @@ export function CanvasStampsLayer({
   onDeleteStamp,
   onDockToGrid,
   onOpenChartEditor,
+  onBringToFront,
+  onSendToBack,
+  onBringForward,
+  onSendBackward,
   selectedStampId,
   onSelectStamp,
 }: CanvasStampsLayerProps) {
@@ -120,6 +130,71 @@ export function CanvasStampsLayer({
   const setSelected = (id: string | null) => {
     if (onSelectStamp) onSelectStamp(id);
     setInternalSelectedId(id);
+  };
+
+  // Layer stacking helpers
+  const handleBringToFront = (stamp: CanvasCoordinateStamp, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (onBringToFront) {
+      onBringToFront(stamp.id);
+    } else if (onUpdateStamp) {
+      const pageStamps = stamps.filter((s) => (s.pageIndex ?? 0) === pageIndex);
+      const maxZ = pageStamps.reduce((max, s) => {
+        const z = s.zIndex ?? (s.layer === "back" ? 6 : 25);
+        return Math.max(max, z);
+      }, 25);
+      onUpdateStamp(stamp.id, { layer: "front", zIndex: maxZ + 1 });
+    }
+  };
+
+  const handleSendToBack = (stamp: CanvasCoordinateStamp, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (onSendToBack) {
+      onSendToBack(stamp.id);
+    } else if (onUpdateStamp) {
+      const pageStamps = stamps.filter((s) => (s.pageIndex ?? 0) === pageIndex);
+      const backStamps = pageStamps.filter((s) => s.id !== stamp.id && s.layer === "back");
+      const minZ = backStamps.length > 0
+        ? backStamps.reduce((min, s) => Math.min(min, s.zIndex ?? 6), 6)
+        : 6;
+      onUpdateStamp(stamp.id, { layer: "back", zIndex: Math.max(1, minZ - 1) });
+    }
+  };
+
+  const handleBringForward = (stamp: CanvasCoordinateStamp, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (onBringForward) {
+      onBringForward(stamp.id);
+    } else if (onUpdateStamp) {
+      const curZ = stamp.zIndex ?? (stamp.layer === "back" ? 6 : 25);
+      if (stamp.layer === "back") {
+        if (curZ >= 9) {
+          onUpdateStamp(stamp.id, { layer: "front", zIndex: 25 });
+        } else {
+          onUpdateStamp(stamp.id, { zIndex: curZ + 1 });
+        }
+      } else {
+        onUpdateStamp(stamp.id, { zIndex: curZ + 1 });
+      }
+    }
+  };
+
+  const handleSendBackward = (stamp: CanvasCoordinateStamp, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (onSendBackward) {
+      onSendBackward(stamp.id);
+    } else if (onUpdateStamp) {
+      const curZ = stamp.zIndex ?? (stamp.layer === "back" ? 6 : 25);
+      if (stamp.layer !== "back") {
+        if (curZ <= 20) {
+          onUpdateStamp(stamp.id, { layer: "back", zIndex: 6 });
+        } else {
+          onUpdateStamp(stamp.id, { zIndex: curZ - 1 });
+        }
+      } else {
+        onUpdateStamp(stamp.id, { zIndex: Math.max(1, curZ - 1) });
+      }
+    }
   };
 
   // Inline editing state for text, titles, values
@@ -370,6 +445,44 @@ export function CanvasStampsLayer({
     return () => window.removeEventListener("mousedown", handleDocClick);
   }, [activeSelectedId]);
 
+  // Keyboard shortcuts for layer stacking (Ctrl+], Ctrl+[, Ctrl+Shift+], Ctrl+Shift+[)
+  useEffect(() => {
+    if (!activeSelectedId || editingFieldKey || activeIsPreview) return;
+    const currentStamp = pageStamps.find((s) => s.id === activeSelectedId);
+    if (!currentStamp) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          (activeEl as HTMLElement).isContentEditable)
+      ) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "]") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleBringToFront(currentStamp);
+        } else {
+          handleBringForward(currentStamp);
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "[") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleSendToBack(currentStamp);
+        } else {
+          handleSendBackward(currentStamp);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeSelectedId, editingFieldKey, activeIsPreview, pageStamps]);
+
   if (pageStamps.length === 0) return null;
 
   return (
@@ -400,6 +513,10 @@ export function CanvasStampsLayer({
         const tintKey = stamp.metricCard?.tintColor || "purple";
         const tint = PALETTE_TINTS[tintKey] || PALETTE_TINTS.purple;
 
+        // Calculate layered stacking zIndex
+        const baseZ = isBack ? (stamp.zIndex ?? 6) : (stamp.zIndex ?? 25);
+        const effectiveZ = isSelected ? Math.max(50, baseZ + 30) : baseZ;
+
         return (
           <div
             key={stamp.id}
@@ -417,7 +534,7 @@ export function CanvasStampsLayer({
               height: `${height}px`,
               transform: `rotate(${rotation}deg)`,
               transformOrigin: "center center",
-              zIndex: isSelected ? 40 : isBack ? 6 : 25,
+              zIndex: effectiveZ,
             }}
             className={`canvas-coordinate-stamp pointer-events-auto cursor-move group/stamp transition-all ${
               isSelected ? "ring-2 ring-[#8B3DFF] ring-dashed" : "hover:ring-1 hover:ring-purple-300/60"
@@ -1014,20 +1131,55 @@ export function CanvasStampsLayer({
                     </button>
                   </div>
 
-                  {/* Layer Toggle: Front vs Back */}
-                  <button
-                    type="button"
-                    onClick={() => onUpdateStamp?.(stamp.id, { layer: isBack ? "front" : "back" })}
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-0.5 cursor-pointer ${
-                      isBack
-                        ? "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"
-                        : "bg-purple-100 dark:bg-purple-950/40 text-[#8B3DFF] font-bold"
-                    }`}
-                    title={isBack ? "Bring element in front of content" : "Send element behind content"}
-                  >
-                    <Layers className="w-2.5 h-2.5" />
-                    <span>{isBack ? "Back" : "Front"}</span>
-                  </button>
+                  {/* Layer Stacking Controls: Bring Front / Send Back / Forward / Backward */}
+                  <div className="flex items-center gap-1 px-1 border-r border-slate-200 dark:border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={(e) => handleBringToFront(stamp, e)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                        !isBack
+                          ? "bg-purple-100 dark:bg-purple-950/50 text-[#8B3DFF] border border-purple-300/40"
+                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-transparent"
+                      }`}
+                      title="Bring to Front (Ctrl+Shift+]) - Places element above page content and other cards"
+                    >
+                      <ChevronsUp className="w-3 h-3 text-[#8B3DFF]" />
+                      <span>Bring Front</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleSendToBack(stamp, e)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors ${
+                        isBack
+                          ? "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-300/40"
+                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-transparent"
+                      }`}
+                      title="Send to Back (Ctrl+Shift+[) - Places element behind report rows and tables"
+                    >
+                      <ChevronsDown className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                      <span>Send Back</span>
+                    </button>
+
+                    <div className="flex items-center border-l border-slate-200 dark:border-zinc-800 pl-0.5 ml-0.5 gap-0.5">
+                      <button
+                        type="button"
+                        onClick={(e) => handleBringForward(stamp, e)}
+                        className="w-4 h-4 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 cursor-pointer"
+                        title="Bring Forward 1 level (Ctrl+])"
+                      >
+                        <ArrowUp className="w-2.5 h-2.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleSendBackward(stamp, e)}
+                        className="w-4 h-4 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 cursor-pointer"
+                        title="Send Backward 1 level (Ctrl+[)"
+                      >
+                        <ArrowDown className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
+                  </div>
 
                   {/* Dock to Grid (for charts, text, bullets, and metric cards) */}
                   {isCard && onDockToGrid && (

@@ -199,6 +199,10 @@ export const {
   addStampToSection,
   updateStampInSection,
   deleteStampFromSection,
+  bringStampToFront,
+  sendStampToBack,
+  bringStampForward,
+  sendStampBackward,
 } = reportModuleSlice.actions;
 
 export default reportModuleSlice.reducer;

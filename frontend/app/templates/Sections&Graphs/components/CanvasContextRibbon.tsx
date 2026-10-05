@@ -49,6 +49,8 @@ import {
   Redo2,
   FileSpreadsheet,
   Layers,
+  ChevronsUp,
+  ChevronsDown,
   X,
 } from "lucide-react";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
@@ -1756,6 +1758,7 @@ function WatermarkPopover({
   const placement = config?.placement ?? "center";
   const xOffset = config?.xOffset ?? 0;
   const yOffset = config?.yOffset ?? 0;
+  const layer = config?.layer ?? "back";
 
   return (
     <div className="absolute top-11 right-6 sm:right-auto sm:left-48 w-88 sm:w-[420px] rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-4 z-50 space-y-3.5 animate-fadeIn">
@@ -2135,6 +2138,71 @@ function WatermarkPopover({
                 onChange={(e) => onUpdateConfig({ rotation: parseInt(e.target.value, 10) })}
                 className="w-full accent-[#8B3DFF] cursor-pointer"
               />
+            </div>
+          </div>
+
+          {/* ── 4. LAYER STACKING: BRING FRONT / SEND BACK ── */}
+          <div className="space-y-2 border-t border-slate-100 dark:border-zinc-800/80 pt-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#8B3DFF]" />
+                Layer Stacking
+              </span>
+              <span
+                className={`text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${
+                  layer === "front"
+                    ? "bg-purple-50 dark:bg-purple-950/40 text-[#8B3DFF] border-purple-200 dark:border-purple-800/50"
+                    : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50"
+                }`}
+              >
+                {layer === "front" ? "Front (z-20)" : "Back (z-5)"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              {/* Send to Back */}
+              <button
+                type="button"
+                onClick={() => onUpdateConfig({ layer: "back" })}
+                className={`p-2 rounded-xl border text-left flex flex-col justify-between cursor-pointer transition-all ${
+                  layer === "back"
+                    ? "border-amber-500 bg-amber-500/10 text-amber-900 dark:text-amber-300 font-bold"
+                    : "border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-400"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <ChevronsDown className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>Send to Back</span>
+                  </div>
+                  {layer === "back" && <Check className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />}
+                </div>
+                <p className="text-[10px] font-normal text-slate-500 dark:text-zinc-400 leading-tight">
+                  Behind report content & tables (subtle background)
+                </p>
+              </button>
+
+              {/* Bring to Front */}
+              <button
+                type="button"
+                onClick={() => onUpdateConfig({ layer: "front" })}
+                className={`p-2 rounded-xl border text-left flex flex-col justify-between cursor-pointer transition-all ${
+                  layer === "front"
+                    ? "border-[#8B3DFF] bg-[#8B3DFF]/10 text-purple-950 dark:text-purple-300 font-bold"
+                    : "border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-400"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1.5">
+                    <ChevronsUp className="w-3.5 h-3.5 text-[#8B3DFF]" />
+                    <span>Bring to Front</span>
+                  </div>
+                  {layer === "front" && <Check className="w-3.5 h-3.5 text-[#8B3DFF]" />}
+                </div>
+                <p className="text-[10px] font-normal text-slate-500 dark:text-zinc-400 leading-tight">
+                  Over report rows (bold draft / confidential stamp)
+                </p>
+              </button>
             </div>
           </div>
         </div>

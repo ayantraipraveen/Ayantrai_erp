@@ -461,7 +461,7 @@ export default function Sidebar({
     <>
       {/* ================= DESKTOP SIDEBAR ================= */}
       <aside
-        className={`hidden lg:flex flex-col bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 h-full select-none ${sidebarOpen ? "w-50" : "w-16"
+        className={`hidden lg:flex flex-col bg-white/95 dark:bg-[#0a0d13]/95 backdrop-blur-xl transition-all duration-300 ease-in-out flex-shrink-0 relative z-30 border-r border-slate-200/90 dark:border-zinc-800/80 h-full select-none ${sidebarOpen ? "w-50" : "w-16"
           }`}
       >
         {/* ================= DESKTOP HEADER (BRAND LOGO + EXPAND / COLLAPSE TOGGLE) ================= */}

@@ -45,6 +45,10 @@ import {
   showGlobalToast,
   updateStampInSection,
   deleteStampFromSection,
+  bringStampToFront,
+  sendStampToBack,
+  bringStampForward,
+  sendStampBackward,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasCoordinateStamp } from "@/lib/redux/types/reportModuleTypes";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
@@ -1545,6 +1549,20 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                       onDeleteStamp={(stampId) => {
                         dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
                         dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
+                      }}
+                      onBringToFront={(stampId) => {
+                        dispatch(bringStampToFront({ sectionId: section.id, stampId }));
+                        dispatch(showGlobalToast({ message: "Brought to front!", type: "info" }));
+                      }}
+                      onSendToBack={(stampId) => {
+                        dispatch(sendStampToBack({ sectionId: section.id, stampId }));
+                        dispatch(showGlobalToast({ message: "Sent to back!", type: "info" }));
+                      }}
+                      onBringForward={(stampId) => {
+                        dispatch(bringStampForward({ sectionId: section.id, stampId }));
+                      }}
+                      onSendBackward={(stampId) => {
+                        dispatch(sendStampBackward({ sectionId: section.id, stampId }));
                       }}
                       onDockToGrid={handleDockStampToGrid}
                       onOpenChartEditor={onOpenChartEditor}

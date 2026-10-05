@@ -521,6 +521,7 @@ export interface CanvasCoordinateStamp {
   rotation: number;
   opacity: number;
   layer: "front" | "back";
+  zIndex?: number;
   locked?: boolean;
   elementType?: "stamp" | "chart" | "metric-card" | "text" | "insight" | "badge-strip";
   chart?: LibraryChartCard;
