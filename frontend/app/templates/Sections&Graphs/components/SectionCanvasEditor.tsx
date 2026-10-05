@@ -1119,6 +1119,7 @@ export default function SectionCanvasEditor({
         };
       } else {
         // metric-card
+        const isProjectMeta = defaultData?.cardVariant === "project-meta";
         const metricCard: LibraryMetricCard = defaultData || {
           id: `metric-${ts}`,
           label: "Shift Adherence",
@@ -1130,12 +1131,12 @@ export default function SectionCanvasEditor({
         newStamp = {
           id: `coord-metric-${ts}`,
           sourceId: metricCard.id,
-          name: metricCard.label,
+          name: isProjectMeta ? "Project & Reporting Period" : metricCard.label,
           pageIndex: targetPage,
-          x: 60,
-          y: 140,
-          width: 220,
-          height: 110,
+          x: isProjectMeta ? 270 : 60,
+          y: isProjectMeta ? 45 : 140,
+          width: isProjectMeta ? 280 : 220,
+          height: isProjectMeta ? 82 : 110,
           rotation: 0,
           opacity: 100,
           layer: "front",

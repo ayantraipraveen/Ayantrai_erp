@@ -35,6 +35,8 @@ import {
   List,
   ChevronsUp,
   ChevronsDown,
+  Building2,
+  Calendar,
 } from "lucide-react";
 import {
   CanvasBlockType,
@@ -42,6 +44,7 @@ import {
   GraphType,
   LibraryChartCard,
   LibraryKeyInsightItem,
+  LibraryMetricCard,
   CanvasRow,
   LibrarySection,
 } from "@/lib/redux/slices/reportModuleSlice";
@@ -308,17 +311,68 @@ interface BaseBlockDef {
   icon: React.ElementType;
   preview: React.ReactNode;
   defaultInsight?: LibraryKeyInsightItem;
+  defaultMetricCard?: LibraryMetricCard;
 }
 
 const BASE_BLOCK_DEFS: BaseBlockDef[] = [
+  {
+    id: "base-project-meta",
+    type: "metric-card",
+    label: "Project & Reporting Period",
+    category: "metrics",
+    description: "Site overview & reporting period info box",
+    badge: "Float Only",
+    icon: Building2,
+    defaultMetricCard: {
+      id: "meta-project-site",
+      label: "Project & Reporting Period",
+      value: "",
+      cardVariant: "project-meta",
+      projectSite: "ABC Infrastructure Project",
+      reportingPeriod: "01 Sept 2025 – 30 Sept 2025",
+      tintColor: "blue",
+      trendDirection: "no-change",
+      trendValue: "",
+    },
+    preview: (
+      <div className="w-full bg-[#eff4fa] dark:bg-slate-900/60 border border-[#dce3ee] dark:border-slate-800 rounded-xl p-2.5 flex flex-col gap-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[8px] font-bold">
+            🏢
+          </div>
+          <div className="min-w-0">
+            <div className="text-[7.5px] uppercase font-bold text-slate-400 tracking-wider">Project / Site</div>
+            <div className="text-[9px] font-bold text-slate-800 dark:text-zinc-200 truncate">ABC Infrastructure Project</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 border-t border-[#e2e8f0]/60 dark:border-zinc-800 pt-1">
+          <div className="w-4 h-4 rounded bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 flex items-center justify-center text-[8px] font-bold">
+            📅
+          </div>
+          <div className="min-w-0">
+            <div className="text-[7.5px] uppercase font-bold text-slate-400 tracking-wider">Reporting Period</div>
+            <div className="text-[9px] font-bold text-slate-800 dark:text-zinc-200 truncate">01 Sept 2025 – 30 Sept 2025</div>
+          </div>
+        </div>
+      </div>
+    ),
+  },
   {
     id: "base-kpi-card",
     type: "metric-card",
     label: "KPI Metric Card",
     category: "metrics",
     description: "Industrial indicator with live trend",
-    badge: "1-4 Col",
+    badge: "Float Only",
     icon: Activity,
+    defaultMetricCard: {
+      id: "base-kpi-1",
+      label: "Compliance Rate",
+      value: "98.4%",
+      tintColor: "purple",
+      trendDirection: "up",
+      trendValue: "+2.4% vs last shift",
+    },
     preview: (
       <div className="w-full bg-blue-500/10 border border-blue-400/30 rounded-xl p-2.5 flex flex-col gap-1">
         <div className="text-[9px] font-bold text-slate-500">Compliance Rate</div>
@@ -335,8 +389,16 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
     label: "4-Badge Metric Strip",
     category: "metrics",
     description: "Multi-indicator executive summary row",
-    badge: "Full Width",
+    badge: "Float Only",
     icon: LayoutGrid,
+    defaultMetricCard: {
+      id: "base-strip-1",
+      label: "Summary Strip",
+      value: "98%",
+      tintColor: "emerald",
+      trendDirection: "up",
+      trendValue: "4 KPIs",
+    },
     preview: (
       <div className="w-full bg-emerald-500/10 border border-emerald-400/30 rounded-xl p-2 grid grid-cols-4 gap-1 text-center">
         <div className="bg-white/60 dark:bg-black/40 rounded p-1">
@@ -2015,24 +2077,39 @@ export function CanvasSidebar({
               <div className="space-y-2.5">
                 {filteredBaseBlocks.map((def) => {
                   const Icon = def.icon;
+                  const isMetricCategory = def.category === "metrics";
                   return (
                     <div
                       key={def.id}
-                      draggable={true}
-                      onDragStart={(e) =>
+                      draggable={!isMetricCategory}
+                      onDragStart={(e) => {
+                        if (isMetricCategory) {
+                          e.preventDefault();
+                          return;
+                        }
                         handleBlockDragStart(e, {
                           blockType: def.type,
                           customInsight: def.defaultInsight,
-                        })
-                      }
-                      onClick={() =>
+                        });
+                      }}
+                      onClick={() => {
+                        if (isMetricCategory) {
+                          if (onAddFloatingElement) {
+                            onAddFloatingElement("metric-card", def.defaultMetricCard);
+                          }
+                          return;
+                        }
                         onAddBlock({
                           blockType: def.type,
                           customInsight: def.defaultInsight,
-                        })
+                        });
+                      }}
+                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 transition-all duration-200 cursor-pointer overflow-hidden p-3 space-y-2"
+                      title={
+                        isMetricCategory
+                          ? "Click to float onto canvas (freely adjustable position, width & height)"
+                          : "Drag anywhere on report to place, or click to add"
                       }
-                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden p-3 space-y-2"
-                      title="Drag anywhere on report to place, or click to add"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -2043,7 +2120,13 @@ export function CanvasSidebar({
                             {def.label}
                           </span>
                         </div>
-                        <span className="text-[9px] font-mono text-slate-400 bg-slate-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                        <span
+                          className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                            isMetricCategory
+                              ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800/60"
+                              : "text-slate-400 bg-slate-100 dark:bg-zinc-800"
+                          }`}
+                        >
                           {def.badge}
                         </span>
                       </div>
@@ -2057,23 +2140,42 @@ export function CanvasSidebar({
                           {def.description}
                         </span>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                          {onAddFloatingElement && (def.type === "text" || def.type === "insight") && (
+                          {isMetricCategory ? (
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onAddFloatingElement(def.type as any, def.defaultInsight);
+                                if (onAddFloatingElement) {
+                                  onAddFloatingElement("metric-card", def.defaultMetricCard);
+                                }
                               }}
                               className="flex items-center gap-1 text-[#8B3DFF] dark:text-purple-300 hover:text-purple-700 dark:hover:text-purple-200 font-bold cursor-pointer bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 px-2 py-0.5 rounded-md transition-colors text-[10px]"
-                              title="Float on Page (freeform coordinates & 360° axis rotation)"
+                              title="Float on Canvas (freely adjustable position, width & height)"
                             >
                               <Move className="w-2.5 h-2.5" />
-                              <span>Float</span>
+                              <span>+ Float</span>
                             </button>
+                          ) : (
+                            <>
+                              {onAddFloatingElement && (def.type === "text" || def.type === "insight") && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAddFloatingElement(def.type as any, def.defaultInsight);
+                                  }}
+                                  className="flex items-center gap-1 text-[#8B3DFF] dark:text-purple-300 hover:text-purple-700 dark:hover:text-purple-200 font-bold cursor-pointer bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 px-2 py-0.5 rounded-md transition-colors text-[10px]"
+                                  title="Float on Page (freeform coordinates & 360° axis rotation)"
+                                >
+                                  <Move className="w-2.5 h-2.5" />
+                                  <span>Float</span>
+                                </button>
+                              )}
+                              <div className="w-5 h-5 rounded-full bg-[#9D61FF]/10 group-hover:bg-[#9D61FF] text-[#9D61FF] group-hover:text-white flex items-center justify-center transition-colors">
+                                <Plus className="w-3 h-3" />
+                              </div>
+                            </>
                           )}
-                          <div className="w-5 h-5 rounded-full bg-[#9D61FF]/10 group-hover:bg-[#9D61FF] text-[#9D61FF] group-hover:text-white flex items-center justify-center transition-colors">
-                            <Plus className="w-3 h-3" />
-                          </div>
                         </div>
                       </div>
                     </div>

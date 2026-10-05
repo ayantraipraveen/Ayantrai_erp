@@ -285,6 +285,9 @@ export interface LibraryMetricCard {
   trendColor?: "green" | "red" | "neutral";
   higherIsBetter?: boolean;
   unit?: string;
+  cardVariant?: "default" | "project-meta";
+  projectSite?: string;
+  reportingPeriod?: string;
 }
 
 export interface ChartDataPoint {

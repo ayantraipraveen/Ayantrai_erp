@@ -14,6 +14,8 @@ import {
   ArrowDown,
   ChevronsUp,
   ChevronsDown,
+  Building2,
+  Calendar,
 } from "lucide-react";
 import {
   CanvasCoordinateStamp,
@@ -224,7 +226,7 @@ export function CanvasStampsLayer({
 
   // Resizing state
   const [resizingId, setResizingId] = useState<string | null>(null);
-  const resizeCorner = useRef<"nw" | "ne" | "sw" | "se" | null>(null);
+  const resizeCorner = useRef<"nw" | "ne" | "sw" | "se" | "n" | "s" | "e" | "w" | null>(null);
   const resizeStartPos = useRef<{
     mouseX: number;
     mouseY: number;
@@ -235,6 +237,7 @@ export function CanvasStampsLayer({
     aspectRatio: number;
     isCard: boolean;
     isMetric: boolean;
+    isProjectMeta: boolean;
   } | null>(null);
 
   // Rotating state
@@ -265,11 +268,11 @@ export function CanvasStampsLayer({
     };
   };
 
-  // ── Resize Corner ──────────────────────────────────────────────────────────
+  // ── Resize Corner & Edges ──────────────────────────────────────────────────
   const handleResizeStart = (
     e: React.MouseEvent,
     stamp: CanvasCoordinateStamp,
-    corner: "nw" | "ne" | "sw" | "se"
+    corner: "nw" | "ne" | "sw" | "se" | "n" | "s" | "e" | "w"
   ) => {
     if (activeIsPreview || stamp.locked || editingFieldKey) return;
     e.stopPropagation();
@@ -282,10 +285,11 @@ export function CanvasStampsLayer({
     const isInsight = stamp.elementType === "insight" || Boolean(stamp.insight);
     const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
     const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
+    const isProjectMeta = isMetric && (stamp.metricCard?.cardVariant === "project-meta" || Boolean(stamp.metricCard?.projectSite));
     const isCard = isChart || isText || isInsight || isMetric || isBadgeStrip;
 
-    const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : 120;
-    const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 110 : 120;
+    const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isProjectMeta ? 280 : isMetric ? 220 : 120;
+    const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isProjectMeta ? 82 : isMetric ? 110 : 120;
 
     const w = stamp.width || defaultW;
     const h = stamp.height || defaultH;
@@ -300,6 +304,7 @@ export function CanvasStampsLayer({
       aspectRatio: w / Math.max(1, h),
       isCard,
       isMetric,
+      isProjectMeta,
     };
   };
 
@@ -345,7 +350,7 @@ export function CanvasStampsLayer({
 
       // 2. Resize
       if (resizingId && resizeStartPos.current && onUpdateStamp && resizeCorner.current) {
-        const { mouseX, mouseY, width, height, x, y, aspectRatio, isCard, isMetric } = resizeStartPos.current;
+        const { mouseX, mouseY, width, height, x, y, aspectRatio, isCard, isMetric, isProjectMeta } = resizeStartPos.current;
         const dx = e.clientX - mouseX;
         const dy = e.clientY - mouseY;
 
@@ -356,8 +361,8 @@ export function CanvasStampsLayer({
 
         if (isCard) {
           // Freeform width & height resizing for all card-type elements
-          const minW = isMetric ? 150 : 180;
-          const minH = isMetric ? 75 : 60;
+          const minW = isProjectMeta ? 140 : isMetric ? 100 : 140;
+          const minH = isProjectMeta ? 32 : isMetric ? 40 : 40;
 
           if (resizeCorner.current === "se") {
             newW = Math.max(minW, width + dx);
@@ -375,6 +380,16 @@ export function CanvasStampsLayer({
             newH = Math.max(minH, height - dy);
             newX = x + (width - newW);
             newY = y + (height - newH);
+          } else if (resizeCorner.current === "s") {
+            newH = Math.max(minH, height + dy);
+          } else if (resizeCorner.current === "n") {
+            newH = Math.max(minH, height - dy);
+            newY = y + (height - newH);
+          } else if (resizeCorner.current === "e") {
+            newW = Math.max(minW, width + dx);
+          } else if (resizeCorner.current === "w") {
+            newW = Math.max(minW, width - dx);
+            newX = x + (width - newW);
           }
         } else {
           // Proportional aspect-ratio resizing for stamps
@@ -394,6 +409,20 @@ export function CanvasStampsLayer({
             newH = Math.round(newW / aspectRatio);
             newX = x + (width - newW);
             newY = y + (height - newH);
+          } else if (resizeCorner.current === "s") {
+            newH = Math.max(20, height + dy);
+            newW = Math.round(newH * aspectRatio);
+          } else if (resizeCorner.current === "n") {
+            newH = Math.max(20, height - dy);
+            newW = Math.round(newH * aspectRatio);
+            newY = y + (height - newH);
+          } else if (resizeCorner.current === "e") {
+            newW = Math.max(30, width + dx);
+            newH = Math.round(newW / aspectRatio);
+          } else if (resizeCorner.current === "w") {
+            newW = Math.max(30, width - dx);
+            newH = Math.round(newW / aspectRatio);
+            newX = x + (width - newW);
           }
         }
 
@@ -523,10 +552,11 @@ export function CanvasStampsLayer({
         const isInsight = stamp.elementType === "insight" || Boolean(stamp.insight);
         const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
         const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
+        const isProjectMeta = isMetric && (stamp.metricCard?.cardVariant === "project-meta" || Boolean(stamp.metricCard?.projectSite));
         const isCard = isChart || isText || isInsight || isMetric || isBadgeStrip;
 
-        const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : 120;
-        const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 110 : 120;
+        const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isProjectMeta ? 280 : isMetric ? 220 : 120;
+        const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isProjectMeta ? 82 : isMetric ? 110 : 120;
 
         const width = stamp.width || defaultW;
         const height = stamp.height || defaultH;
@@ -887,14 +917,315 @@ export function CanvasStampsLayer({
               </div>
             )}
 
-            {/* ── 4. Floating Metric KPI Card with Inline Editing ── */}
-            {isMetric && (
+            {/* ── 4A. Floating Project & Reporting Period Metadata Card ── */}
+            {isMetric && isProjectMeta && (
               <div
-                style={{ opacity }}
-                className={`w-full h-full rounded-2xl border ${tint.border} ${tint.bg} p-3.5 flex flex-col justify-between overflow-hidden select-none`}
+                style={{
+                  opacity,
+                  padding: `${Math.max(4, Math.min(14, Math.round(height * 0.08)))}px ${Math.max(8, Math.min(18, Math.round(width * 0.045)))}px`,
+                }}
+                className="w-full h-full bg-[#eff4fa] dark:bg-slate-900/90 border border-[#dce3ee] dark:border-slate-800 rounded-xl sm:rounded-2xl flex flex-col justify-between overflow-hidden select-none transition-all shadow-xs"
               >
-                {/* Metric Label (Inline Editable) */}
-                <div className="flex items-center justify-between pb-1 flex-shrink-0">
+                {height < 58 ? (
+                  /* Single Compact Row Layout when height is small (< 58px) */
+                  <div className="w-full h-full flex items-center justify-between gap-2 overflow-hidden">
+                    {/* Project */}
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <div
+                        style={{
+                          width: `${Math.max(16, Math.min(22, Math.round(height * 0.38)))}px`,
+                          height: `${Math.max(16, Math.min(22, Math.round(height * 0.38)))}px`,
+                        }}
+                        className="rounded-md bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0"
+                      >
+                        <Building2 style={{ width: `${Math.max(9, Math.min(13, Math.round(height * 0.22)))}px`, height: `${Math.max(9, Math.min(13, Math.round(height * 0.22)))}px` }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        {editingFieldKey === `${stamp.id}-project-site` ? (
+                          <input
+                            type="text"
+                            autoFocus
+                            value={editingTextVal}
+                            onChange={(e) => setEditingTextVal(e.target.value)}
+                            onBlur={() => {
+                              const trimmed = editingTextVal.trim();
+                              setEditingFieldKey(null);
+                              if (trimmed && onUpdateStamp) {
+                                onUpdateStamp(stamp.id, {
+                                  metricCard: {
+                                    ...(stamp.metricCard || { id: stamp.id, label: "", value: "", tintColor: "blue", trendDirection: "no-change", trendValue: "" }),
+                                    projectSite: trimmed,
+                                  },
+                                });
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === "Enter") {
+                                const trimmed = editingTextVal.trim();
+                                setEditingFieldKey(null);
+                                if (trimmed && onUpdateStamp) {
+                                  onUpdateStamp(stamp.id, {
+                                    metricCard: {
+                                      ...(stamp.metricCard || { id: stamp.id, label: "", value: "", tintColor: "blue", trendDirection: "no-change", trendValue: "" }),
+                                      projectSite: trimmed,
+                                    },
+                                  });
+                                }
+                              } else if (e.key === "Escape") setEditingFieldKey(null);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] font-bold text-slate-800 dark:text-zinc-100 bg-white dark:bg-black border border-blue-400 rounded px-1 py-0.5 outline-none w-full"
+                          />
+                        ) : (
+                          <div
+                            onDoubleClick={(e) =>
+                              startInlineEdit(`${stamp.id}-project-site`, stamp.metricCard?.projectSite || "ABC Infrastructure Project", e)
+                            }
+                            style={{ fontSize: `${Math.max(9, Math.min(13, Math.round(height * 0.22)))}px` }}
+                            className="font-bold text-slate-800 dark:text-zinc-100 truncate cursor-text hover:underline"
+                            title="Double-click to edit Project / Site"
+                          >
+                            {stamp.metricCard?.projectSite || "ABC Infrastructure Project"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="w-px h-4 bg-slate-300 dark:bg-zinc-700 shrink-0" />
+
+                    {/* Period */}
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <div
+                        style={{
+                          width: `${Math.max(16, Math.min(22, Math.round(height * 0.38)))}px`,
+                          height: `${Math.max(16, Math.min(22, Math.round(height * 0.38)))}px`,
+                        }}
+                        className="rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0"
+                      >
+                        <Calendar style={{ width: `${Math.max(9, Math.min(13, Math.round(height * 0.22)))}px`, height: `${Math.max(9, Math.min(13, Math.round(height * 0.22)))}px` }} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        {editingFieldKey === `${stamp.id}-reporting-period` ? (
+                          <input
+                            type="text"
+                            autoFocus
+                            value={editingTextVal}
+                            onChange={(e) => setEditingTextVal(e.target.value)}
+                            onBlur={() => {
+                              const trimmed = editingTextVal.trim();
+                              setEditingFieldKey(null);
+                              if (trimmed && onUpdateStamp) {
+                                onUpdateStamp(stamp.id, {
+                                  metricCard: {
+                                    ...(stamp.metricCard || { id: stamp.id, label: "", value: "", tintColor: "blue", trendDirection: "no-change", trendValue: "" }),
+                                    reportingPeriod: trimmed,
+                                  },
+                                });
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === "Enter") {
+                                const trimmed = editingTextVal.trim();
+                                setEditingFieldKey(null);
+                                if (trimmed && onUpdateStamp) {
+                                  onUpdateStamp(stamp.id, {
+                                    metricCard: {
+                                      ...(stamp.metricCard || { id: stamp.id, label: "", value: "", tintColor: "blue", trendDirection: "no-change", trendValue: "" }),
+                                      reportingPeriod: trimmed,
+                                    },
+                                  });
+                                }
+                              } else if (e.key === "Escape") setEditingFieldKey(null);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] font-bold text-slate-800 dark:text-zinc-100 bg-white dark:bg-black border border-purple-400 rounded px-1 py-0.5 outline-none w-full"
+                          />
+                        ) : (
+                          <div
+                            onDoubleClick={(e) =>
+                              startInlineEdit(`${stamp.id}-reporting-period`, stamp.metricCard?.reportingPeriod || "01 Sept 2025 – 30 Sept 2025", e)
+                            }
+                            style={{ fontSize: `${Math.max(9, Math.min(13, Math.round(height * 0.22)))}px` }}
+                            className="font-bold text-slate-800 dark:text-zinc-100 truncate cursor-text hover:underline"
+                            title="Double-click to edit Reporting Period"
+                          >
+                            {stamp.metricCard?.reportingPeriod || "01 Sept 2025 – 30 Sept 2025"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Standard 2-Row Stacked Layout (height >= 58px, matching Dummy Report Page 3) */
+                  <div className="w-full h-full flex flex-col justify-between">
+                    {/* Row 1: Project / Site */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div
+                        style={{
+                          width: `${Math.max(18, Math.min(32, Math.round(height * 0.28)))}px`,
+                          height: `${Math.max(18, Math.min(32, Math.round(height * 0.28)))}px`,
+                        }}
+                        className="rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0"
+                      >
+                        <Building2
+                          style={{
+                            width: `${Math.max(10, Math.min(16, Math.round(height * 0.16)))}px`,
+                            height: `${Math.max(10, Math.min(16, Math.round(height * 0.16)))}px`,
+                          }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1 leading-tight">
+                        <div
+                          style={{ fontSize: `${Math.max(7, Math.min(11, Math.round(height * 0.11)))}px` }}
+                          className="uppercase font-bold tracking-wider text-slate-400 dark:text-zinc-400"
+                        >
+                          Project / Site
+                        </div>
+                        {editingFieldKey === `${stamp.id}-project-site` ? (
+                          <input
+                            type="text"
+                            autoFocus
+                            value={editingTextVal}
+                            onChange={(e) => setEditingTextVal(e.target.value)}
+                            onBlur={() => {
+                              const trimmed = editingTextVal.trim();
+                              setEditingFieldKey(null);
+                              if (trimmed && onUpdateStamp) {
+                                onUpdateStamp(stamp.id, {
+                                  metricCard: {
+                                    ...(stamp.metricCard || { id: stamp.id, label: "", value: "", tintColor: "blue", trendDirection: "no-change", trendValue: "" }),
+                                    projectSite: trimmed,
+                                  },
+                                });
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === "Enter") {
+                                const trimmed = editingTextVal.trim();
+                                setEditingFieldKey(null);
+                                if (trimmed && onUpdateStamp) {
+                                  onUpdateStamp(stamp.id, {
+                                    metricCard: {
+                                      ...(stamp.metricCard || { id: stamp.id, label: "", value: "", tintColor: "blue", trendDirection: "no-change", trendValue: "" }),
+                                      projectSite: trimmed,
+                                    },
+                                  });
+                                }
+                              } else if (e.key === "Escape") setEditingFieldKey(null);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs font-bold text-slate-800 dark:text-zinc-100 bg-white dark:bg-black border border-blue-400 rounded px-1 py-0.5 outline-none w-full"
+                          />
+                        ) : (
+                          <div
+                            onDoubleClick={(e) =>
+                              startInlineEdit(`${stamp.id}-project-site`, stamp.metricCard?.projectSite || "ABC Infrastructure Project", e)
+                            }
+                            style={{ fontSize: `${Math.max(9.5, Math.min(15, Math.round(height * 0.155)))}px` }}
+                            className="font-bold text-slate-800 dark:text-zinc-100 truncate cursor-text hover:underline"
+                            title="Double-click to edit Project / Site"
+                          >
+                            {stamp.metricCard?.projectSite || "ABC Infrastructure Project"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Subtle divider */}
+                    <div className="w-full border-t border-[#dce3ee]/70 dark:border-slate-800 my-0.5" />
+
+                    {/* Row 2: Reporting Period */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div
+                        style={{
+                          width: `${Math.max(18, Math.min(32, Math.round(height * 0.28)))}px`,
+                          height: `${Math.max(18, Math.min(32, Math.round(height * 0.28)))}px`,
+                        }}
+                        className="rounded-lg bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0"
+                      >
+                        <Calendar
+                          style={{
+                            width: `${Math.max(10, Math.min(16, Math.round(height * 0.16)))}px`,
+                            height: `${Math.max(10, Math.min(16, Math.round(height * 0.16)))}px`,
+                          }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1 leading-tight">
+                        <div
+                          style={{ fontSize: `${Math.max(7, Math.min(11, Math.round(height * 0.11)))}px` }}
+                          className="uppercase font-bold tracking-wider text-slate-400 dark:text-zinc-400"
+                        >
+                          Reporting Period
+                        </div>
+                        {editingFieldKey === `${stamp.id}-reporting-period` ? (
+                          <input
+                            type="text"
+                            autoFocus
+                            value={editingTextVal}
+                            onChange={(e) => setEditingTextVal(e.target.value)}
+                            onBlur={() => {
+                              const trimmed = editingTextVal.trim();
+                              setEditingFieldKey(null);
+                              if (trimmed && onUpdateStamp) {
+                                onUpdateStamp(stamp.id, {
+                                  metricCard: {
+                                    ...(stamp.metricCard || { id: stamp.id, label: "", value: "", tintColor: "blue", trendDirection: "no-change", trendValue: "" }),
+                                    reportingPeriod: trimmed,
+                                  },
+                                });
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === "Enter") {
+                                const trimmed = editingTextVal.trim();
+                                setEditingFieldKey(null);
+                                if (trimmed && onUpdateStamp) {
+                                  onUpdateStamp(stamp.id, {
+                                    metricCard: {
+                                      ...(stamp.metricCard || { id: stamp.id, label: "", value: "", tintColor: "blue", trendDirection: "no-change", trendValue: "" }),
+                                      reportingPeriod: trimmed,
+                                    },
+                                  });
+                                }
+                              } else if (e.key === "Escape") setEditingFieldKey(null);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs font-bold text-slate-800 dark:text-zinc-100 bg-white dark:bg-black border border-purple-400 rounded px-1 py-0.5 outline-none w-full"
+                          />
+                        ) : (
+                          <div
+                            onDoubleClick={(e) =>
+                              startInlineEdit(`${stamp.id}-reporting-period`, stamp.metricCard?.reportingPeriod || "01 Sept 2025 – 30 Sept 2025", e)
+                            }
+                            style={{ fontSize: `${Math.max(9.5, Math.min(15, Math.round(height * 0.155)))}px` }}
+                            className="font-bold text-slate-800 dark:text-zinc-100 truncate cursor-text hover:underline"
+                            title="Double-click to edit Reporting Period"
+                          >
+                            {stamp.metricCard?.reportingPeriod || "01 Sept 2025 – 30 Sept 2025"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── 4B. Floating Metric KPI Card with Responsive Inside Scaling & Inline Editing ── */}
+            {isMetric && !isProjectMeta && (
+              <div
+                style={{
+                  opacity,
+                  padding: `${Math.max(6, Math.min(18, Math.round(Math.min(width * 0.05, height * 0.1))))}px`,
+                }}
+                className={`w-full h-full rounded-2xl border ${tint.border} ${tint.bg} flex flex-col justify-between overflow-hidden select-none`}
+              >
+                {/* Metric Label (Inline Editable, Scaled Font) */}
+                <div className="flex items-center justify-between pb-0.5 flex-shrink-0">
                   {editingFieldKey === `${stamp.id}-metric-label` ? (
                     <input
                       type="text"
@@ -931,14 +1262,16 @@ export function CanvasStampsLayer({
                         } else if (e.key === "Escape") setEditingFieldKey(null);
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-[11px] font-semibold text-slate-800 dark:text-white bg-purple-500/10 border border-[#8B3DFF] rounded px-1.5 py-0.5 outline-none w-full"
+                      style={{ fontSize: `${Math.max(8.5, Math.min(16, Math.round(height * 0.125)))}px` }}
+                      className="font-semibold text-slate-800 dark:text-white bg-purple-500/10 border border-[#8B3DFF] rounded px-1 py-0.5 outline-none w-full"
                     />
                   ) : (
                     <span
                       onDoubleClick={(e) =>
                         startInlineEdit(`${stamp.id}-metric-label`, stamp.metricCard?.label || stamp.name, e)
                       }
-                      className="text-[11px] font-semibold text-slate-600 dark:text-zinc-300 truncate cursor-text hover:underline"
+                      style={{ fontSize: `${Math.max(8.5, Math.min(16, Math.round(height * 0.125)))}px` }}
+                      className="font-semibold text-slate-600 dark:text-zinc-300 truncate cursor-text hover:underline"
                       title="Double-click to edit label"
                     >
                       {stamp.metricCard?.label || stamp.name}
@@ -946,8 +1279,8 @@ export function CanvasStampsLayer({
                   )}
                 </div>
 
-                {/* Metric Value (Large Bold, Inline Editable) */}
-                <div className="py-1 flex-1 flex items-center">
+                {/* Metric Value (Large Bold, Inline Editable, Scaled Font) */}
+                <div className="py-0.5 flex-1 flex items-center min-h-0">
                   {editingFieldKey === `${stamp.id}-metric-value` ? (
                     <input
                       type="text"
@@ -982,14 +1315,16 @@ export function CanvasStampsLayer({
                         } else if (e.key === "Escape") setEditingFieldKey(null);
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className={`text-2xl font-black font-mono tracking-tight bg-purple-500/10 border border-[#8B3DFF] rounded px-2 py-0.5 outline-none w-full ${tint.text}`}
+                      style={{ fontSize: `${Math.max(15, Math.min(42, Math.round(height * 0.27)))}px` }}
+                      className={`font-black font-mono tracking-tight bg-purple-500/10 border border-[#8B3DFF] rounded px-1.5 py-0.5 outline-none w-full ${tint.text}`}
                     />
                   ) : (
                     <span
                       onDoubleClick={(e) =>
                         startInlineEdit(`${stamp.id}-metric-value`, stamp.metricCard?.value || "0", e)
                       }
-                      className={`text-2xl font-black font-mono tracking-tight cursor-text hover:opacity-80 transition-opacity ${tint.text}`}
+                      style={{ fontSize: `${Math.max(15, Math.min(42, Math.round(height * 0.27)))}px` }}
+                      className={`font-black font-mono tracking-tight cursor-text hover:opacity-80 transition-opacity truncate ${tint.text}`}
                       title="Double-click to edit value"
                     >
                       {stamp.metricCard?.value || "98.4%"}
@@ -997,8 +1332,8 @@ export function CanvasStampsLayer({
                   )}
                 </div>
 
-                {/* Trend Badge */}
-                <div className="flex items-center gap-1.5 pt-1 border-t border-slate-200/40 dark:border-zinc-800/40">
+                {/* Trend Badge (Scaled Font & Padding) */}
+                <div className="flex items-center gap-1.5 pt-0.5 border-t border-slate-200/40 dark:border-zinc-800/40">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -1017,13 +1352,14 @@ export function CanvasStampsLayer({
                         },
                       });
                     }}
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono transition-transform hover:scale-105 cursor-pointer ${tint.badgeBg} ${tint.badgeText}`}
+                    style={{ fontSize: `${Math.max(8, Math.min(13, Math.round(height * 0.1)))}px` }}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md font-bold font-mono transition-transform hover:scale-105 cursor-pointer ${tint.badgeBg} ${tint.badgeText}`}
                     title="Click to cycle trend direction"
                   >
-                    {stamp.metricCard?.trendDirection === "up" && <ArrowUp className="w-2.5 h-2.5" />}
-                    {stamp.metricCard?.trendDirection === "down" && <ArrowDown className="w-2.5 h-2.5" />}
+                    {stamp.metricCard?.trendDirection === "up" && <ArrowUp style={{ width: `${Math.max(8, Math.min(12, Math.round(height * 0.1)))}px`, height: `${Math.max(8, Math.min(12, Math.round(height * 0.1)))}px` }} />}
+                    {stamp.metricCard?.trendDirection === "down" && <ArrowDown style={{ width: `${Math.max(8, Math.min(12, Math.round(height * 0.1)))}px`, height: `${Math.max(8, Math.min(12, Math.round(height * 0.1)))}px` }} />}
                     {stamp.metricCard?.trendDirection === "no-change" && <span>—</span>}
-                    <span>{stamp.metricCard?.trendValue || "+2.4% vs last cycle"}</span>
+                    <span className="truncate">{stamp.metricCard?.trendValue || "+2.4% vs last cycle"}</span>
                   </button>
                 </div>
               </div>
@@ -1044,23 +1380,45 @@ export function CanvasStampsLayer({
                 {/* 4 Corner Resize Handles */}
                 <div
                   onMouseDown={(e) => handleResizeStart(e, stamp, "nw")}
-                  className="absolute -top-1.5 -left-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nwse-resize hover:scale-125 transition-transform"
+                  className="absolute -top-1.5 -left-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nwse-resize hover:scale-125 transition-transform shadow-xs z-10"
                   title="Resize (NW)"
                 />
                 <div
                   onMouseDown={(e) => handleResizeStart(e, stamp, "ne")}
-                  className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nesw-resize hover:scale-125 transition-transform"
+                  className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nesw-resize hover:scale-125 transition-transform shadow-xs z-10"
                   title="Resize (NE)"
                 />
                 <div
                   onMouseDown={(e) => handleResizeStart(e, stamp, "sw")}
-                  className="absolute -bottom-1.5 -left-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nesw-resize hover:scale-125 transition-transform"
+                  className="absolute -bottom-1.5 -left-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nesw-resize hover:scale-125 transition-transform shadow-xs z-10"
                   title="Resize (SW)"
                 />
                 <div
                   onMouseDown={(e) => handleResizeStart(e, stamp, "se")}
-                  className="absolute -bottom-1.5 -right-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nwse-resize hover:scale-125 transition-transform"
+                  className="absolute -bottom-1.5 -right-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nwse-resize hover:scale-125 transition-transform shadow-xs z-10"
                   title="Resize (SE)"
+                />
+
+                {/* 4 Edge Midpoint Handles (Height & Width Adjustment) */}
+                <div
+                  onMouseDown={(e) => handleResizeStart(e, stamp, "n")}
+                  className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-6 h-2 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-ns-resize hover:scale-125 transition-transform shadow-xs z-10"
+                  title="Adjust Height (Top)"
+                />
+                <div
+                  onMouseDown={(e) => handleResizeStart(e, stamp, "s")}
+                  className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-6 h-2 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-ns-resize hover:scale-125 transition-transform shadow-xs z-10"
+                  title="Adjust Height (Bottom)"
+                />
+                <div
+                  onMouseDown={(e) => handleResizeStart(e, stamp, "w")}
+                  className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-2 h-6 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-ew-resize hover:scale-125 transition-transform shadow-xs z-10"
+                  title="Adjust Width (Left)"
+                />
+                <div
+                  onMouseDown={(e) => handleResizeStart(e, stamp, "e")}
+                  className="absolute top-1/2 -right-1.5 -translate-y-1/2 w-2 h-6 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-ew-resize hover:scale-125 transition-transform shadow-xs z-10"
+                  title="Adjust Width (Right)"
                 />
 
                 {/* ── Top Stem Axis Rotation Handle (Canva / Figma Style) ── */}
