@@ -522,8 +522,12 @@ export interface CanvasCoordinateStamp {
   opacity: number;
   layer: "front" | "back";
   locked?: boolean;
-  elementType?: "stamp" | "chart" | "metric-card" | "text";
+  elementType?: "stamp" | "chart" | "metric-card" | "text" | "insight" | "badge-strip";
   chart?: LibraryChartCard;
+  metricCard?: LibraryMetricCard;
+  textBlock?: CanvasTextBlock;
+  insight?: LibraryKeyInsightItem;
+  badgeStrip?: CanvasBadgeStrip;
 }
 
 export type CanvasCoordinateElement = CanvasCoordinateStamp;

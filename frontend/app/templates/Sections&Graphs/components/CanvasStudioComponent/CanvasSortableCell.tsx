@@ -208,6 +208,35 @@ export function SortableCell({
   }, [cell.customHeight]);
 
   const [isCellEditing, setIsCellEditing] = useState(false);
+  const [hasActiveInput, setHasActiveInput] = useState(false);
+
+  useEffect(() => {
+    const handleFocusCheck = () => {
+      if (!cellDomRef.current) {
+        setHasActiveInput(false);
+        return;
+      }
+      const activeEl = document.activeElement;
+      const isInside = Boolean(activeEl && cellDomRef.current.contains(activeEl));
+      const isInput =
+        isInside &&
+        (activeEl?.tagName === "INPUT" ||
+          activeEl?.tagName === "TEXTAREA" ||
+          (activeEl as HTMLElement)?.isContentEditable ||
+          Boolean(activeEl?.closest('[contenteditable="true"]')) ||
+          Boolean(activeEl?.closest('.dynamic-word-editor')));
+      setHasActiveInput(Boolean(isInput));
+    };
+
+    document.addEventListener("focusin", handleFocusCheck);
+    document.addEventListener("focusout", handleFocusCheck);
+    return () => {
+      document.removeEventListener("focusin", handleFocusCheck);
+      document.removeEventListener("focusout", handleFocusCheck);
+    };
+  }, []);
+
+  const isEditingActive = isCellEditing || hasActiveInput;
 
   useEffect(() => {
     if (!isSelected) {
@@ -222,7 +251,7 @@ export function SortableCell({
 
   const effectiveZoom = zoom > 0 ? zoom : 1;
 
-  const showTopToolbar = !isPreview && !isDragging && !isCellEditing && (isSelected || isResizing || isHeightResizing);
+  const showTopToolbar = !isPreview && !isDragging && !isEditingActive && (isSelected || isResizing || isHeightResizing);
 
   const updateToolbarPortalPos = useCallback(() => {
     if (!cellDomRef.current) {
@@ -673,7 +702,7 @@ export function SortableCell({
       }}
     >
       {/* Draggable cell badge tag (positioned top-right to avoid blocking card label) */}
-      {!isPreview && (
+      {!isPreview && !isEditingActive && (
         <div
           {...attributes}
           {...listeners}
@@ -689,7 +718,7 @@ export function SortableCell({
       )}
 
       {/* Live resizing indicator HUD */}
-      {!isPreview && (isResizing || isHeightResizing) && (
+      {!isPreview && !isEditingActive && (isResizing || isHeightResizing) && (
         <div className="absolute top-2 right-2 z-40 bg-[#8B3DFF] text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md shadow-lg pointer-events-none animate-in fade-in zoom-in-95 duration-100 flex items-center gap-1.5">
           {isResizing && <span>W: {Math.round(currentPercent)}%</span>}
           {isResizing && isHeightResizing && <span className="opacity-60">&bull;</span>}
@@ -698,7 +727,7 @@ export function SortableCell({
       )}
 
       {/* Resize handle (right edge for width) — fixed size, opacity-only on hover */}
-      {!isPreview && (
+      {!isPreview && !isEditingActive && (
         <div
           onMouseDown={handleResizeStart}
           className={`absolute right-0 top-0 bottom-0 w-2.5 cursor-col-resize z-30 flex items-center justify-center transition-opacity ${
@@ -711,7 +740,7 @@ export function SortableCell({
       )}
 
       {/* Beside Droppable Zone on Right Edge (Canva Column Beside Target) */}
-      {!isPreview && !isSelfDragging && (
+      {!isPreview && !isEditingActive && !isSelfDragging && (
         <div
           ref={setBesideDropRef}
           className={`absolute right-0 top-0 bottom-0 transition-all z-35 flex items-center justify-center ${
@@ -732,7 +761,7 @@ export function SortableCell({
       )}
 
       {/* Quick Add Column Beside Button (+) — absolute, does NOT affect layout flow */}
-      {!isPreview && !activeDragCellId && typeof onAddBlockBeside === "function" && (
+      {!isPreview && !isEditingActive && !activeDragCellId && typeof onAddBlockBeside === "function" && (
         <button
           type="button"
           onClick={(e) => {
@@ -747,7 +776,7 @@ export function SortableCell({
       )}
 
       {/* Resize handle (bottom edge for height) — always visible on hover */}
-      {!isPreview && (
+      {!isPreview && !isEditingActive && (
         <div
           onMouseDown={handleHeightResizeStart}
           className={`absolute left-0 right-0 -bottom-1.5 h-3 cursor-row-resize z-30 flex items-center justify-center transition-opacity ${
@@ -760,7 +789,7 @@ export function SortableCell({
       )}
 
       {/* Resize handle (bottom-right corner) — fixed size, opacity-only, shown when no stacked blocks */}
-      {!isPreview && !hasStacked && (
+      {!isPreview && !isEditingActive && !hasStacked && (
         <div
           onMouseDown={handleCornerResizeStart}
           className={`absolute -right-1.5 -bottom-1.5 w-4 h-4 cursor-se-resize z-30 flex items-center justify-center transition-opacity ${
@@ -1093,7 +1122,7 @@ export function SortableCell({
       </div>
 
       {/* ── React Portal: Floating "+ Stack below" Button & Quick-Add Menu ── */}
-      {mounted && !chartEditorFullscreen && typeof document !== "undefined" && portalPos && !isPreview && !isDragging && (isSelected || isHovered || quickAddOpen) &&
+      {mounted && !chartEditorFullscreen && typeof document !== "undefined" && portalPos && !isPreview && !isDragging && !isEditingActive && (isSelected || isHovered || quickAddOpen) &&
         createPortal(
           quickAddOpen ? (
             <div
@@ -1434,8 +1463,8 @@ export function SortableCell({
               <Trash2 className="w-3.5 h-3.5" />
             </button>
 
-            {/* Float Chart on Page (Freeform coordinates & 360° axis rotation) */}
-            {cell.blockType === "chart" && onFloatCell && (
+            {/* Float Element on Page (Freeform coordinates & 360° axis rotation) */}
+            {onFloatCell && (cell.blockType === "chart" || cell.blockType === "text" || cell.blockType === "insight" || cell.blockType === "metric-card" || cell.blockType === "badge-strip") && (
               <button
                 type="button"
                 onClick={(e) => {
@@ -1443,7 +1472,7 @@ export function SortableCell({
                   onFloatCell(cell, rowId);
                 }}
                 className="p-1 text-slate-500 hover:text-[#8B3DFF] dark:hover:text-purple-400 transition-colors cursor-pointer rounded flex items-center gap-1"
-                title="Float Chart (detach to freeform coordinates with 360° axis rotation)"
+                title="Float on Page (detach to freeform coordinates with 360° axis rotation)"
               >
                 <Move className="w-3.5 h-3.5 text-[#8B3DFF]" />
               </button>

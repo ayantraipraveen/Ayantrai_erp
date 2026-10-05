@@ -7,8 +7,22 @@ import {
   Layers,
   Check,
   LayoutGrid,
+  SlidersHorizontal,
+  Type,
+  Lightbulb,
+  Sparkles,
+  ArrowUp,
+  ArrowDown,
+  Edit2,
+  FileText,
 } from "lucide-react";
-import { CanvasCoordinateStamp } from "@/lib/redux/types/reportModuleTypes";
+import {
+  CanvasCoordinateStamp,
+  LibraryChartCard,
+  LibraryMetricCard,
+  LibraryKeyInsightItem,
+  CanvasTextBlock,
+} from "@/lib/redux/types/reportModuleTypes";
 import ChartRenderer from "../ChartComponent/ChartRenderer";
 
 export interface CanvasStampsLayerProps {
@@ -18,20 +32,82 @@ export interface CanvasStampsLayerProps {
   onUpdateStamp?: (stampId: string, patch: Partial<CanvasCoordinateStamp>) => void;
   onDeleteStamp?: (stampId: string) => void;
   onDockToGrid?: (stamp: CanvasCoordinateStamp) => void;
+  onOpenChartEditor?: (stampId: string, chart: LibraryChartCard) => void;
   selectedStampId?: string | null;
   onSelectStamp?: (stampId: string | null) => void;
   pageWidth?: number;  // 595
   pageHeight?: number; // 842
 }
 
+const PALETTE_TINTS: Record<string, { bg: string; text: string; border: string; badgeBg: string; badgeText: string }> = {
+  purple: {
+    bg: "bg-purple-500/10 dark:bg-purple-950/30",
+    text: "text-[#8B3DFF] dark:text-purple-400",
+    border: "border-purple-200 dark:border-purple-800/60",
+    badgeBg: "bg-purple-100 dark:bg-purple-900/50",
+    badgeText: "text-purple-700 dark:text-purple-300",
+  },
+  blue: {
+    bg: "bg-blue-500/10 dark:bg-blue-950/30",
+    text: "text-blue-600 dark:text-blue-400",
+    border: "border-blue-200 dark:border-blue-800/60",
+    badgeBg: "bg-blue-100 dark:bg-blue-900/50",
+    badgeText: "text-blue-700 dark:text-blue-300",
+  },
+  green: {
+    bg: "bg-emerald-500/10 dark:bg-emerald-950/30",
+    text: "text-emerald-600 dark:text-emerald-400",
+    border: "border-emerald-200 dark:border-emerald-800/60",
+    badgeBg: "bg-emerald-100 dark:bg-emerald-900/50",
+    badgeText: "text-emerald-700 dark:text-emerald-300",
+  },
+  emerald: {
+    bg: "bg-emerald-500/10 dark:bg-emerald-950/30",
+    text: "text-emerald-600 dark:text-emerald-400",
+    border: "border-emerald-200 dark:border-emerald-800/60",
+    badgeBg: "bg-emerald-100 dark:bg-emerald-900/50",
+    badgeText: "text-emerald-700 dark:text-emerald-300",
+  },
+  amber: {
+    bg: "bg-amber-500/10 dark:bg-amber-950/30",
+    text: "text-amber-600 dark:text-amber-400",
+    border: "border-amber-200 dark:border-amber-800/60",
+    badgeBg: "bg-amber-100 dark:bg-amber-900/50",
+    badgeText: "text-amber-700 dark:text-amber-300",
+  },
+  orange: {
+    bg: "bg-orange-500/10 dark:bg-orange-950/30",
+    text: "text-orange-600 dark:text-orange-400",
+    border: "border-orange-200 dark:border-orange-800/60",
+    badgeBg: "bg-orange-100 dark:bg-orange-900/50",
+    badgeText: "text-orange-700 dark:text-orange-300",
+  },
+  red: {
+    bg: "bg-rose-500/10 dark:bg-rose-950/30",
+    text: "text-rose-600 dark:text-rose-400",
+    border: "border-rose-200 dark:border-rose-800/60",
+    badgeBg: "bg-rose-100 dark:bg-rose-900/50",
+    badgeText: "text-rose-700 dark:text-rose-300",
+  },
+  cyan: {
+    bg: "bg-cyan-500/10 dark:bg-cyan-950/30",
+    text: "text-cyan-600 dark:text-cyan-400",
+    border: "border-cyan-200 dark:border-cyan-800/60",
+    badgeBg: "bg-cyan-100 dark:bg-cyan-900/50",
+    badgeText: "text-cyan-700 dark:text-cyan-300",
+  },
+  slate: {
+    bg: "bg-slate-500/10 dark:bg-zinc-800/40",
+    text: "text-slate-700 dark:text-zinc-300",
+    border: "border-slate-200 dark:border-zinc-800",
+    badgeBg: "bg-slate-100 dark:bg-zinc-800",
+    badgeText: "text-slate-700 dark:text-zinc-300",
+  },
+};
+
 /**
- * Precision Coordinate-based Stamp / Chart / Element Canvas Layer.
- * Renders SVG stamps (100% transparent, borderless) and floating charts positioned by exact (x, y) coordinates.
- * Features:
- * - Freeform drag repositioning anywhere across page
- * - 4-corner resizing (proportional for stamps, freeform for charts)
- * - Top stem handle for free 360° center-axis rotation
- * - Quick preset toolbar (rotation presets, opacity, layer front/back, dock-to-grid, delete)
+ * Precision Coordinate-based Stamp / Chart / Text / Bullet Insight / Metric Element Canvas Layer.
+ * Renders SVG stamps and floating element cards positioned by exact (x, y) coordinates with 360° rotation.
  */
 export function CanvasStampsLayer({
   pageIndex,
@@ -40,6 +116,7 @@ export function CanvasStampsLayer({
   onUpdateStamp,
   onDeleteStamp,
   onDockToGrid,
+  onOpenChartEditor,
   selectedStampId,
   onSelectStamp,
   pageWidth = 595,
@@ -51,6 +128,19 @@ export function CanvasStampsLayer({
   const setSelected = (id: string | null) => {
     if (onSelectStamp) onSelectStamp(id);
     setInternalSelectedId(id);
+  };
+
+  // Inline editing state for text, titles, values
+  const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
+  const [editingTextVal, setEditingTextVal] = useState<string>("");
+
+  const startInlineEdit = (fieldKey: string, initialValue: string, e?: React.MouseEvent) => {
+    if (activeIsPreview) return;
+    if (e) {
+      e.stopPropagation();
+    }
+    setEditingFieldKey(fieldKey);
+    setEditingTextVal(initialValue);
   };
 
   // Dragging state
@@ -68,7 +158,8 @@ export function CanvasStampsLayer({
     x: number;
     y: number;
     aspectRatio: number;
-    isChart: boolean;
+    isCard: boolean;
+    isMetric: boolean;
   } | null>(null);
 
   // Rotating state
@@ -80,7 +171,7 @@ export function CanvasStampsLayer({
 
   // ── Drag to Move ───────────────────────────────────────────────────────────
   const handleDragStart = (e: React.MouseEvent, stamp: CanvasCoordinateStamp) => {
-    if (activeIsPreview || stamp.locked) return;
+    if (activeIsPreview || stamp.locked || editingFieldKey) return;
     e.stopPropagation();
     e.preventDefault();
     setSelected(stamp.id);
@@ -100,15 +191,25 @@ export function CanvasStampsLayer({
     stamp: CanvasCoordinateStamp,
     corner: "nw" | "ne" | "sw" | "se"
   ) => {
-    if (activeIsPreview || stamp.locked) return;
+    if (activeIsPreview || stamp.locked || editingFieldKey) return;
     e.stopPropagation();
     e.preventDefault();
     setResizingId(stamp.id);
     resizeCorner.current = corner;
 
     const isChart = stamp.elementType === "chart" || Boolean(stamp.chart);
-    const w = stamp.width || (isChart ? 380 : 120);
-    const h = stamp.height || (isChart ? 250 : 120);
+    const isText = stamp.elementType === "text" || Boolean(stamp.textBlock);
+    const isInsight = stamp.elementType === "insight" || Boolean(stamp.insight);
+    const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
+    const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
+    const isCard = isChart || isText || isInsight || isMetric || isBadgeStrip;
+
+    const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : 120;
+    const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 110 : 120;
+
+    const w = stamp.width || defaultW;
+    const h = stamp.height || defaultH;
+
     resizeStartPos.current = {
       mouseX: e.clientX,
       mouseY: e.clientY,
@@ -117,7 +218,8 @@ export function CanvasStampsLayer({
       x: stamp.x,
       y: stamp.y,
       aspectRatio: w / Math.max(1, h),
-      isChart,
+      isCard,
+      isMetric,
     };
   };
 
@@ -127,7 +229,7 @@ export function CanvasStampsLayer({
     stamp: CanvasCoordinateStamp,
     element: HTMLElement
   ) => {
-    if (activeIsPreview || stamp.locked) return;
+    if (activeIsPreview || stamp.locked || editingFieldKey) return;
     e.stopPropagation();
     e.preventDefault();
     setRotatingId(stamp.id);
@@ -163,7 +265,7 @@ export function CanvasStampsLayer({
 
       // 2. Resize
       if (resizingId && resizeStartPos.current && onUpdateStamp && resizeCorner.current) {
-        const { mouseX, mouseY, width, height, x, y, aspectRatio, isChart } = resizeStartPos.current;
+        const { mouseX, mouseY, width, height, x, y, aspectRatio, isCard, isMetric } = resizeStartPos.current;
         const dx = e.clientX - mouseX;
         const dy = e.clientY - mouseY;
 
@@ -172,22 +274,25 @@ export function CanvasStampsLayer({
         let newX = x;
         let newY = y;
 
-        if (isChart) {
-          // Freeform width & height resizing for charts
+        if (isCard) {
+          // Freeform width & height resizing for all card-type elements
+          const minW = isMetric ? 150 : 180;
+          const minH = isMetric ? 75 : 60;
+
           if (resizeCorner.current === "se") {
-            newW = Math.max(180, width + dx);
-            newH = Math.max(120, height + dy);
+            newW = Math.max(minW, width + dx);
+            newH = Math.max(minH, height + dy);
           } else if (resizeCorner.current === "sw") {
-            newW = Math.max(180, width - dx);
-            newH = Math.max(120, height + dy);
+            newW = Math.max(minW, width - dx);
+            newH = Math.max(minH, height + dy);
             newX = x + (width - newW);
           } else if (resizeCorner.current === "ne") {
-            newW = Math.max(180, width + dx);
-            newH = Math.max(120, height - dy);
+            newW = Math.max(minW, width + dx);
+            newH = Math.max(minH, height - dy);
             newY = y + (height - newH);
           } else if (resizeCorner.current === "nw") {
-            newW = Math.max(180, width - dx);
-            newH = Math.max(120, height - dy);
+            newW = Math.max(minW, width - dx);
+            newH = Math.max(minH, height - dy);
             newX = x + (width - newW);
             newY = y + (height - newH);
           }
@@ -230,7 +335,7 @@ export function CanvasStampsLayer({
         let finalAngle = Math.round((initialRotation + deltaAngle) % 360);
         if (finalAngle < 0) finalAngle += 360;
 
-        // Snap to nearest 45° or 15° when Shift is held
+        // Snap to nearest 15° when Shift is held
         if (e.shiftKey) {
           finalAngle = Math.round(finalAngle / 15) * 15;
         }
@@ -266,6 +371,7 @@ export function CanvasStampsLayer({
         !target?.closest(".stamp-toolbar-portal")
       ) {
         setSelected(null);
+        setEditingFieldKey(null);
       }
     };
     window.addEventListener("mousedown", handleDocClick);
@@ -282,11 +388,25 @@ export function CanvasStampsLayer({
         const isResizing = resizingId === stamp.id;
         const isRotating = rotatingId === stamp.id;
         const isBack = stamp.layer === "back";
+
         const isChart = stamp.elementType === "chart" || Boolean(stamp.chart);
-        const width = stamp.width || (isChart ? 380 : 120);
-        const height = stamp.height || (isChart ? 250 : 120);
+        const isText = stamp.elementType === "text" || Boolean(stamp.textBlock);
+        const isInsight = stamp.elementType === "insight" || Boolean(stamp.insight);
+        const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
+        const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
+        const isCard = isChart || isText || isInsight || isMetric || isBadgeStrip;
+
+        const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : 120;
+        const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 110 : 120;
+
+        const width = stamp.width || defaultW;
+        const height = stamp.height || defaultH;
         const rotation = stamp.rotation || 0;
         const opacity = (stamp.opacity ?? 100) / 100;
+
+        // Metric tint
+        const tintKey = stamp.metricCard?.tintColor || "purple";
+        const tint = PALETTE_TINTS[tintKey] || PALETTE_TINTS.purple;
 
         return (
           <div
@@ -311,27 +431,125 @@ export function CanvasStampsLayer({
               isSelected ? "ring-2 ring-[#8B3DFF] ring-dashed" : "hover:ring-1 hover:ring-purple-300/60"
             }`}
           >
-            {/* ── Content: Floating Chart Card OR Transparent SVG Stamp ── */}
-            {isChart && stamp.chart ? (
+            {/* ── 1. Floating Chart Card with Edit Data & Inline Title Editing ── */}
+            {isChart && stamp.chart && (
               <div
                 style={{ opacity }}
                 className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 shadow-lg flex flex-col justify-between overflow-hidden select-none"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-zinc-800/60 flex-shrink-0">
+                <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-100 dark:border-zinc-800/60 flex-shrink-0">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                      {stamp.chart.title || stamp.name}
-                    </h3>
-                    {stamp.chart.description && (
-                      <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate">
-                        {stamp.chart.description}
+                    {editingFieldKey === `${stamp.id}-chart-title` ? (
+                      <input
+                        type="text"
+                        autoFocus
+                        value={editingTextVal}
+                        onChange={(e) => setEditingTextVal(e.target.value)}
+                        onBlur={() => {
+                          const trimmed = editingTextVal.trim();
+                          setEditingFieldKey(null);
+                          if (trimmed && stamp.chart && onUpdateStamp) {
+                            onUpdateStamp(stamp.id, {
+                              name: trimmed,
+                              chart: { ...stamp.chart, title: trimmed },
+                            });
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                          if (e.key === "Enter") {
+                            const trimmed = editingTextVal.trim();
+                            setEditingFieldKey(null);
+                            if (trimmed && stamp.chart && onUpdateStamp) {
+                              onUpdateStamp(stamp.id, {
+                                name: trimmed,
+                                chart: { ...stamp.chart, title: trimmed },
+                              });
+                            }
+                          } else if (e.key === "Escape") {
+                            setEditingFieldKey(null);
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs font-bold text-slate-900 dark:text-white bg-purple-500/10 border border-[#8B3DFF] rounded px-1.5 py-0.5 outline-none w-full"
+                      />
+                    ) : (
+                      <h3
+                        onDoubleClick={(e) => startInlineEdit(`${stamp.id}-chart-title`, stamp.chart?.title || stamp.name, e)}
+                        className="text-xs font-bold text-slate-900 dark:text-white truncate cursor-text hover:text-[#8B3DFF] transition-colors"
+                        title="Double-click to inline edit chart title"
+                      >
+                        {stamp.chart.title || stamp.name}
+                      </h3>
+                    )}
+
+                    {editingFieldKey === `${stamp.id}-chart-desc` ? (
+                      <input
+                        type="text"
+                        autoFocus
+                        value={editingTextVal}
+                        onChange={(e) => setEditingTextVal(e.target.value)}
+                        onBlur={() => {
+                          const trimmed = editingTextVal.trim();
+                          setEditingFieldKey(null);
+                          if (stamp.chart && onUpdateStamp) {
+                            onUpdateStamp(stamp.id, {
+                              chart: { ...stamp.chart, description: trimmed },
+                            });
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                          if (e.key === "Enter") {
+                            const trimmed = editingTextVal.trim();
+                            setEditingFieldKey(null);
+                            if (stamp.chart && onUpdateStamp) {
+                              onUpdateStamp(stamp.id, {
+                                chart: { ...stamp.chart, description: trimmed },
+                              });
+                            }
+                          } else if (e.key === "Escape") {
+                            setEditingFieldKey(null);
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-[10px] text-slate-700 dark:text-zinc-300 bg-purple-500/10 border border-[#8B3DFF] rounded px-1 py-0.5 outline-none w-full"
+                      />
+                    ) : (
+                      <p
+                        onDoubleClick={(e) =>
+                          startInlineEdit(`${stamp.id}-chart-desc`, stamp.chart?.description || "", e)
+                        }
+                        className="text-[10px] text-slate-500 dark:text-zinc-400 truncate cursor-text hover:text-[#8B3DFF] transition-colors"
+                        title="Double-click to inline edit caption / description"
+                      >
+                        {stamp.chart.description || "Double click to add description"}
                       </p>
                     )}
                   </div>
-                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-purple-500/10 text-[#8B3DFF] font-bold flex-shrink-0">
-                    {stamp.chart.chartType}
-                  </span>
+
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-purple-500/10 text-[#8B3DFF] font-bold">
+                      {stamp.chart.chartType}
+                    </span>
+
+                    {/* Edit Data Button right in header */}
+                    {onOpenChartEditor && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (stamp.chart) onOpenChartEditor(stamp.id, stamp.chart);
+                        }}
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#8B3DFF] text-white hover:bg-purple-700 shadow-xs transition-transform active:scale-95 cursor-pointer"
+                        title="Open Full Telemetry & Data Editor"
+                      >
+                        <SlidersHorizontal className="w-2.5 h-2.5" />
+                        <span>Edit Data</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Live Chart Renderer */}
@@ -351,7 +569,335 @@ export function CanvasStampsLayer({
                   />
                 </div>
               </div>
-            ) : (
+            )}
+
+            {/* ── 2. Floating Text Block with Inline Editing ── */}
+            {isText && (
+              <div
+                style={{ opacity }}
+                className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 shadow-lg flex flex-col justify-between overflow-hidden select-none"
+              >
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800/60 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 text-slate-700 dark:text-zinc-300">
+                    <Type className="w-3.5 h-3.5 text-[#8B3DFF]" />
+                    <span className="text-[10px] font-mono uppercase font-bold tracking-wide text-slate-500">
+                      Text Block
+                    </span>
+                  </div>
+                  <span className="text-[9px] text-slate-400">Double-click to edit</span>
+                </div>
+
+                <div className="flex-1 min-h-0 w-full pt-1.5 overflow-hidden">
+                  {editingFieldKey === `${stamp.id}-text` ? (
+                    <textarea
+                      autoFocus
+                      value={editingTextVal}
+                      onChange={(e) => setEditingTextVal(e.target.value)}
+                      onBlur={() => {
+                        const trimmed = editingTextVal.trim();
+                        setEditingFieldKey(null);
+                        if (onUpdateStamp) {
+                          onUpdateStamp(stamp.id, {
+                            name: trimmed.slice(0, 30) || "Text Block",
+                            textBlock: { id: stamp.textBlock?.id || stamp.id, content: trimmed },
+                          });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === "Escape") setEditingFieldKey(null);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full h-full resize-none p-2 text-xs text-slate-800 dark:text-zinc-100 bg-purple-500/10 border border-[#8B3DFF] rounded-lg outline-none leading-relaxed"
+                    />
+                  ) : (
+                    <div
+                      onDoubleClick={(e) =>
+                        startInlineEdit(`${stamp.id}-text`, stamp.textBlock?.content || "Editable text commentary...", e)
+                      }
+                      className="w-full h-full overflow-y-auto text-xs text-slate-800 dark:text-zinc-200 leading-relaxed cursor-text whitespace-pre-wrap select-text pr-1"
+                      title="Double-click to edit text"
+                    >
+                      {stamp.textBlock?.content || "Double-click to edit text notes and commentary..."}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── 3. Floating Bullet / Key Insight Card with Inline Editing ── */}
+            {isInsight && (
+              <div
+                style={{ opacity }}
+                className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 shadow-lg flex flex-col justify-between overflow-hidden select-none"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800/60 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                    <div className="w-5 h-5 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center flex-shrink-0">
+                      <Lightbulb className="w-3 h-3" />
+                    </div>
+                    {editingFieldKey === `${stamp.id}-insight-title` ? (
+                      <input
+                        type="text"
+                        autoFocus
+                        value={editingTextVal}
+                        onChange={(e) => setEditingTextVal(e.target.value)}
+                        onBlur={() => {
+                          const trimmed = editingTextVal.trim();
+                          setEditingFieldKey(null);
+                          if (trimmed && onUpdateStamp) {
+                            onUpdateStamp(stamp.id, {
+                              name: trimmed,
+                              insight: {
+                                ...(stamp.insight || { id: stamp.id, text: "" }),
+                                title: trimmed,
+                              },
+                            });
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                          if (e.key === "Enter") {
+                            const trimmed = editingTextVal.trim();
+                            setEditingFieldKey(null);
+                            if (trimmed && onUpdateStamp) {
+                              onUpdateStamp(stamp.id, {
+                                name: trimmed,
+                                insight: {
+                                  ...(stamp.insight || { id: stamp.id, text: "" }),
+                                  title: trimmed,
+                                },
+                              });
+                            }
+                          } else if (e.key === "Escape") {
+                            setEditingFieldKey(null);
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs font-bold text-slate-900 dark:text-white bg-purple-500/10 border border-[#8B3DFF] rounded px-1.5 py-0.5 outline-none w-full"
+                      />
+                    ) : (
+                      <h4
+                        onDoubleClick={(e) =>
+                          startInlineEdit(`${stamp.id}-insight-title`, stamp.insight?.title || "Key Insights", e)
+                        }
+                        className="text-xs font-bold text-blue-950 dark:text-blue-300 truncate cursor-text hover:text-[#8B3DFF] transition-colors"
+                        title="Double-click to inline edit title"
+                      >
+                        {stamp.insight?.title || stamp.name || "Key Insights"}
+                      </h4>
+                    )}
+                  </div>
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 font-bold flex-shrink-0">
+                    Bullets
+                  </span>
+                </div>
+
+                {/* Bullets List or Text Body */}
+                <div className="flex-1 min-h-0 w-full pt-2 overflow-y-auto pr-1">
+                  {stamp.insight?.items && stamp.insight.items.length > 0 ? (
+                    <div className="space-y-1.5 text-[11px] leading-relaxed">
+                      {stamp.insight.items.map((item, idx) => (
+                        <div key={item.id || idx} className="flex items-start gap-2">
+                          <span className="w-3.5 h-3.5 rounded-full bg-[#8B3DFF] text-white font-bold flex items-center justify-center text-[8px] flex-shrink-0 mt-0.5">
+                            {item.num ?? idx + 1}
+                          </span>
+                          <span
+                            onDoubleClick={(e) =>
+                              startInlineEdit(`${stamp.id}-bullet-${idx}`, item.text, e)
+                            }
+                            className="text-slate-700 dark:text-zinc-200 cursor-text hover:underline"
+                            dangerouslySetInnerHTML={{ __html: item.text }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : editingFieldKey === `${stamp.id}-insight-text` ? (
+                    <textarea
+                      autoFocus
+                      value={editingTextVal}
+                      onChange={(e) => setEditingTextVal(e.target.value)}
+                      onBlur={() => {
+                        const trimmed = editingTextVal.trim();
+                        setEditingFieldKey(null);
+                        if (onUpdateStamp) {
+                          onUpdateStamp(stamp.id, {
+                            insight: {
+                              ...(stamp.insight || { id: stamp.id, text: "" }),
+                              text: trimmed,
+                            },
+                          });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === "Escape") setEditingFieldKey(null);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full h-full resize-none p-2 text-xs text-slate-800 dark:text-zinc-100 bg-purple-500/10 border border-[#8B3DFF] rounded-lg outline-none leading-relaxed"
+                    />
+                  ) : (
+                    <div
+                      onDoubleClick={(e) =>
+                        startInlineEdit(
+                          `${stamp.id}-insight-text`,
+                          stamp.insight?.text || "Key operational observation...",
+                          e
+                        )
+                      }
+                      className="text-xs text-slate-700 dark:text-zinc-200 leading-relaxed cursor-text whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: stamp.insight?.text || "Double-click to edit key takeaway..." }}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── 4. Floating Metric KPI Card with Inline Editing ── */}
+            {isMetric && (
+              <div
+                style={{ opacity }}
+                className={`w-full h-full rounded-2xl border ${tint.border} ${tint.bg} p-3.5 shadow-lg flex flex-col justify-between overflow-hidden select-none`}
+              >
+                {/* Metric Label (Inline Editable) */}
+                <div className="flex items-center justify-between pb-1 flex-shrink-0">
+                  {editingFieldKey === `${stamp.id}-metric-label` ? (
+                    <input
+                      type="text"
+                      autoFocus
+                      value={editingTextVal}
+                      onChange={(e) => setEditingTextVal(e.target.value)}
+                      onBlur={() => {
+                        const trimmed = editingTextVal.trim();
+                        setEditingFieldKey(null);
+                        if (trimmed && onUpdateStamp) {
+                          onUpdateStamp(stamp.id, {
+                            name: trimmed,
+                            metricCard: {
+                              ...(stamp.metricCard || { id: stamp.id, label: "", value: "0", tintColor: "purple", trendDirection: "up", trendValue: "" }),
+                              label: trimmed,
+                            },
+                          });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === "Enter") {
+                          const trimmed = editingTextVal.trim();
+                          setEditingFieldKey(null);
+                          if (trimmed && onUpdateStamp) {
+                            onUpdateStamp(stamp.id, {
+                              name: trimmed,
+                              metricCard: {
+                                ...(stamp.metricCard || { id: stamp.id, label: "", value: "0", tintColor: "purple", trendDirection: "up", trendValue: "" }),
+                                label: trimmed,
+                              },
+                            });
+                          }
+                        } else if (e.key === "Escape") setEditingFieldKey(null);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[11px] font-semibold text-slate-800 dark:text-white bg-purple-500/10 border border-[#8B3DFF] rounded px-1.5 py-0.5 outline-none w-full"
+                    />
+                  ) : (
+                    <span
+                      onDoubleClick={(e) =>
+                        startInlineEdit(`${stamp.id}-metric-label`, stamp.metricCard?.label || stamp.name, e)
+                      }
+                      className="text-[11px] font-semibold text-slate-600 dark:text-zinc-300 truncate cursor-text hover:underline"
+                      title="Double-click to edit label"
+                    >
+                      {stamp.metricCard?.label || stamp.name}
+                    </span>
+                  )}
+                </div>
+
+                {/* Metric Value (Large Bold, Inline Editable) */}
+                <div className="py-1 flex-1 flex items-center">
+                  {editingFieldKey === `${stamp.id}-metric-value` ? (
+                    <input
+                      type="text"
+                      autoFocus
+                      value={editingTextVal}
+                      onChange={(e) => setEditingTextVal(e.target.value)}
+                      onBlur={() => {
+                        const trimmed = editingTextVal.trim();
+                        setEditingFieldKey(null);
+                        if (trimmed && onUpdateStamp) {
+                          onUpdateStamp(stamp.id, {
+                            metricCard: {
+                              ...(stamp.metricCard || { id: stamp.id, label: "", value: "0", tintColor: "purple", trendDirection: "up", trendValue: "" }),
+                              value: trimmed,
+                            },
+                          });
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        e.stopPropagation();
+                        if (e.key === "Enter") {
+                          const trimmed = editingTextVal.trim();
+                          setEditingFieldKey(null);
+                          if (trimmed && onUpdateStamp) {
+                            onUpdateStamp(stamp.id, {
+                              metricCard: {
+                                ...(stamp.metricCard || { id: stamp.id, label: "", value: "0", tintColor: "purple", trendDirection: "up", trendValue: "" }),
+                                value: trimmed,
+                              },
+                            });
+                          }
+                        } else if (e.key === "Escape") setEditingFieldKey(null);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`text-2xl font-black font-mono tracking-tight bg-purple-500/10 border border-[#8B3DFF] rounded px-2 py-0.5 outline-none w-full ${tint.text}`}
+                    />
+                  ) : (
+                    <span
+                      onDoubleClick={(e) =>
+                        startInlineEdit(`${stamp.id}-metric-value`, stamp.metricCard?.value || "0", e)
+                      }
+                      className={`text-2xl font-black font-mono tracking-tight cursor-text hover:opacity-80 transition-opacity ${tint.text}`}
+                      title="Double-click to edit value"
+                    >
+                      {stamp.metricCard?.value || "98.4%"}
+                    </span>
+                  )}
+                </div>
+
+                {/* Trend Badge */}
+                <div className="flex items-center gap-1.5 pt-1 border-t border-slate-200/40 dark:border-zinc-800/40">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (activeIsPreview || !onUpdateStamp) return;
+                      const nextDir =
+                        stamp.metricCard?.trendDirection === "up"
+                          ? "down"
+                          : stamp.metricCard?.trendDirection === "down"
+                          ? "no-change"
+                          : "up";
+                      onUpdateStamp(stamp.id, {
+                        metricCard: {
+                          ...(stamp.metricCard || { id: stamp.id, label: "", value: "0", tintColor: "purple", trendDirection: "up", trendValue: "" }),
+                          trendDirection: nextDir,
+                        },
+                      });
+                    }}
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono transition-transform hover:scale-105 cursor-pointer ${tint.badgeBg} ${tint.badgeText}`}
+                    title="Click to cycle trend direction"
+                  >
+                    {stamp.metricCard?.trendDirection === "up" && <ArrowUp className="w-2.5 h-2.5" />}
+                    {stamp.metricCard?.trendDirection === "down" && <ArrowDown className="w-2.5 h-2.5" />}
+                    {stamp.metricCard?.trendDirection === "no-change" && <span>—</span>}
+                    <span>{stamp.metricCard?.trendValue || "+2.4% vs last cycle"}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── 5. Transparent SVG Decorative Stamp ── */}
+            {!isCard && (
               <div
                 style={{ opacity }}
                 className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full drop-shadow-sm select-none"
@@ -404,6 +950,19 @@ export function CanvasStampsLayer({
                   onMouseDown={(e) => e.stopPropagation()}
                   className="stamp-toolbar-portal absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/98 dark:bg-zinc-900/98 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 shadow-2xl backdrop-blur-md text-xs z-50 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100"
                 >
+                  {/* For Charts: Direct "Edit Data" button on floating toolbar */}
+                  {isChart && stamp.chart && onOpenChartEditor && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenChartEditor(stamp.id, stamp.chart!)}
+                      className="px-2 py-0.5 rounded-md bg-[#8B3DFF] text-white hover:bg-purple-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer mr-1 shadow-xs transition-colors"
+                      title="Open Telemetry Data Editor"
+                    >
+                      <SlidersHorizontal className="w-2.5 h-2.5" />
+                      <span>Edit Data</span>
+                    </button>
+                  )}
+
                   {/* Rotation Angle Preset Display & Stepper */}
                   <div className="flex items-center gap-1 font-mono text-[11px] text-slate-700 dark:text-zinc-300 pr-1 border-r border-slate-200 dark:border-zinc-800">
                     <button
@@ -478,13 +1037,13 @@ export function CanvasStampsLayer({
                     <span>{isBack ? "Back" : "Front"}</span>
                   </button>
 
-                  {/* Dock to Grid (if chart) */}
-                  {isChart && onDockToGrid && (
+                  {/* Dock to Grid (for charts, text, bullets, and metric cards) */}
+                  {isCard && onDockToGrid && (
                     <button
                       type="button"
                       onClick={() => onDockToGrid(stamp)}
                       className="px-1.5 py-0.5 rounded bg-sky-50 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 text-[10px] font-semibold flex items-center gap-1 cursor-pointer hover:bg-sky-100 transition-colors"
-                      title="Dock this chart back into report grid rows"
+                      title="Dock this element back into report grid rows"
                     >
                       <LayoutGrid className="w-2.5 h-2.5" />
                       <span>To Grid</span>
@@ -494,20 +1053,23 @@ export function CanvasStampsLayer({
                   {/* Done / Deselect */}
                   <button
                     type="button"
-                    onClick={() => setSelected(null)}
+                    onClick={() => {
+                      setSelected(null);
+                      setEditingFieldKey(null);
+                    }}
                     className="p-1 rounded text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40 cursor-pointer"
                     title="Done"
                   >
                     <Check className="w-3 h-3" />
                   </button>
 
-                  {/* Delete Stamp / Chart */}
+                  {/* Delete Stamp / Element */}
                   {onDeleteStamp && (
                     <button
                       type="button"
                       onClick={() => onDeleteStamp(stamp.id)}
                       className="p-1 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
-                      title={isChart ? "Delete Floating Chart" : "Delete Stamp"}
+                      title={isCard ? "Delete Floating Element" : "Delete Stamp"}
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>

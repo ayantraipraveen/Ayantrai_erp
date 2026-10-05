@@ -52,6 +52,7 @@ import {
   updateTableOfContentsData,
   updateBackCoverData,
   addStampToSection,
+  updateStampInSection,
   CanvasCoordinateStamp,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasSidebar, SidebarAddBlockEvent, ReportOutlineItem } from "./CanvasSidebar";
@@ -625,6 +626,7 @@ export default function SectionCanvasEditor({
   const [chartModalOpen, setChartModalOpen] = useState(false);
   const [editingChart, setEditingChart] = useState<LibraryChartCard | null>(null);
   const [editingChartCellMeta, setEditingChartCellMeta] = useState<{ cell: CanvasCell; rowId: string } | null>(null);
+  const [editingFloatingChartId, setEditingFloatingChartId] = useState<string | null>(null);
   const [chartTitle, setChartTitle] = useState("");
   const [chartType, setChartType] = useState<GraphType>("bar");
   const [chartDataSource, setChartDataSource] = useState("ppe_sensor_compliance");
@@ -643,10 +645,41 @@ export default function SectionCanvasEditor({
     showLegend: true,
   });
 
+  const handleOpenFloatingChartEditor = useCallback(
+    (stampId: string, chart: LibraryChartCard) => {
+      setEditingFloatingChartId(stampId);
+      setEditingChartCellMeta(null);
+      setEditingChart(chart);
+      setChartTitle(chart.title || "");
+      setChartType(chart.chartType || "bar");
+      setChartDataSource(chart.dataSourceField || "ppe_sensor_compliance");
+      setChartDesc(chart.description || "");
+      setChartColor(chart.color || chart.colors?.[0] || "#9D61FF");
+      setChartColors(chart.colors || (chart.color ? [chart.color] : ["#9D61FF"]));
+      setGridRows(chart.gridRows || 4);
+      setGridCols(chart.gridCols || 7);
+      setChartDataPoints(chart.dataPoints || []);
+      setChartXAxis(chart.xAxis || {});
+      setChartYAxis(chart.yAxis || {});
+      setChartSeries(chart.series || []);
+      setChartOptions(
+        chart.options || {
+          showValues: true,
+          showGridLines: true,
+          showLegend: true,
+        }
+      );
+      setChartModalOpen(true);
+      dispatch(setChartEditorFullscreen(true));
+    },
+    [dispatch]
+  );
+
   const handleCloseChartEditor = () => {
     const targetCellId = editingChartCellMeta?.cell?.id;
     setChartModalOpen(false);
     setEditingChartCellMeta(null);
+    setEditingFloatingChartId(null);
     dispatch(setChartEditorFullscreen(false));
 
     // Clear URL search params and session storage
@@ -673,33 +706,53 @@ export default function SectionCanvasEditor({
   };
 
   const handleSaveChart = () => {
-    if (!editingChartCellMeta || !editingChart) return;
+    if (!editingChart) return;
     const finalColors = chartColors && chartColors.length > 0 ? chartColors : [chartColor];
-    dispatch(
-      updateChartInCell({
-        sectionId,
-        rowId: editingChartCellMeta.rowId,
-        cellId: editingChartCellMeta.cell.id,
-        chart: {
-          ...editingChart,
-          title: chartTitle.trim(),
-          chartType,
-          dataSourceField: chartDataSource,
-          description: chartDesc.trim(),
-          color: chartColor,
-          colors: finalColors,
-          gridRows: chartType === "heatmap" || chartType === "table" ? gridRows : undefined,
-          gridCols: chartType === "heatmap" || chartType === "table" ? gridCols : undefined,
-          dataPoints: chartDataPoints && chartDataPoints.length > 0 ? chartDataPoints : undefined,
-          xAxis: Object.keys(chartXAxis).length > 0 ? chartXAxis : undefined,
-          yAxis: Object.keys(chartYAxis).length > 0 ? chartYAxis : undefined,
-          series: chartSeries && chartSeries.length > 0 ? chartSeries : undefined,
-          options: chartOptions,
-        },
-      })
-    );
-    dispatch(showGlobalToast({ message: "Chart updated!", type: "success" }));
-    handleCloseChartEditor();
+    const updatedChart: LibraryChartCard = {
+      ...editingChart,
+      title: chartTitle.trim(),
+      chartType,
+      dataSourceField: chartDataSource,
+      description: chartDesc.trim(),
+      color: chartColor,
+      colors: finalColors,
+      gridRows: chartType === "heatmap" || chartType === "table" ? gridRows : undefined,
+      gridCols: chartType === "heatmap" || chartType === "table" ? gridCols : undefined,
+      dataPoints: chartDataPoints && chartDataPoints.length > 0 ? chartDataPoints : undefined,
+      xAxis: Object.keys(chartXAxis).length > 0 ? chartXAxis : undefined,
+      yAxis: Object.keys(chartYAxis).length > 0 ? chartYAxis : undefined,
+      series: chartSeries && chartSeries.length > 0 ? chartSeries : undefined,
+      options: chartOptions,
+    };
+
+    if (editingFloatingChartId) {
+      dispatch(
+        updateStampInSection({
+          sectionId,
+          stampId: editingFloatingChartId,
+          patch: {
+            name: chartTitle.trim(),
+            chart: updatedChart,
+          },
+        })
+      );
+      dispatch(showGlobalToast({ message: "Floating chart data updated!", type: "success" }));
+      handleCloseChartEditor();
+      return;
+    }
+
+    if (editingChartCellMeta) {
+      dispatch(
+        updateChartInCell({
+          sectionId,
+          rowId: editingChartCellMeta.rowId,
+          cellId: editingChartCellMeta.cell.id,
+          chart: updatedChart,
+        })
+      );
+      dispatch(showGlobalToast({ message: "Chart updated!", type: "success" }));
+      handleCloseChartEditor();
+    }
   };
 
   // Badge Strip Modal
@@ -1006,6 +1059,95 @@ export default function SectionCanvasEditor({
       dispatch(
         showGlobalToast({
           message: `"${chart.title}" placed as floating chart on Page ${canvasActivePageIndex + 1}! Drag anywhere, or use the top handle to rotate on axis.`,
+          type: "success",
+        })
+      );
+    },
+    [dispatch, sectionId, canvasActivePageIndex]
+  );
+
+  const handleAddFloatingElement = useCallback(
+    (elementType: "text" | "insight" | "metric-card", defaultData?: any) => {
+      const ts = Date.now();
+      const targetPage = canvasActivePageIndex >= 0 ? canvasActivePageIndex : 0;
+      let newStamp: CanvasCoordinateStamp;
+
+      if (elementType === "text") {
+        const textContent =
+          typeof defaultData === "string"
+            ? defaultData
+            : "Double-click to edit text commentary and operational notes directly on canvas.";
+        newStamp = {
+          id: `coord-text-${ts}`,
+          sourceId: `text-${ts}`,
+          name: "Text Block",
+          pageIndex: targetPage,
+          x: 60,
+          y: 140,
+          width: 360,
+          height: 120,
+          rotation: 0,
+          opacity: 100,
+          layer: "front",
+          elementType: "text",
+          textBlock: {
+            id: `text-${ts}`,
+            content: textContent,
+          },
+        };
+      } else if (elementType === "insight") {
+        const insight: LibraryKeyInsightItem = defaultData || {
+          id: `ki-${ts}`,
+          variant: "single",
+          title: "Key Observation",
+          text: "Double-click to edit key takeaway and operational observations.",
+        };
+        newStamp = {
+          id: `coord-insight-${ts}`,
+          sourceId: insight.id,
+          name: insight.title || "Key Insight",
+          pageIndex: targetPage,
+          x: 60,
+          y: 140,
+          width: 380,
+          height: 130,
+          rotation: 0,
+          opacity: 100,
+          layer: "front",
+          elementType: "insight",
+          insight,
+        };
+      } else {
+        // metric-card
+        const metricCard: LibraryMetricCard = defaultData || {
+          id: `metric-${ts}`,
+          label: "Shift Adherence",
+          value: "96.4%",
+          tintColor: "purple",
+          trendDirection: "up",
+          trendValue: "+3.2% vs last cycle",
+        };
+        newStamp = {
+          id: `coord-metric-${ts}`,
+          sourceId: metricCard.id,
+          name: metricCard.label,
+          pageIndex: targetPage,
+          x: 60,
+          y: 140,
+          width: 220,
+          height: 110,
+          rotation: 0,
+          opacity: 100,
+          layer: "front",
+          elementType: "metric-card",
+          metricCard,
+        };
+      }
+
+      dispatch(addStampToSection({ sectionId, stamp: newStamp }));
+      dispatch(
+        showGlobalToast({
+          message: `Added floating ${elementType.replace("-", " ")} to page ${targetPage + 1}! Drag, resize or rotate it freely.`,
           type: "success",
         })
       );
@@ -1440,8 +1582,19 @@ export default function SectionCanvasEditor({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (chartModalOpen) return;
-      const activeTag = document.activeElement?.tagName.toLowerCase();
-      const isInput = activeTag === "input" || activeTag === "textarea" || activeTag === "select";
+      const activeEl = document.activeElement as HTMLElement | null;
+      const activeTag = activeEl?.tagName.toLowerCase();
+      const isContentEditable = Boolean(
+        activeEl?.isContentEditable ||
+        activeEl?.getAttribute("contenteditable") === "true" ||
+        activeEl?.closest('[contenteditable="true"]') ||
+        activeEl?.closest('.dynamic-word-editor')
+      );
+      const isInput =
+        activeTag === "input" ||
+        activeTag === "textarea" ||
+        activeTag === "select" ||
+        isContentEditable;
 
       // Escape key exits preview or clears selection
       if (e.key === "Escape") {
@@ -1518,7 +1671,7 @@ export default function SectionCanvasEditor({
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden animate-fadeIn bg-white dark:bg-[#07090d] relative">
       {/* Fullscreen Telemetry Studio Overlay (keeps CanvasStudio mounted so page and scroll position are preserved) */}
-      {chartModalOpen && chartEditorFullscreen && editingChart && editingChartCellMeta && (
+      {chartModalOpen && chartEditorFullscreen && editingChart && (editingChartCellMeta || editingFloatingChartId) && (
         <div data-chart-editor-open="true" className="fixed inset-0 z-[100000] flex flex-col bg-white dark:bg-[#07090d] animate-fadeIn">
           <ChartEditorPanel
             editingChart={editingChart}
@@ -1860,6 +2013,7 @@ export default function SectionCanvasEditor({
             onSelectWatermark={handleSelectWatermark}
             onAddWatermarkElement={handleAddWatermarkElement}
             onAddFloatingChart={handleAddFloatingChart}
+            onAddFloatingElement={handleAddFloatingElement}
             watermarkConfig={watermarkConfig}
             reportSections={isReportFrame ? computedReportSections : undefined}
             activeReportSectionKey={activeReportSectionKey}
@@ -1880,6 +2034,7 @@ export default function SectionCanvasEditor({
             setSelectedRowId(rowId);
           }}
           onEditCell={handleEditCell}
+          onOpenChartEditor={handleOpenFloatingChartEditor}
           onUpdateMetricCardInCell={handleUpdateMetricCardInCell}
           onUpdateChartInCell={(rowId, cellId, chart) =>
             dispatch(updateChartInCell({ sectionId, rowId, cellId, chart }))

@@ -86,6 +86,7 @@ export function CanvasStudio({
   selectedRowId,
   onSelectCell,
   onEditCell,
+  onOpenChartEditor,
   onUpdateMetricCardInCell,
   onUpdateChartInCell,
   onUpdateInsightInCell,
@@ -608,19 +609,68 @@ export function CanvasStudio({
 
   const handleDockStampToGrid = useCallback(
     (stamp: CanvasCoordinateStamp) => {
-      if (stamp.elementType === "chart" && stamp.chart) {
-        const cell: CanvasCell = {
+      let cell: CanvasCell | null = null;
+      const isChart = stamp.elementType === "chart" || Boolean(stamp.chart);
+      const isText = stamp.elementType === "text" || Boolean(stamp.textBlock);
+      const isInsight = stamp.elementType === "insight" || Boolean(stamp.insight);
+      const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
+      const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
+
+      if (isChart && stamp.chart) {
+        cell = {
           id: `cell-chart-${Date.now()}`,
           colSpan: 4,
           blockType: "chart",
           chart: stamp.chart,
           customHeight: stamp.height,
         };
+      } else if (isText) {
+        cell = {
+          id: `cell-text-${Date.now()}`,
+          colSpan: 4,
+          blockType: "text",
+          textBlock: stamp.textBlock || { id: stamp.id, content: stamp.name || "Text block" },
+          customHeight: stamp.height,
+        };
+      } else if (isInsight) {
+        cell = {
+          id: `cell-insight-${Date.now()}`,
+          colSpan: 4,
+          blockType: "insight",
+          insight: stamp.insight || { id: stamp.id, text: stamp.name || "Key Insight" },
+          customHeight: stamp.height,
+        };
+      } else if (isMetric) {
+        cell = {
+          id: `cell-metric-${Date.now()}`,
+          colSpan: 2,
+          blockType: "metric-card",
+          metricCard: stamp.metricCard || {
+            id: stamp.id,
+            label: stamp.name || "Metric",
+            value: "98.4%",
+            tintColor: "purple",
+            trendDirection: "up",
+            trendValue: "+2.4%",
+          },
+          customHeight: stamp.height,
+        };
+      } else if (isBadgeStrip && stamp.badgeStrip) {
+        cell = {
+          id: `cell-badge-${Date.now()}`,
+          colSpan: 4,
+          blockType: "badge-strip",
+          badgeStrip: stamp.badgeStrip,
+          customHeight: stamp.height,
+        };
+      }
+
+      if (cell) {
         dispatch(addRowWithCell({ sectionId: section.id, cell }));
         dispatch(deleteStampFromSection({ sectionId: section.id, stampId: stamp.id }));
         dispatch(
           showGlobalToast({
-            message: `"${stamp.name}" docked back into report grid rows!`,
+            message: `"${stamp.name || "Element"}" docked back into report grid rows!`,
             type: "success",
           })
         );
@@ -631,9 +681,13 @@ export function CanvasStudio({
 
   const handleFloatCell = useCallback(
     (cell: CanvasCell, rowId: string) => {
+      const ts = Date.now();
+      let newCoord: CanvasCoordinateStamp | null = null;
+      let label = "Element";
+
       if (cell.blockType === "chart" && cell.chart) {
-        const ts = Date.now();
-        const newCoord: CanvasCoordinateStamp = {
+        label = cell.chart.title;
+        newCoord = {
           id: `coord-chart-${ts}`,
           sourceId: cell.chart.id,
           name: cell.chart.title,
@@ -648,13 +702,84 @@ export function CanvasStudio({
           elementType: "chart",
           chart: cell.chart,
         };
+      } else if (cell.blockType === "text") {
+        label = "Text Block";
+        const content = cell.textBlock?.content || "Editable text block";
+        newCoord = {
+          id: `coord-text-${ts}`,
+          sourceId: cell.textBlock?.id || cell.id,
+          name: content.slice(0, 30) || "Text Block",
+          pageIndex: 0,
+          x: 50,
+          y: 130,
+          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 360,
+          height: cell.customHeight || 120,
+          rotation: 0,
+          opacity: 100,
+          layer: "front",
+          elementType: "text",
+          textBlock: cell.textBlock || { id: cell.id, content },
+        };
+      } else if (cell.blockType === "insight") {
+        label = cell.insight?.title || "Key Insight";
+        newCoord = {
+          id: `coord-insight-${ts}`,
+          sourceId: cell.insight?.id || cell.id,
+          name: label,
+          pageIndex: 0,
+          x: 50,
+          y: 130,
+          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 380,
+          height: cell.customHeight || 130,
+          rotation: 0,
+          opacity: 100,
+          layer: "front",
+          elementType: "insight",
+          insight: cell.insight || { id: cell.id, text: "Key operational observation" },
+        };
+      } else if (cell.blockType === "metric-card" && cell.metricCard) {
+        label = cell.metricCard.label || "Metric Card";
+        newCoord = {
+          id: `coord-metric-${ts}`,
+          sourceId: cell.metricCard.id,
+          name: label,
+          pageIndex: 0,
+          x: 50,
+          y: 130,
+          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 220,
+          height: cell.customHeight || 110,
+          rotation: 0,
+          opacity: 100,
+          layer: "front",
+          elementType: "metric-card",
+          metricCard: cell.metricCard,
+        };
+      } else if (cell.blockType === "badge-strip" && cell.badgeStrip) {
+        label = "Badge Strip";
+        newCoord = {
+          id: `coord-badge-${ts}`,
+          sourceId: cell.badgeStrip.id,
+          name: label,
+          pageIndex: 0,
+          x: 50,
+          y: 130,
+          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 380,
+          height: cell.customHeight || 80,
+          rotation: 0,
+          opacity: 100,
+          layer: "front",
+          elementType: "badge-strip",
+          badgeStrip: cell.badgeStrip,
+        };
+      }
 
+      if (newCoord) {
         dispatch(addStampToSection({ sectionId: section.id, stamp: newCoord }));
         dispatch(deleteCanvasCell({ sectionId: section.id, rowId, cellId: cell.id }));
         handleSelectCell(null, null);
         dispatch(
           showGlobalToast({
-            message: `Detached "${cell.chart.title}" to free-floating coordinate chart with 360° axis rotation!`,
+            message: `Detached "${label}" to free-floating element with 360° axis rotation!`,
             type: "success",
           })
         );
@@ -1422,6 +1547,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                         dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
                       }}
                       onDockToGrid={handleDockStampToGrid}
+                      onOpenChartEditor={onOpenChartEditor}
                       selectedStampId={selectedStampId}
                       onSelectStamp={setSelectedStampId}
                       pageWidth={activePageWidth}

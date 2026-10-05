@@ -111,6 +111,7 @@ export interface CanvasStudioProps {
   onEditCell: (cell: CanvasCell, rowId: string) => void;
   onFloatCell?: (cell: CanvasCell, rowId: string) => void;
   onDockStampToGrid?: (stamp: CanvasCoordinateStamp) => void;
+  onOpenChartEditor?: (stampId: string, chart: LibraryChartCard) => void;
   onUpdateMetricCardInCell?: (rowId: string, cellId: string, card: LibraryMetricCard) => void;
   onUpdateChartInCell?: (rowId: string, cellId: string, chart: LibraryChartCard) => void;
   onUpdateInsightInCell?: (rowId: string, cellId: string, textOrInsight: string | LibraryKeyInsightItem) => void;

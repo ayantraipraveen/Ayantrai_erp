@@ -94,6 +94,7 @@ export interface CanvasSidebarProps {
   onSelectWatermark?: (watermarkId: string | null) => void;
   onAddWatermarkElement?: (watermarkId: string) => void;
   onAddFloatingChart?: (chart: LibraryChartCard) => void;
+  onAddFloatingElement?: (type: "text" | "insight" | "metric-card", defaultData?: any) => void;
   watermarkConfig?: WatermarkStampConfig;
   onUpdateWatermarkConfig?: (cfg: Partial<WatermarkStampConfig>) => void;
   isCollapsed?: boolean;
@@ -913,6 +914,7 @@ export function CanvasSidebar({
   onSelectWatermark,
   onAddWatermarkElement,
   onAddFloatingChart,
+  onAddFloatingElement,
   watermarkConfig,
   onUpdateWatermarkConfig,
   isCollapsed,
@@ -1915,8 +1917,24 @@ export function CanvasSidebar({
                         <span className="text-[10px] text-slate-400 leading-tight truncate">
                           {def.description}
                         </span>
-                        <div className="w-5 h-5 rounded-full bg-[#9D61FF]/10 group-hover:bg-[#9D61FF] text-[#9D61FF] group-hover:text-white flex items-center justify-center transition-colors">
-                          <Plus className="w-3 h-3" />
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {onAddFloatingElement && (def.type === "text" || def.type === "insight") && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAddFloatingElement(def.type as any, def.defaultInsight);
+                              }}
+                              className="flex items-center gap-1 text-[#8B3DFF] dark:text-purple-300 hover:text-purple-700 dark:hover:text-purple-200 font-bold cursor-pointer bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 px-2 py-0.5 rounded-md transition-colors text-[10px]"
+                              title="Float on Page (freeform coordinates & 360° axis rotation)"
+                            >
+                              <Move className="w-2.5 h-2.5" />
+                              <span>Float</span>
+                            </button>
+                          )}
+                          <div className="w-5 h-5 rounded-full bg-[#9D61FF]/10 group-hover:bg-[#9D61FF] text-[#9D61FF] group-hover:text-white flex items-center justify-center transition-colors">
+                            <Plus className="w-3 h-3" />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1929,13 +1947,14 @@ export function CanvasSidebar({
       </aside>
 
       {/* ── High-Definition Full Chart Preview Modal ── */}
+      {/* ── Chart Full Preview Modal (Standard Enterprise Clean UI - No Box Shadow) ── */}
       {previewingChart && (
         <div
           className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fadeIn select-none"
           onClick={() => setPreviewingChart(null)}
         >
           <div
-            className="bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col transition-all"
+            className="bg-white dark:bg-[#0f131a] border border-slate-200 dark:border-zinc-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col transition-all"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -1965,7 +1984,7 @@ export function CanvasSidebar({
 
             {/* Modal Live Visual Rendering */}
             <div className="p-6 space-y-4">
-              <div className="w-full bg-slate-50 dark:bg-black/40 border border-slate-200 dark:border-zinc-800/80 rounded-2xl p-6 min-h-[300px] flex items-center justify-center shadow-inner">
+              <div className="w-full bg-slate-50/70 dark:bg-zinc-900/50 border border-slate-200 dark:border-zinc-800 rounded-xl p-6 min-h-[300px] flex items-center justify-center">
                 <ChartRenderer
                   chart={previewingChart}
                   color={previewingChart.color || "#9D61FF"}
@@ -2006,7 +2025,7 @@ export function CanvasSidebar({
                       onAddFloatingChart(previewingChart);
                       setPreviewingChart(null);
                     }}
-                    className="h-9 px-3.5 sm:px-4 rounded-xl border border-purple-400/40 dark:border-purple-600/40 bg-purple-50/80 dark:bg-purple-950/40 text-[#8B3DFF] dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition-all active:scale-[0.98]"
+                    className="h-9 px-3.5 sm:px-4 rounded-xl border border-purple-300 dark:border-purple-700/60 bg-purple-50/80 dark:bg-purple-950/40 text-[#8B3DFF] dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
                     title="Place freely with 360° axis rotation and exact coordinates"
                   >
                     <Move className="w-3.5 h-3.5 text-[#8B3DFF] dark:text-purple-400" />
@@ -2023,7 +2042,7 @@ export function CanvasSidebar({
                     });
                     setPreviewingChart(null);
                   }}
-                  className="h-9 px-4 sm:px-5 rounded-xl bg-gradient-to-r from-[#8B3DFF] to-[#6D28D9] hover:from-[#7C3AED] hover:to-[#5B21B6] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md shadow-purple-500/25 transition-all active:scale-[0.98]"
+                  className="h-9 px-4 sm:px-5 rounded-xl bg-[#8B3DFF] hover:bg-[#7a32e6] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Insert to Grid</span>

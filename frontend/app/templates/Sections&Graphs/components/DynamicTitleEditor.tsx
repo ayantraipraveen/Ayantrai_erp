@@ -980,6 +980,7 @@ useEffect(() => {
         suppressContentEditableWarning
         data-placeholder={placeholder}
         onKeyDown={(e) => {
+          e.stopPropagation();
           if (e.ctrlKey || e.metaKey) {
             if (e.key === "b" || e.key === "B") {
               e.preventDefault();
@@ -1009,6 +1010,7 @@ useEffect(() => {
             onCancel();
           }
         }}
+        onKeyUp={(e) => e.stopPropagation()}
         style={{
           fontSize: `${defaultFontSize}px`,
           borderColor: editorBorderColor || undefined,

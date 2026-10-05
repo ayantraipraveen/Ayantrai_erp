@@ -308,7 +308,7 @@ export function CanvasTableOfContentsPage({
   return (
     <div
       id="canvas-toc-page"
-      className="relative bg-white text-slate-900 overflow-hidden select-none shadow-2xl mx-auto"
+      className="relative bg-white text-slate-900 overflow-hidden select-none mx-auto"
       style={{
         width: "595px",
         height: "842px",
@@ -466,17 +466,7 @@ export function CanvasTableOfContentsPage({
 
           {/* Content Items */}
           <div className="flex flex-col flex-1 mt-6">
-            <div className="flex items-center justify-between pb-1.5 px-0.5 border-b border-slate-100">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                Sections Index ({items.length})
-              </span>
-              <span className="text-[9px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1 shadow-2xs">
-                <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
-                Auto Page Numbers
-              </span>
-            </div>
-
-            <div className="flex flex-col flex-1 mt-1 justify-between">
+             <div className="flex flex-col flex-1 mt-1 ">
               {items.map((item, idx) => {
                 const numKey = item.number || String(idx + 1).padStart(2, "0");
                 const palette = COLOR_MAP[numKey] || COLOR_PALETTES[idx % COLOR_PALETTES.length];
@@ -490,7 +480,7 @@ export function CanvasTableOfContentsPage({
                     <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
                       {/* Number Badge */}
                       <div
-                        className={`w-9 h-9 rounded-xl ${palette.bg} ${palette.text} font-black text-xs flex items-center justify-center flex-shrink-0 font-mono shadow-xs`}
+                        className={`w-9 h-9 rounded-xl ${palette.bg} ${palette.text} font-black text-xs flex items-center justify-center flex-shrink-0 font-mono `}
                       >
                         <EditableItemText
                           itemId={item.id}

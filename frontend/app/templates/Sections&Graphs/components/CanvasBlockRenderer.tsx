@@ -120,10 +120,12 @@ function MetricCardBlock({
   cell,
   isPreview,
   onUpdateMetricCard,
+  onEditingChange,
 }: {
   cell: CanvasCell;
   isPreview?: boolean;
   onUpdateMetricCard?: (card: LibraryMetricCard) => void;
+  onEditingChange?: (isEditing: boolean) => void;
 }) {
   const card = cell.metricCard;
   if (!card) return null;
@@ -140,13 +142,18 @@ function MetricCardBlock({
     setLocalTrendVal(card.trendValue);
   }, [card]);
 
+  const handleSetEditingField = (field: "label" | "value" | "trend" | null) => {
+    setEditingField(field);
+    onEditingChange?.(Boolean(field));
+  };
+
   const commitCardChange = (patch: Partial<LibraryMetricCard>) => {
     if (!onUpdateMetricCard) return;
     onUpdateMetricCard({
       ...card,
       ...patch,
     });
-    setEditingField(null);
+    handleSetEditingField(null);
   };
 
   const cycleTrend = (e: React.MouseEvent) => {
@@ -164,7 +171,7 @@ function MetricCardBlock({
   return (
     <div
       style={cell.customHeight ? { height: `${cell.customHeight}px`, minHeight: `${cell.customHeight}px` } : undefined}
-      className={`w-full h-full min-h-[140px] rounded-2xl border p-4 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} shadow-sm ${editingField ? "relative z-50" : "relative z-10"}`}
+      className={`w-full h-full min-h-[140px] rounded-2xl border p-4 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} ${editingField ? "relative z-50" : "relative z-10"}`}
     >
       {/* Label (inline editable on double click) */}
       <div className="text-[11px] font-semibold text-slate-600 dark:text-zinc-400 line-clamp-2 leading-snug mb-2">
@@ -177,14 +184,14 @@ function MetricCardBlock({
             onSave={(plain, html) => {
               commitCardChange({ label: plain, labelHtml: html } as any);
             }}
-            onCancel={() => setEditingField(null)}
+            onCancel={() => handleSetEditingField(null)}
           />
         ) : (
           <span
             onDoubleClick={(e) => {
               if (isPreview) return;
               e.stopPropagation();
-              setEditingField("label");
+              handleSetEditingField("label");
             }}
             title={!isPreview ? "Double-click to format label (Word style)" : undefined}
             className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
@@ -205,14 +212,14 @@ function MetricCardBlock({
             onSave={(plain, html) => {
               commitCardChange({ value: plain, valueHtml: html } as any);
             }}
-            onCancel={() => setEditingField(null)}
+            onCancel={() => handleSetEditingField(null)}
           />
         ) : (
           <span
             onDoubleClick={(e) => {
               if (isPreview) return;
               e.stopPropagation();
-              setEditingField("value");
+              handleSetEditingField("value");
             }}
             title={!isPreview ? "Double-click to format value (Word style)" : undefined}
             className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
@@ -235,7 +242,7 @@ function MetricCardBlock({
           {card.trendDirection === "no-change" && <span>—</span>}
 
           {!isPreview && editingField === "trend" ? (
-            <div onClick={(e) => e.stopPropagation()} className="min-w-[120px]">
+            <div onClick={(e) => e.stopPropagation()} className="min-w-[120px] max-w-full">
               <DynamicTextEditor
                 initialValue={card.trendValue}
                 initialHtml={(card as any).trendValueHtml}
@@ -244,7 +251,7 @@ function MetricCardBlock({
                 onSave={(plain, html) => {
                   commitCardChange({ trendValue: plain, trendValueHtml: html } as any);
                 }}
-                onCancel={() => setEditingField(null)}
+                onCancel={() => handleSetEditingField(null)}
               />
             </div>
           ) : (
@@ -252,7 +259,7 @@ function MetricCardBlock({
               onDoubleClick={(e) => {
                 if (isPreview) return;
                 e.stopPropagation();
-                setEditingField("trend");
+                handleSetEditingField("trend");
               }}
               title={!isPreview ? "Double-click to format trend text (Word style)" : undefined}
             >
@@ -270,11 +277,13 @@ function ChartBlock({
   isPreview,
   onOpenChartEditor,
   onUpdateChart,
+  onEditingChange,
 }: {
   cell: CanvasCell;
   isPreview?: boolean;
   onOpenChartEditor?: () => void;
   onUpdateChart?: (chart: LibraryChartCard) => void;
+  onEditingChange?: (isEditing: boolean) => void;
 }) {
   const chart = cell.chart;
   if (!chart) return null;
@@ -345,6 +354,16 @@ function ChartBlock({
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [localDesc, setLocalDesc] = useState(chart.description || "");
 
+  const handleSetEditingTitle = (editing: boolean) => {
+    setIsEditingTitle(editing);
+    onEditingChange?.(editing || isEditingDesc);
+  };
+
+  const handleSetEditingDesc = (editing: boolean) => {
+    setIsEditingDesc(editing);
+    onEditingChange?.(isEditingTitle || editing);
+  };
+
   useEffect(() => {
     setLocalTitle(chart.title || "");
   }, [chart.title]);
@@ -354,7 +373,7 @@ function ChartBlock({
   }, [chart.description]);
 
   const handleTitleCommit = () => {
-    setIsEditingTitle(false);
+    handleSetEditingTitle(false);
     const trimmed = localTitle.trim();
     if (trimmed !== (chart.title || "").trim() && onUpdateChart) {
       onUpdateChart({ ...chart, title: trimmed });
@@ -362,7 +381,7 @@ function ChartBlock({
   };
 
   const handleDescCommit = () => {
-    setIsEditingDesc(false);
+    handleSetEditingDesc(false);
     const trimmed = localDesc.trim();
     if (trimmed !== (chart.description || "").trim() && onUpdateChart) {
       onUpdateChart({ ...chart, description: trimmed });
@@ -372,7 +391,7 @@ function ChartBlock({
   return (
     <div
       style={customHeight ? { height: `${customHeight}px`, maxHeight: "100%" } : { maxHeight: "100%" }}
-      className={`relative group/chart w-full max-h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] ${pClass} shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between overflow-hidden`}
+      className={`relative group/chart w-full max-h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] ${pClass} flex flex-col justify-between overflow-hidden`}
     >
       {/* Configure & Edit Data Button - Clean overlay in top right on hover */}
       {!isPreview && onOpenChartEditor && (
@@ -382,7 +401,7 @@ function ChartBlock({
             e.stopPropagation();
             onOpenChartEditor();
           }}
-          className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover/chart:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#9D61FF] text-white hover:bg-purple-600 shadow-sm cursor-pointer"
+          className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover/chart:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#9D61FF] text-white hover:bg-purple-600 cursor-pointer"
           title="Configure Chart, Data Points & Axis"
         >
           <SlidersHorizontal className="w-3 h-3" />
@@ -401,18 +420,20 @@ function ChartBlock({
                 value={localTitle}
                 onChange={(e) => setLocalTitle(e.target.value)}
                 onBlur={handleTitleCommit}
+                onClick={(e) => e.stopPropagation()}
                 onKeyDown={(e) => {
+                  e.stopPropagation();
                   if (e.key === "Enter") handleTitleCommit();
                   if (e.key === "Escape") {
                     setLocalTitle(chart.title || "");
-                    setIsEditingTitle(false);
+                    handleSetEditingTitle(false);
                   }
                 }}
                 className={`${titleSizeClass} text-slate-900 dark:text-white bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
               />
             ) : (
               <h3
-                onDoubleClick={() => !isPreview && setIsEditingTitle(true)}
+                onDoubleClick={() => !isPreview && handleSetEditingTitle(true)}
                 title={!isPreview ? "Double click to rename or clear chart title" : undefined}
                 className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate ${
                   !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
@@ -445,18 +466,20 @@ function ChartBlock({
             value={localDesc}
             onChange={(e) => setLocalDesc(e.target.value)}
             onBlur={handleDescCommit}
+            onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => {
+              e.stopPropagation();
               if (e.key === "Enter") handleDescCommit();
               if (e.key === "Escape") {
                 setLocalDesc(chart.description || "");
-                setIsEditingDesc(false);
+                handleSetEditingDesc(false);
               }
             }}
             className={`${descSizeClass} font-medium text-slate-700 dark:text-zinc-300 bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
           />
         ) : (
           <p
-            onDoubleClick={() => !isPreview && setIsEditingDesc(true)}
+            onDoubleClick={() => !isPreview && handleSetEditingDesc(true)}
             title={!isPreview ? "Double click to edit description / caption" : undefined}
             className={`${descSizeClass} text-slate-500 dark:text-zinc-400 ${isCompact ? "pt-1" : "pt-1.5"} border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 ${
               !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
@@ -574,33 +597,18 @@ function InsightBlock({
         : cell.style.borderRadius
       : undefined;
 
-  const dynamicBoxShadow =
-    cell.style?.shadow !== undefined
-      ? cell.style.shadow === "none"
-        ? "none"
-        : cell.style.shadow === "sm"
-        ? "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)"
-        : cell.style.shadow === "md"
-        ? "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.08)"
-        : cell.style.shadow === "lg"
-        ? "0 10px 15px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08)"
-        : cell.style.shadow === "xl"
-        ? "0 20px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.08)"
-        : cell.style.shadow === "glow"
-        ? "0 0 24px -2px rgba(139,61,255,0.38)"
-        : cell.style.shadow
-      : undefined;
+  const dynamicBoxShadow = "none";
 
   // ── 1. 4-Column Numbered Key Insights Grid (Page 5, 6, 7, 8) ────────────────
   if (variant === "columns-numbered") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 sm:p-5 shadow-sm space-y-3.5 overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 sm:p-5 space-y-3.5 overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shadow-xs">
+            <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
               <Lightbulb className="w-4 h-4" />
             </div>
             <div>
@@ -2186,6 +2194,7 @@ export function CanvasBlockRenderer({
             cell={cell}
             isPreview={isPreview}
             onUpdateMetricCard={onUpdateMetricCard}
+            onEditingChange={onEditingChange}
           />
         );
       case "chart":
@@ -2195,6 +2204,7 @@ export function CanvasBlockRenderer({
             isPreview={isPreview}
             onOpenChartEditor={onOpenChartEditor}
             onUpdateChart={onUpdateChart}
+            onEditingChange={onEditingChange}
           />
         );
       case "insight":
