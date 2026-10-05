@@ -165,7 +165,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-4 sm:px-6 lg:px-7 space-y-3.5 animate-fadeIn">
       {/* 1. TOP METRICS STRIP */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 flex-shrink-0">
-        <div className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] shadow-sm flex items-center justify-between">
+        <div className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] flex items-center justify-between">
           <div>
             <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Total Sections</div>
             <div className="text-lg font-bold text-slate-900 dark:text-white font-mono mt-0.5">
@@ -177,7 +177,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           </div>
         </div>
 
-        <div className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] shadow-sm flex items-center justify-between">
+        <div className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] flex items-center justify-between">
           <div>
             <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Core Standards</div>
             <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
@@ -189,7 +189,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           </div>
         </div>
 
-        <div className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] shadow-sm flex items-center justify-between">
+        <div className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] flex items-center justify-between">
           <div>
             <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Custom Modules</div>
             <div className="text-lg font-bold text-amber-500 font-mono mt-0.5">
@@ -201,7 +201,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           </div>
         </div>
 
-        <div className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] shadow-sm flex items-center justify-between">
+        <div className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] flex items-center justify-between">
           <div>
             <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Total Visualizations</div>
             <div className="text-lg font-bold text-sky-600 dark:text-sky-400 font-mono mt-0.5">
@@ -215,7 +215,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
       </div>
 
       {/* 2. SEARCH & FILTER TOOLBAR */}
-      <div className="p-2.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] flex items-center justify-between gap-3 flex-wrap flex-shrink-0 shadow-sm">
+      <div className="p-2.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] flex items-center justify-between gap-3 flex-wrap flex-shrink-0">
         {/* Search */}
         <div className="relative flex-1 min-w-[220px] max-w-md h-9">
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400 dark:text-zinc-500 pointer-events-none" />
@@ -235,7 +235,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
             onClick={() => setFilterType("all")}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
               filterType === "all"
-                ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold"
+                ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-white font-bold"
                 : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
@@ -246,7 +246,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
             onClick={() => setFilterType("core")}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
               filterType === "core"
-                ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold"
+                ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-white font-bold"
                 : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
@@ -257,7 +257,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
             onClick={() => setFilterType("custom")}
             className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
               filterType === "custom"
-                ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold"
+                ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-white font-bold"
                 : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
@@ -270,7 +270,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           {/* Chart Button navigating to /templates/Sections&Graphs/charts */}
           <Link
             href="/templates/Sections&Graphs/charts"
-            className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
+            className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
           >
             <BarChart2 className="w-3.5 h-3.5 text-[#9D61FF]" />
             <span>Chart</span>
@@ -279,7 +279,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           {/* Watermark Button navigating to /templates/Sections&Graphs/watermark */}
           <Link
             href="/templates/Sections&Graphs/watermark"
-            className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
+            className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
           >
             <Stamp className="w-3.5 h-3.5 text-[#9D61FF]" />
             <span>Watermark</span>
@@ -289,7 +289,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           {/* Create Section Action navigating to /templates/Sections&Graphs/create */}
           <Link
             href="/templates/Sections&Graphs/create"
-            className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#9D61FF] to-[#8B4CF0] hover:from-[#9254f8] hover:to-[#7e3beb] text-white font-bold text-xs cursor-pointer flex items-center gap-2 flex-shrink-0 shadow-[0_2px_10px_rgba(157,97,255,0.25)] hover:shadow-[0_4px_16px_rgba(157,97,255,0.4)] transition-all active:scale-[0.98] border border-purple-400/20"
+            className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#9D61FF] to-[#8B4CF0] hover:from-[#9254f8] hover:to-[#7e3beb] text-white font-bold text-xs cursor-pointer flex items-center gap-2 flex-shrink-0 transition-all active:scale-[0.98] border border-purple-400/20"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Create Section</span>
@@ -308,7 +308,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
             </p>
             <Link
               href="/templates/Sections&Graphs/create"
-              className="mt-2 px-4 py-2 rounded-xl bg-[#9D61FF] text-white text-xs font-bold hover:bg-[#8845fc] inline-flex items-center gap-2 cursor-pointer shadow-sm"
+              className="mt-2 px-4 py-2 rounded-xl bg-[#9D61FF] text-white text-xs font-bold hover:bg-[#8845fc] inline-flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Create New Section</span>
@@ -324,7 +324,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
               return (
                 <div
                   key={sec.id}
-                  className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white dark:bg-[#0c1017] shadow-sm hover:border-[#9D61FF]/50 hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group"
+                  className="rounded-2xl border border-slate-200 dark:border-zinc-800/90 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/50 transition-all flex flex-col justify-between overflow-hidden group"
                 >
                   {/* Card Header & Content */}
                   <div className="p-4 sm:p-5 space-y-3">
@@ -437,7 +437,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                           onSelectSection(sec.id);
                           router.push(`/templates/Sections&Graphs/edit?id=${sec.id}`);
                         }}
-                        className="h-8 px-3 rounded-xl bg-[#9D61FF] hover:bg-[#8845fc] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                        className="h-8 px-3 rounded-xl bg-[#9D61FF] hover:bg-[#8845fc] text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>Visual Canvas</span>
@@ -455,7 +455,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
       {/* ================= MODAL: CREATE NEW SECTION ================= */}
       {createModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white">
+          <div className="w-full max-w-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-purple-500/10 text-[#9D61FF]">
@@ -525,7 +525,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                 type="button"
                 onClick={handleCreateSection}
                 disabled={!newSectionName.trim()}
-                className="px-5 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8845fc] text-white text-xs font-bold disabled:opacity-50 cursor-pointer shadow-sm"
+                className="px-5 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8845fc] text-white text-xs font-bold disabled:opacity-50 cursor-pointer"
               >
                 Create Section
               </button>
@@ -537,7 +537,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
       {/* ================= MODAL: DELETE CONFIRMATION ================= */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white text-center">
+          <div className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 space-y-4 animate-scaleUp text-slate-900 dark:text-white text-center">
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>

@@ -598,12 +598,12 @@ export default function ChartEditorPanel({
         {/* Left Column: Tabbed Configuration Studio */}
         <div className="w-[430px] lg:w-[470px] xl:w-[500px] flex-shrink-0 border-r border-slate-200/80 dark:border-zinc-800/80 flex flex-col min-h-0 h-full bg-slate-50/25 dark:bg-zinc-950/20">
           {/* Studio Tab Switcher */}
-          <div className="flex border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pt-2.5 gap-1.5 flex-shrink-0 shadow-2xs">
+          <div className="flex border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 pt-2.5 gap-1.5 flex-shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab("type")}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer ${activeTab === "type"
-                  ? "border-[#9D61FF] text-[#9D61FF] bg-purple-50/40 dark:bg-purple-950/20 shadow-2xs"
+                  ? "border-[#9D61FF] text-[#9D61FF] bg-purple-50/40 dark:bg-purple-950/20"
                   : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
                 }`}
             >
@@ -615,7 +615,7 @@ export default function ChartEditorPanel({
               type="button"
               onClick={() => setActiveTab("data")}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer ${activeTab === "data"
-                  ? "border-[#9D61FF] text-[#9D61FF] bg-purple-50/40 dark:bg-purple-950/20 shadow-2xs"
+                  ? "border-[#9D61FF] text-[#9D61FF] bg-purple-50/40 dark:bg-purple-950/20"
                   : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
                 }`}
             >
@@ -630,7 +630,7 @@ export default function ChartEditorPanel({
               type="button"
               onClick={() => setActiveTab("axis")}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-t-lg transition-all border-b-2 cursor-pointer ${activeTab === "axis"
-                  ? "border-[#9D61FF] text-[#9D61FF] bg-purple-50/40 dark:bg-purple-950/20 shadow-2xs"
+                  ? "border-[#9D61FF] text-[#9D61FF] bg-purple-50/40 dark:bg-purple-950/20"
                   : "border-transparent text-slate-500 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200"
                 }`}
             >
@@ -664,7 +664,7 @@ export default function ChartEditorPanel({
                           setActiveSeriesIndex(0);
                         }}
                         className={`p-2 rounded-xl border flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${isSelected
-                            ? "border-[#9D61FF] bg-[#9D61FF]/15 text-[#9D61FF] font-bold shadow-[0_0_14px_rgba(157,97,255,0.25)] scale-[1.02]"
+                            ? "border-[#9D61FF] bg-[#9D61FF]/15 text-[#9D61FF] font-bold scale-[1.02]"
                             : "border-slate-200/80 dark:border-zinc-800/80 bg-white/40 dark:bg-zinc-900/40 text-slate-600 dark:text-zinc-400 hover:border-[#9D61FF]/50 hover:text-[#9D61FF] hover:bg-purple-500/5"
                           }`}
                       >
@@ -698,7 +698,7 @@ export default function ChartEditorPanel({
                       key={preset.name}
                       type="button"
                       onClick={() => handleApplyPreset(preset)}
-                      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 text-[11px] font-medium text-slate-600 dark:text-zinc-300 hover:border-[#9D61FF] hover:text-[#9D61FF] bg-slate-50 dark:bg-zinc-800/60 transition-colors whitespace-nowrap cursor-pointer shadow-2xs"
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 text-[11px] font-medium text-slate-600 dark:text-zinc-300 hover:border-[#9D61FF] hover:text-[#9D61FF] bg-slate-50 dark:bg-zinc-800/60 transition-colors whitespace-nowrap cursor-pointer"
                     >
                       {preset.name}
                     </button>
@@ -743,7 +743,7 @@ export default function ChartEditorPanel({
                     </div>
 
                     {/* Matrix Spreadsheet Grid */}
-                    <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 p-2 shadow-2xs">
+                    <div className="overflow-x-auto rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 p-2">
                       <div
                         className="grid gap-1.5 items-center mb-2 pb-1.5 border-b border-slate-200/70 dark:border-zinc-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider"
                         style={{
@@ -840,7 +840,7 @@ export default function ChartEditorPanel({
                 {editorMode === "gauge" && (
                   <div className="space-y-4">
                     {/* Primary Hero Gauge Reading */}
-                    <div className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 shadow-2xs">
+                    <div className="p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
                           <Gauge className="w-4 h-4 text-[#9D61FF]" />
@@ -892,7 +892,7 @@ export default function ChartEditorPanel({
                     </div>
 
                     {/* Status & Scale Card */}
-                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 shadow-2xs">
+                    <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
                       <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 block">
                         Status & Health Alert
                       </span>
@@ -907,12 +907,12 @@ export default function ChartEditorPanel({
                               onClick={() => handleUpdateGaugeStatus(st)}
                               className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${isSel
                                   ? st === "Optimal"
-                                    ? "bg-emerald-500/15 text-emerald-600 border-emerald-500 shadow-2xs"
+                                    ? "bg-emerald-500/15 text-emerald-600 border-emerald-500"
                                     : st === "Normal"
-                                      ? "bg-blue-500/15 text-blue-600 border-blue-500 shadow-2xs"
+                                      ? "bg-blue-500/15 text-blue-600 border-blue-500"
                                       : st === "Warning"
-                                        ? "bg-amber-500/15 text-amber-600 border-amber-500 shadow-2xs"
-                                        : "bg-rose-500/15 text-rose-600 border-rose-500 shadow-2xs"
+                                        ? "bg-amber-500/15 text-amber-600 border-amber-500"
+                                        : "bg-rose-500/15 text-rose-600 border-rose-500"
                                   : "border-slate-200 dark:border-zinc-800 text-slate-500 hover:border-slate-300"
                                 }`}
                             >
@@ -986,7 +986,7 @@ export default function ChartEditorPanel({
                       {currentDataPoints.slice(0, 4).map((kpi, idx) => (
                         <div
                           key={kpi.id || idx}
-                          className="p-3 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs space-y-2.5"
+                          className="p-3 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 space-y-2.5"
                         >
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold text-[#9D61FF] uppercase tracking-wider">
@@ -1145,7 +1145,7 @@ export default function ChartEditorPanel({
                                 className="flex-1 min-w-[100px] flex items-center gap-1.5 bg-slate-100/70 dark:bg-zinc-800/60 px-2 py-1 rounded-lg border border-slate-200/60 dark:border-zinc-700/60"
                               >
                                 <span
-                                  className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-2xs"
+                                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                                   style={{ backgroundColor: sColor }}
                                 />
                                 <input
@@ -1176,7 +1176,7 @@ export default function ChartEditorPanel({
                         {currentDataPoints.map((pt, idx) => (
                           <div
                             key={pt.id || idx}
-                            className="flex items-center gap-2 p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                            className="flex items-center gap-2 p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-[#9D61FF]/40 transition-colors"
                           >
                             <div className="w-36 flex-shrink-0">
                               <input
@@ -1256,7 +1256,7 @@ export default function ChartEditorPanel({
                       {currentDataPoints.map((pt, idx) => (
                         <div
                           key={pt.id || idx}
-                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-[#9D61FF]/40 transition-colors"
                         >
                           <span className="col-span-1 text-center text-xs font-mono text-slate-400 font-bold">
                             {idx + 1}
@@ -1362,7 +1362,7 @@ export default function ChartEditorPanel({
                         return (
                           <div
                             key={pt.id || idx}
-                            className="p-2 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs space-y-1.5"
+                            className="p-2 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 space-y-1.5"
                           >
                             <div className="grid grid-cols-12 gap-2 items-center">
                               <div className="col-span-5">
@@ -1495,7 +1495,7 @@ export default function ChartEditorPanel({
                           return (
                             <div
                               key={pt.id || idx}
-                              className="p-2.5 rounded-xl border bg-white dark:bg-zinc-900 shadow-2xs space-y-2 transition-colors hover:border-[#9D61FF]/30"
+                              className="p-2.5 rounded-xl border bg-white dark:bg-zinc-900 space-y-2 transition-colors hover:border-[#9D61FF]/30"
                               style={{ borderColor: `${segColor}40` }}
                             >
                               {/* Row 1: colour · label · value · delete */}
@@ -1503,7 +1503,7 @@ export default function ChartEditorPanel({
                                 {/* Colour swatch */}
                                 <div className="col-span-1 flex items-center justify-center">
                                   <div
-                                    className="w-4 h-4 rounded-full border-2 border-white dark:border-zinc-800 shadow cursor-pointer ring-2 ring-offset-1"
+                                    className="w-4 h-4 rounded-full border-2 border-white dark:border-zinc-800 cursor-pointer ring-2 ring-offset-1"
                                     style={{ backgroundColor: segColor, "--tw-ring-color": segColor } as React.CSSProperties} title="Segment colour"
                                   />
                                 </div>
@@ -1631,7 +1631,7 @@ export default function ChartEditorPanel({
                             return (
                               <div
                                 key={pt.id || idx}
-                                className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                                className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-[#9D61FF]/40 transition-colors"
                               >
                                 <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
                                   {idx + 1}
@@ -1717,7 +1717,7 @@ export default function ChartEditorPanel({
                         return (
                           <div
                             key={pt.id || idx}
-                            className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                            className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-[#9D61FF]/40 transition-colors"
                           >
                             <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
                               {idx + 1}
@@ -1788,7 +1788,7 @@ export default function ChartEditorPanel({
                       {currentDataPoints.map((pt, idx) => (
                         <div
                           key={pt.id || idx}
-                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-[#9D61FF]/40 transition-colors"
                         >
                           <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
                             {idx + 1}
@@ -1867,7 +1867,7 @@ export default function ChartEditorPanel({
                       {currentDataPoints.map((pt, idx) => (
                         <div
                           key={pt.id || idx}
-                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                          className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-[#9D61FF]/40 transition-colors"
                         >
                           <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
                             {idx + 1}
@@ -1975,7 +1975,7 @@ export default function ChartEditorPanel({
                           ? pt.rowValues.map(v => (typeof v === "number" ? v : parseFloat(String(v)) || 0))
                           : [10, 20, 15, 30, 25, 35];
                         return (
-                          <div key={pt.id || idx} className="p-3 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs space-y-2">
+                          <div key={pt.id || idx} className="p-3 rounded-2xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 space-y-2">
                             <div className="flex items-center justify-between">
                               <input
                                 type="text"
@@ -2053,7 +2053,7 @@ export default function ChartEditorPanel({
                         return (
                           <div
                             key={pt.id || idx}
-                            className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                            className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-[#9D61FF]/40 transition-colors"
                           >
                             <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">{idx + 1}</span>
                             <div className="col-span-4">
@@ -2170,7 +2170,7 @@ export default function ChartEditorPanel({
                         {currentDataPoints.map((pt, idx) => (
                           <div
                             key={pt.id || idx}
-                            className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 shadow-2xs hover:border-[#9D61FF]/40 transition-colors"
+                            className="grid grid-cols-12 gap-2 items-center p-1.5 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 hover:border-[#9D61FF]/40 transition-colors"
                           >
                             <span className="col-span-1 text-center text-xs font-mono font-bold text-slate-400">
                               {idx + 1}
@@ -2272,7 +2272,7 @@ export default function ChartEditorPanel({
           {activeTab === "axis" && (
             <div className="flex-1 flex flex-col min-h-0 overflow-auto custom-scrollbar p-4 space-y-4">
               {/* X-Axis Card */}
-              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 shadow-2xs">
+              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
                     Horizontal (X) Axis
@@ -2294,7 +2294,7 @@ export default function ChartEditorPanel({
               </div>
 
               {/* Y-Axis Card */}
-              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 shadow-2xs">
+              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
                     Vertical (Y) Axis & Scale
@@ -2383,7 +2383,7 @@ export default function ChartEditorPanel({
               </div>
 
               {/* Display & Telemetry Toggles Card */}
-              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3 shadow-2xs">
+              <div className="p-3.5 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
                 <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
                   Display Options
                 </span>
@@ -2455,7 +2455,7 @@ export default function ChartEditorPanel({
               </div>
 
               {/* Swatch palette for the active element/series */}
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50/90 dark:bg-zinc-900/60 border border-slate-200/70 dark:border-zinc-800 shadow-2xs">
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50/90 dark:bg-zinc-900/60 border border-slate-200/70 dark:border-zinc-800">
                 <span className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400 mr-1">
                   {seriesConfig.length > 1
                     ? `Color for ${currentSeries?.label || "Selected"}:`
@@ -2508,12 +2508,12 @@ export default function ChartEditorPanel({
                         type="button"
                         onClick={() => setActiveSeriesIndex(idx)}
                         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all cursor-pointer border ${isSelected
-                            ? "bg-purple-50 dark:bg-purple-950/40 border-[#9D61FF] text-[#9D61FF] font-bold shadow-2xs"
+                            ? "bg-purple-50 dark:bg-purple-950/40 border-[#9D61FF] text-[#9D61FF] font-bold"
                             : "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 font-medium hover:border-slate-300 dark:hover:border-zinc-700"
                           }`}
                       >
                         <span
-                          className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-black/15 shadow-2xs"
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0 border border-black/15"
                           style={{ backgroundColor: sColor }}
                         />
                         <span>{s.label}</span>
@@ -2562,7 +2562,7 @@ export default function ChartEditorPanel({
 
             {/* Grid & Table Row/Column Dimension Controls */}
             {(chartType === "heatmap" || chartType === "table") && (
-              <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-slate-50/90 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800 text-xs shadow-2xs animate-fadeIn mt-1 flex-wrap">
+              <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-xl bg-slate-50/90 dark:bg-zinc-900/60 border border-slate-200/80 dark:border-zinc-800 text-xs animate-fadeIn mt-1 flex-wrap">
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-zinc-200">
                     <Grid className="w-3.5 h-3.5 text-[#9D61FF]" />
@@ -2581,7 +2581,7 @@ export default function ChartEditorPanel({
                           type="button"
                           onClick={() => handleUpdateRows(num)}
                           className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${currentRows === num
-                              ? "bg-[#9D61FF] text-white shadow-2xs scale-105"
+                              ? "bg-[#9D61FF] text-white scale-105"
                               : "bg-white dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-purple-300"
                             }`}
                         >
@@ -2591,7 +2591,7 @@ export default function ChartEditorPanel({
                     </div>
 
                     {/* Custom Row Stepper & Direct Input */}
-                    <div className="flex items-center border border-slate-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-950 overflow-hidden h-6 ml-0.5 shadow-2xs focus-within:border-[#9D61FF] transition-all">
+                    <div className="flex items-center border border-slate-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-950 overflow-hidden h-6 ml-0.5 focus-within:border-[#9D61FF] transition-all">
                       <button
                         type="button"
                         onClick={() => handleUpdateRows(currentRows - 1)}
@@ -2659,7 +2659,7 @@ export default function ChartEditorPanel({
                           type="button"
                           onClick={() => handleUpdateCols(num)}
                           className={`w-6 h-6 rounded-md text-xs font-bold transition-all cursor-pointer ${currentCols === num
-                              ? "bg-[#9D61FF] text-white shadow-2xs scale-105"
+                              ? "bg-[#9D61FF] text-white scale-105"
                               : "bg-white dark:bg-zinc-950 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800 hover:border-purple-300"
                             }`}
                         >
@@ -2669,7 +2669,7 @@ export default function ChartEditorPanel({
                     </div>
 
                     {/* Custom Column Stepper & Direct Input */}
-                    <div className="flex items-center border border-slate-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-950 overflow-hidden h-6 ml-0.5 shadow-2xs focus-within:border-[#9D61FF] transition-all">
+                    <div className="flex items-center border border-slate-200 dark:border-zinc-800 rounded-md bg-white dark:bg-zinc-950 overflow-hidden h-6 ml-0.5 focus-within:border-[#9D61FF] transition-all">
                       <button
                         type="button"
                         onClick={() => handleUpdateCols(currentCols - 1)}
@@ -2781,7 +2781,7 @@ export default function ChartEditorPanel({
             <button
               type="button"
               onClick={onSave}
-              className="px-5 py-2.5 rounded-xl bg-[#9D61FF] text-white text-sm font-bold hover:bg-purple-600 transition-colors cursor-pointer shadow-md shadow-purple-500/20"
+              className="px-5 py-2.5 rounded-xl bg-[#9D61FF] text-white text-sm font-bold hover:bg-purple-600 transition-colors cursor-pointer"
             >
               Save Chart
             </button>

@@ -291,7 +291,7 @@ export default function WatermarkPage() {
           <button
             type="button"
             onClick={() => setIsPasteModalOpen(true)}
-            className="h-8.5 px-3 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:border-[#9D61FF]/40"
+            className="h-8.5 px-3 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:border-[#9D61FF]/40"
           >
             <Code2 className="w-3.5 h-3.5 text-[#9D61FF]" />
             <span className="hidden sm:inline">Paste SVG Code</span>
@@ -300,7 +300,7 @@ export default function WatermarkPage() {
           {/* Back to Sections button */}
           <Link
             href="/templates/Sections&Graphs"
-            className="h-8.5 px-3 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
+            className="h-8.5 px-3 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Sections</span>
@@ -346,7 +346,7 @@ export default function WatermarkPage() {
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <div className="w-9 h-9 rounded-2xl bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex items-center justify-center shadow-xs">
+              <div className="w-9 h-9 rounded-2xl bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex items-center justify-center">
                 <UploadCloud className="w-4.5 h-4.5" />
               </div>
               <div>
@@ -448,13 +448,13 @@ export default function WatermarkPage() {
                     onClick={() => handleSelectWatermark(wm)}
                     className={`p-3 rounded-2xl border transition-all cursor-pointer group flex items-center justify-between gap-3 ${
                       isSelected
-                        ? "border-[#9D61FF] bg-[#9D61FF]/10 dark:bg-[#9D61FF]/15 shadow-sm ring-1 ring-[#9D61FF]/40"
+                        ? "border-[#9D61FF] bg-[#9D61FF]/10 dark:bg-[#9D61FF]/15 ring-1 ring-[#9D61FF]/40"
                         : "border-slate-200/80 dark:border-zinc-800/80 bg-white/60 dark:bg-zinc-900/40 hover:border-slate-300 dark:hover:border-zinc-700 hover:bg-white dark:hover:bg-zinc-900/60"
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       {/* Mini Thumbnail */}
-                      <div className="w-14 h-11 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center overflow-hidden flex-shrink-0 p-1 shadow-2xs">
+                      <div className="w-14 h-11 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-center overflow-hidden flex-shrink-0 p-1">
                         <div
                           className="w-full h-full flex items-center justify-center opacity-90"
                           dangerouslySetInnerHTML={{ __html: wm.svgContent }}
@@ -545,7 +545,7 @@ export default function WatermarkPage() {
             {/* Size Scale Controls (Supporting Minus Scale) & Delete Action */}
             <div className="flex items-center gap-2 flex-wrap">
               {/* SIZE SCALE CONTROLS (SUPPORTS MINUS SCALE) */}
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs shadow-2xs">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs">
                 <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400">
                   Size Scale:
                 </span>
@@ -624,7 +624,7 @@ export default function WatermarkPage() {
                       onClick={() => handleUpdateScale(preset)}
                       className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
                         sizeScale === preset
-                          ? "bg-[#9D61FF] text-white shadow-2xs"
+                          ? "bg-[#9D61FF] text-white"
                           : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                       }`}
                       title={`Set scale to ${preset}%`}
@@ -642,7 +642,7 @@ export default function WatermarkPage() {
                   onClick={() => setPreviewTheme("light")}
                   className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                     previewTheme === "light"
-                      ? "bg-[#9D61FF] text-white shadow-xs"
+                      ? "bg-[#9D61FF] text-white"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                   }`}
                   title="Light Canvas"
@@ -654,7 +654,7 @@ export default function WatermarkPage() {
                   onClick={() => setPreviewTheme("dark")}
                   className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                     previewTheme === "dark"
-                      ? "bg-[#9D61FF] text-white shadow-xs"
+                      ? "bg-[#9D61FF] text-white"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                   }`}
                   title="Dark Canvas"
@@ -666,7 +666,7 @@ export default function WatermarkPage() {
                   onClick={() => setPreviewTheme("grid")}
                   className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                     previewTheme === "grid"
-                      ? "bg-[#9D61FF] text-white shadow-xs"
+                      ? "bg-[#9D61FF] text-white"
                       : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
                   }`}
                   title="Technical Blueprint Grid"
@@ -694,12 +694,12 @@ export default function WatermarkPage() {
           <div className="flex-1 min-h-0 overflow-auto custom-scrollbar p-6 flex items-center justify-center">
             {selectedWatermark ? (
               <div
-                className={`w-full max-w-[640px] h-[480px] max-h-[calc(100vh-210px)] rounded-3xl shadow-xl relative overflow-hidden border p-6 flex flex-col justify-between transition-colors ${
+                className={`w-full max-w-[640px] h-[480px] max-h-[calc(100vh-210px)] rounded-3xl relative overflow-hidden border p-6 flex flex-col justify-between transition-colors ${
                   previewTheme === "light"
                     ? "bg-white text-slate-900 border-slate-200/90"
                     : previewTheme === "dark"
                     ? "bg-zinc-900 text-white border-zinc-800"
-                    : "bg-[#090D18] text-white border-[#9D61FF]/40 shadow-[0_0_30px_rgba(157,97,255,0.12)]"
+                    : "bg-[#090D18] text-white border-[#9D61FF]/40"
                 }`}
               >
                 {/* Technical Blueprint Engineering Grid */}
@@ -760,7 +760,7 @@ export default function WatermarkPage() {
                 {/* Centered SVG Render with Proportional Bounds & Negative Scale Support */}
                 <div className="relative z-10 w-full flex-1 flex items-center justify-center p-6 overflow-hidden">
                   <div
-                    className="w-full h-full max-w-[480px] max-h-[270px] flex items-center justify-center transition-transform duration-150 drop-shadow-sm [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
+                    className="w-full h-full max-w-[480px] max-h-[270px] flex items-center justify-center transition-transform duration-150 [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
                     style={{
                       transform: `scale(${sizeScale === 0 ? 0.01 : sizeScale / 100})`,
                       transformOrigin: "center center",
@@ -796,7 +796,7 @@ export default function WatermarkPage() {
       {/* ==================================================================== */}
       {isPasteModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 space-y-4 animate-scaleUp">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 animate-scaleUp">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-2xl bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex items-center justify-center">
@@ -864,7 +864,7 @@ export default function WatermarkPage() {
               <button
                 type="button"
                 onClick={handleAddPastedSvg}
-                className="px-4 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4FE8] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-sm"
+                className="px-4 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4FE8] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>Add to Library</span>

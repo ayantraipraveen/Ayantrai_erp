@@ -62,7 +62,7 @@ export function WatermarkStampLayer({
                 transformOrigin: "center center",
                 mixBlendMode: isDarkPaper ? "screen" : "multiply",
               }}
-              className="w-full max-w-[280px] filter drop-shadow-sm select-none"
+              className="w-full max-w-[280px] filter select-none"
               dangerouslySetInnerHTML={{ __html: activeWatermark.svgContent }}
             />
           ))}
@@ -82,7 +82,7 @@ export function WatermarkStampLayer({
               transformOrigin: "center center",
               mixBlendMode: isDarkPaper ? "screen" : "multiply",
             }}
-            className="w-full max-w-[500px] flex items-center justify-center filter drop-shadow-sm select-none cursor-pointer"
+            className="w-full max-w-[500px] flex items-center justify-center filter select-none cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               if (!activeIsPreview) setIsWatermarkSelected(true);
@@ -98,27 +98,27 @@ export function WatermarkStampLayer({
             >
               <div
                 onMouseDown={handleWatermarkResizeStart}
-                className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
+                className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nwse-resize hover:scale-125 transition-transform"
                 title="Drag corner to resize scale"
               />
               <div
                 onMouseDown={handleWatermarkResizeStart}
-                className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
+                className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nesw-resize hover:scale-125 transition-transform"
                 title="Drag corner to resize scale"
               />
               <div
                 onMouseDown={handleWatermarkResizeStart}
-                className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
+                className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nesw-resize hover:scale-125 transition-transform"
                 title="Drag corner to resize scale"
               />
               <div
                 onMouseDown={handleWatermarkResizeStart}
-                className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
+                className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nwse-resize hover:scale-125 transition-transform"
                 title="Drag corner to resize scale"
               />
 
               <div
-                className="absolute -top-11 left-1/2 -translate-x-1/2 h-8 px-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-zinc-200 z-50 whitespace-nowrap cursor-default"
+                className="absolute -top-11 left-1/2 -translate-x-1/2 h-8 px-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-zinc-200 z-50 whitespace-nowrap cursor-default"
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <span title="Drag watermark" className="flex items-center">

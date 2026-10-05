@@ -95,7 +95,7 @@ export default function SectionsGraphsChartsPage() {
         </div>
         <Link
           href="/templates/Sections&Graphs"
-          className="h-8.5 px-3 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
+          className="h-8.5 px-3 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:border-[#9D61FF]/40 hover:text-[#9D61FF]"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Sections</span>

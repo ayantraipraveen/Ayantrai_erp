@@ -295,7 +295,7 @@ export default function ChartRenderer({
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
               {allSeriesData.map((sData, sIdx) => (
                 <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
-                  <span className={`${legendDotClass} rounded-xs shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
+                  <span className={`${legendDotClass} rounded-xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
                   <span className="text-slate-600 dark:text-zinc-300 font-semibold">{sData.name}</span>
                 </div>
               ))}
@@ -451,7 +451,7 @@ export default function ChartRenderer({
           <div className={`space-y-1 sm:space-y-1.5 ${legendTextClass} font-medium`}>
             {segments.map((seg, i) => (
               <div key={i} className="flex items-center gap-1.5 sm:gap-2">
-                <div className={`${legendDotClass} rounded-full flex-shrink-0 shadow-2xs`} style={{ backgroundColor: seg.color }} />
+                <div className={`${legendDotClass} rounded-full flex-shrink-0`} style={{ backgroundColor: seg.color }} />
                 <span className="text-slate-700 dark:text-zinc-300">
                   {seg.label}: <b className="font-bold">{seg.val}{d.unit} ({seg.pct}%)</b>
                 </span>
@@ -576,7 +576,7 @@ export default function ChartRenderer({
                   return (
                     <div
                       key={cIdx}
-                      className={`w-full h-full min-h-0 rounded-md flex items-center justify-center ${cellTextSize} text-white shadow-2xs transition-all hover:scale-[1.03] cursor-default`}
+                      className={`w-full h-full min-h-0 rounded-md flex items-center justify-center ${cellTextSize} text-white transition-all hover:scale-[1.03] cursor-default`}
                       style={{ backgroundColor: cellColor }}
                       title={`${w}, ${days[cIdx]}: ${val}% Compliance`}
                     >
@@ -622,7 +622,7 @@ export default function ChartRenderer({
                 const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
                 return (
                   <div key={s.id || sIdx} className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-xs shadow-2xs flex-shrink-0" style={{ backgroundColor: sColor }} />
+                    <span className="w-2.5 h-2.5 rounded-xs flex-shrink-0" style={{ backgroundColor: sColor }} />
                     <span className="text-slate-600 dark:text-zinc-300 font-semibold">{s.name || `Series ${sIdx + 1}`}</span>
                   </div>
                 );
@@ -647,7 +647,7 @@ export default function ChartRenderer({
                         style={{ width: `${pct}%`, backgroundColor: sColor }}
                       >
                         {d.showValues && (
-                          <span className="text-[9px] sm:text-[10px] font-bold text-white shadow-sm whitespace-nowrap">
+                          <span className="text-[9px] sm:text-[10px] font-bold text-white whitespace-nowrap">
                             {v}{d.unit}
                           </span>
                         )}
@@ -703,7 +703,7 @@ export default function ChartRenderer({
             <span className={`font-semibold text-slate-700 dark:text-zinc-300 ${legendTextClass}`}>{chart.title || "Total Operational Distribution"}</span>
             <span className={`font-bold text-slate-900 dark:text-white ${legendTextClass}`}>{total.toLocaleString()} {d.unit}</span>
           </div>
-          <div className="w-full h-8 sm:h-10 flex rounded-lg overflow-hidden shadow-sm mb-3">
+          <div className="w-full h-8 sm:h-10 flex rounded-lg overflow-hidden mb-3">
             {seriesSegments.map((seg, sIdx) => (
               <div
                 key={seg.s.id || sIdx}
@@ -764,7 +764,7 @@ export default function ChartRenderer({
                 const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
                 return (
                   <div key={s.id || sIdx} className="flex items-center gap-1.5 min-w-0 max-w-[140px] sm:max-w-none flex-shrink-0">
-                    <span className={`${legendDotClass} rounded-full shadow-2xs flex-shrink-0`} style={{ backgroundColor: sColor }} />
+                    <span className={`${legendDotClass} rounded-full flex-shrink-0`} style={{ backgroundColor: sColor }} />
                     <span className="text-slate-600 dark:text-zinc-300 font-semibold truncate">{s.name || `Series ${sIdx + 1}`}</span>
                   </div>
                 );
@@ -877,7 +877,7 @@ export default function ChartRenderer({
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap max-w-full px-2`}>
               {seriesInfo.map((sData, sIdx) => (
                 <div key={sData.s.id || sIdx} className="flex items-center gap-1.5 min-w-0 max-w-[140px] sm:max-w-none flex-shrink-0">
-                  <span className={`${legendDotClass} rounded-full shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
+                  <span className={`${legendDotClass} rounded-full flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
                   <span className="text-slate-600 dark:text-zinc-300 font-semibold truncate">{sData.name}</span>
                 </div>
               ))}
@@ -1000,7 +1000,7 @@ export default function ChartRenderer({
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap max-w-full px-2`}>
               {allSeriesData.map((sData, sIdx) => (
                 <div key={sData.s.id || sIdx} className="flex items-center gap-1.5 min-w-0 max-w-[140px] sm:max-w-none flex-shrink-0">
-                  <span className={`${legendDotClass} rounded-full shadow-2xs flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
+                  <span className={`${legendDotClass} rounded-full flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
                   <span className="text-slate-600 dark:text-zinc-300 font-semibold truncate">{sData.name}</span>
                 </div>
               ))}
@@ -1329,7 +1329,7 @@ export default function ChartRenderer({
             return (
               <div
                 key={i}
-                className="h-7 sm:h-8 rounded-lg flex items-center justify-between px-3 shadow-2xs transition-all"
+                className="h-7 sm:h-8 rounded-lg flex items-center justify-between px-3 transition-all"
                 style={{ width: `${pct}%`, backgroundColor: c0, opacity: Math.max(0.4, op) }}
               >
                 <span className="text-[10px] sm:text-xs truncate">{pt.label}</span>
@@ -1489,7 +1489,7 @@ export default function ChartRenderer({
           {items.map((item, i) => (
             <div
               key={i}
-              className={`rounded-lg p-2 flex items-end shadow-2xs ${i === 0 ? "col-span-2 row-span-2" : i === 3 ? "col-span-3" : ""}`}
+              className={`rounded-lg p-2 flex items-end ${i === 0 ? "col-span-2 row-span-2" : i === 3 ? "col-span-3" : ""}`}
               style={{ backgroundColor: item.color || [c0, c1, c2, c3][i % 4] }}
             >
               <div className="truncate">
@@ -1517,7 +1517,7 @@ export default function ChartRenderer({
           {kpis.slice(0, 4).map((k, i) => (
             <div
               key={i}
-              className={`flex flex-col justify-between bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-xl ${isUltraCompact ? "p-1.5" : isCompact ? "p-2 sm:p-2.5" : "p-3 sm:p-4"} border border-slate-200/80 dark:border-zinc-800/80 shadow-2xs hover:border-[#9D61FF]/40 transition-all min-h-0 overflow-hidden`}
+              className={`flex flex-col justify-between bg-white/60 dark:bg-zinc-900/60 backdrop-blur-md rounded-xl ${isUltraCompact ? "p-1.5" : isCompact ? "p-2 sm:p-2.5" : "p-3 sm:p-4"} border border-slate-200/80 dark:border-zinc-800/80 hover:border-[#9D61FF]/40 transition-all min-h-0 overflow-hidden`}
             >
               <span className={`${isUltraCompact ? "text-[8px]" : "text-[10px] sm:text-xs"} font-semibold text-slate-500 dark:text-zinc-400 uppercase tracking-wider truncate`}>
                 {k.label}
@@ -1550,7 +1550,7 @@ export default function ChartRenderer({
               <div className={`w-20 text-right text-[10px] font-bold text-slate-500 truncate ${legendTextClass}`}>{t.label}</div>
               <div className="flex-1 h-5 bg-slate-100 dark:bg-zinc-800 rounded flex items-center">
                 <div
-                  className="h-full rounded shadow-2xs transition-all"
+                  className="h-full rounded transition-all"
                   style={{
                     width: `${Math.max(10, Math.min(80, t.secondaryValue ?? 30))}%`,
                     marginLeft: `${Math.max(0, Math.min(70, t.value ?? 10))}%`,

@@ -292,7 +292,7 @@ export function RowAppearancePopover({
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="w-72 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-3.5 space-y-3.5 animate-fadeIn text-slate-800 dark:text-zinc-200"
+      className="w-72 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-3.5 space-y-3.5 animate-fadeIn text-slate-800 dark:text-zinc-200"
     >
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2">
         <div className="flex items-center gap-2">
@@ -396,7 +396,7 @@ export function RowAppearancePopover({
       <button
         type="button"
         onClick={onClose}
-        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors"
       >
         Apply & Close
       </button>
@@ -609,7 +609,7 @@ export function CanvasContextRibbon({
                     }}
                     className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
                       selectedCell.customWidth === undefined
-                        ? "bg-[#9D61FF] text-white shadow-xs"
+                        ? "bg-[#9D61FF] text-white"
                         : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
                     }`}
                     title="Auto width (fits row naturally)"
@@ -629,7 +629,7 @@ export function CanvasContextRibbon({
                       }}
                       className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
                         selectedCell.customWidth !== undefined && Math.abs(currentCellWidth - w) <= 1
-                          ? "bg-[#9D61FF] text-white shadow-xs"
+                          ? "bg-[#9D61FF] text-white"
                           : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
                       }`}
                       title={`Set block width to ${w}%`}
@@ -694,7 +694,7 @@ export function CanvasContextRibbon({
                         onClick={() => onUpdateHeight && onUpdateHeight(h.val)}
                         className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
                           isSelected
-                            ? "bg-[#9D61FF] text-white shadow-xs"
+                            ? "bg-[#9D61FF] text-white"
                             : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
                         }`}
                         title={h.tip}
@@ -765,7 +765,7 @@ export function CanvasContextRibbon({
               isOpen={fontMenuOpen}
               onClose={() => setFontMenuOpen(false)}
             >
-              <div className="w-44 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl p-1.5 space-y-1 animate-fadeIn select-none">
+              <div className="w-44 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-1.5 space-y-1 animate-fadeIn select-none">
                 <div className="px-2 py-1 text-[10px] font-mono uppercase text-slate-400 font-bold">Typography</div>
                 {FONT_OPTIONS.map((f) => (
                   <button
@@ -807,7 +807,7 @@ export function CanvasContextRibbon({
                   onClick={() => onUpdateCellStyle && onUpdateCellStyle({ fontSize: sz.id })}
                   className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-[#9D61FF] text-white shadow-xs"
+                      ? "bg-[#9D61FF] text-white"
                       : "text-slate-600 dark:text-zinc-400 hover:bg-white dark:hover:bg-zinc-900"
                   }`}
                   title={sz.tip}
@@ -825,7 +825,7 @@ export function CanvasContextRibbon({
               onClick={() => onUpdateCellStyle && onUpdateCellStyle({ textAlign: "left" })}
               className={`p-1 rounded cursor-pointer transition-colors ${
                 (currentStyle.textAlign || "left") === "left"
-                  ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                  ? "bg-white dark:bg-zinc-900 text-[#8B3DFF]"
                   : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
               }`}
               title="Align Left"
@@ -837,7 +837,7 @@ export function CanvasContextRibbon({
               onClick={() => onUpdateCellStyle && onUpdateCellStyle({ textAlign: "center" })}
               className={`p-1 rounded cursor-pointer transition-colors ${
                 currentStyle.textAlign === "center"
-                  ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                  ? "bg-white dark:bg-zinc-900 text-[#8B3DFF]"
                   : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
               }`}
               title="Align Center"
@@ -849,7 +849,7 @@ export function CanvasContextRibbon({
               onClick={() => onUpdateCellStyle && onUpdateCellStyle({ textAlign: "right" })}
               className={`p-1 rounded cursor-pointer transition-colors ${
                 currentStyle.textAlign === "right"
-                  ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                  ? "bg-white dark:bg-zinc-900 text-[#8B3DFF]"
                   : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
               }`}
               title="Align Right"
@@ -1086,7 +1086,7 @@ export function CanvasContextRibbon({
                 <button
                   type="button"
                   onClick={onOpenChartEditor}
-                  className="h-7 px-2.5 rounded-lg border border-purple-300 dark:border-purple-800/80 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                  className="h-7 px-2.5 rounded-lg border border-purple-300 dark:border-purple-800/80 bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                   title="Configure Chart Type, Data Points, Axis & Units"
                 >
                   <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -1480,7 +1480,7 @@ export function CanvasContextRibbon({
             }}
             className={`h-6 px-2 rounded text-[10px] font-bold border transition-all cursor-pointer ${
               paperTone === "white" || paperTone.toLowerCase() === "#ffffff"
-                ? "bg-white text-slate-900 border-slate-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-600 shadow-sm"
+                ? "bg-white text-slate-900 border-slate-300 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
                 : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200"
             }`}
           >
@@ -1494,7 +1494,7 @@ export function CanvasContextRibbon({
             }}
             className={`h-6 px-2 rounded text-[10px] font-bold border transition-all cursor-pointer ${
               paperTone === "slate" || paperTone.toLowerCase() === "#f8fafc"
-                ? "bg-slate-100 text-slate-900 border-slate-300 dark:bg-zinc-900 dark:text-white dark:border-zinc-700 shadow-sm"
+                ? "bg-slate-100 text-slate-900 border-slate-300 dark:bg-zinc-900 dark:text-white dark:border-zinc-700"
                 : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200"
             }`}
           >
@@ -1508,7 +1508,7 @@ export function CanvasContextRibbon({
             }}
             className={`h-6 px-2 rounded text-[10px] font-bold border transition-all cursor-pointer ${
               paperTone === "paper" || paperTone === "cream" || paperTone.toLowerCase() === "#faf8f5"
-                ? "bg-[#faf8f5] text-amber-900 border-amber-300 dark:bg-[#15130f] dark:text-amber-200 dark:border-amber-800 shadow-sm"
+                ? "bg-[#faf8f5] text-amber-900 border-amber-300 dark:bg-[#15130f] dark:text-amber-200 dark:border-amber-800"
                 : "border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-zinc-200"
             }`}
           >
@@ -1525,13 +1525,13 @@ export function CanvasContextRibbon({
             }}
             className={`h-6 px-2 rounded text-[10px] font-bold border flex items-center gap-1.5 transition-all cursor-pointer ${
               (!["white", "#ffffff", "slate", "#f8fafc", "paper", "cream", "#faf8f5"].includes(paperTone.toLowerCase())) || paperColorMenuOpen
-                ? "bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-700 shadow-xs"
+                ? "bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-700"
                 : "border-slate-200 dark:border-zinc-700/80 text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
             }`}
             title="Custom Paper Color & Document Surface Tones"
           >
             <div
-              className="w-2.5 h-2.5 rounded-full border border-slate-300 dark:border-zinc-600 shadow-xs flex-shrink-0"
+              className="w-2.5 h-2.5 rounded-full border border-slate-300 dark:border-zinc-600 flex-shrink-0"
               style={{ backgroundColor: getPaperToneColor(paperTone) }}
             />
             <span>Custom</span>
@@ -1566,13 +1566,13 @@ export function CanvasContextRibbon({
             }}
             className={`h-6 px-2 rounded text-[10px] font-bold border flex items-center gap-1.5 transition-all cursor-pointer ${
               sectionTextColor || sectionTextColorMenuOpen
-                ? "bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-700 shadow-xs"
+                ? "bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-700"
                 : "border-slate-200 dark:border-zinc-700/80 text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
             }`}
             title="Section Text & Heading Color"
           >
             <div
-              className="w-2.5 h-2.5 rounded-full border border-slate-300 dark:border-zinc-600 shadow-xs flex-shrink-0"
+              className="w-2.5 h-2.5 rounded-full border border-slate-300 dark:border-zinc-600 flex-shrink-0"
               style={{ backgroundColor: sectionTextColor || "#0f172a" }}
             />
             <span>{sectionTextColor ? sectionTextColor.toUpperCase() : "Default"}</span>
@@ -1606,7 +1606,7 @@ export function CanvasContextRibbon({
             }}
             className={`h-7 max-w-[190px] shrink-0 whitespace-nowrap rounded-lg border px-2.5 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               currentWm
-                ? "bg-purple-500/15 border-purple-400/50 text-[#8B3DFF] shadow-xs"
+                ? "bg-purple-500/15 border-purple-400/50 text-[#8B3DFF]"
                 : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200"
             }`}
             title="Configure Document Watermark Stamp"
@@ -1663,7 +1663,7 @@ export function CanvasContextRibbon({
               }}
               className={`h-6 shrink-0 whitespace-nowrap rounded border px-2 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
                 marginMenuOpen || showGuides
-                  ? "bg-purple-500/15 text-[#9D61FF] border-purple-400/40 shadow-xs"
+                  ? "bg-purple-500/15 text-[#9D61FF] border-purple-400/40"
                   : "border-slate-200 dark:border-zinc-700/80 text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
               }`}
               title="Adjust Printable Margins (Narrow, Standard, Wide, Custom)"
@@ -1696,7 +1696,7 @@ export function CanvasContextRibbon({
               onClick={onToggleRulers}
               className={`h-6 shrink-0 whitespace-nowrap rounded border px-2 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
                 showRulers
-                  ? "bg-purple-500/15 text-[#9D61FF] border-purple-400/40 shadow-xs"
+                  ? "bg-purple-500/15 text-[#9D61FF] border-purple-400/40"
                   : "border-slate-200 dark:border-zinc-700/80 text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800"
               }`}
               title="Toggle Dimensions & Position Rulers (Shift+R) — Standard PDF Page (595×842px)"
@@ -1716,7 +1716,7 @@ export function CanvasContextRibbon({
         <button
           type="button"
           onClick={onTogglePreview}
-          className="h-7 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 dark:border-zinc-800 px-3 text-slate-700 dark:text-zinc-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+          className="h-7 shrink-0 whitespace-nowrap rounded-lg border border-slate-200 dark:border-zinc-800 px-3 text-slate-700 dark:text-zinc-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
           title="Toggle Clean Executive Report Preview"
         >
           <Eye className="w-3.5 h-3.5 text-[#9D61FF]" />
@@ -1758,7 +1758,7 @@ function WatermarkPopover({
   const yOffset = config?.yOffset ?? 0;
 
   return (
-    <div className="absolute top-11 right-6 sm:right-auto sm:left-48 w-88 sm:w-[420px] rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-4 z-50 space-y-3.5 animate-fadeIn">
+    <div className="absolute top-11 right-6 sm:right-auto sm:left-48 w-88 sm:w-[420px] rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-4 z-50 space-y-3.5 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
         <div className="flex items-center gap-2">
@@ -1789,7 +1789,7 @@ function WatermarkPopover({
           onClick={() => setActiveTab("select")}
           className={`flex-1 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "select"
-              ? "bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-xs"
+              ? "bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400"
               : "text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200"
           }`}
         >
@@ -1805,7 +1805,7 @@ function WatermarkPopover({
             !activeWatermarkId
               ? "opacity-40 cursor-not-allowed text-slate-400"
               : activeTab === "transform"
-              ? "bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400 shadow-xs"
+              ? "bg-white dark:bg-zinc-800 text-purple-600 dark:text-purple-400"
               : "text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200"
           }`}
         >
@@ -1852,13 +1852,13 @@ function WatermarkPopover({
                 }}
                 className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between cursor-pointer transition-all ${
                   isSelected
-                    ? "border-[#8B3DFF] bg-[#8B3DFF]/10 text-[#8B3DFF] font-bold shadow-sm"
+                    ? "border-[#8B3DFF] bg-[#8B3DFF]/10 text-[#8B3DFF] font-bold"
                     : "border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900/50 text-slate-700 dark:text-zinc-300"
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
-                    className="w-12 h-8 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-0.5 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-2xs"
+                    className="w-12 h-8 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-0.5 flex items-center justify-center flex-shrink-0 overflow-hidden"
                     dangerouslySetInnerHTML={{ __html: wm.svgContent }}
                   />
                   <div className="min-w-0">
@@ -1952,7 +1952,7 @@ function WatermarkPopover({
                   onClick={() => onUpdateConfig({ scale: p.val })}
                   className={`py-1 rounded-lg border text-center transition-all cursor-pointer ${
                     scale === p.val
-                      ? "bg-[#8B3DFF] text-white border-transparent shadow-xs"
+                      ? "bg-[#8B3DFF] text-white border-transparent"
                       : "border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
                   }`}
                 >
@@ -2006,7 +2006,7 @@ function WatermarkPopover({
                     onClick={() => onUpdateConfig({ placement: pos.id as any })}
                     className={`h-7 rounded-lg text-[10px] font-bold transition-all cursor-pointer border flex items-center justify-center ${
                       isSelected
-                        ? "bg-[#8B3DFF] text-white border-transparent shadow-xs"
+                        ? "bg-[#8B3DFF] text-white border-transparent"
                         : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:border-purple-300"
                     }`}
                   >
@@ -2022,7 +2022,7 @@ function WatermarkPopover({
               onClick={() => onUpdateConfig({ placement: placement === "tiled" ? "center" : "tiled" })}
               className={`w-full py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 placement === "tiled"
-                  ? "bg-[#8B3DFF] text-white border-transparent shadow-xs"
+                  ? "bg-[#8B3DFF] text-white border-transparent"
                   : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300"
               }`}
             >
@@ -2144,7 +2144,7 @@ function WatermarkPopover({
       <button
         type="button"
         onClick={onClose}
-        className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+        className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors"
       >
         Done & Apply
       </button>
@@ -2199,7 +2199,7 @@ function MarginPopover({
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="absolute top-8 left-0 w-80 max-h-[min(540px,calc(100dvh-15rem))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-3.5 z-[60] space-y-3 animate-fadeIn text-slate-800 dark:text-zinc-200"
+      className="absolute top-8 left-0 w-80 max-h-[min(540px,calc(100dvh-15rem))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-3.5 z-[60] space-y-3 animate-fadeIn text-slate-800 dark:text-zinc-200"
     >
       <div className="border-b border-slate-100 dark:border-zinc-800/80 pb-2">
         <h4 className="text-xs font-bold text-slate-900 dark:text-white">Page Margins & Section Padding</h4>
@@ -2213,7 +2213,7 @@ function MarginPopover({
           onClick={() => setActiveTab("margins")}
           className={`py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "margins"
-              ? "bg-[#8B3DFF] text-white shadow-xs"
+              ? "bg-[#8B3DFF] text-white"
               : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
@@ -2224,7 +2224,7 @@ function MarginPopover({
           onClick={() => setActiveTab("padding")}
           className={`py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === "padding"
-              ? "bg-[#8B3DFF] text-white shadow-xs"
+              ? "bg-[#8B3DFF] text-white"
               : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
           }`}
         >
@@ -2476,7 +2476,7 @@ function PaperColorPopover({
   };
 
   return (
-    <div className="absolute top-8 left-0 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-4 z-50 space-y-4 animate-fadeIn">
+    <div className="absolute top-8 left-0 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-4 z-50 space-y-4 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
         <div className="flex items-center gap-2">
@@ -2489,7 +2489,7 @@ function PaperColorPopover({
           </div>
         </div>
         <span
-          className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-2xs"
+          className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200"
         >
           {activeColor.toUpperCase()}
         </span>
@@ -2512,7 +2512,7 @@ function PaperColorPopover({
                 onClick={() => onSetPaperTone(p.id)}
                 className={`group relative p-2 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer h-16 ${
                   isSelected
-                    ? "ring-2 ring-[#8B3DFF] border-[#8B3DFF] shadow-sm"
+                    ? "ring-2 ring-[#8B3DFF] border-[#8B3DFF]"
                     : "hover:scale-[1.03] border-slate-200 dark:border-zinc-700/80"
                 }`}
                 style={{ backgroundColor: p.color, borderColor: isSelected ? undefined : p.border }}
@@ -2520,7 +2520,7 @@ function PaperColorPopover({
               >
                 <div className="flex items-center justify-between w-full">
                   <div
-                    className="w-3.5 h-3.5 rounded-full border border-black/10 dark:border-white/20 shadow-xs"
+                    className="w-3.5 h-3.5 rounded-full border border-black/10 dark:border-white/20"
                     style={{ backgroundColor: p.color }}
                   />
                   {isSelected && (
@@ -2553,12 +2553,12 @@ function PaperColorPopover({
             <button
               type="button"
               onClick={() => colorPickerRef.current?.click()}
-              className="w-9 h-9 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center shadow-xs hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
+              className="w-9 h-9 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
               style={{ backgroundColor: activeColor }}
               title="Open color picker"
             >
               <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                <Pipette className="w-3.5 h-3.5 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" />
+                <Pipette className="w-3.5 h-3.5 text-white opacity-80 group-hover:scale-110 transition-transform" />
               </div>
             </button>
             <input
@@ -2606,7 +2606,7 @@ function PaperColorPopover({
       <button
         type="button"
         onClick={onClose}
-        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors"
       >
         Apply & Close
       </button>
@@ -2661,7 +2661,7 @@ function TextColorPopover({
   const isCustomColor = !TEXT_COLOR_SWATCHES.some(s => s.hex.toLowerCase() === currentColor.toLowerCase());
 
   return (
-    <div className="absolute top-8 left-0 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-4 z-50 space-y-3.5 animate-fadeIn">
+    <div className="absolute top-8 left-0 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-4 z-50 space-y-3.5 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
         <div className="flex items-center gap-2">
@@ -2674,7 +2674,7 @@ function TextColorPopover({
           </div>
         </div>
         <span
-          className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-2xs"
+          className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200"
         >
           {currentColor.toUpperCase()}
         </span>
@@ -2691,7 +2691,7 @@ function TextColorPopover({
           <button
             type="button"
             onClick={() => colorPickerRef.current?.click()}
-            className={`w-full h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105 cursor-pointer shadow-xs border relative overflow-hidden group ${
+            className={`w-full h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105 cursor-pointer border relative overflow-hidden group ${
               isCustomColor
                 ? "ring-2 ring-[#8B3DFF] ring-offset-1 border-[#8B3DFF]"
                 : "border-slate-300 dark:border-zinc-700 hover:border-purple-400"
@@ -2701,7 +2701,7 @@ function TextColorPopover({
             }}
             title="Custom Selection: Open Color Picker / Eyedropper"
           >
-            <div className="w-5 h-5 rounded-md bg-white/90 dark:bg-black/90 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+            <div className="w-5 h-5 rounded-md bg-white/90 dark:bg-black/90 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Plus className="w-3.5 h-3.5 text-[#8B3DFF] font-bold" />
             </div>
           </button>
@@ -2715,7 +2715,7 @@ function TextColorPopover({
                 onClick={() => {
                   onSelectColor(swatch.hex);
                 }}
-                className={`w-full h-8 rounded-lg flex items-center justify-center transition-transform hover:scale-110 cursor-pointer shadow-xs border ${
+                className={`w-full h-8 rounded-lg flex items-center justify-center transition-transform hover:scale-110 cursor-pointer border ${
                   isSelected
                     ? "ring-2 ring-[#8B3DFF] ring-offset-1 border-transparent"
                     : "border-slate-200 dark:border-zinc-700"
@@ -2725,7 +2725,7 @@ function TextColorPopover({
               >
                 {isSelected && (
                   <Check
-                    className={`w-3.5 h-3.5 drop-shadow ${
+                    className={`w-3.5 h-3.5 ${
                       swatch.hex.toLowerCase() === "#ffffff" ? "text-slate-900" : "text-white"
                     }`}
                   />
@@ -2741,7 +2741,7 @@ function TextColorPopover({
         <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/25">
           <div className="flex items-center gap-2">
             <div
-              className="w-4 h-4 rounded-md border border-black/10 dark:border-white/20 shadow-xs flex-shrink-0"
+              className="w-4 h-4 rounded-md border border-black/10 dark:border-white/20 flex-shrink-0"
               style={{ backgroundColor: currentColor }}
             />
             <div className="text-[11px] font-mono font-bold text-slate-800 dark:text-zinc-200">
@@ -2765,13 +2765,13 @@ function TextColorPopover({
             <button
               type="button"
               onClick={() => colorPickerRef.current?.click()}
-              className="w-9 h-9 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center shadow-xs hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
+              className="w-9 h-9 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
               style={{ backgroundColor: currentColor }}
               title="Click to open system color picker"
             >
               <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Pipette
-                  className={`w-3.5 h-3.5 drop-shadow ${
+                  className={`w-3.5 h-3.5 ${
                     currentColor.toLowerCase() === "#ffffff" ? "text-slate-900" : "text-white"
                   }`}
                 />
@@ -2822,7 +2822,7 @@ function TextColorPopover({
       <button
         type="button"
         onClick={onClose}
-        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors"
       >
         Apply & Close
       </button>
@@ -2879,7 +2879,7 @@ function CardBgPopover({
   const isCustomBg = Boolean(currentBg?.startsWith("#") || currentBg?.startsWith("rgb"));
 
   return (
-    <div className="absolute top-9 left-0 w-64 sm:w-72 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-3.5 z-50 space-y-3.5 animate-fadeIn">
+    <div className="absolute top-9 left-0 w-64 sm:w-72 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-3.5 z-50 space-y-3.5 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2">
         <div className="flex items-center gap-2">
@@ -2891,7 +2891,7 @@ function CardBgPopover({
             <p className="text-[10px] text-slate-400">Surface tone & custom hex</p>
           </div>
         </div>
-        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 shadow-2xs">
+        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200">
           {activeBgHex.toUpperCase()}
         </span>
       </div>
@@ -2907,7 +2907,7 @@ function CardBgPopover({
             type="button"
             onClick={() => colorPickerRef.current?.click()}
             className={`h-11 rounded-lg border p-1 text-[10px] font-bold flex flex-col items-center justify-center transition-all cursor-pointer relative overflow-hidden group ${
-              isCustomBg ? "ring-2 ring-[#8B3DFF] border-[#8B3DFF] shadow-xs" : "border-slate-300 dark:border-zinc-700 hover:scale-105"
+              isCustomBg ? "ring-2 ring-[#8B3DFF] border-[#8B3DFF]" : "border-slate-300 dark:border-zinc-700 hover:scale-105"
             }`}
             style={{
               background: "conic-gradient(from 180deg at 50% 50%, #FF0000 0deg, #FFA500 45deg, #FFFF00 90deg, #008000 135deg, #00FFFF 180deg, #0000FF 225deg, #800080 270deg, #FF00FF 315deg, #FF0000 360deg)",
@@ -2929,7 +2929,7 @@ function CardBgPopover({
                 onClick={() => onSelectBg(p.id)}
                 className={`h-11 rounded-lg border p-1 text-[10px] font-bold flex flex-col items-center justify-center transition-all cursor-pointer ${
                   isSelected
-                    ? "ring-2 ring-[#8B3DFF] shadow-sm"
+                    ? "ring-2 ring-[#8B3DFF]"
                     : "hover:scale-105"
                 }`}
                 style={{ backgroundColor: p.color, borderColor: p.border }}
@@ -2953,12 +2953,12 @@ function CardBgPopover({
             <button
               type="button"
               onClick={() => colorPickerRef.current?.click()}
-              className="w-8 h-8 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center shadow-xs hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
+              className="w-8 h-8 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
               style={{ backgroundColor: activeBgHex }}
               title="Open card background color picker"
             >
               <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                <Pipette className="w-3.5 h-3.5 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" />
+                <Pipette className="w-3.5 h-3.5 text-white opacity-80 group-hover:scale-110 transition-transform" />
               </div>
             </button>
             <input
@@ -3006,7 +3006,7 @@ function CardBgPopover({
       <button
         type="button"
         onClick={onClose}
-        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+        className="w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors"
       >
         Apply & Close
       </button>
@@ -3098,7 +3098,7 @@ function CardBorderPopover({
   };
 
   return (
-    <div className="absolute top-9 left-0 w-80 max-h-[min(540px,calc(100vh-140px))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 shadow-2xl p-4 z-50 space-y-4 animate-fadeIn">
+    <div className="absolute top-9 left-0 w-80 max-h-[min(540px,calc(100vh-140px))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-4 z-50 space-y-4 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
         <div className="flex items-center gap-2">
@@ -3107,7 +3107,7 @@ function CardBorderPopover({
           </div>
           <div>
             <h4 className="text-xs font-bold text-slate-900 dark:text-white">Card Appearance</h4>
-            <p className="text-[10px] text-slate-400">Border, radius, depth & shadow</p>
+            <p className="text-[10px] text-slate-400">Border line style, width & corner radius</p>
           </div>
         </div>
         <button
@@ -3146,7 +3146,7 @@ function CardBorderPopover({
               }
               className={`py-1 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer flex items-center justify-center ${
                 (currentBorderStyle || (activeWidth === 0 ? "none" : "solid")) === st
-                  ? "bg-[#8B3DFF] text-white shadow-xs"
+                  ? "bg-[#8B3DFF] text-white"
                   : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
@@ -3192,7 +3192,7 @@ function CardBorderPopover({
                 onClick={() => handleWidthChange(w)}
                 className={`w-6 h-6 rounded-lg text-[10px] font-bold font-mono transition-all cursor-pointer flex items-center justify-center ${
                   activeWidth === w
-                    ? "bg-[#8B3DFF] text-white shadow-xs"
+                    ? "bg-[#8B3DFF] text-white"
                     : "border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400"
                 }`}
               >
@@ -3255,7 +3255,7 @@ function CardBorderPopover({
               onClick={() => handleRadiusChange(r.val)}
               className={`py-1 rounded-lg text-[10px] font-bold font-mono transition-all cursor-pointer flex items-center justify-center border ${
                 activeRadius === r.val
-                  ? "bg-[#8B3DFF] border-[#8B3DFF] text-white shadow-xs"
+                  ? "bg-[#8B3DFF] border-[#8B3DFF] text-white"
                   : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-400"
               }`}
               title={r.title}
@@ -3266,43 +3266,7 @@ function CardBorderPopover({
         </div>
       </div>
 
-      {/* ── 3. Card Shadow (Depth & Elevation) ── */}
-      <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
-        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-          <span>Card Shadow & Depth</span>
-          <span className="capitalize text-[#8B3DFF] font-bold">{currentShadow || "None"}</span>
-        </div>
 
-        <div className="grid grid-cols-5 gap-1.5">
-          {[
-            { id: "none", label: "None", shadow: "none" },
-            { id: "sm", label: "Soft", shadow: "0 1px 2px rgba(0,0,0,0.06)" },
-            { id: "md", label: "Medium", shadow: "0 4px 6px -1px rgba(0,0,0,0.1)" },
-            { id: "lg", label: "Elevated", shadow: "0 10px 15px -3px rgba(0,0,0,0.12)" },
-            { id: "glow", label: "Glow", shadow: "0 0 16px rgba(139,61,255,0.4)" },
-          ].map((sh) => {
-            const isSelected = (currentShadow || "none") === sh.id;
-            return (
-              <button
-                key={sh.id}
-                type="button"
-                onClick={() => onSelectBorder({ shadow: sh.id })}
-                className={`py-1.5 px-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer flex flex-col items-center justify-center gap-1 border ${
-                  isSelected
-                    ? "bg-[#8B3DFF] border-[#8B3DFF] text-white shadow-sm"
-                    : "border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/60 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300"
-                }`}
-              >
-                <div
-                  className="w-5 h-2.5 rounded-sm bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700"
-                  style={{ boxShadow: sh.shadow }}
-                />
-                <span className="text-[9px] leading-none">{sh.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       {/* ── 4. Border Colors ── */}
       <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-zinc-800/80">
@@ -3336,7 +3300,7 @@ function CardBorderPopover({
                   }
                 }}
                 className={`h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer relative ${
-                  isSelected ? "ring-2 ring-[#8B3DFF] scale-105 shadow-xs" : "hover:scale-105 border-slate-300 dark:border-zinc-700"
+                  isSelected ? "ring-2 ring-[#8B3DFF] scale-105" : "hover:scale-105 border-slate-300 dark:border-zinc-700"
                 }`}
                 style={{ backgroundColor: p.color === "transparent" ? "#ffffff" : p.color }}
                 title={p.label}
@@ -3361,12 +3325,12 @@ function CardBorderPopover({
             <button
               type="button"
               onClick={() => colorPickerRef.current?.click()}
-              className="w-8 h-8 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center shadow-xs hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
+              className="w-8 h-8 rounded-xl border border-slate-200 dark:border-zinc-700 flex items-center justify-center hover:scale-105 transition-all cursor-pointer relative overflow-hidden group"
               style={{ backgroundColor: activeHex }}
               title="Open border color eyedropper"
             >
               <div className="absolute inset-0 bg-black/10 flex items-center justify-center">
-                <Pipette className="w-3.5 h-3.5 text-white drop-shadow opacity-80 group-hover:scale-110 transition-transform" />
+                <Pipette className="w-3.5 h-3.5 text-white opacity-80 group-hover:scale-110 transition-transform" />
               </div>
             </button>
             <input
@@ -3402,7 +3366,7 @@ function CardBorderPopover({
       <button
         type="button"
         onClick={onClose}
-        className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors shadow-sm"
+        className="w-full py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs cursor-pointer transition-colors"
       >
         Apply & Close
       </button>
