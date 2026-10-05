@@ -23,7 +23,7 @@ export function getDefaultBlockHeight(blockType?: string, cellOrVariant?: Canvas
       : (cellOrVariant?.insight?.variant || "single");
     switch (variant) {
       case "vertical-takeaways":
-        return 320;
+        return 220;
       case "priority-actions":
         return 200;
       case "split-quote":
@@ -141,14 +141,13 @@ export function partitionCanvasPages(
   const page1MarginY = (marginConfig?.top ?? 24) + (marginConfig?.bottom ?? 24);
 
   // Exact physical A4 sheet height: 842px (Standard ISO PDF Page)
-  // All pages have identical standard Header (Sitesafe + Section Bar) and identical Footer
-  const BOTTOM_CONTROLS_RESERVE = 100; 
- const standardCapacity = Math.round(
-  Math.max(
-    380,
-    Math.min(540, sheetHeight - page1MarginY - 110 - 75 - 70 - 35 - BOTTOM_CONTROLS_RESERVE)
-  )
-);
+  // All pages have standard Header (Sitesafe + Section Bar) and Footer
+  const standardCapacity = Math.round(
+    Math.max(
+      480,
+      Math.min(620, sheetHeight - page1MarginY - 95 - 65 - 35)
+    )
+  );
 
   const getCapacityForPage = (pageIdx: number): number => {
     let capacity = standardCapacity;

@@ -441,9 +441,17 @@ useEffect(() => {
 
     const ed = editorRef.current;
     if (!ed) return;
-    const html = ed.innerHTML;
+    let html = ed.innerHTML;
     const plain = (ed.innerText || "").trim();
     const empty = !plain || html === "<br>" || html === "<p><br></p>";
+    if (!empty) {
+      const edStyle = ed.style;
+      if (edStyle.fontSize || edStyle.fontFamily || edStyle.color) {
+        if (!html.includes("font-size") && edStyle.fontSize) {
+          html = `<span style="font-size: ${edStyle.fontSize};${edStyle.fontFamily ? ` font-family: ${edStyle.fontFamily};` : ''}${edStyle.color ? ` color: ${edStyle.color};` : ''}">${html}</span>`;
+        }
+      }
+    }
     onSaveRef.current(empty ? "" : plain, empty ? "" : html);
   };
   document.addEventListener("mousedown", handler);
@@ -487,42 +495,36 @@ useEffect(() => {
 
     // Case 1: If nothing is selected (cursor only, collapsed), apply to whole input content
     if (range.collapsed || !savedOffsetsRef.current || savedOffsetsRef.current.start === savedOffsetsRef.current.end) {
-      if (styles.color) {
-        editorRef.current.style.color = styles.color;
-        editorRef.current.querySelectorAll("span").forEach((s) => {
-          (s as HTMLElement).style.color = styles.color!;
+      const existingSpans = editorRef.current.querySelectorAll("span");
+      if (existingSpans.length > 0) {
+        existingSpans.forEach((s) => {
+          const el = s as HTMLElement;
+          if (styles.color) el.style.color = styles.color;
+          if (styles.fontFamily) el.style.fontFamily = styles.fontFamily;
+          if (styles.fontSize) el.style.fontSize = styles.fontSize;
+          if (styles.fontWeight) el.style.fontWeight = styles.fontWeight;
+          if (styles.fontStyle) el.style.fontStyle = styles.fontStyle;
+          if (styles.textDecoration) el.style.textDecoration = styles.textDecoration;
         });
+      } else {
+        const textContent = editorRef.current.textContent || "";
+        const span = document.createElement("span");
+        if (styles.color) span.style.color = styles.color;
+        if (styles.fontFamily) span.style.fontFamily = styles.fontFamily;
+        if (styles.fontSize) span.style.fontSize = styles.fontSize;
+        if (styles.fontWeight) span.style.fontWeight = styles.fontWeight;
+        if (styles.fontStyle) span.style.fontStyle = styles.fontStyle;
+        if (styles.textDecoration) span.style.textDecoration = styles.textDecoration;
+        span.textContent = textContent;
+        editorRef.current.innerHTML = "";
+        editorRef.current.appendChild(span);
       }
-      if (styles.fontFamily) {
-        editorRef.current.style.fontFamily = styles.fontFamily;
-        editorRef.current.querySelectorAll("span").forEach((s) => {
-          (s as HTMLElement).style.fontFamily = styles.fontFamily!;
-        });
-      }
-      if (styles.fontSize) {
-        editorRef.current.style.fontSize = styles.fontSize;
-        editorRef.current.querySelectorAll("span").forEach((s) => {
-          (s as HTMLElement).style.fontSize = styles.fontSize!;
-        });
-      }
-      if (styles.fontWeight) {
-        editorRef.current.style.fontWeight = styles.fontWeight;
-        editorRef.current.querySelectorAll("span").forEach((s) => {
-          (s as HTMLElement).style.fontWeight = styles.fontWeight!;
-        });
-      }
-      if (styles.fontStyle) {
-        editorRef.current.style.fontStyle = styles.fontStyle;
-        editorRef.current.querySelectorAll("span").forEach((s) => {
-          (s as HTMLElement).style.fontStyle = styles.fontStyle!;
-        });
-      }
-      if (styles.textDecoration) {
-        editorRef.current.style.textDecoration = styles.textDecoration;
-        editorRef.current.querySelectorAll("span").forEach((s) => {
-          (s as HTMLElement).style.textDecoration = styles.textDecoration!;
-        });
-      }
+      if (styles.color) editorRef.current.style.color = styles.color;
+      if (styles.fontFamily) editorRef.current.style.fontFamily = styles.fontFamily;
+      if (styles.fontSize) editorRef.current.style.fontSize = styles.fontSize;
+      if (styles.fontWeight) editorRef.current.style.fontWeight = styles.fontWeight;
+      if (styles.fontStyle) editorRef.current.style.fontStyle = styles.fontStyle;
+      if (styles.textDecoration) editorRef.current.style.textDecoration = styles.textDecoration;
       return;
     }
 
@@ -644,9 +646,17 @@ useEffect(() => {
   // Commit and Save
   const handleSave = () => {
     if (!editorRef.current) return;
-    const html = editorRef.current.innerHTML;
+    let html = editorRef.current.innerHTML;
     const plainText = (editorRef.current.innerText || "").trim();
     const isActuallyEmpty = !plainText || html === "<br>" || html === "<p><br></p>";
+    if (!isActuallyEmpty) {
+      const edStyle = editorRef.current.style;
+      if (edStyle.fontSize || edStyle.fontFamily || edStyle.color) {
+        if (!html.includes("font-size") && edStyle.fontSize) {
+          html = `<span style="font-size: ${edStyle.fontSize};${edStyle.fontFamily ? ` font-family: ${edStyle.fontFamily};` : ''}${edStyle.color ? ` color: ${edStyle.color};` : ''}">${html}</span>`;
+        }
+      }
+    }
     onSave(isActuallyEmpty ? "" : (plainText || initialValue), isActuallyEmpty ? "" : html);
   };
 

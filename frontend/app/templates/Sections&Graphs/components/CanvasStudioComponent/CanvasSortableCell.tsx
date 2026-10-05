@@ -403,14 +403,12 @@ export function SortableCell({
 
       const reservedBottomSpace = (isPreview ? 16 : 48) + rowsBelowHeight;
       const maxUsable = Math.floor(distanceToFooter - reservedBottomSpace);
-      // return Math.max(0, Math.min(460, maxUsable));
-  return Math.max(0, maxUsable);
+      return Math.max(120, maxUsable);
     }
 
     const pageRect = pageEl.getBoundingClientRect();
     const distanceToPageBottom = (pageRect.bottom - cellRect.top) / effectiveZoom;
-    // return Math.max(0, Math.min(460, Math.floor(distanceToPageBottom - (isPreview ? 32 : 72))));
-    return Math.max(0, Math.floor(distanceToPageBottom - (isPreview ? 32 : 72)));
+    return Math.max(120, Math.floor(distanceToPageBottom - (isPreview ? 32 : 72)));
   }, [currentPageNumber, effectiveZoom, isPreview]);
 
   const [dynamicMaxHeight, setDynamicMaxHeight] = useState<number>(() => {
@@ -426,16 +424,14 @@ export function SortableCell({
     updateDynamicMaxHeight();
     const handler = () => updateDynamicMaxHeight();
     window.addEventListener("resize", handler);
-    window.addEventListener("scroll", handler, true);
     return () => {
       window.removeEventListener("resize", handler);
-      window.removeEventListener("scroll", handler, true);
     };
   }, [updateDynamicMaxHeight]);
 
   const STACK_H = 5;
-  const MIN_BLOCK_H = 0;
-  const maxColumnHeight = dynamicMaxHeight;
+  const MIN_BLOCK_H = 80;
+  const maxColumnHeight = Math.max(120, dynamicMaxHeight);
   const hasStacked = Boolean(cell.stackedCells && cell.stackedCells.length > 0);
   const bottomZoneH = 0; // Rendered in React portal, takes zero internal cell layout height
 
@@ -480,7 +476,7 @@ export function SortableCell({
     ? baseBlockHeight + stackedExtraHeight
     : (typeof currentHeight === "number" ? Math.max(MIN_BLOCK_H, currentHeight) : undefined);
 
-  const effectiveMinHeight = rawMinHeight !== undefined ? Math.min(maxColumnHeight, rawMinHeight) : undefined;
+  const effectiveMinHeight = rawMinHeight;
 
   const maxPrimaryH = Math.max(MIN_BLOCK_H, maxColumnHeight - stackedExtraHeight);
 
@@ -672,10 +668,10 @@ export function SortableCell({
     width: widthStyle,
     maxWidth: widthStyle,
     height: typeof currentHeight === "number"
-      ? `${Math.min(maxColumnHeight, currentHeight + (hasStacked ? stackedExtraHeight : 0))}px`
+      ? `${currentHeight + (hasStacked ? stackedExtraHeight : 0)}px`
       : undefined,
-    maxHeight: `${maxColumnHeight}px`,
-    minHeight: effectiveMinHeight ? `${Math.min(maxColumnHeight, effectiveMinHeight)}px` : undefined,
+    maxHeight: isHeightResizing ? `${maxColumnHeight}px` : undefined,
+    minHeight: effectiveMinHeight ? `${effectiveMinHeight}px` : undefined,
     flexShrink: 0,
     flexGrow: 0,
     boxSizing: "border-box",

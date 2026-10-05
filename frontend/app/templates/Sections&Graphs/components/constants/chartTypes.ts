@@ -30,6 +30,8 @@ export const PALETTE_RAMPS: {
   badgeBg: string;
   badgeText: string;
   accent: string;
+  iconCircleBg?: string;
+  iconColor?: string;
 }[] = [
   {
     id: "blue",
@@ -43,6 +45,8 @@ export const PALETTE_RAMPS: {
     badgeBg: "bg-blue-500/15",
     badgeText: "text-blue-700 dark:text-blue-300",
     accent: "#3B82F6",
+    iconCircleBg: "bg-blue-100 dark:bg-blue-900/50",
+    iconColor: "text-blue-600 dark:text-blue-300",
   },
   {
     id: "green",
@@ -56,6 +60,8 @@ export const PALETTE_RAMPS: {
     badgeBg: "bg-green-500/15",
     badgeText: "text-green-700 dark:text-green-300",
     accent: "#22C55E",
+    iconCircleBg: "bg-green-100 dark:bg-green-900/50",
+    iconColor: "text-green-700 dark:text-green-300",
   },
   {
     id: "purple",
@@ -69,6 +75,8 @@ export const PALETTE_RAMPS: {
     badgeBg: "bg-purple-500/15",
     badgeText: "text-purple-700 dark:text-purple-300",
     accent: "#9D61FF",
+    iconCircleBg: "bg-purple-100 dark:bg-purple-900/50",
+    iconColor: "text-purple-700 dark:text-purple-300",
   },
   {
     id: "red",
@@ -82,6 +90,8 @@ export const PALETTE_RAMPS: {
     badgeBg: "bg-rose-500/15",
     badgeText: "text-rose-700 dark:text-rose-300",
     accent: "#F43F5E",
+    iconCircleBg: "bg-rose-100 dark:bg-rose-900/50",
+    iconColor: "text-rose-600 dark:text-rose-300",
   },
   {
     id: "amber",
@@ -95,6 +105,8 @@ export const PALETTE_RAMPS: {
     badgeBg: "bg-amber-500/15",
     badgeText: "text-amber-700 dark:text-amber-300",
     accent: "#F59E0B",
+    iconCircleBg: "bg-amber-100 dark:bg-amber-900/50",
+    iconColor: "text-amber-700 dark:text-amber-300",
   },
   {
     id: "emerald",
@@ -108,6 +120,8 @@ export const PALETTE_RAMPS: {
     badgeBg: "bg-emerald-500/15",
     badgeText: "text-emerald-700 dark:text-emerald-300",
     accent: "#10B981",
+    iconCircleBg: "bg-emerald-100 dark:bg-emerald-900/50",
+    iconColor: "text-emerald-700 dark:text-emerald-300",
   },
   {
     id: "cyan",
@@ -121,6 +135,8 @@ export const PALETTE_RAMPS: {
     badgeBg: "bg-cyan-500/15",
     badgeText: "text-cyan-700 dark:text-cyan-300",
     accent: "#06B6D4",
+    iconCircleBg: "bg-cyan-100 dark:bg-cyan-900/50",
+    iconColor: "text-cyan-700 dark:text-cyan-300",
   },
   {
     id: "orange",
@@ -134,6 +150,8 @@ export const PALETTE_RAMPS: {
     badgeBg: "bg-orange-500/15",
     badgeText: "text-orange-700 dark:text-orange-300",
     accent: "#F97316",
+    iconCircleBg: "bg-orange-100 dark:bg-orange-900/50",
+    iconColor: "text-orange-700 dark:text-orange-300",
   },
   {
     id: "slate",
@@ -147,6 +165,8 @@ export const PALETTE_RAMPS: {
     badgeBg: "bg-slate-500/15",
     badgeText: "text-slate-700 dark:text-slate-300",
     accent: "#64748B",
+    iconCircleBg: "bg-slate-200/80 dark:bg-slate-800",
+    iconColor: "text-slate-700 dark:text-slate-300",
   },
 ];
 

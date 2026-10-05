@@ -30,8 +30,12 @@ import {
   Quote,
   HardHat,
   CheckSquare,
-  ListChecks,
   SlidersHorizontal,
+  ShieldCheck,
+  Package,
+  UserCheck,
+  Settings,
+  History,
 } from "lucide-react";
 import {
   CanvasCell,
@@ -168,105 +172,246 @@ function MetricCardBlock({
     commitCardChange({ trendDirection: nextDir });
   };
 
+  const renderCardIcon = (iconName?: string) => {
+    switch (iconName) {
+      case "Users":
+        return <Users className="w-5 h-5" />;
+      case "ShieldCheck":
+      case "Shield":
+        return <ShieldCheck className="w-5 h-5" />;
+      case "Package":
+      case "Box":
+        return <Package className="w-5 h-5" />;
+      case "AlertTriangle":
+        return <AlertTriangle className="w-5 h-5" />;
+      case "Clock":
+        return <Clock className="w-5 h-5" />;
+      case "UserCheck":
+      case "UserCog":
+        return <UserCheck className="w-5 h-5" />;
+      case "Settings":
+      case "Gear":
+        return <Settings className="w-5 h-5" />;
+      case "History":
+        return <History className="w-5 h-5" />;
+      default:
+        return <Activity className="w-5 h-5" />;
+    }
+  };
+
+  // Dynamic Trend Sentiment Resolution
+  const isNegativeMetric =
+    card.higherIsBetter === false ||
+    card.dataSourceField?.includes("damage") ||
+    card.dataSourceField?.includes("overtime") ||
+    card.dataSourceField?.includes("incident") ||
+    card.dataSourceField?.includes("violation") ||
+    card.label?.toLowerCase().includes("damage") ||
+    card.label?.toLowerCase().includes("overtime");
+
+  const resolvedTrendColor: "green" | "red" | "neutral" = card.trendColor || (
+    card.trendDirection === "no-change"
+      ? "neutral"
+      : isNegativeMetric
+      ? card.trendDirection === "up" ? "red" : "green"
+      : card.trendDirection === "up" ? "green" : "red"
+  );
+
+  const trendTextColor =
+    resolvedTrendColor === "red"
+      ? "text-rose-600 dark:text-rose-400"
+      : resolvedTrendColor === "neutral"
+      ? "text-slate-500 dark:text-zinc-400"
+      : "text-emerald-600 dark:text-emerald-400";
+
+  // Dynamic Value & Unit parsing
+  const formatDynamicValue = (valStr: string) => {
+    const trimmed = (valStr || "").trim();
+    if (!trimmed) return { num: "0", unit: card.unit || "" };
+    // Check if ends with unit e.g. "hrs", "%", "devices", etc.
+    const unitMatch = trimmed.match(/^(.*?)\s*(hrs|hr|%|min|sec|days|devices|workers)$/i);
+    if (unitMatch) {
+      return { num: unitMatch[1], unit: unitMatch[2] };
+    }
+    return { num: trimmed, unit: card.unit || "" };
+  };
+
+  // Dynamic Font Size resolution from cell.style or default A4 scale
+  const valueFontSizeClass =
+    cell.style?.fontSize === "xs"
+      ? "text-base sm:text-lg"
+      : cell.style?.fontSize === "sm"
+      ? "text-lg sm:text-xl"
+      : cell.style?.fontSize === "lg"
+      ? "text-[26px] sm:text-[28px]"
+      : cell.style?.fontSize === "xl"
+      ? "text-3xl sm:text-[34px]"
+      : "text-2xl sm:text-[25px]"; // default compact A4 scale
+
+  const labelFontSizeClass =
+    cell.style?.fontSize === "xs"
+      ? "text-[10px]"
+      : cell.style?.fontSize === "sm"
+      ? "text-[10.5px]"
+      : cell.style?.fontSize === "lg"
+      ? "text-[12.5px]"
+      : cell.style?.fontSize === "xl"
+      ? "text-[13.5px]"
+      : "text-[11px] sm:text-[11.5px]";
+
+  const customPx = cell.style?.customFontSize ?? cell.style?.fontSizeCustom;
+
+  const defaultValFontSize =
+    customPx ||
+    (cell.style?.fontSize === "xs" ? 18 : cell.style?.fontSize === "sm" ? 21 : cell.style?.fontSize === "lg" ? 28 : cell.style?.fontSize === "xl" ? 34 : 25);
+
   return (
     <div
       style={cell.customHeight ? { height: `${cell.customHeight}px`, minHeight: `${cell.customHeight}px` } : undefined}
-      className={`w-full h-full min-h-[140px] rounded-2xl border p-4 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} ${editingField ? "relative z-50" : "relative z-10"}`}
+      className={`w-full h-full min-h-[118px] sm:min-h-[125px] rounded-xl sm:rounded-2xl border p-2.5 sm:p-3 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} ${editingField ? "relative z-50" : "relative z-10"}`}
     >
-      {/* Label (inline editable on double click) */}
-      <div className="text-[11px] font-semibold text-slate-600 dark:text-zinc-400 line-clamp-2 leading-snug mb-2">
-        {!isPreview && editingField === "label" ? (
-          <DynamicTextEditor
-            initialValue={card.label}
-            initialHtml={(card as any).labelHtml}
-            defaultFontSize={11}
-            className="text-[11px] font-semibold leading-snug"
-            onSave={(plain, html) => {
-              commitCardChange({ label: plain, labelHtml: html } as any);
-            }}
-            onCancel={() => handleSetEditingField(null)}
-          />
-        ) : (
-          <span
-            onDoubleClick={(e) => {
-              if (isPreview) return;
-              e.stopPropagation();
-              handleSetEditingField("label");
-            }}
-            title={!isPreview ? "Double-click to format label (Word style)" : undefined}
-            className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
-          >
-            {renderDynamicText((card as any).labelHtml, card.label)}
-          </span>
-        )}
-      </div>
+      <div>
+        {/* Circular Icon Badge matching Dummy_report.pdf */}
+        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 mb-1.5 shadow-none ${ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50"} ${ramp.iconColor || "text-blue-600 dark:text-blue-300"}`}>
+          {renderCardIcon(card.icon)}
+        </div>
 
-      {/* Primary Value (inline editable on double click) */}
-      <div className={`text-2xl font-black font-mono tracking-tight leading-tight ${ramp.textLight} ${ramp.textDark}`}>
-        {!isPreview && editingField === "value" ? (
-          <DynamicTextEditor
-            initialValue={card.value}
-            initialHtml={(card as any).valueHtml}
-            defaultFontSize={24}
-            className="text-2xl font-black font-mono"
-            onSave={(plain, html) => {
-              commitCardChange({ value: plain, valueHtml: html } as any);
-            }}
-            onCancel={() => handleSetEditingField(null)}
-          />
-        ) : (
-          <span
-            onDoubleClick={(e) => {
-              if (isPreview) return;
-              e.stopPropagation();
-              handleSetEditingField("value");
-            }}
-            title={!isPreview ? "Double-click to format value (Word style)" : undefined}
-            className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
-          >
-            {renderDynamicText((card as any).valueHtml, card.value)}
-          </span>
-        )}
-      </div>
-
-      {/* Trend Badge */}
-      <div className="pt-2 flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={cycleTrend}
-          title={!isPreview ? "Click to cycle trend: Up → Down → Neutral" : undefined}
-          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold font-mono transition-transform ${ramp.badgeBg} ${ramp.badgeText} ${!isPreview ? "hover:scale-105 cursor-pointer" : ""}`}
-        >
-          {card.trendDirection === "up" && <ArrowUp className="w-2.5 h-2.5" />}
-          {card.trendDirection === "down" && <ArrowDown className="w-2.5 h-2.5" />}
-          {card.trendDirection === "no-change" && <span>—</span>}
-
-          {!isPreview && editingField === "trend" ? (
-            <div onClick={(e) => e.stopPropagation()} className="min-w-[120px] max-w-full">
-              <DynamicTextEditor
-                initialValue={card.trendValue}
-                initialHtml={(card as any).trendValueHtml}
-                defaultFontSize={10}
-                className="text-[10px] font-mono font-bold"
-                onSave={(plain, html) => {
-                  commitCardChange({ trendValue: plain, trendValueHtml: html } as any);
-                }}
-                onCancel={() => handleSetEditingField(null)}
-              />
-            </div>
+        {/* Label (inline editable on double click) */}
+        <div className={`${labelFontSizeClass} font-bold text-slate-800 dark:text-zinc-200 line-clamp-2 leading-tight mb-0.5`}>
+          {!isPreview && editingField === "label" ? (
+            <DynamicTextEditor
+              initialValue={card.label}
+              initialHtml={(card as any).labelHtml}
+              defaultFontSize={11.5}
+              className="font-bold leading-tight"
+              onSave={(plain, html) => {
+                commitCardChange({ label: plain, labelHtml: html } as any);
+              }}
+              onCancel={() => handleSetEditingField(null)}
+            />
           ) : (
             <span
               onDoubleClick={(e) => {
                 if (isPreview) return;
                 e.stopPropagation();
-                handleSetEditingField("trend");
+                handleSetEditingField("label");
               }}
-              title={!isPreview ? "Double-click to format trend text (Word style)" : undefined}
+              title={!isPreview ? "Double-click to format label (Word style)" : undefined}
+              className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
             >
-              {renderDynamicText((card as any).trendValueHtml, card.trendValue)}
+              {renderDynamicText((card as any).labelHtml, card.label)}
             </span>
           )}
-        </button>
+        </div>
+
+        {/* Primary Value (inline editable on double click) */}
+        <div
+          className={`${valueFontSizeClass} font-black tracking-tight leading-none text-slate-900 dark:text-white my-0.5 flex items-baseline gap-1`}
+          style={customPx ? { fontSize: `${customPx}px` } : undefined}
+        >
+          {!isPreview && editingField === "value" ? (
+            <DynamicTextEditor
+              initialValue={card.value}
+              initialHtml={(card as any).valueHtml}
+              defaultFontSize={defaultValFontSize}
+              className="font-black"
+              onSave={(plain, html) => {
+                commitCardChange({ value: plain, valueHtml: html } as any);
+              }}
+              onCancel={() => handleSetEditingField(null)}
+            />
+          ) : (
+            <span
+              onDoubleClick={(e) => {
+                if (isPreview) return;
+                e.stopPropagation();
+                handleSetEditingField("value");
+              }}
+              title={!isPreview ? "Double-click to format value (Word style)" : undefined}
+              className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
+            >
+              {(() => {
+                // If user customized via DynamicTextEditor (has HTML tags/styles), prioritize valueHtml!
+                const hasCustomHtml = Boolean((card as any).valueHtml && (card as any).valueHtml.includes("<"));
+                if (hasCustomHtml) {
+                  return renderDynamicText((card as any).valueHtml, card.value);
+                }
+
+                const { num, unit } = formatDynamicValue(card.value);
+                if (unit) {
+                  return (
+                    <>
+                      <span>{num}</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-zinc-300 ml-0.5">{unit}</span>
+                    </>
+                  );
+                }
+                return renderDynamicText((card as any).valueHtml, card.value);
+              })()}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Trend Row: ▲ +2.1%  vs. last month */}
+      <div className="pt-1.5 flex flex-col gap-0.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            type="button"
+            onClick={cycleTrend}
+            title={!isPreview ? "Click to cycle trend: Up → Down → Neutral" : undefined}
+            className={`inline-flex items-center gap-1 text-[11px] sm:text-[11.5px] font-bold font-sans transition-transform ${trendTextColor} ${!isPreview ? "hover:scale-105 cursor-pointer" : ""}`}
+          >
+            {card.trendDirection === "up" && <span>▲</span>}
+            {card.trendDirection === "down" && <span>▼</span>}
+            {card.trendDirection === "no-change" && <span>—</span>}
+
+            {!isPreview && editingField === "trend" ? (
+              <div onClick={(e) => e.stopPropagation()} className="min-w-[80px] max-w-full">
+                <DynamicTextEditor
+                  initialValue={card.trendValue}
+                  initialHtml={(card as any).trendValueHtml}
+                  defaultFontSize={11.5}
+                  className="text-[11.5px] font-bold"
+                  onSave={(plain, html) => {
+                    commitCardChange({ trendValue: plain, trendValueHtml: html } as any);
+                  }}
+                  onCancel={() => handleSetEditingField(null)}
+                />
+              </div>
+            ) : (
+              <span
+                onDoubleClick={(e) => {
+                  if (isPreview) return;
+                  e.stopPropagation();
+                  handleSetEditingField("trend");
+                }}
+                title={!isPreview ? "Double-click to format trend text (Word style)" : undefined}
+              >
+                {renderDynamicText((card as any).trendValueHtml, card.trendValue)}
+              </span>
+            )}
+          </button>
+
+          {/* Subtitle e.g. "vs. last month" */}
+          {card.trendSubtitle && !card.trendSubtitle.includes("(Lower is better)") && (
+            <span className="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-zinc-500 font-normal">
+              {card.trendSubtitle}
+            </span>
+          )}
+          {!card.trendSubtitle && (
+            <span className="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-zinc-500 font-normal">
+              vs. last month
+            </span>
+          )}
+        </div>
+
+        {/* Special subtitle for metrics where lower is better */}
+        {(card.trendSubtitle?.includes("(Lower is better)") || (isNegativeMetric && card.trendDirection === "down")) && (
+          <div className="text-[9.5px] sm:text-[10px] text-slate-400 dark:text-zinc-500 font-medium leading-none">
+            (Lower is better)
+          </div>
+        )}
       </div>
     </div>
   );
@@ -501,7 +646,10 @@ const BADGE_NUM_COLORS: Record<string, string> = {
   red: "bg-[#ef4444] text-white",
   amber: "bg-[#f59e0b] text-white",
   emerald: "bg-[#059669] text-white",
+  mint: "bg-[#059669] text-white",
+  cyan: "bg-[#0ea5e9] text-white",
   sky: "bg-[#0284c7] text-white",
+  teal: "bg-[#10b981] text-white",
 };
 
 function InsightBlock({
@@ -813,44 +961,64 @@ function InsightBlock({
 
   // ── 3. Key Takeaways Numbered Badge List (Page 3) ───────────────────────────
   if (variant === "vertical-takeaways") {
+    const takeawayFontSizeClass =
+      cell.style?.fontSize === "xs"
+        ? "text-[9.5px] leading-tight"
+        : cell.style?.fontSize === "sm"
+        ? "text-[10px] leading-tight"
+        : cell.style?.fontSize === "lg"
+        ? "text-[12px] leading-normal"
+        : cell.style?.fontSize === "xl"
+        ? "text-[13px] leading-relaxed"
+        : "text-[10.5px] sm:text-[11px] leading-tight";
+
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 sm:p-5 space-y-3 overflow-hidden"
+        className="w-full h-full flex-1 min-h-0 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-[#f8fafc] dark:bg-[#0c1017] p-2.5 sm:p-3 space-y-1.5 overflow-hidden shadow-none"
         style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
-        <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-              <FileText className="w-4 h-4" />
+        <div className="flex items-center justify-between pb-1 border-b border-slate-200/80 dark:border-zinc-800">
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold shrink-0">
+              <FileText className="w-3 h-3" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-blue-400 tracking-tight leading-none">
+              <h3 className="text-xs sm:text-sm font-black text-[#0f172a] dark:text-blue-400 tracking-tight leading-none">
                 {insight.title || "Key Takeaways"}
               </h3>
-              <div className="w-10 h-0.5 bg-blue-600 rounded-full mt-1" />
             </div>
           </div>
           {!isPreview && (
             <button
               type="button"
               onClick={() => handleAddItem({ title: "New Metric" })}
-              className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-900/50 flex items-center gap-1 cursor-pointer transition-colors"
+              className="text-[9.5px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900/50 flex items-center gap-1 cursor-pointer transition-colors"
             >
-              <Plus className="w-3 h-3" /> Add Takeaway
+              <Plus className="w-2.5 h-2.5" /> Add Takeaway
             </button>
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-0.5 sm:space-y-1">
           {(insight.items || []).map((item, idx) => {
+            const defaultColors = [
+              "bg-[#3b82f6] text-white",
+              "bg-[#10b981] text-white",
+              "bg-[#8b5cf6] text-white",
+              "bg-[#ef4444] text-white",
+              "bg-[#059669] text-white",
+              "bg-[#f59e0b] text-white",
+              "bg-[#0ea5e9] text-white",
+              "bg-[#10b981] text-white",
+            ];
             const badgeColorClass =
               BADGE_NUM_COLORS[item.color || ""] ||
-              (idx % 8 === 0 ? "bg-[#3b82f6] text-white" : idx % 8 === 1 ? "bg-[#10b981] text-white" : idx % 8 === 2 ? "bg-[#8b5cf6] text-white" : idx % 8 === 3 ? "bg-[#ef4444] text-white" : idx % 8 === 4 ? "bg-[#10b981] text-white" : idx % 8 === 5 ? "bg-[#f59e0b] text-white" : idx % 8 === 6 ? "bg-[#0284c7] text-white" : "bg-[#059669] text-white");
+              defaultColors[idx % defaultColors.length];
             const isEditing = editingTarget === `item-${item.id}`;
 
             return (
-              <div key={item.id} className="relative group/row flex items-start gap-2.5 text-xs text-slate-700 dark:text-zinc-300 leading-snug">
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 mt-0.5 ${badgeColorClass}`}>
+              <div key={item.id} className={`relative group/row flex items-start gap-1.5 ${takeawayFontSizeClass} text-slate-700 dark:text-zinc-300`}>
+                <span className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center text-[8.5px] sm:text-[9px] font-black shrink-0 mt-0.5 ${badgeColorClass}`}>
                   {item.num ?? idx + 1}
                 </span>
 
@@ -859,10 +1027,10 @@ function InsightBlock({
                     <DynamicTextEditor
                       initialValue={item.text}
                       initialHtml={item.text}
-                      defaultFontSize={12}
+                      defaultFontSize={11}
                       multiline={true}
                       toolbarPosition="top"
-                      className="text-xs leading-snug"
+                      className="text-[11px] leading-tight"
                       onSave={(_plain, html) => handleItemTextUpdate(item.id, html)}
                       onCancel={finishEdit}
                     />
@@ -872,7 +1040,7 @@ function InsightBlock({
                       title={!isPreview ? "Double-click to format takeaway (Word style)" : undefined}
                       className={`select-text ${!isPreview ? "hover:bg-blue-500/5 rounded px-1 py-0.5 cursor-text transition-colors" : ""}`}
                     >
-                      {item.title && <b className="text-slate-900 dark:text-white mr-1.5">{item.title}:</b>}
+                      {item.title && <b className="text-slate-900 dark:text-white mr-1 font-bold">{item.title}:</b>}
                       <span dangerouslySetInnerHTML={{ __html: item.text }} />
                     </div>
                   )}

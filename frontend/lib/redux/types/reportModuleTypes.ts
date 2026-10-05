@@ -281,6 +281,10 @@ export interface LibraryMetricCard {
   trendDirection: "up" | "down" | "no-change";
   trendValue: string;
   icon?: string;
+  trendSubtitle?: string;
+  trendColor?: "green" | "red" | "neutral";
+  higherIsBetter?: boolean;
+  unit?: string;
 }
 
 export interface ChartDataPoint {
@@ -447,6 +451,7 @@ export interface CanvasCellStyle {
   fontFamily?: "sans" | "serif" | "mono" | "rounded";
   fontSize?: "xs" | "sm" | "base" | "lg" | "xl";
   customFontSize?: number; // custom font size in px (e.g. 8 to 48)
+  fontSizeCustom?: number; // custom font size in px alias
   fontWeight?: "normal" | "medium" | "semibold" | "bold";
   textAlign?: "left" | "center" | "right";
   textColor?: string;
@@ -716,6 +721,9 @@ export interface LibrarySection {
   canvasRows?: CanvasRow[];
   watermarkId?: string;
   stamps?: CanvasCoordinateStamp[];
+  // Section site & period meta (matching Dummy_report.pdf)
+  projectSite?: string;
+  reportingPeriod?: string;
   // Fixed first/last page data
   coverPageData?: CoverPageData;
   tableOfContentsData?: TableOfContentsData;
