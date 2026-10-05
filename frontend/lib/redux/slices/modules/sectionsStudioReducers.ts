@@ -1319,16 +1319,20 @@ export const sectionsStudioReducers = {
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec && sec.stamps) {
-        const targetStamp = sec.stamps.find((st: CanvasCoordinateStamp) => st.id === action.payload.stampId);
-        if (targetStamp) {
+        const idx = sec.stamps.findIndex((st: CanvasCoordinateStamp) => st.id === action.payload.stampId);
+        if (idx !== -1) {
+          const targetStamp = sec.stamps[idx];
           const pageIndex = targetStamp.pageIndex ?? 0;
           const pageStamps = sec.stamps.filter((st: CanvasCoordinateStamp) => (st.pageIndex ?? 0) === pageIndex);
           const currentMaxZ = pageStamps.reduce((max, s) => {
             const z = s.zIndex ?? (s.layer === "back" ? 6 : 25);
             return Math.max(max, z);
           }, 25);
-          targetStamp.layer = "front";
-          targetStamp.zIndex = currentMaxZ + 1;
+          sec.stamps[idx] = {
+            ...targetStamp,
+            layer: "front",
+            zIndex: Math.max(25, currentMaxZ + 1),
+          };
           sec.updatedAt = "Just now";
         }
       }
@@ -1342,16 +1346,20 @@ export const sectionsStudioReducers = {
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec && sec.stamps) {
-        const targetStamp = sec.stamps.find((st: CanvasCoordinateStamp) => st.id === action.payload.stampId);
-        if (targetStamp) {
+        const idx = sec.stamps.findIndex((st: CanvasCoordinateStamp) => st.id === action.payload.stampId);
+        if (idx !== -1) {
+          const targetStamp = sec.stamps[idx];
           const pageIndex = targetStamp.pageIndex ?? 0;
           const pageStamps = sec.stamps.filter((st: CanvasCoordinateStamp) => (st.pageIndex ?? 0) === pageIndex);
           const backStamps = pageStamps.filter((st) => st.id !== targetStamp.id && st.layer === "back");
           const currentMinZ = backStamps.length > 0
             ? backStamps.reduce((min, s) => Math.min(min, s.zIndex ?? 6), 6)
             : 6;
-          targetStamp.layer = "back";
-          targetStamp.zIndex = Math.max(1, currentMinZ - 1);
+          sec.stamps[idx] = {
+            ...targetStamp,
+            layer: "back",
+            zIndex: Math.max(1, currentMinZ - 1),
+          };
           sec.updatedAt = "Just now";
         }
       }
@@ -1365,18 +1373,18 @@ export const sectionsStudioReducers = {
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec && sec.stamps) {
-        const targetStamp = sec.stamps.find((st: CanvasCoordinateStamp) => st.id === action.payload.stampId);
-        if (targetStamp) {
+        const idx = sec.stamps.findIndex((st: CanvasCoordinateStamp) => st.id === action.payload.stampId);
+        if (idx !== -1) {
+          const targetStamp = sec.stamps[idx];
           const curZ = targetStamp.zIndex ?? (targetStamp.layer === "back" ? 6 : 25);
           if (targetStamp.layer === "back") {
             if (curZ >= 9) {
-              targetStamp.layer = "front";
-              targetStamp.zIndex = 25;
+              sec.stamps[idx] = { ...targetStamp, layer: "front", zIndex: 25 };
             } else {
-              targetStamp.zIndex = curZ + 1;
+              sec.stamps[idx] = { ...targetStamp, zIndex: curZ + 1 };
             }
           } else {
-            targetStamp.zIndex = curZ + 1;
+            sec.stamps[idx] = { ...targetStamp, zIndex: curZ + 1 };
           }
           sec.updatedAt = "Just now";
         }
@@ -1391,18 +1399,18 @@ export const sectionsStudioReducers = {
     ) => {
       const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
       if (sec && sec.stamps) {
-        const targetStamp = sec.stamps.find((st: CanvasCoordinateStamp) => st.id === action.payload.stampId);
-        if (targetStamp) {
+        const idx = sec.stamps.findIndex((st: CanvasCoordinateStamp) => st.id === action.payload.stampId);
+        if (idx !== -1) {
+          const targetStamp = sec.stamps[idx];
           const curZ = targetStamp.zIndex ?? (targetStamp.layer === "back" ? 6 : 25);
           if (targetStamp.layer !== "back") {
             if (curZ <= 20) {
-              targetStamp.layer = "back";
-              targetStamp.zIndex = 6;
+              sec.stamps[idx] = { ...targetStamp, layer: "back", zIndex: 6 };
             } else {
-              targetStamp.zIndex = curZ - 1;
+              sec.stamps[idx] = { ...targetStamp, zIndex: curZ - 1 };
             }
           } else {
-            targetStamp.zIndex = Math.max(1, curZ - 1);
+            sec.stamps[idx] = { ...targetStamp, zIndex: Math.max(1, curZ - 1) };
           }
           sec.updatedAt = "Just now";
         }

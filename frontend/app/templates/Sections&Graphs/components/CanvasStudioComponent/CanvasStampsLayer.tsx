@@ -37,6 +37,7 @@ export interface CanvasStampsLayerProps {
   onSelectStamp?: (stampId: string | null) => void;
   pageWidth?: number;  // 595
   pageHeight?: number; // 842
+  layerFilter?: "all" | "back" | "front";
 }
 
 const PALETTE_TINTS: Record<string, { bg: string; text: string; border: string; badgeBg: string; badgeText: string }> = {
