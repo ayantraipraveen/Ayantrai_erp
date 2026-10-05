@@ -20,7 +20,7 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Layers, Trash2 } from "lucide-react";
+import { Layers, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
   CanvasCell,
@@ -695,6 +695,94 @@ export function CanvasStudio({
     [dispatch, section.id, section.canvasRows, pages.length, handleSelectCell]
   );
 
+  const handleMovePageUp = useCallback(
+    (pageIndex: number) => {
+      if (pageIndex <= 0 || pageIndex >= pages.length) return;
+      const targetPage = pages[pageIndex];
+      const prevPage = pages[pageIndex - 1];
+      if (!targetPage || !prevPage) return;
+
+      const currentRows = section.canvasRows || [];
+      const targetIds = new Set(targetPage.rows.map((r) => r.id));
+      const prevIds = new Set(prevPage.rows.map((r) => r.id));
+
+      const firstPrevIdx = currentRows.findIndex((r) => prevIds.has(r.id));
+      if (firstPrevIdx === -1) return;
+
+      const rowsWithoutTarget = currentRows.filter((r) => !targetIds.has(r.id));
+      const targetRows = targetPage.rows;
+
+      const nextRows = [
+        ...rowsWithoutTarget.slice(0, firstPrevIdx),
+        ...targetRows,
+        ...rowsWithoutTarget.slice(firstPrevIdx),
+      ].map((r, idx) => {
+        if (idx === 0) {
+          return { ...r, pageBreakBefore: false };
+        }
+        if (prevIds.has(r.id) && r.id === prevPage.rows[0]?.id) {
+          return { ...r, pageBreakBefore: true };
+        }
+        return r;
+      });
+
+      dispatch(setSectionCanvasRows({ sectionId: section.id, canvasRows: nextRows }));
+      dispatch(showGlobalToast({ message: `Moved Page ${targetPage.pageNumber} up!`, type: "success" }));
+      setActiveViewPageIndex(pageIndex - 1);
+      setTimeout(() => {
+        document.getElementById(`canvas-page-${pageIndex - 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    },
+    [dispatch, section.id, section.canvasRows, pages, setActiveViewPageIndex]
+  );
+
+  const handleMovePageDown = useCallback(
+    (pageIndex: number) => {
+      if (pageIndex < 0 || pageIndex >= pages.length - 1) return;
+      const targetPage = pages[pageIndex];
+      const nextPage = pages[pageIndex + 1];
+      if (!targetPage || !nextPage) return;
+
+      const currentRows = section.canvasRows || [];
+      const targetIds = new Set(targetPage.rows.map((r) => r.id));
+      const nextIds = new Set(nextPage.rows.map((r) => r.id));
+
+      let lastNextIdx = -1;
+      for (let i = 0; i < currentRows.length; i++) {
+        if (nextIds.has(currentRows[i].id)) lastNextIdx = i;
+      }
+      if (lastNextIdx === -1) return;
+
+      const rowsWithoutTarget = currentRows.filter((r) => !targetIds.has(r.id));
+      let insertIdx = 0;
+      for (let i = 0; i < rowsWithoutTarget.length; i++) {
+        if (nextIds.has(rowsWithoutTarget[i].id)) insertIdx = i + 1;
+      }
+
+      const nextRows = [
+        ...rowsWithoutTarget.slice(0, insertIdx),
+        ...targetPage.rows,
+        ...rowsWithoutTarget.slice(insertIdx),
+      ].map((r, idx) => {
+        if (idx === 0) {
+          return { ...r, pageBreakBefore: false };
+        }
+        if (targetIds.has(r.id) && r.id === targetPage.rows[0]?.id) {
+          return { ...r, pageBreakBefore: true };
+        }
+        return r;
+      });
+
+      dispatch(setSectionCanvasRows({ sectionId: section.id, canvasRows: nextRows }));
+      dispatch(showGlobalToast({ message: `Moved Page ${targetPage.pageNumber} down!`, type: "success" }));
+      setActiveViewPageIndex(pageIndex + 1);
+      setTimeout(() => {
+        document.getElementById(`canvas-page-${pageIndex + 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    },
+    [dispatch, section.id, section.canvasRows, pages, setActiveViewPageIndex]
+  );
+
   const handleAddBlockBeside = useCallback(
     (rowId: string, cellIndex: number, blockType: CanvasBlockType = "text") => {
       const ts = Date.now();
@@ -1112,15 +1200,39 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                       </div>
 
                       {pages.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setPageToDelete(page)}
-                          className="h-7 px-2.5 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                          title={`Delete Page ${page.pageNumber}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Delete Page</span>
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleMovePageUp(page.pageIndex)}
+                            disabled={page.pageIndex === 0}
+                            className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                            title="Move Page Up"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Move Up</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleMovePageDown(page.pageIndex)}
+                            disabled={page.pageIndex === pages.length - 1}
+                            className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                            title="Move Page Down"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Move Down</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setPageToDelete(page)}
+                            className="h-7 px-2.5 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                            title={`Delete Page ${page.pageNumber}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete Page</span>
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}

@@ -513,6 +513,7 @@ export interface CanvasRow {
   cells: CanvasCell[];
   pageBreakBefore?: boolean;
   style?: CanvasRowStyle;
+  sectionName?: string;
 }
 
 export interface CanvasSectionStyle {

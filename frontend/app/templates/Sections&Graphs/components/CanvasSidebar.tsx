@@ -23,6 +23,9 @@ import {
   HardHat,
   AlertTriangle,
   AlignLeft,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
   Minus,
   Activity,
   Bookmark,
@@ -38,6 +41,7 @@ import {
   CanvasRow,
   LibrarySection,
 } from "@/lib/redux/slices/reportModuleSlice";
+import { resolveSectionCanvasRows } from "../utils/canvasLayoutUtils";
 import { useAppSelector } from "@/lib/redux/hooks";
 import {
   CHART_TYPE_OPTIONS,
@@ -47,7 +51,7 @@ import ChartRenderer from "./ChartComponent/ChartRenderer";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 
 export interface SidebarAddBlockEvent {
-  blockType: CanvasBlockType;
+  blockType: CanvasBlockType | "section";
   elementBlock?: CanvasElementBlock;
   chartType?: GraphType;
   customChart?: LibraryChartCard;
@@ -56,6 +60,8 @@ export interface SidebarAddBlockEvent {
   targetCellIndex?: number;
   insertRowAtIndex?: number;
   targetStackCellId?: string;
+  sectionRows?: CanvasRow[];
+  sectionName?: string;
 }
 
 export function handleBlockDragStart(
@@ -94,6 +100,7 @@ export interface CanvasSidebarProps {
   activeReportSectionKey?: string;
   onSelectReportSection?: (key: string) => void;
   onAddSectionRows?: (rows: CanvasRow[], sectionName: string) => void;
+  onReorderReportSections?: (fromIndex: number, toIndex: number) => void;
   onRemoveReportSection?: (sectionId: string) => void;
   showReportSections?: boolean;
 }
@@ -910,6 +917,7 @@ export function CanvasSidebar({
   activeReportSectionKey,
   onSelectReportSection,
   onAddSectionRows,
+  onReorderReportSections,
   onRemoveReportSection,
   showReportSections = false,
 }: CanvasSidebarProps) {
@@ -1156,14 +1164,52 @@ export function CanvasSidebar({
                   </span>
                 </button>
 
-                {/* 3...N. Dynamic Body Sections */}
+                {/* 3...N. Dynamic Body Sections (Draggable & Reorderable) */}
                 {reportSections &&
                   reportSections
                     .filter((s) => s.type === "section")
-                    .map((sec, idx) => (
-                      <button
+                    .map((sec, idx, arr) => (
+                      <div
                         key={sec.id || idx}
-                        type="button"
+                        draggable={true}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData("application/reorder-section", String(idx));
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragOver={(e) => {
+                          if (
+                            e.dataTransfer.types.includes("application/reorder-section") ||
+                            e.dataTransfer.types.includes("application/json")
+                          ) {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = "copy";
+                          }
+                        }}
+                        onDrop={(e) => {
+                          const rawIdx = e.dataTransfer.getData("application/reorder-section");
+                          if (rawIdx !== "") {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const fromIdx = parseInt(rawIdx, 10);
+                            if (!isNaN(fromIdx) && fromIdx !== idx) {
+                              onReorderReportSections?.(fromIdx, idx);
+                            }
+                            return;
+                          }
+                          const rawJson = e.dataTransfer.getData("application/json");
+                          if (rawJson) {
+                            try {
+                              const parsed = JSON.parse(rawJson);
+                              if (parsed.blockType === "section" && parsed.sectionRows) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                onAddSectionRows?.(parsed.sectionRows, parsed.sectionName || "New Section");
+                              }
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }
+                        }}
                         onClick={() => onSelectReportSection?.(sec.key)}
                         className={`w-full text-left p-2.5 rounded-xl border transition-all flex items-center justify-between group cursor-pointer ${
                           activeReportSectionKey === sec.key
@@ -1171,11 +1217,20 @@ export function CanvasSidebar({
                             : "border-purple-500/20 bg-purple-500/5 hover:bg-purple-500/10 hover:border-purple-500/50"
                         }`}
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-7 h-7 rounded-lg bg-purple-500/15 text-[#9D61FF] flex items-center justify-center flex-shrink-0">
-                            <Layers className="w-3.5 h-3.5" />
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          {/* Drag handle */}
+                          <div
+                            className="cursor-grab active:cursor-grabbing p-0.5 text-slate-400 group-hover:text-[#9D61FF] transition-colors flex-shrink-0"
+                            title="Drag up or down to reorder this section"
+                          >
+                            <GripVertical className="w-3.5 h-3.5" />
                           </div>
-                          <div className="min-w-0">
+
+                          <div className="w-6 h-6 rounded-lg bg-purple-500/15 text-[#9D61FF] flex items-center justify-center flex-shrink-0">
+                            <Layers className="w-3 h-3" />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
                             <div className="text-xs font-bold text-slate-800 dark:text-zinc-200 group-hover:text-[#9D61FF] truncate">
                               {idx + 3}. {sec.title}
                             </div>
@@ -1184,10 +1239,43 @@ export function CanvasSidebar({
                             </div>
                           </div>
                         </div>
-                        <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-[#9D61FF] flex-shrink-0">
-                          Page {sec.pageNumber || idx + 3}
-                        </span>
-                      </button>
+
+                        {/* Reorder Steppers & Page Badge */}
+                        <div className="flex items-center gap-1 flex-shrink-0 ml-1">
+                          {arr.length > 1 && (
+                            <div className="flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onReorderReportSections?.(idx, idx - 1);
+                                }}
+                                className="p-1 rounded hover:bg-purple-500/20 disabled:opacity-20 text-slate-500 hover:text-[#9D61FF] transition-all cursor-pointer disabled:pointer-events-none"
+                                title="Move Section Up"
+                              >
+                                <ChevronUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === arr.length - 1}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onReorderReportSections?.(idx, idx + 1);
+                                }}
+                                className="p-1 rounded hover:bg-purple-500/20 disabled:opacity-20 text-slate-500 hover:text-[#9D61FF] transition-all cursor-pointer disabled:pointer-events-none"
+                                title="Move Section Down"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-[#9D61FF]">
+                            Page {sec.pageNumber || idx + 3}
+                          </span>
+                        </div>
+                      </div>
                     ))}
 
                 {/* Last. Fixed Back Cover Page */}
@@ -1219,34 +1307,50 @@ export function CanvasSidebar({
                 </button>
               </div>
 
-              {/* ── EXISTING SECTIONS FROM LIBRARY (+ INSERT SECTION) ── */}
+              {/* ── EXISTING SECTIONS FROM LIBRARY (+ INSERT SECTION & DRAG TO REPORT) ── */}
               <div className="pt-3 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-2.5">
                 <div className="flex items-center justify-between px-1">
                   <span className="text-[10px] font-mono uppercase font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-[#9D61FF]" />
                     Insert Existing Section ({filteredLibrarySections.length})
                   </span>
-                  <span className="text-[9px] text-emerald-500 font-semibold font-mono">Available</span>
+                  <span className="text-[9px] text-emerald-500 font-semibold font-mono">Drag or Insert</span>
                 </div>
 
                 <div className="space-y-2">
                   {filteredLibrarySections.map((libSec, secIdx) => {
+                    const resolvedRows = resolveSectionCanvasRows(libSec);
                     const chartsCount = libSec.charts?.length || 0;
                     const metricsCount = libSec.metricCards?.length || 0;
-                    const rowsCount = libSec.canvasRows?.length || 1;
+                    const rowsCount = resolvedRows.length;
 
                     return (
                       <div
                         key={`lib-sec-${libSec.id}-${secIdx}`}
-                        className="p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#9D61FF]/60 hover:shadow-sm transition-all space-y-2"
+                        draggable={true}
+                        onDragStart={(e) => {
+                          const payload: SidebarAddBlockEvent = {
+                            blockType: "section",
+                            sectionName: libSec.name,
+                            sectionRows: resolvedRows,
+                          };
+                          e.dataTransfer.setData("application/json", JSON.stringify(payload));
+                          e.dataTransfer.setData("text/plain", libSec.name);
+                          e.dataTransfer.effectAllowed = "copy";
+                        }}
+                        className="group/sec-card p-3 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 hover:border-[#9D61FF]/60 hover:shadow-md transition-all space-y-2 cursor-grab active:cursor-grabbing"
+                        title="Drag section onto report canvas, or click button to insert after current section"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                              {libSec.name}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-mono truncate mt-0.5">
-                              {libSec.eyebrow}
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                            <GripVertical className="w-3.5 h-3.5 text-slate-400 group-hover/sec-card:text-[#9D61FF] transition-colors flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                                {libSec.name}
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono truncate mt-0.5">
+                                {libSec.eyebrow}
+                              </div>
                             </div>
                           </div>
                           <span
@@ -1261,7 +1365,7 @@ export function CanvasSidebar({
                         </div>
 
                         {/* Badges / Stats */}
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono pl-5">
                           <span>
                             {chartsCount} {chartsCount === 1 ? "Chart" : "Charts"}
                           </span>
@@ -1274,8 +1378,8 @@ export function CanvasSidebar({
                         {/* Action Button: Insert Section into Report */}
                         <button
                           type="button"
-                          onClick={() => onAddSectionRows?.(libSec.canvasRows || [], libSec.name)}
-                          className="w-full py-1.5 px-2.5 rounded-xl bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                          onClick={() => onAddSectionRows?.(resolvedRows, libSec.name)}
+                          className="w-full py-1.5 px-2.5 rounded-xl bg-purple-500/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Insert Section to Report</span>

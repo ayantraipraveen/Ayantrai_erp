@@ -65,6 +65,11 @@ import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
 import { CanvasStudio } from "./CanvasStudio";
 import { CanvasContextRibbon } from "./CanvasContextRibbon";
 import { CanvasMarginConfig, DEFAULT_CANVAS_MARGIN } from "../utils";
+import {
+  getReportSectionGroups,
+  reorderReportSectionGroups,
+  ReportSectionGroup,
+} from "../utils/canvasLayoutUtils";
 import ChartEditorPanel from "./ChartComponent/ChartEditorPanel";
 import {
   EditSectionHeaderModal,
@@ -285,6 +290,10 @@ export default function SectionCanvasEditor({
   // Report Sections Outline & Sidebar Jump Navigator
   const [activeReportSectionKey, setActiveReportSectionKey] = useState<string>("cover");
 
+  const sectionGroups = useMemo<ReportSectionGroup[]>(() => {
+    return getReportSectionGroups(section?.canvasRows || [], section?.name || "Statutory Compliance & Audit");
+  }, [section?.canvasRows, section?.name]);
+
   const computedReportSections = useMemo<ReportOutlineItem[]>(() => {
     const list: ReportOutlineItem[] = [];
 
@@ -307,34 +316,19 @@ export default function SectionCanvasEditor({
       });
     }
 
-    const rows = section?.canvasRows || [];
-    let currentSecIndex = 1;
-    rows.forEach((r, rIdx) => {
-      if (r.pageBreakBefore && rIdx > 0) {
-        list.push({
-          id: `outline-sec-${rIdx}`,
-          key: `section-${r.id}`,
-          title: `Section ${currentSecIndex}`,
-          subtitle: `Telemetry rows & widgets (${r.cells.length} cells)`,
-          type: "section",
-          pageNumber: list.length + 1,
-          rowsCount: 1,
-        });
-        currentSecIndex++;
-      }
-    });
-
-    if (list.length === (isReportFrame ? 2 : 0)) {
+    // Dynamic Body Sections partitioned into cohesive section groups
+    sectionGroups.forEach((g, gIdx) => {
+      const widgetCount = g.rows.reduce((sum, r) => sum + r.cells.length, 0);
       list.push({
-        id: `outline-main`,
-        key: `section-main`,
-        title: section?.name || "Report Telemetry & Analysis",
-        subtitle: section?.eyebrow || "Workforce and inspection metrics",
+        id: g.id,
+        key: g.key,
+        title: g.name,
+        subtitle: `${g.rows.length} ${g.rows.length === 1 ? "row" : "rows"} • ${widgetCount} widgets`,
         type: "section",
-        pageNumber: isReportFrame ? 3 : 1,
-        rowsCount: rows.length,
+        pageNumber: isReportFrame ? gIdx + 3 : gIdx + 1,
+        rowsCount: g.rows.length,
       });
-    }
+    });
 
     if (isReportFrame) {
       list.push({
@@ -348,7 +342,7 @@ export default function SectionCanvasEditor({
     }
 
     return list;
-  }, [isReportFrame, section?.coverPageData, section?.canvasRows, section?.name, section?.eyebrow]);
+  }, [isReportFrame, section?.coverPageData, sectionGroups]);
 
   const handleSelectReportSection = useCallback((key: string) => {
     setActiveReportSectionKey(key);
@@ -373,18 +367,135 @@ export default function SectionCanvasEditor({
     }
   }, []);
 
+  /**
+   * Inserts an entire section (composed of N CanvasRows) immediately after the currently viewed section.
+   * If insertAtIndex is explicitly given (e.g. from drag & drop), it honors that index.
+   */
   const handleAddSectionRows = useCallback(
-    (rowsToAdd: CanvasRow[], sectionName: string) => {
+    (rowsToAdd: CanvasRow[], sectionName: string, insertAtIndex?: number) => {
       if (!section) return;
       const currentRows = section.canvasRows || [];
+      const groups = getReportSectionGroups(currentRows, section.name);
+
+      let targetInsertIndex = currentRows.length; // fallback: end of rows
+
+      if (typeof insertAtIndex === "number") {
+        targetInsertIndex = Math.max(0, Math.min(currentRows.length, insertAtIndex));
+      } else {
+        // Find which section group the user is currently viewing
+        let activeGroupIdx = -1;
+
+        // 1. If a row or cell is actively selected:
+        if (selectedRowId) {
+          activeGroupIdx = groups.findIndex((g) => g.rows.some((r) => r.id === selectedRowId));
+        }
+
+        // 2. If a report section is selected in the outline:
+        if (activeGroupIdx === -1 && activeReportSectionKey) {
+          if (activeReportSectionKey.startsWith("section-")) {
+            const targetRowId = activeReportSectionKey.replace("section-", "");
+            activeGroupIdx = groups.findIndex(
+              (g) => g.key === activeReportSectionKey || g.rows.some((r) => r.id === targetRowId)
+            );
+          } else if (activeReportSectionKey === "cover" || activeReportSectionKey === "toc") {
+            activeGroupIdx = groups.length > 0 ? 0 : -1;
+          } else if (activeReportSectionKey === "back-cover") {
+            activeGroupIdx = groups.length - 1;
+          }
+        }
+
+        // 3. If canvas active page index is set:
+        if (activeGroupIdx === -1 && typeof canvasActivePageIndex === "number" && groups.length > 0) {
+          activeGroupIdx = Math.min(groups.length - 1, Math.max(0, canvasActivePageIndex));
+        }
+
+        // Insert immediately after the found section group
+        if (activeGroupIdx >= 0 && activeGroupIdx < groups.length) {
+          targetInsertIndex = groups[activeGroupIdx].endRowIndex + 1;
+        }
+      }
+
+      const ts = Date.now();
       const clonedRows: CanvasRow[] = rowsToAdd.map((r, rIdx) => ({
         ...r,
-        id: `row-${Date.now()}-${rIdx}-${Math.random().toString(36).substr(2, 4)}`,
-        pageBreakBefore: rIdx === 0,
+        id: `row-${ts}-${rIdx}-${Math.random().toString(36).substr(2, 4)}`,
+        sectionName,
+        pageBreakBefore: rIdx === 0, // Fresh page break for the start of the inserted section
       }));
-      const nextRows = [...currentRows, ...clonedRows];
+
+      const nextRows = [
+        ...currentRows.slice(0, targetInsertIndex),
+        ...clonedRows,
+        ...currentRows.slice(targetInsertIndex),
+      ];
+
+      // If inserted before an existing section, ensure the subsequent section retains its page break
+      if (targetInsertIndex < currentRows.length && nextRows[targetInsertIndex + clonedRows.length]) {
+        nextRows[targetInsertIndex + clonedRows.length] = {
+          ...nextRows[targetInsertIndex + clonedRows.length],
+          pageBreakBefore: true,
+        };
+      }
+
       dispatch(setSectionCanvasRows({ sectionId, canvasRows: nextRows }));
-      dispatch(showGlobalToast({ message: `Added "${sectionName}" to report!`, type: "success" }));
+      dispatch(
+        showGlobalToast({
+          message: `Inserted "${sectionName}" after current section!`,
+          type: "success",
+        })
+      );
+
+      // Auto-scroll to the new section and highlight
+      const firstNewRowId = clonedRows[0]?.id;
+      if (firstNewRowId) {
+        setActiveReportSectionKey(`section-${firstNewRowId}`);
+        setTimeout(() => {
+          const rowEl = document.getElementById(`row-${firstNewRowId}`);
+          if (rowEl) {
+            rowEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            rowEl.classList.add("ring-4", "ring-[#9D61FF]/40", "ring-offset-2");
+            setTimeout(() => {
+              rowEl?.classList.remove("ring-4", "ring-[#9D61FF]/40", "ring-offset-2");
+            }, 2500);
+          }
+        }, 150);
+      }
+    },
+    [dispatch, section, sectionId, selectedRowId, activeReportSectionKey, canvasActivePageIndex]
+  );
+
+  /**
+   * Reorders entire section groups (by moving all rows belonging to a group)
+   */
+  const handleReorderReportSections = useCallback(
+    (fromIndex: number, toIndex: number) => {
+      if (!section) return;
+      const currentRows = section.canvasRows || [];
+      const nextRows = reorderReportSectionGroups(currentRows, fromIndex, toIndex, section.name);
+      dispatch(setSectionCanvasRows({ sectionId, canvasRows: nextRows }));
+
+      const newGroups = getReportSectionGroups(nextRows, section.name);
+      const movedGroup = newGroups[toIndex];
+      dispatch(
+        showGlobalToast({
+          message: `Moved "${movedGroup?.name || "Section"}" to position ${toIndex + 1}!`,
+          type: "success",
+        })
+      );
+
+      if (movedGroup?.rows[0]?.id) {
+        setActiveReportSectionKey(movedGroup.key);
+        setTimeout(() => {
+          const targetEl = document.getElementById(`row-${movedGroup.rows[0].id}`);
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+            targetEl.classList.add("ring-4", "ring-[#9D61FF]/40", "ring-offset-2");
+            setTimeout(() => {
+              targetEl?.classList.remove("ring-4", "ring-[#9D61FF]/40", "ring-offset-2");
+            }, 2000);
+          }
+        }, 100);
+      }
     },
     [dispatch, section, sectionId]
   );
@@ -586,6 +697,13 @@ export default function SectionCanvasEditor({
   const handleSidebarAddBlock = useCallback(
     (e: SidebarAddBlockEvent) => {
       if (!section) return;
+
+      if (e.blockType === "section") {
+        const rowsToInsert = e.sectionRows && e.sectionRows.length > 0 ? e.sectionRows : [];
+        handleAddSectionRows(rowsToInsert, e.sectionName || "New Section", e.insertRowAtIndex);
+        return;
+      }
+
       const ts = Date.now();
       let cell: CanvasCell | null = null;
       switch (e.blockType) {
@@ -1646,6 +1764,7 @@ export default function SectionCanvasEditor({
             activeReportSectionKey={activeReportSectionKey}
             onSelectReportSection={handleSelectReportSection}
             onAddSectionRows={handleAddSectionRows}
+            onReorderReportSections={handleReorderReportSections}
             showReportSections={isReportFrame}
           />
         )}

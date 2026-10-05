@@ -1,4 +1,4 @@
-import { CanvasRow, CanvasCell } from "@/lib/redux/slices/reportModuleSlice";
+import { CanvasRow, CanvasCell, LibrarySection } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasMarginConfig, DEFAULT_CANVAS_MARGIN } from "./canvasStyleUtils";
 
 // ─── Standard ISO A4 PDF Dimensions (595 × 842 px / pt at 72 DPI) ───────────
@@ -257,4 +257,201 @@ export function autoBalanceRowCells(cells: CanvasCell[]): CanvasCell[] {
       colSpan: Math.max(1, Math.min(4, Math.round(w / 25))) as 1 | 2 | 3 | 4,
     };
   });
+}
+
+/**
+ * Resolves or constructs working canvasRows for any LibrarySection.
+ * If the section already has non-empty canvasRows, returns them.
+ * Otherwise, generates balanced metric card rows, chart rows, and insight rows.
+ */
+export function resolveSectionCanvasRows(sec: LibrarySection): CanvasRow[] {
+  if (sec.canvasRows && sec.canvasRows.length > 0) {
+    return sec.canvasRows;
+  }
+  const rows: CanvasRow[] = [];
+  const ts = Date.now();
+
+  // 1. Metric Cards Row
+  if (sec.metricCards && sec.metricCards.length > 0) {
+    const count = sec.metricCards.length;
+    const w = count === 1 ? 100 : count === 2 ? 50 : count === 3 ? 33.3 : count === 4 ? 25 : Math.floor(100 / count);
+    const colSpan = (count === 1 ? 4 : count === 2 ? 2 : 1) as 1 | 2 | 3 | 4;
+    rows.push({
+      id: `row-mc-${ts}-${Math.random().toString(36).substr(2, 4)}`,
+      sectionName: sec.name,
+      pageBreakBefore: true,
+      cells: sec.metricCards.map((card, cIdx) => ({
+        id: `cell-mc-${card.id || `${ts}-${cIdx}`}`,
+        colSpan,
+        customWidth: w,
+        blockType: "metric-card" as const,
+        metricCard: card,
+      })),
+    });
+  }
+
+  // 2. Charts (one row per chart)
+  if (sec.charts && sec.charts.length > 0) {
+    sec.charts.forEach((chart, cIdx) => {
+      rows.push({
+        id: `row-ch-${ts}-${cIdx}-${Math.random().toString(36).substr(2, 4)}`,
+        sectionName: sec.name,
+        pageBreakBefore: rows.length === 0,
+        cells: [
+          {
+            id: `cell-ch-${chart.id || `${ts}-${cIdx}`}`,
+            colSpan: 4 as const,
+            blockType: "chart" as const,
+            chart,
+          },
+        ],
+      });
+    });
+  }
+
+  // 3. Key Insights
+  if (sec.keyInsights && sec.keyInsights.length > 0) {
+    rows.push({
+      id: `row-ki-${ts}-${Math.random().toString(36).substr(2, 4)}`,
+      sectionName: sec.name,
+      pageBreakBefore: rows.length === 0,
+      cells: sec.keyInsights.map((ki, kIdx) => ({
+        id: `cell-ki-${ki.id || `${ts}-${kIdx}`}`,
+        colSpan: 4 as const,
+        blockType: "insight" as const,
+        insight: ki,
+      })),
+    });
+  }
+
+  // Fallback text block if empty
+  if (rows.length === 0) {
+    rows.push({
+      id: `row-def-${ts}-${Math.random().toString(36).substr(2, 4)}`,
+      sectionName: sec.name,
+      pageBreakBefore: true,
+      cells: [
+        {
+          id: `cell-tb-${ts}`,
+          colSpan: 4,
+          blockType: "text",
+          textBlock: {
+            id: `tb-${ts}`,
+            content: `<p><strong>${sec.name}</strong></p><p>${sec.description || "Operational telemetry and safety analysis."}</p>`,
+          },
+        },
+      ],
+    });
+  }
+
+  return rows;
+}
+
+export interface ReportSectionGroup {
+  id: string;
+  key: string;
+  name: string;
+  rows: CanvasRow[];
+  startRowIndex: number;
+  endRowIndex: number;
+  pageNumber: number;
+}
+
+/**
+ * Groups flat canvasRows into high-level report section blocks based on pageBreakBefore boundaries
+ * and sectionName annotations.
+ */
+export function getReportSectionGroups(
+  rows: CanvasRow[],
+  defaultSectionName: string = "Statutory Compliance & Audit"
+): ReportSectionGroup[] {
+  if (!rows || rows.length === 0) return [];
+
+  const groups: ReportSectionGroup[] = [];
+  let currentGroupRows: CanvasRow[] = [];
+  let currentStart = 0;
+  let currentName = rows[0]?.sectionName || defaultSectionName;
+  let currentKey = `section-${rows[0]?.id || "0"}`;
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const isNewSection =
+      i > 0 && (Boolean(row.pageBreakBefore) || Boolean(row.sectionName && row.sectionName !== currentName));
+
+    if (isNewSection && currentGroupRows.length > 0) {
+      groups.push({
+        id: `sec-group-${groups.length}`,
+        key: currentKey,
+        name: currentName,
+        rows: currentGroupRows,
+        startRowIndex: currentStart,
+        endRowIndex: i - 1,
+        pageNumber: groups.length + 3,
+      });
+
+      currentGroupRows = [row];
+      currentStart = i;
+      currentName = row.sectionName || `Section ${groups.length + 1}`;
+      currentKey = `section-${row.id}`;
+    } else {
+      currentGroupRows.push(row);
+      if (!currentName && row.sectionName) {
+        currentName = row.sectionName;
+      }
+    }
+  }
+
+  if (currentGroupRows.length > 0) {
+    groups.push({
+      id: `sec-group-${groups.length}`,
+      key: currentKey,
+      name: currentName,
+      rows: currentGroupRows,
+      startRowIndex: currentStart,
+      endRowIndex: rows.length - 1,
+      pageNumber: groups.length + 3,
+    });
+  }
+
+  return groups;
+}
+
+/**
+ * Reorders high-level section groups (fromIndex -> toIndex) and reconstructs the flat canvasRows array,
+ * maintaining correct pageBreakBefore topology.
+ */
+export function reorderReportSectionGroups(
+  rows: CanvasRow[],
+  fromIndex: number,
+  toIndex: number,
+  defaultSectionName: string = "Statutory Compliance & Audit"
+): CanvasRow[] {
+  const groups = getReportSectionGroups(rows, defaultSectionName);
+  if (
+    fromIndex < 0 ||
+    fromIndex >= groups.length ||
+    toIndex < 0 ||
+    toIndex >= groups.length ||
+    fromIndex === toIndex
+  ) {
+    return rows;
+  }
+
+  const reordered = [...groups];
+  const [moved] = reordered.splice(fromIndex, 1);
+  reordered.splice(toIndex, 0, moved);
+
+  const nextRows: CanvasRow[] = [];
+  reordered.forEach((group, gIdx) => {
+    group.rows.forEach((r, rIdx) => {
+      nextRows.push({
+        ...r,
+        // The first row of the first group does not break; all subsequent groups start on a new page.
+        pageBreakBefore: rIdx === 0 ? gIdx > 0 : Boolean(r.pageBreakBefore),
+        sectionName: group.name,
+      });
+    });
+  });
+
+  return nextRows;
 }
