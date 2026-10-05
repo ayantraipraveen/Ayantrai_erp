@@ -455,3 +455,50 @@ export function reorderReportSectionGroups(
 
   return nextRows;
 }
+
+export interface AccurateReportSectionGroup extends ReportSectionGroup {
+  startPageNumber: number;
+  endPageNumber: number;
+  pageRangeStr: string;
+}
+
+/**
+ * Calculates accurate starting and ending page numbers for each section group
+ * based on the actual partitioned pages.
+ */
+export function calculateSectionGroupPageNumbers(
+  groups: ReportSectionGroup[],
+  pages: PagePartition[]
+): AccurateReportSectionGroup[] {
+  if (!groups || groups.length === 0) return [];
+  if (!pages || pages.length === 0) {
+    return groups.map((g, idx) => ({
+      ...g,
+      startPageNumber: idx + 3,
+      endPageNumber: idx + 3,
+      pageRangeStr: `${idx + 3}`,
+      pageNumber: idx + 3,
+    }));
+  }
+
+  return groups.map((group, idx) => {
+    const firstRowId = group.rows[0]?.id;
+    const lastRowId = group.rows[group.rows.length - 1]?.id;
+
+    const startPage = pages.find((p) => p.rows.some((r) => r.id === firstRowId));
+    const endPage = pages.find((p) => p.rows.some((r) => r.id === lastRowId));
+
+    const defaultPageNum = pages[0]?.pageNumber ?? 3;
+    const startPageNum = startPage?.pageNumber ?? (idx === 0 ? defaultPageNum : defaultPageNum + idx);
+    const endPageNum = endPage?.pageNumber ?? startPageNum;
+    const pageRangeStr = startPageNum === endPageNum ? `${startPageNum}` : `${startPageNum} – ${endPageNum}`;
+
+    return {
+      ...group,
+      pageNumber: startPageNum,
+      startPageNumber: startPageNum,
+      endPageNumber: endPageNum,
+      pageRangeStr,
+    };
+  });
+}

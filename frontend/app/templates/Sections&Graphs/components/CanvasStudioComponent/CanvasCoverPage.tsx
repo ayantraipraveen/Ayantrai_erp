@@ -61,11 +61,11 @@ export function CanvasCoverPage({
     label: string;
     field: keyof CoverPageData;
   }> = [
-    { icon: Calendar, label: "Reporting Period", field: "reportingPeriod" },
-    { icon: Building2, label: "Project / Site", field: "projectSite" },
-    { icon: User, label: "Prepared for", field: "preparedFor" },
-    { icon: FileText, label: "Prepared by", field: "preparedBy" },
-  ];
+      { icon: Calendar, label: "Reporting Period", field: "reportingPeriod" },
+      { icon: Building2, label: "Project / Site", field: "projectSite" },
+      { icon: User, label: "Prepared for", field: "preparedFor" },
+      { icon: FileText, label: "Prepared by", field: "preparedBy" },
+    ];
 
   const rawTitle = String(val("reportType") || "Monthly\nReport");
   const displayTitle = rawTitle.includes("\n")
@@ -238,9 +238,8 @@ export function CanvasCoverPage({
         ) : (
           <div
             onDoubleClick={() => startEdit("reportType")}
-            className={`font-black text-[#1E2B58] text-[42px] leading-[0.95] tracking-tight whitespace-pre-line cursor-text transition-colors ${
-              !activeIsPreview ? "hover:bg-blue-50/50 rounded -mx-1 px-1" : ""
-            }`}
+            className={`font-black text-[#1E2B58] text-[42px] leading-[0.95] tracking-tight whitespace-pre-line cursor-text transition-colors ${!activeIsPreview ? "hover:bg-blue-50/50 rounded -mx-1 px-1" : ""
+              }`}
             title={activeIsPreview ? undefined : "Double-click to edit title"}
           >
             {displayTitle}
@@ -276,9 +275,8 @@ export function CanvasCoverPage({
         ) : (
           <div
             onDoubleClick={() => startEdit("subtitle")}
-            className={`text-[9.5px] font-bold tracking-[0.18em] uppercase text-[#334155] leading-tight whitespace-pre-line cursor-text transition-colors ${
-              !activeIsPreview ? "hover:bg-blue-50/50 rounded -mx-1 px-1" : ""
-            }`}
+            className={`text-[9.5px] font-bold tracking-[0.18em] uppercase text-[#334155] leading-tight whitespace-pre-line cursor-text transition-colors ${!activeIsPreview ? "hover:bg-blue-50/50 rounded -mx-1 px-1" : ""
+              }`}
             title={activeIsPreview ? undefined : "Double-click to edit subtitle"}
           >
             {val("subtitle") || "WORKFORCE INSIGHTS\nFOR A SAFER TOMORROW"}
@@ -324,11 +322,10 @@ export function CanvasCoverPage({
                 ) : (
                   <div
                     onDoubleClick={() => startEdit(field)}
-                    className={`text-[11.5px] font-bold text-[#1E2B58] leading-tight whitespace-nowrap cursor-text transition-colors ${
-                      !activeIsPreview
+                    className={`text-[11.5px] font-bold text-[#1E2B58] leading-tight whitespace-nowrap cursor-text transition-colors ${!activeIsPreview
                         ? "hover:bg-blue-50/50 rounded -mx-0.5 px-0.5"
                         : ""
-                    }`}
+                      }`}
                     title={activeIsPreview ? undefined : "Double-click to edit"}
                   >
                     {val(field) || label}
@@ -339,14 +336,6 @@ export function CanvasCoverPage({
           );
         })}
       </div>
-
-      {/* Edit Hint Badge */}
-      {!activeIsPreview && (
-        <div className="absolute top-2.5 right-4 z-30 flex items-center gap-1.5 bg-white/95 backdrop-blur-md text-[#1E2B58] text-[8px] font-bold px-2.5 py-1 rounded-full shadow-sm border border-slate-200/80 pointer-events-none">
-          <Edit3 className="w-2.5 h-2.5 text-[#9D61FF]" />
-          <span>COVER PAGE — Double-click any text to edit in-place</span>
-        </div>
-      )}
     </div>
   );
 }

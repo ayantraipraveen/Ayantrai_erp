@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import {
   BarChart2,
@@ -12,17 +12,20 @@ import {
   Target,
   Layers,
   Edit3,
+  Sparkles,
 } from "lucide-react";
 import {
   TableOfContentsData,
   TableOfContentsItem,
   DEFAULT_TOC_DATA,
 } from "@/lib/redux/types/reportModuleTypes";
+import { AccurateReportSectionGroup } from "../../utils/canvasLayoutUtils";
 
 export interface CanvasTableOfContentsPageProps {
   tocData?: Partial<TableOfContentsData>;
   activeIsPreview?: boolean;
   onUpdate?: (data: Partial<TableOfContentsData>) => void;
+  sectionGroups?: AccurateReportSectionGroup[];
 }
 
 interface EditingField {
@@ -53,13 +56,55 @@ const COLOR_MAP: Record<string, { bg: string; text: string; iconBg: string }> = 
   "07": { bg: "bg-[#E6E1FF]", text: "text-[#4326B8]", iconBg: "bg-[#F0ECFF]" },
 };
 
+const COLOR_PALETTES = [
+  { bg: "bg-[#DCEBFF]", text: "text-[#1E5BCE]", iconBg: "bg-[#EBF3FE]" },
+  { bg: "bg-[#D2F5DC]", text: "text-[#187A42]", iconBg: "bg-[#E6F9EC]" },
+  { bg: "bg-[#FDE2DF]", text: "text-[#D42B2B]", iconBg: "bg-[#FDEEED]" },
+  { bg: "bg-[#E9DEFF]", text: "text-[#5E2DBF]", iconBg: "bg-[#F3ECFF]" },
+  { bg: "bg-[#FBEBD2]", text: "text-[#A66212]", iconBg: "bg-[#FDF4E6]" },
+  { bg: "bg-[#D9F4FF]", text: "text-[#087A9E]", iconBg: "bg-[#EAF8FE]" },
+  { bg: "bg-[#E6E1FF]", text: "text-[#4326B8]", iconBg: "bg-[#F0ECFF]" },
+  { bg: "bg-[#FEF08A]/40", text: "text-[#854D0E]", iconBg: "bg-[#FEF9C3]" },
+  { bg: "bg-[#CCFBF1]", text: "text-[#0F766E]", iconBg: "bg-[#F0FDFA]" },
+  { bg: "bg-[#FCE7F3]", text: "text-[#9D174D]", iconBg: "bg-[#FDF2F8]" },
+];
+
 export function CanvasTableOfContentsPage({
   tocData,
   activeIsPreview = false,
   onUpdate,
+  sectionGroups,
 }: CanvasTableOfContentsPageProps) {
   const data: TableOfContentsData = { ...DEFAULT_TOC_DATA, ...tocData };
-  const items = data.items && data.items.length > 0 ? data.items : DEFAULT_TOC_DATA.items;
+  const rawItems = data.items && data.items.length > 0 ? data.items : DEFAULT_TOC_DATA.items;
+
+  // Dynamically resolve items based on real report section groups when available
+  const items = useMemo(() => {
+    if (!sectionGroups || sectionGroups.length === 0) {
+      return rawItems;
+    }
+
+    return sectionGroups.map((group, idx) => {
+      const existing = rawItems[idx];
+      const numKey = existing?.number || String(idx + 1).padStart(2, "0");
+      return {
+        id: existing?.id || `toc-group-${group.id || idx}`,
+        number: numKey,
+        title:
+          existing?.title && existing.title !== DEFAULT_TOC_DATA.items[idx]?.title
+            ? existing.title
+            : group.name,
+        description:
+          existing?.description ||
+          "Comprehensive operational telemetry, performance metrics and safety review.",
+        pageRange: group.pageRangeStr || existing?.pageRange || String(idx + 3),
+        iconType:
+          existing?.iconType ||
+          (idx % 4 === 0 ? "chart" : idx % 4 === 1 ? "users" : idx % 4 === 2 ? "alert" : "target"),
+        color: existing?.color,
+      };
+    });
+  }, [sectionGroups, rawItems]);
 
   const [editing, setEditing] = useState<EditingField | null>(null);
 
@@ -419,71 +464,83 @@ export function CanvasTableOfContentsPage({
             </div>
           </div>
 
-          {/* 7 Content Items */}
-          <div className="flex flex-col flex-1 mt-8">
-            {items.map((item, idx) => {
-              const numKey = item.number || String(idx + 1).padStart(2, "0");
-              const palette = COLOR_MAP[numKey] || COLOR_MAP["01"];
-              const IconComp = ICON_MAP[item.iconType || "chart"] || BarChart2;
+          {/* Content Items */}
+          <div className="flex flex-col flex-1 mt-6">
+            <div className="flex items-center justify-between pb-1.5 px-0.5 border-b border-slate-100">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Sections Index ({items.length})
+              </span>
+              <span className="text-[9px] font-mono font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1 shadow-2xs">
+                <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                Auto Page Numbers
+              </span>
+            </div>
 
-              return (
-                <div
-                  key={item.id || idx}
-                  className="flex items-center justify-between py-1 border-b border-slate-100 last:border-b-0 group"
-                >
-                  <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
-                    {/* Number Badge */}
-                    <div
-                      className={`w-9 h-9 rounded-xl ${palette.bg} ${palette.text} font-black text-xs flex items-center justify-center flex-shrink-0 font-mono shadow-xs`}
-                    >
-                      <EditableItemText
-                        itemId={item.id}
-                        field="number"
-                        className="font-mono text-center"
-                        placeholder={numKey}
-                      />
+            <div className="flex flex-col flex-1 mt-1 justify-between">
+              {items.map((item, idx) => {
+                const numKey = item.number || String(idx + 1).padStart(2, "0");
+                const palette = COLOR_MAP[numKey] || COLOR_PALETTES[idx % COLOR_PALETTES.length];
+                const IconComp = ICON_MAP[item.iconType || "chart"] || BarChart2;
+
+                return (
+                  <div
+                    key={item.id || idx}
+                    className="flex items-center justify-between py-1 border-b border-slate-100 last:border-b-0 group"
+                  >
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0 pr-2">
+                      {/* Number Badge */}
+                      <div
+                        className={`w-9 h-9 rounded-xl ${palette.bg} ${palette.text} font-black text-xs flex items-center justify-center flex-shrink-0 font-mono shadow-xs`}
+                      >
+                        <EditableItemText
+                          itemId={item.id}
+                          field="number"
+                          className="font-mono text-center"
+                          placeholder={numKey}
+                        />
+                      </div>
+
+                      {/* Circular Icon */}
+                      <div
+                        className={`w-9 h-9 rounded-full ${palette.iconBg} ${palette.text} flex items-center justify-center flex-shrink-0`}
+                      >
+                        <IconComp className="w-4 h-4 stroke-[2]" />
+                      </div>
+
+                      {/* Title & Description (Natural 2-line wrap matching reference PDF) */}
+                      <div className="flex-1 min-w-0">
+                        <EditableItemText
+                          itemId={item.id}
+                          field="title"
+                          as="div"
+                          className="text-[12.5px] font-bold text-[#0E1B46] leading-tight block"
+                          placeholder="Title"
+                        />
+                        <EditableItemText
+                          itemId={item.id}
+                          field="description"
+                          multiline
+                          rows={2}
+                          as="div"
+                          className="text-[9.5px] text-[#64748B] leading-tight mt-0.5 block"
+                          placeholder="Description"
+                        />
+                      </div>
                     </div>
 
-                    {/* Circular Icon */}
-                    <div
-                      className={`w-9 h-9 rounded-full ${palette.iconBg} ${palette.text} flex items-center justify-center flex-shrink-0`}
-                    >
-                      <IconComp className="w-4 h-4 stroke-[2]" />
-                    </div>
-
-                    {/* Title & Description (Natural 2-line wrap matching reference PDF) */}
-                    <div className="flex-1 min-w-0">
+                    {/* Page Number (Bold right-aligned, based on auto) */}
+                    <div className="px-1 py-0.5 flex-shrink-0 text-right min-w-[36px]">
                       <EditableItemText
                         itemId={item.id}
-                        field="title"
-                        as="div"
-                        className="text-[12.5px] font-bold text-[#0E1B46] leading-tight block"
-                        placeholder="Title"
-                      />
-                      <EditableItemText
-                        itemId={item.id}
-                        field="description"
-                        multiline
-                        rows={2}
-                        as="div"
-                        className="text-[9.5px] text-[#64748B] leading-tight mt-0.5 block"
-                        placeholder="Description"
+                        field="pageRange"
+                        className="text-[13px] font-bold text-[#0E1B46] text-right block font-mono"
+                        placeholder={item.pageRange || "1"}
                       />
                     </div>
                   </div>
-
-                  {/* Page Number (Bold right-aligned) */}
-                  <div className="px-1 py-0.5 flex-shrink-0 text-right min-w-[36px]">
-                    <EditableItemText
-                      itemId={item.id}
-                      field="pageRange"
-                      className="text-[13px] font-bold text-[#0E1B46] text-right block font-mono"
-                      placeholder="1"
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
         </div>

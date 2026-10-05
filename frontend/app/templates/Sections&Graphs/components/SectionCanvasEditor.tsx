@@ -68,7 +68,10 @@ import { CanvasMarginConfig, DEFAULT_CANVAS_MARGIN } from "../utils";
 import {
   getReportSectionGroups,
   reorderReportSectionGroups,
+  calculateSectionGroupPageNumbers,
+  partitionCanvasPages,
   ReportSectionGroup,
+  AccurateReportSectionGroup,
 } from "../utils/canvasLayoutUtils";
 import ChartEditorPanel from "./ChartComponent/ChartEditorPanel";
 import {
@@ -290,9 +293,32 @@ export default function SectionCanvasEditor({
   // Report Sections Outline & Sidebar Jump Navigator
   const [activeReportSectionKey, setActiveReportSectionKey] = useState<string>("cover");
 
+  // Base starting page number for body pages: Cover = 1, TOC = 2 => Body = 3 (or 1 for standalone section)
+  const bodyStartPageNumber = isReportFrame ? 3 : 1;
+
   const sectionGroups = useMemo<ReportSectionGroup[]>(() => {
     return getReportSectionGroups(section?.canvasRows || [], section?.name || "Statutory Compliance & Audit");
   }, [section?.canvasRows, section?.name]);
+
+  // Reactive canvas partitions used across page headers, outline, and TOC
+  const partitionedCanvasPages = useMemo(() => {
+    return partitionCanvasPages(section?.canvasRows || [], marginConfig, bodyStartPageNumber);
+  }, [section?.canvasRows, marginConfig, bodyStartPageNumber]);
+
+  // Section groups with accurately calculated start/end page numbers
+  const accurateSectionGroups = useMemo<AccurateReportSectionGroup[]>(() => {
+    return calculateSectionGroupPageNumbers(sectionGroups, partitionedCanvasPages);
+  }, [sectionGroups, partitionedCanvasPages]);
+
+  // Total pages across the complete report blueprint
+  const totalReportPages = useMemo(() => {
+    if (!isReportFrame) return partitionedCanvasPages.length;
+    const lastBodyPageNum =
+      partitionedCanvasPages.length > 0
+        ? partitionedCanvasPages[partitionedCanvasPages.length - 1].pageNumber
+        : 2;
+    return lastBodyPageNum + 1; // + 1 for Back Cover
+  }, [isReportFrame, partitionedCanvasPages]);
 
   const computedReportSections = useMemo<ReportOutlineItem[]>(() => {
     const list: ReportOutlineItem[] = [];
@@ -316,8 +342,8 @@ export default function SectionCanvasEditor({
       });
     }
 
-    // Dynamic Body Sections partitioned into cohesive section groups
-    sectionGroups.forEach((g, gIdx) => {
+    // Dynamic Body Sections with live auto-calculated page numbers
+    accurateSectionGroups.forEach((g) => {
       const widgetCount = g.rows.reduce((sum, r) => sum + r.cells.length, 0);
       list.push({
         id: g.id,
@@ -325,24 +351,29 @@ export default function SectionCanvasEditor({
         title: g.name,
         subtitle: `${g.rows.length} ${g.rows.length === 1 ? "row" : "rows"} • ${widgetCount} widgets`,
         type: "section",
-        pageNumber: isReportFrame ? gIdx + 3 : gIdx + 1,
+        pageNumber: g.pageRangeStr,
         rowsCount: g.rows.length,
       });
     });
 
     if (isReportFrame) {
+      const lastBodyPageNum =
+        partitionedCanvasPages.length > 0
+          ? partitionedCanvasPages[partitionedCanvasPages.length - 1].pageNumber
+          : 2;
+      const backCoverPageNum = lastBodyPageNum + 1;
       list.push({
         id: "outline-back-cover",
         key: "back-cover",
         title: "Back Cover Page",
         subtitle: "Document Closure & Sign-off",
         type: "back-cover",
-        pageNumber: list.length + 1,
+        pageNumber: backCoverPageNum,
       });
     }
 
     return list;
-  }, [isReportFrame, section?.coverPageData, sectionGroups]);
+  }, [isReportFrame, section?.coverPageData, accurateSectionGroups, partitionedCanvasPages]);
 
   const handleSelectReportSection = useCallback((key: string) => {
     setActiveReportSectionKey(key);
@@ -390,7 +421,28 @@ export default function SectionCanvasEditor({
           activeGroupIdx = groups.findIndex((g) => g.rows.some((r) => r.id === selectedRowId));
         }
 
-        // 2. If a report section is selected in the outline:
+        // 2. Check which section group element is currently visible in viewport view center
+        if (activeGroupIdx === -1 && groups.length > 0 && typeof window !== "undefined") {
+          const midY = window.innerHeight * 0.45;
+          for (let gIdx = 0; gIdx < groups.length; gIdx++) {
+            const rowId = groups[gIdx].rows[0]?.id;
+            const el = document.getElementById(`row-${rowId}`);
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              if (rect.top <= midY && rect.bottom >= 80) {
+                activeGroupIdx = gIdx;
+                break;
+              }
+            }
+          }
+        }
+
+        // 3. If canvas active page index is set:
+        if (activeGroupIdx === -1 && typeof canvasActivePageIndex === "number" && groups.length > 0) {
+          activeGroupIdx = Math.min(groups.length - 1, Math.max(0, canvasActivePageIndex));
+        }
+
+        // 4. If a report section is selected in the outline:
         if (activeGroupIdx === -1 && activeReportSectionKey) {
           if (activeReportSectionKey.startsWith("section-")) {
             const targetRowId = activeReportSectionKey.replace("section-", "");
@@ -402,11 +454,6 @@ export default function SectionCanvasEditor({
           } else if (activeReportSectionKey === "back-cover") {
             activeGroupIdx = groups.length - 1;
           }
-        }
-
-        // 3. If canvas active page index is set:
-        if (activeGroupIdx === -1 && typeof canvasActivePageIndex === "number" && groups.length > 0) {
-          activeGroupIdx = Math.min(groups.length - 1, Math.max(0, canvasActivePageIndex));
         }
 
         // Insert immediately after the found section group
@@ -421,6 +468,10 @@ export default function SectionCanvasEditor({
         id: `row-${ts}-${rIdx}-${Math.random().toString(36).substr(2, 4)}`,
         sectionName,
         pageBreakBefore: rIdx === 0, // Fresh page break for the start of the inserted section
+        cells: r.cells?.map((c, cIdx) => ({
+          ...c,
+          id: `cell-${ts}-${rIdx}-${cIdx}-${Math.random().toString(36).substr(2, 4)}`,
+        })) || [],
       }));
 
       const nextRows = [
@@ -1794,7 +1845,8 @@ export default function SectionCanvasEditor({
           onUpdateSectionStyle={handleUpdateSectionStyle}
           paperTone={paperTone}
           marginConfig={marginConfig}
-          pageNumber={Math.max(1, librarySections.findIndex((item) => item.id === sectionId) + 1)}
+          pageNumber={bodyStartPageNumber}
+          totalReportPages={totalReportPages}
           sectionTextColor={sectionTextColor}
           showGrid={showGrid}
           onToggleGrid={() => setShowGrid(!showGrid)}
@@ -1836,6 +1888,7 @@ export default function SectionCanvasEditor({
                 <div id="canvas-toc-page" className="transition-all duration-300 rounded-2xl">
                   <CanvasTableOfContentsPage
                     tocData={section?.tableOfContentsData}
+                    sectionGroups={accurateSectionGroups}
                     activeIsPreview={isPreview}
                     onUpdate={(data) => dispatch(updateTableOfContentsData({ sectionId, data }))}
                   />

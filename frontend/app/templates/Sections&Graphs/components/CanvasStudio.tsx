@@ -94,6 +94,7 @@ export function CanvasStudio({
   paperTone = "white",
   marginConfig = DEFAULT_CANVAS_MARGIN,
   pageNumber = 1,
+  totalReportPages,
   sectionTextColor,
   showGrid = true,
   onToggleGrid,
@@ -130,6 +131,15 @@ export function CanvasStudio({
   const pages = useMemo(() => {
     return partitionCanvasPages(rows, marginConfig, pageNumber, activePageHeight);
   }, [rows, marginConfig, pageNumber, activePageHeight]);
+
+  const computedTotalPages = useMemo(() => {
+    return (
+      totalReportPages ??
+      (pageNumber > 1
+        ? pageNumber - 1 + pages.length + (afterContent ? 1 : 0)
+        : pages.length)
+    );
+  }, [totalReportPages, pageNumber, pages.length, afterContent]);
 
   const [internalActiveViewPageIndex, setInternalActiveViewPageIndex] = useState<number>(externalActiveViewPageIndex ?? 0);
   const activeViewPageIndex = externalActiveViewPageIndex !== undefined ? externalActiveViewPageIndex : internalActiveViewPageIndex;
@@ -375,7 +385,7 @@ export function CanvasStudio({
   const handleDeskScroll = useCallback(() => {
     if (isProgrammaticScrollingRef.current) return;
     const container = deskScrollRef.current;
-    if (!container || pages.length <= 1) return;
+    if (!container || pages.length === 0) return;
 
     const containerRect = container.getBoundingClientRect();
     // Reference reading focal line: 35% down the container viewport
@@ -1189,7 +1199,7 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                     >
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-slate-800 dark:text-zinc-200">
-                          Page {page.pageNumber} of {pages.length}
+                          Page {page.pageNumber} of {computedTotalPages}
                         </span>
                         <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">
                           &bull; {page.rows.length} {page.rows.length === 1 ? "row" : "rows"}
@@ -1364,7 +1374,15 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                       <div>
                         {/* Section-specific Header Bar */}
                         <CanvasSectionHeader
-                          section={section}
+                          section={
+                            page.rows[0]?.sectionName && page.rows[0].sectionName !== section.name
+                              ? {
+                                  ...section,
+                                  name: page.rows[0].sectionName,
+                                  eyebrow: "STATUTORY COMPLIANCE & AUDIT",
+                                }
+                              : section
+                          }
                           paperTone={paperTone}
                           isDarkPaper={isDarkPaper}
                           sectionTextColor={sectionTextColor}

@@ -1272,7 +1272,7 @@ export function CanvasSidebar({
                           )}
 
                           <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/15 text-[#9D61FF]">
-                            Page {sec.pageNumber || idx + 3}
+                            Page {sec.pageNumber ? (typeof sec.pageNumber === "number" ? String(sec.pageNumber).padStart(2, "0") : sec.pageNumber) : String(idx + 3).padStart(2, "0")}
                           </span>
                         </div>
                       </div>
@@ -1302,7 +1302,9 @@ export function CanvasSidebar({
                     </div>
                   </div>
                   <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 flex-shrink-0">
-                    Last Page
+                    {reportSections?.find((s) => s.type === "back-cover")?.pageNumber
+                      ? `Page ${String(reportSections.find((s) => s.type === "back-cover")?.pageNumber).padStart(2, "0")}`
+                      : "Last Page"}
                   </span>
                 </button>
               </div>

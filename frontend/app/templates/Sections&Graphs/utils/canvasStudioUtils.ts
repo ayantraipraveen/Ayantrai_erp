@@ -120,6 +120,7 @@ export interface CanvasStudioProps {
   paperTone?: string;
   marginConfig?: CanvasMarginConfig;
   pageNumber?: number;
+  totalReportPages?: number;
   sectionTextColor?: string;
   showGrid?: boolean;
   onToggleGrid?: () => void;
