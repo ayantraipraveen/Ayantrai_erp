@@ -140,31 +140,32 @@ export function CanvasStudio({
   const activePageHeight = A4_HEIGHT_PX;
 
   const [pageOverrides, setPageOverrides] = useState<Record<number, PageConfigOverride>>(section.pageOverrides || {});
+  const pageOverridesRef = useRef<Record<number, PageConfigOverride>>(section.pageOverrides || {});
 
   useEffect(() => {
     if (section.pageOverrides) {
       setPageOverrides(section.pageOverrides);
+      pageOverridesRef.current = section.pageOverrides;
     }
   }, [section.pageOverrides]);
 
   const patchPageOverride = useCallback(
     (pageIdx: number, patch: Partial<PageConfigOverride>) => {
-      setPageOverrides((prev) => {
-        const next = {
-          ...prev,
-          [pageIdx]: {
-            ...prev[pageIdx],
-            ...patch,
-          },
-        };
-        dispatch(
-          updateLibrarySection({
-            id: section.id,
-            changes: { pageOverrides: next },
-          })
-        );
-        return next;
-      });
+      const next: Record<number, PageConfigOverride> = {
+        ...pageOverridesRef.current,
+        [pageIdx]: {
+          ...pageOverridesRef.current[pageIdx],
+          ...patch,
+        },
+      };
+      pageOverridesRef.current = next;
+      setPageOverrides(next);
+      dispatch(
+        updateLibrarySection({
+          id: section.id,
+          changes: { pageOverrides: next },
+        })
+      );
     },
     [dispatch, section.id]
   );
