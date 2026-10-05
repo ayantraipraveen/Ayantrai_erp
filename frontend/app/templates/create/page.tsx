@@ -2,14 +2,7 @@
 
 import React, { Suspense, useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import {
-  ArrowLeft,
-  Check,
-  Building,
-  Loader2,
-  Save,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   addTemplate,
@@ -279,81 +272,23 @@ function CreateTemplatePageContent() {
 
   return (
     <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden bg-white dark:bg-[#07090d]">
-      
-      {/* ── Top Header Bar ── */}
-      <div className="sticky top-0 z-30 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800/80 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <Link
-            href="/templates"
-            className="p-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors flex items-center gap-1.5 text-xs font-semibold flex-shrink-0"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Templates</span>
-          </Link>
-          <div className="h-4 w-px bg-slate-200 dark:bg-zinc-800 hidden sm:block flex-shrink-0" />
-          
-          <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-[#9D61FF] border border-purple-500/20 flex-shrink-0">
-            {activeBlueprintId}
-          </span>
-
-          {/* Inline Editable Template Title */}
-          <div className="flex items-center gap-2 min-w-0 flex-1 max-w-lg">
-            <input
-              type="text"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              placeholder="Enter Template Blueprint Name..."
-              className="bg-transparent font-bold text-sm text-slate-900 dark:text-white border-b border-transparent hover:border-slate-300 dark:hover:border-zinc-700 focus:border-[#9D61FF] focus:outline-none px-1.5 py-0.5 truncate w-full transition-all"
-              title="Click to rename template"
-            />
-          </div>
-        </div>
-
-        {/* Right Action Controls */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Target Industrial Site Selector */}
-          <div className="hidden md:flex items-center gap-1.5 bg-slate-100/80 dark:bg-zinc-900/80 rounded-xl px-2.5 py-1 border border-slate-200 dark:border-zinc-800 text-xs">
-            <Building className="w-3.5 h-3.5 text-slate-400" />
-            <select
-              value={selectedSiteId}
-              onChange={(e) => setSelectedSiteId(e.target.value)}
-              className="bg-transparent text-slate-800 dark:text-zinc-200 outline-none text-xs font-medium cursor-pointer"
-            >
-              {sites.map((s) => (
-                <option key={s.id} value={s.id} className="dark:bg-zinc-900 text-slate-900 dark:text-white">
-                  {s.name} ({s.id})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
-          >
-            <Save className="w-3.5 h-3.5 text-slate-500" />
-            <span>Save Draft</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSaveAndPublish}
-            className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#9D61FF] to-[#8035ea] hover:from-[#9254f8] hover:to-[#7227dc] text-white text-xs font-bold flex items-center gap-1.5 shadow-[0_2px_12px_rgba(157,97,255,0.35)] hover:shadow-[0_4px_20px_rgba(157,97,255,0.5)] transition-all active:scale-[0.98] cursor-pointer"
-          >
-            <Check className="w-3.5 h-3.5" />
-            <span>Publish Blueprint</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ── Main Visual Canvas Studio (Complete Report Format) ── */}
+      {/* ── Main Visual Canvas Studio (Complete Report Format with Unified Single-Row Header) ── */}
       <div className="flex-1 min-h-0 flex overflow-hidden">
         {activeSectionId ? (
           <SectionCanvasEditor
             sectionId={activeSectionId}
             onBack={() => router.push("/templates")}
             showReportFrame={true}
+            templateHeaderProps={{
+              templateId: activeBlueprintId,
+              templateName,
+              onTemplateNameChange: setTemplateName,
+              sites,
+              selectedSiteId,
+              onSelectSiteId: setSelectedSiteId,
+              onSaveDraft: handleSaveDraft,
+              onPublish: handleSaveAndPublish,
+            }}
           />
         ) : (
           <div className="flex-1 min-h-0 flex items-center justify-center bg-slate-50/50 dark:bg-[#07090d]">
