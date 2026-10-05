@@ -15,6 +15,7 @@ import {
   CanvasTextBlock,
   CanvasBadgeStrip,
   CanvasBadgeItem,
+  CanvasCoordinateStamp,
   GraphType,
   CoverPageData,
   DEFAULT_COVER_PAGE_DATA,
@@ -1244,5 +1245,49 @@ export const sectionsStudioReducers = {
       }
     },
 
-    // Global Universal Toast Reducers
+    // ── Coordinate-based Stamps & Stickers Reducers ──────────────────────
+    addStampToSection: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        stamp: CanvasCoordinateStamp;
+      }>
+    ) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
+      if (sec) {
+        if (!sec.stamps) sec.stamps = [];
+        sec.stamps.push(action.payload.stamp);
+        sec.updatedAt = "Just now";
+      }
+    },
+    updateStampInSection: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        stampId: string;
+        patch: Partial<CanvasCoordinateStamp>;
+      }>
+    ) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
+      if (sec && sec.stamps) {
+        const idx = sec.stamps.findIndex((st: CanvasCoordinateStamp) => st.id === action.payload.stampId);
+        if (idx !== -1) {
+          sec.stamps[idx] = { ...sec.stamps[idx], ...action.payload.patch };
+          sec.updatedAt = "Just now";
+        }
+      }
+    },
+    deleteStampFromSection: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        stampId: string;
+      }>
+    ) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
+      if (sec && sec.stamps) {
+        sec.stamps = sec.stamps.filter((st: CanvasCoordinateStamp) => st.id !== action.payload.stampId);
+        sec.updatedAt = "Just now";
+      }
+    },
 };

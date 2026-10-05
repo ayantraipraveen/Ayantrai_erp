@@ -41,6 +41,8 @@ import {
   updateCellWidth,
   updateCellHeight,
   showGlobalToast,
+  updateStampInSection,
+  deleteStampFromSection,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
 import { CanvasRuler } from "./CanvasRuler";
@@ -64,6 +66,7 @@ import {
   PageAddRowDropZone,
   SortableRow,
   WatermarkStampLayer,
+  CanvasStampsLayer,
   CanvasReportHeader,
   CanvasSectionHeader,
   CanvasReportFooter,
@@ -252,6 +255,7 @@ export function CanvasStudio({
     >
   >({});
   const [editingFooterValue, setEditingFooterValue] = useState<"company" | "websites" | "quote" | null>(null);
+  const [selectedStampId, setSelectedStampId] = useState<string | null>(null);
 
   const headerValues = headerValuesBySection[section.id] || {
     taglinePrimary: "Visibility for Every Worker,",
@@ -1345,6 +1349,24 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                       getPlacementClass={getPlacementClass}
                     />
 
+                    {/* Precision Coordinate-based Stamp / Sticker / Element Layer */}
+                    <CanvasStampsLayer
+                      pageIndex={page.pageIndex}
+                      stamps={section.stamps || []}
+                      activeIsPreview={activeIsPreview}
+                      onUpdateStamp={(stampId, patch) => {
+                        dispatch(updateStampInSection({ sectionId: section.id, stampId, patch }));
+                      }}
+                      onDeleteStamp={(stampId) => {
+                        dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
+                        dispatch(showGlobalToast({ message: "Stamp removed!", type: "info" }));
+                      }}
+                      selectedStampId={selectedStampId}
+                      onSelectStamp={setSelectedStampId}
+                      pageWidth={activePageWidth}
+                      pageHeight={activePageHeight}
+                    />
+
                     {/* Fixed Sitesafe Running Report Header (Edge-to-edge flush with top of A4 sheet) */}
                     <CanvasReportHeader
                       pageNumber={page.pageNumber}
@@ -1379,7 +1401,9 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                               ? {
                                   ...section,
                                   name: page.rows[0].sectionName,
-                                  eyebrow: "STATUTORY COMPLIANCE & AUDIT",
+                                  titleHtml: page.rows[0].sectionNameHtml,
+                                  eyebrow: page.rows[0].sectionEyebrow || section.eyebrow || "STATUTORY COMPLIANCE & AUDIT",
+                                  eyebrowHtml: page.rows[0].sectionEyebrowHtml || section.eyebrowHtml,
                                 }
                               : section
                           }
@@ -1394,17 +1418,39 @@ const openSection = (f: "eyebrow" | "name" | "description") => {
                           onStartEditing={openSection}
                           onFinishEditing={() => setEditingSectionField(null)}
                           onUpdateSection={(patch) => {
-                            dispatch(
-                              updateLibrarySection({
-                                id: section.id,
-                                ...patch,
-                                changes: patch,
-                              })
-                            );
-                            if (patch.name !== undefined) setLocalSectionName(patch.name);
-                            if (patch.eyebrow !== undefined) setLocalSectionEyebrow(patch.eyebrow);
-                            if (patch.description !== undefined) setLocalSectionDesc(patch.description);
-                            dispatch(showGlobalToast({ message: "Section updated!", type: "success" }));
+                            const targetSectionName = page.rows[0]?.sectionName;
+                            const isMultiSectionReport = Boolean(targetSectionName) && (section.canvasRows || []).some((r) => r.sectionName && r.sectionName !== targetSectionName);
+
+                            if (targetSectionName && (isMultiSectionReport || page.rows[0]?.sectionName !== section.name)) {
+                              // Isolated update: update ONLY rows that belong to this section group
+                              const updatedRows = (section.canvasRows || []).map((row) => {
+                                if (row.sectionName === targetSectionName || page.rows.some((pr) => pr.id === row.id)) {
+                                  return {
+                                    ...row,
+                                    sectionName: patch.name !== undefined ? patch.name : row.sectionName,
+                                    sectionNameHtml: patch.titleHtml !== undefined ? patch.titleHtml : row.sectionNameHtml,
+                                    sectionEyebrow: patch.eyebrow !== undefined ? patch.eyebrow : row.sectionEyebrow,
+                                    sectionEyebrowHtml: patch.eyebrowHtml !== undefined ? patch.eyebrowHtml : row.sectionEyebrowHtml,
+                                  };
+                                }
+                                return row;
+                              });
+                              dispatch(setSectionCanvasRows({ sectionId: section.id, canvasRows: updatedRows }));
+                              dispatch(showGlobalToast({ message: "Section title updated!", type: "success" }));
+                            } else {
+                              // Standalone single section
+                              dispatch(
+                                updateLibrarySection({
+                                  id: section.id,
+                                  ...patch,
+                                  changes: patch,
+                                })
+                              );
+                              if (patch.name !== undefined) setLocalSectionName(patch.name);
+                              if (patch.eyebrow !== undefined) setLocalSectionEyebrow(patch.eyebrow);
+                              if (patch.description !== undefined) setLocalSectionDesc(patch.description);
+                              dispatch(showGlobalToast({ message: "Section updated!", type: "success" }));
+                            }
                           }}
                           onUpdateSpacing={(space) => {
                             dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));

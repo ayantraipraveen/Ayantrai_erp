@@ -80,6 +80,8 @@ function CreateTemplatePageContent() {
           rows.push({
             ...r,
             id: `row-${sec.id}-${rIdx}-${Date.now()}`,
+            sectionName: r.sectionName || sec.name,
+            sectionEyebrow: r.sectionEyebrow || sec.eyebrow,
             pageBreakBefore: rIdx === 0 && sIdx > 0,
           });
         });

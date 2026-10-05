@@ -196,6 +196,9 @@ export const {
   updateCoverPageData,
   updateTableOfContentsData,
   updateBackCoverData,
+  addStampToSection,
+  updateStampInSection,
+  deleteStampFromSection,
 } = reportModuleSlice.actions;
 
 export default reportModuleSlice.reducer;

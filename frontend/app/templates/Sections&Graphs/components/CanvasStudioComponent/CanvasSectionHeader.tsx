@@ -88,7 +88,10 @@ export function CanvasSectionHeader({
       ) : (
         <div className="flex items-center justify-between gap-3 mb-1.5">
           <span
-            onDoubleClick={() => open("eyebrow")}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              open("eyebrow");
+            }}
             className="text-[12.5px] font-bold uppercase tracking-[0.15em] font-sans leading-none cursor-pointer transition-colors"
             title="Double-click to format eyebrow (Word style)"
           >
@@ -105,7 +108,10 @@ export function CanvasSectionHeader({
                   <button
                     key={space}
                     type="button"
-                    onClick={() => onUpdateSpacing(space)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdateSpacing(space);
+                    }}
                     className={`px-1.5 py-0.5 rounded capitalize transition-colors cursor-pointer ${
                       (section.headerSpacing || "normal") === space
                         ? "bg-white dark:bg-zinc-700 text-[#8B3DFF] font-bold shadow-xs"
@@ -140,7 +146,10 @@ export function CanvasSectionHeader({
 
               <button
                 type="button"
-                onClick={() => open("name")}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  open("name");
+                }}
                 className="opacity-0 group-hover/section-header:opacity-100 transition-opacity flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-[#2563eb] px-2 py-0.5 rounded hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
                 title="Edit Section Header"
               >
@@ -168,7 +177,10 @@ export function CanvasSectionHeader({
         />
       ) : (
         <h1
-          onDoubleClick={() => open("name")}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            open("name");
+          }}
           className="text-3xl sm:text-[38px] lg:text-[40px] font-black tracking-[-0.035em] leading-[1.08] cursor-pointer mt-1"
           title="Double-click to format title (Word style)"
         >
@@ -195,7 +207,10 @@ export function CanvasSectionHeader({
         />
       ) : section.description || section.descriptionHtml ? (
         <p
-          onDoubleClick={() => open("description")}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            open("description");
+          }}
           className={`text-[14px] sm:text-[14.5px] mt-2 max-w-4xl leading-relaxed cursor-pointer font-normal ${
             isDarkPaper && !sectionTextColor
               ? "text-zinc-300"

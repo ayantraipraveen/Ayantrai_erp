@@ -10,4 +10,5 @@ export * from "./CanvasInlineEditableText";
 export * from "./CanvasCoverPage";
 export * from "./CanvasTableOfContentsPage";
 export * from "./CanvasBackCoverPage";
+export * from "./CanvasStampsLayer";
 

@@ -508,12 +508,31 @@ export interface CanvasRowStyle {
   shadow?: "none" | "sm" | "md" | "lg" | "xl" | string;
 }
 
+export interface CanvasCoordinateStamp {
+  id: string;
+  sourceId: string;
+  name: string;
+  svgContent: string;
+  pageIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  opacity: number;
+  layer: "front" | "back";
+  locked?: boolean;
+}
+
 export interface CanvasRow {
   id: string;
   cells: CanvasCell[];
   pageBreakBefore?: boolean;
   style?: CanvasRowStyle;
   sectionName?: string;
+  sectionNameHtml?: string;
+  sectionEyebrow?: string;
+  sectionEyebrowHtml?: string;
 }
 
 export interface CanvasSectionStyle {
@@ -687,6 +706,7 @@ export interface LibrarySection {
   // New canvas layout (row-based Canva-like editor)
   canvasRows?: CanvasRow[];
   watermarkId?: string;
+  stamps?: CanvasCoordinateStamp[];
   // Fixed first/last page data
   coverPageData?: CoverPageData;
   tableOfContentsData?: TableOfContentsData;

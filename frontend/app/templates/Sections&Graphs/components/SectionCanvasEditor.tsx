@@ -51,6 +51,8 @@ import {
   updateCoverPageData,
   updateTableOfContentsData,
   updateBackCoverData,
+  addStampToSection,
+  CanvasCoordinateStamp,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasSidebar, SidebarAddBlockEvent, ReportOutlineItem } from "./CanvasSidebar";
 import {
@@ -947,21 +949,32 @@ export default function SectionCanvasEditor({
     (watermarkId: string) => {
       const watermark = uploadedWatermarks.find((item) => item.id === watermarkId);
       if (!watermark) return;
-      handleSidebarAddBlock({
-        blockType: "element",
-        elementBlock: {
-          sourceId: watermark.id,
-          svgContent: watermark.svgContent,
-          name: watermark.name,
-          opacity: 100,
-          rotation: 0,
-          scale: 100,
-          isWatermark: false,
-          layer: "front",
-        },
-      });
+
+      const targetPage = canvasActivePageIndex >= 0 ? canvasActivePageIndex : 0;
+      const newStamp: CanvasCoordinateStamp = {
+        id: `stamp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+        sourceId: watermark.id,
+        name: watermark.name,
+        svgContent: watermark.svgContent,
+        pageIndex: targetPage,
+        x: 215, // center on 595px page
+        y: 340, // center on 842px page
+        width: 160,
+        height: 160,
+        rotation: 0,
+        opacity: 100,
+        layer: "front",
+      };
+
+      dispatch(addStampToSection({ sectionId, stamp: newStamp }));
+      dispatch(
+        showGlobalToast({
+          message: `Added "${watermark.name}" stamp to page ${targetPage + 1}! Drag, resize or rotate it freely.`,
+          type: "success",
+        })
+      );
     },
-    [handleSidebarAddBlock, uploadedWatermarks]
+    [dispatch, sectionId, uploadedWatermarks, canvasActivePageIndex]
   );
 
   // ── Cell Edit Trigger ───────────────────────────────────────────────────────
