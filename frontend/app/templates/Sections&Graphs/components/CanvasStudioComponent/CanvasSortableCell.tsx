@@ -708,7 +708,7 @@ export function SortableCell({
           {...listeners}
           className={`absolute top-1.5 right-2 z-20 ${
             isSelected ? "opacity-0 pointer-events-none" : "opacity-0 group-hover/cell:opacity-100"
-          } transition-opacity bg-black/80 hover:bg-black text-white rounded-md px-1.5 py-0.5 text-[9px] font-mono font-bold flex items-center gap-1 cursor-grab active:cursor-grabbing backdrop-blur-xs shadow-xs`}
+          } transition-opacity bg-black/80 hover:bg-black text-white rounded-md px-1.5 py-0.5 text-[9px] font-mono font-bold flex items-center gap-1 cursor-grab active:cursor-grabbing backdrop-blur-xs`}
           title="Drag to move card anywhere (within row or across rows)"
         >
           <GripVertical className="w-2.5 h-2.5" />
@@ -719,7 +719,7 @@ export function SortableCell({
 
       {/* Live resizing indicator HUD */}
       {!isPreview && !isEditingActive && (isResizing || isHeightResizing) && (
-        <div className="absolute top-2 right-2 z-40 bg-[#8B3DFF] text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md shadow-lg pointer-events-none animate-in fade-in zoom-in-95 duration-100 flex items-center gap-1.5">
+        <div className="absolute top-2 right-2 z-40 bg-[#8B3DFF] text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md pointer-events-none animate-in fade-in zoom-in-95 duration-100 flex items-center gap-1.5">
           {isResizing && <span>W: {Math.round(currentPercent)}%</span>}
           {isResizing && isHeightResizing && <span className="opacity-60">&bull;</span>}
           {isHeightResizing && <span>H: {currentHeight ? `${Math.round(currentHeight)}px` : "Auto"}</span>}
@@ -753,7 +753,7 @@ export function SortableCell({
           title="Drop here to place beside as column"
         >
           {isBesideDropOver && (
-            <div className="bg-[#8B3DFF] text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-md whitespace-nowrap rotate-90 flex items-center gap-0.5 animate-pulse pointer-events-none">
+            <div className="bg-[#8B3DFF] text-white text-[9px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap rotate-90 flex items-center gap-0.5 animate-pulse pointer-events-none">
               <Plus className="w-2.5 h-2.5" /> Beside
             </div>
           )}
@@ -768,7 +768,7 @@ export function SortableCell({
             e.stopPropagation();
             onAddBlockBeside(rowId, (cellIndex ?? 0) + 1, "text");
           }}
-          className="absolute -right-2 top-1/2 -translate-y-1/2 z-35 w-4 h-4 rounded-full bg-white dark:bg-zinc-800 border border-purple-300 dark:border-purple-700 text-[#8B3DFF] hover:bg-[#8B3DFF] hover:text-white flex items-center justify-center shadow-md transition-colors opacity-0 group-hover/cell:opacity-100 cursor-pointer pointer-events-auto"
+          className="absolute -right-2 top-1/2 -translate-y-1/2 z-35 w-4 h-4 rounded-full bg-white dark:bg-zinc-800 border border-purple-300 dark:border-purple-700 text-[#8B3DFF] hover:bg-[#8B3DFF] hover:text-white flex items-center justify-center transition-colors opacity-0 group-hover/cell:opacity-100 cursor-pointer pointer-events-auto"
           title="Add a new column block beside this card in this row"
         >
           <Plus className="w-2.5 h-2.5" />
@@ -870,12 +870,12 @@ export function SortableCell({
                     flexShrink: 0,
                   }}
                   className={`relative group/stacked-block transition-all ${
-                    isStackedSelected && !isPreview ? "ring-2 ring-[#8B3DFF] rounded-2xl shadow-lg" : ""
+                    isStackedSelected && !isPreview ? "ring-2 ring-[#8B3DFF] rounded-2xl" : ""
                   }`}
                 >
                   {/* Mini Hover Toolbar for Stacked Item — positioned -top-8 (32px above) so it sits fully above the card and doesn't cover top content */}
                   {!isPreview && isStackedSelected && (
-                    <div className={`absolute -top-8 left-0 z-30 ${isStackedSelected ? "opacity-100" : "opacity-0 group-hover/stacked-block:opacity-100"} transition-opacity flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-0.5 shadow-md text-xs backdrop-blur-sm`}>
+                    <div className={`absolute -top-8 left-0 z-30 ${isStackedSelected ? "opacity-100" : "opacity-0 group-hover/stacked-block:opacity-100"} transition-opacity flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg px-2 py-0.5 text-xs backdrop-blur-sm`}>
                       {/* Width Quick Stepper */}
                       <div className="flex items-center border-r border-slate-200 dark:border-zinc-700 pr-1.5 mr-0.5 gap-0.5">
                         <span className="text-[9px] font-mono text-slate-400">W:</span>
@@ -1135,7 +1135,7 @@ export function SortableCell({
                 left: portalPos.left,
                 zIndex: 99999,
               }}
-              className="portal-quick-add-panel p-1.5 bg-white/98 dark:bg-zinc-900/98 backdrop-blur-md border-2 border-[#8B3DFF] rounded-2xl shadow-2xl flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-150 select-none whitespace-nowrap"
+              className="portal-quick-add-panel p-1.5 bg-white/98 dark:bg-zinc-900/98 backdrop-blur-md border-2 border-[#8B3DFF] rounded-2xl flex items-center gap-1.5 animate-in fade-in zoom-in-95 duration-150 select-none whitespace-nowrap"
             >
               <div className="flex items-center gap-1 pl-1">
                 <Plus className="w-3 h-3 text-[#8B3DFF]" />
@@ -1252,7 +1252,7 @@ export function SortableCell({
                 left: portalPos.left,
                 zIndex: 99999,
               }}
-              className="portal-stack-trigger-btn flex items-center gap-1 px-3 py-1 bg-white/95 dark:bg-zinc-900/95 border border-dashed border-[#8B3DFF]/70 hover:border-[#8B3DFF] text-[#8B3DFF] hover:bg-[#8B3DFF]/10 text-[11px] font-semibold rounded-full shadow-lg backdrop-blur-md cursor-pointer transition-all duration-150 animate-in fade-in zoom-in-95 hover:scale-105 active:scale-95"
+              className="portal-stack-trigger-btn flex items-center gap-1 px-3 py-1 bg-white/95 dark:bg-zinc-900/95 border border-dashed border-[#8B3DFF]/70 hover:border-[#8B3DFF] text-[#8B3DFF] hover:bg-[#8B3DFF]/10 text-[11px] font-semibold rounded-full backdrop-blur-md cursor-pointer transition-all duration-150 animate-in fade-in zoom-in-95 hover:scale-105 active:scale-95"
               title="Click to stack another block directly below in this column"
             >
               <Plus className="w-3 h-3 text-[#8B3DFF]" />
@@ -1276,7 +1276,7 @@ export function SortableCell({
               left: `${toolbarPortalPos.left}px`,
               zIndex: 99999,
             }}
-            className="portal-cell-action-bar flex items-center gap-0.5 bg-white/98 dark:bg-zinc-900/98 border border-slate-200 dark:border-zinc-800 rounded-xl px-1.5 py-0.5 shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap animate-in fade-in duration-100"
+            className="portal-cell-action-bar flex items-center gap-0.5 bg-white/98 dark:bg-zinc-900/98 border border-slate-200 dark:border-zinc-800 rounded-xl px-1.5 py-0.5 backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap animate-in fade-in duration-100"
           >
             <div
               {...attributes}
@@ -1488,7 +1488,7 @@ export function SortableCell({
                     onMoveToStackBelow(cell.id, previousCellId);
                   }
                 }}
-                className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-[#8B3DFF] hover:bg-[#7828E0] transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                className="px-2.5 py-1 rounded-lg text-[10px] font-bold text-white bg-[#8B3DFF] hover:bg-[#7828E0] transition-colors cursor-pointer flex items-center gap-1.5 active:scale-95"
                 title="Combine into a single vertical column under the card to its left (Canva Stack)"
               >
                 <CornerDownLeft className="w-3.5 h-3.5" />
@@ -1504,7 +1504,7 @@ export function SortableCell({
               }}
               className={`px-1.5 py-1 transition-all cursor-pointer rounded-lg flex items-center gap-1 text-[10px] font-bold ${
                 quickAddOpen
-                  ? "bg-[#8B3DFF] text-white shadow-xs"
+                  ? "bg-[#8B3DFF] text-white"
                   : "text-purple-600 dark:text-purple-400 bg-purple-500/10 hover:bg-purple-500/20"
               }`}
               title="Stack another block directly below this card (Canva Stack)"

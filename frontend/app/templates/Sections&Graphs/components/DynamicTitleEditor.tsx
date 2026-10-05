@@ -765,7 +765,7 @@ useEffect(() => {
           <div className="w-px h-5 bg-slate-200 dark:bg-zinc-800 shrink-0" />
 
           {/* B, I, U Word Toggles */}
-          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 p-0.5 shadow-2xs shrink-0">
+          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 p-0.5 shrink-0">
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
@@ -807,7 +807,7 @@ useEffect(() => {
                 setColorMenuOpen(!colorMenuOpen);
                 setFontMenuOpen(false);
               }}
-              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1 cursor-pointer shadow-2xs shrink-0"
+              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1 cursor-pointer shrink-0"
               title="Text Color (Select text and click color)"
             >
               <div className="flex flex-col items-center">
@@ -827,7 +827,7 @@ useEffect(() => {
                     left: colorMenuPos.left,
                     zIndex: 99999,
                   }}
-                  className="portal-title-dropdown w-60 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#11151e] shadow-2xl p-3 space-y-2.5 animate-fadeIn select-none"
+                  className="portal-title-dropdown w-60 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#11151e] p-3 space-y-2.5 animate-fadeIn select-none"
                 >
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Select Color for Selected Text
@@ -844,7 +844,7 @@ useEffect(() => {
                           applyColor(col.hex);
                           setColorMenuOpen(false);
                         }}
-                        className="w-7 h-7 rounded-lg border border-slate-300 dark:border-zinc-700 hover:scale-110 transition-transform cursor-pointer shadow-2xs relative flex items-center justify-center"
+                        className="w-7 h-7 rounded-lg border border-slate-300 dark:border-zinc-700 hover:scale-110 transition-transform cursor-pointer relative flex items-center justify-center"
                         style={{ backgroundColor: col.hex }}
                         title={col.name}
                       >
@@ -916,9 +916,9 @@ useEffect(() => {
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => applyColor(col.hex)}
-                className={`w-3.5 h-3.5 rounded-full border transition-all cursor-pointer shadow-2xs shrink-0 ${
+                className={`w-3.5 h-3.5 rounded-full border transition-all cursor-pointer shrink-0 ${
                   activeColor.toLowerCase() === col.hex.toLowerCase()
-                    ? "ring-2 ring-blue-500 scale-125 border-white dark:border-white shadow-xs"
+                    ? "ring-2 ring-blue-500 scale-125 border-white dark:border-white"
                     : "border-slate-300/80 dark:border-zinc-700 hover:scale-125"
                 }`}
                 style={{ backgroundColor: col.hex }}
@@ -928,7 +928,7 @@ useEffect(() => {
 
             {/* Direct Custom Color Picker Tile (Rainbow gradient with Eyedropper) */}
             <label
-              className="relative w-4.5 h-4.5 rounded-full cursor-pointer shadow-2xs hover:scale-125 transition-transform flex items-center justify-center overflow-hidden border border-slate-300 dark:border-zinc-600 ml-0.5 shrink-0"
+              className="relative w-4.5 h-4.5 rounded-full cursor-pointer hover:scale-125 transition-transform flex items-center justify-center overflow-hidden border border-slate-300 dark:border-zinc-600 ml-0.5 shrink-0"
               style={{
                 background: "conic-gradient(from 180deg, #ff0000, #ff8000, #ffff00, #00ff00, #00ffff, #0066ff, #9900ff, #ff0088, #ff0000)",
               }}
@@ -942,7 +942,7 @@ useEffect(() => {
                 }}
                 className="sr-only cursor-pointer"
               />
-              <Pipette className="w-2.5 h-2.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]" />
+              <Pipette className="w-2.5 h-2.5 text-white" />
             </label>
           </div>
         </div>
@@ -952,7 +952,7 @@ useEffect(() => {
           <button
             type="button"
             onClick={handleSave}
-            className="h-7 px-2.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 font-bold flex items-center gap-1 cursor-pointer shadow-xs text-xs shrink-0"
+            className="h-7 px-2.5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-700 font-bold flex items-center gap-1 cursor-pointer text-xs shrink-0"
             title="Save (Enter)"
           >
             <Check className="w-3.5 h-3.5" />
@@ -1017,8 +1017,8 @@ useEffect(() => {
         }}
         className={`w-full outline-none select-text dynamic-word-editor rounded-lg transition-all ${
           multiline
-            ? `min-h-[50px] p-2 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} shadow-sm flex-1`
-            : `min-h-[26px] px-1.5 py-0.5 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} shadow-sm`
+            ? `min-h-[50px] p-2 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} flex-1`
+            : `min-h-[26px] px-1.5 py-0.5 border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"}`
         } ${className}`}
         aria-label={placeholder}
       />

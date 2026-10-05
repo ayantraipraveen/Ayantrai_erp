@@ -10,18 +10,12 @@ import {
   SlidersHorizontal,
   Type,
   Lightbulb,
-  Sparkles,
-  ArrowUp,
+    ArrowUp,
   ArrowDown,
-  Edit2,
-  FileText,
-} from "lucide-react";
+  } from "lucide-react";
 import {
   CanvasCoordinateStamp,
   LibraryChartCard,
-  LibraryMetricCard,
-  LibraryKeyInsightItem,
-  CanvasTextBlock,
 } from "@/lib/redux/types/reportModuleTypes";
 import ChartRenderer from "../ChartComponent/ChartRenderer";
 
@@ -119,8 +113,6 @@ export function CanvasStampsLayer({
   onOpenChartEditor,
   selectedStampId,
   onSelectStamp,
-  pageWidth = 595,
-  pageHeight = 842,
 }: CanvasStampsLayerProps) {
   const [internalSelectedId, setInternalSelectedId] = useState<string | null>(null);
   const activeSelectedId = selectedStampId !== undefined ? selectedStampId : internalSelectedId;
@@ -427,7 +419,7 @@ export function CanvasStampsLayer({
               transformOrigin: "center center",
               zIndex: isSelected ? 40 : isBack ? 6 : 25,
             }}
-            className={`canvas-coordinate-stamp pointer-events-auto cursor-move group/stamp transition-shadow ${
+            className={`canvas-coordinate-stamp pointer-events-auto cursor-move group/stamp transition-all ${
               isSelected ? "ring-2 ring-[#8B3DFF] ring-dashed" : "hover:ring-1 hover:ring-purple-300/60"
             }`}
           >
@@ -435,7 +427,7 @@ export function CanvasStampsLayer({
             {isChart && stamp.chart && (
               <div
                 style={{ opacity }}
-                className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 shadow-lg flex flex-col justify-between overflow-hidden select-none"
+                className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 flex flex-col justify-between overflow-hidden select-none"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-100 dark:border-zinc-800/60 flex-shrink-0">
@@ -542,7 +534,7 @@ export function CanvasStampsLayer({
                           e.stopPropagation();
                           if (stamp.chart) onOpenChartEditor(stamp.id, stamp.chart);
                         }}
-                        className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#8B3DFF] text-white hover:bg-purple-700 shadow-xs transition-transform active:scale-95 cursor-pointer"
+                        className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#8B3DFF] text-white hover:bg-purple-700 transition-transform active:scale-95 cursor-pointer"
                         title="Open Full Telemetry & Data Editor"
                       >
                         <SlidersHorizontal className="w-2.5 h-2.5" />
@@ -575,7 +567,7 @@ export function CanvasStampsLayer({
             {isText && (
               <div
                 style={{ opacity }}
-                className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 shadow-lg flex flex-col justify-between overflow-hidden select-none"
+                className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 flex flex-col justify-between overflow-hidden select-none"
               >
                 <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800/60 flex-shrink-0">
                   <div className="flex items-center gap-1.5 text-slate-700 dark:text-zinc-300">
@@ -629,7 +621,7 @@ export function CanvasStampsLayer({
             {isInsight && (
               <div
                 style={{ opacity }}
-                className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 shadow-lg flex flex-col justify-between overflow-hidden select-none"
+                className="w-full h-full rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#0c1017]/95 p-3.5 flex flex-col justify-between overflow-hidden select-none"
               >
                 {/* Header */}
                 <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800/60 flex-shrink-0">
@@ -758,7 +750,7 @@ export function CanvasStampsLayer({
             {isMetric && (
               <div
                 style={{ opacity }}
-                className={`w-full h-full rounded-2xl border ${tint.border} ${tint.bg} p-3.5 shadow-lg flex flex-col justify-between overflow-hidden select-none`}
+                className={`w-full h-full rounded-2xl border ${tint.border} ${tint.bg} p-3.5 flex flex-col justify-between overflow-hidden select-none`}
               >
                 {/* Metric Label (Inline Editable) */}
                 <div className="flex items-center justify-between pb-1 flex-shrink-0">
@@ -900,7 +892,7 @@ export function CanvasStampsLayer({
             {!isCard && (
               <div
                 style={{ opacity }}
-                className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full drop-shadow-sm select-none"
+                className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full select-none"
                 dangerouslySetInnerHTML={{ __html: stamp.svgContent || "" }}
               />
             )}
@@ -911,22 +903,22 @@ export function CanvasStampsLayer({
                 {/* 4 Corner Resize Handles */}
                 <div
                   onMouseDown={(e) => handleResizeStart(e, stamp, "nw")}
-                  className="absolute -top-1.5 -left-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
+                  className="absolute -top-1.5 -left-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nwse-resize hover:scale-125 transition-transform"
                   title="Resize (NW)"
                 />
                 <div
                   onMouseDown={(e) => handleResizeStart(e, stamp, "ne")}
-                  className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
+                  className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nesw-resize hover:scale-125 transition-transform"
                   title="Resize (NE)"
                 />
                 <div
                   onMouseDown={(e) => handleResizeStart(e, stamp, "sw")}
-                  className="absolute -bottom-1.5 -left-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nesw-resize hover:scale-125 transition-transform"
+                  className="absolute -bottom-1.5 -left-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nesw-resize hover:scale-125 transition-transform"
                   title="Resize (SW)"
                 />
                 <div
                   onMouseDown={(e) => handleResizeStart(e, stamp, "se")}
-                  className="absolute -bottom-1.5 -right-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] shadow-md cursor-nwse-resize hover:scale-125 transition-transform"
+                  className="absolute -bottom-1.5 -right-1.5 w-3 h-3 rounded-full bg-white dark:bg-black border-2 border-[#8B3DFF] cursor-nwse-resize hover:scale-125 transition-transform"
                   title="Resize (SE)"
                 />
 
@@ -939,7 +931,7 @@ export function CanvasStampsLayer({
                   }}
                   title="Drag to rotate on center axis"
                 >
-                  <div className="w-3.5 h-3.5 rounded-full bg-white dark:bg-zinc-900 border-2 border-[#8B3DFF] text-[#8B3DFF] flex items-center justify-center shadow-md hover:scale-125 transition-transform">
+                  <div className="w-3.5 h-3.5 rounded-full bg-white dark:bg-zinc-900 border-2 border-[#8B3DFF] text-[#8B3DFF] flex items-center justify-center hover:scale-125 transition-transform">
                     <RotateCw className="w-2 h-2" />
                   </div>
                   <div className="w-0.5 h-2.5 bg-[#8B3DFF]" />
@@ -948,14 +940,14 @@ export function CanvasStampsLayer({
                 {/* ── Quick Floating Action Toolbar ── */}
                 <div
                   onMouseDown={(e) => e.stopPropagation()}
-                  className="stamp-toolbar-portal absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/98 dark:bg-zinc-900/98 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 shadow-2xl backdrop-blur-md text-xs z-50 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100"
+                  className="stamp-toolbar-portal absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white/98 dark:bg-zinc-900/98 border border-slate-200 dark:border-zinc-800 rounded-xl px-2 py-1 backdrop-blur-md text-xs z-50 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100"
                 >
                   {/* For Charts: Direct "Edit Data" button on floating toolbar */}
                   {isChart && stamp.chart && onOpenChartEditor && (
                     <button
                       type="button"
                       onClick={() => onOpenChartEditor(stamp.id, stamp.chart!)}
-                      className="px-2 py-0.5 rounded-md bg-[#8B3DFF] text-white hover:bg-purple-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer mr-1 shadow-xs transition-colors"
+                      className="px-2 py-0.5 rounded-md bg-[#8B3DFF] text-white hover:bg-purple-700 text-[10px] font-bold flex items-center gap-1 cursor-pointer mr-1 transition-colors"
                       title="Open Telemetry Data Editor"
                     >
                       <SlidersHorizontal className="w-2.5 h-2.5" />

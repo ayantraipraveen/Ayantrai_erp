@@ -663,7 +663,7 @@ function InsightBlock({
                 key={item.id}
                 className={`relative group/item flex items-start gap-2.5 ${idx > 0 ? "md:pl-3.5" : ""}`}
               >
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shadow-xs shrink-0 mt-0.5 ${badgeColorClass}`}>
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5 ${badgeColorClass}`}>
                   {item.num ?? idx + 1}
                 </span>
 
@@ -714,12 +714,12 @@ function InsightBlock({
   if (variant === "columns-titled") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 sm:p-5 shadow-sm space-y-3.5 overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 sm:p-5 space-y-3.5 overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shadow-xs">
+            <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
               <Lightbulb className="w-4 h-4" />
             </div>
             <div>
@@ -750,7 +750,7 @@ function InsightBlock({
 
             return (
               <div key={item.id} className={`relative group/item flex items-start gap-2.5 ${idx > 0 ? "md:pl-3.5" : ""}`}>
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shadow-xs shrink-0 mt-0.5 ${badgeColorClass}`}>
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-0.5 ${badgeColorClass}`}>
                   {item.num ?? idx + 1}
                 </span>
 
@@ -815,12 +815,12 @@ function InsightBlock({
   if (variant === "vertical-takeaways") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 sm:p-5 shadow-sm space-y-3 overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 sm:p-5 space-y-3 overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shadow-xs">
+            <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
               <FileText className="w-4 h-4" />
             </div>
             <div>
@@ -850,7 +850,7 @@ function InsightBlock({
 
             return (
               <div key={item.id} className="relative group/row flex items-start gap-2.5 text-xs text-slate-700 dark:text-zinc-300 leading-snug">
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black shadow-2xs shrink-0 mt-0.5 ${badgeColorClass}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black shrink-0 mt-0.5 ${badgeColorClass}`}>
                   {item.num ?? idx + 1}
                 </span>
 
@@ -899,11 +899,11 @@ function InsightBlock({
   if (variant === "narrative-summary") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm space-y-3.5 overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 space-y-3.5 overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center gap-2.5 pb-1.5 border-b border-slate-100 dark:border-zinc-800">
-          <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shadow-xs">
+          <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
             <FileText className="w-4 h-4" />
           </div>
           <div>
@@ -946,8 +946,8 @@ function InsightBlock({
   if (variant === "split-quote") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-10 gap-6 items-center">
           <div className="lg:col-span-7 space-y-2.5">
@@ -1019,8 +1019,8 @@ function InsightBlock({
   if (variant === "quote-card") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-blue-200/60 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/60 via-white to-sky-50/40 dark:from-blue-950/30 dark:via-zinc-950 dark:to-zinc-900 p-6 shadow-sm flex flex-col justify-between relative overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-blue-200/60 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/60 via-white to-sky-50/40 dark:from-blue-950/30 dark:via-zinc-950 dark:to-zinc-900 p-6 flex flex-col justify-between relative overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <span className="text-3xl font-serif font-black text-blue-400/80 leading-none">“</span>
         <div className="py-2 px-4 text-center">
@@ -1057,11 +1057,11 @@ function InsightBlock({
   if (variant === "vision-banner") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-blue-200/80 dark:border-blue-900/50 bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50/50 dark:from-blue-950/40 dark:via-zinc-950 dark:to-zinc-900 p-4 sm:p-5 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-blue-200/80 dark:border-blue-900/50 bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50/50 dark:from-blue-950/40 dark:via-zinc-950 dark:to-zinc-900 p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-full bg-blue-900 text-white flex items-center justify-center shadow-md shrink-0">
+          <div className="w-11 h-11 rounded-full bg-blue-900 text-white flex items-center justify-center shrink-0">
             <HardHat className="w-6 h-6" />
           </div>
           <div className="w-px h-10 bg-blue-600/40 hidden sm:block shrink-0" />
@@ -1076,15 +1076,15 @@ function InsightBlock({
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 dark:bg-zinc-800/80 border border-blue-200/60 dark:border-zinc-700 text-xs font-bold text-blue-900 dark:text-blue-200 shadow-2xs">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 dark:bg-zinc-800/80 border border-blue-200/60 dark:border-zinc-700 text-xs font-bold text-blue-900 dark:text-blue-200">
             <Shield className="w-3.5 h-3.5 text-blue-600" />
             <span>People Safer</span>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 dark:bg-zinc-800/80 border border-blue-200/60 dark:border-zinc-700 text-xs font-bold text-blue-900 dark:text-blue-200 shadow-2xs">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 dark:bg-zinc-800/80 border border-blue-200/60 dark:border-zinc-700 text-xs font-bold text-blue-900 dark:text-blue-200">
             <BarChart2 className="w-3.5 h-3.5 text-blue-600" />
             <span>Sites Smarter</span>
           </div>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 dark:bg-zinc-800/80 border border-blue-200/60 dark:border-zinc-700 text-xs font-bold text-blue-900 dark:text-blue-200 shadow-2xs">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/80 dark:bg-zinc-800/80 border border-blue-200/60 dark:border-zinc-700 text-xs font-bold text-blue-900 dark:text-blue-200">
             <Users className="w-3.5 h-3.5 text-blue-600" />
             <span>Operations Stronger</span>
           </div>
@@ -1104,8 +1104,8 @@ function InsightBlock({
   if (variant === "risk-factors") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/40 dark:bg-rose-950/20 p-4 shadow-sm space-y-2.5 overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-rose-50/40 dark:bg-rose-950/20 p-4 space-y-2.5 overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center justify-between pb-1 border-b border-rose-100 dark:border-rose-900/40">
           <div className="flex items-center gap-2">
@@ -1164,8 +1164,8 @@ function InsightBlock({
   if (variant === "bullet-observations") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 shadow-sm space-y-2.5 overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 space-y-2.5 overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-zinc-800">
           <div className="flex items-center gap-2">
@@ -1224,8 +1224,8 @@ function InsightBlock({
   if (variant === "priority-actions") {
     return (
       <div
-        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 shadow-sm space-y-3.5 overflow-hidden"
-        style={{ borderRadius: dynamicBorderRadius, boxShadow: dynamicBoxShadow, ...style }}
+        className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-5 space-y-3.5 overflow-hidden"
+        style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
@@ -1252,7 +1252,7 @@ function InsightBlock({
             return (
               <div key={item.id} className="rounded-xl border border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/40 p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shadow-2xs ${badgeColorClass}`}>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${badgeColorClass}`}>
                     {String(item.num ?? idx + 1).padStart(2, "0")}
                   </span>
                 </div>
@@ -1280,14 +1280,14 @@ function InsightBlock({
   // ── 11. Default / Single Callout Bullet ──────────────────────────────────────
   return (
     <div
-      className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 flex items-start gap-3.5 shadow-sm overflow-hidden"
+      className="w-full h-full flex-1 min-h-0 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-4 flex items-start gap-3.5 overflow-hidden"
       style={{
         borderRadius: dynamicBorderRadius,
-        boxShadow: dynamicBoxShadow,
+        boxShadow: "none",
         ...style,
       }}
     >
-      <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#9D61FF] to-blue-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+      <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#9D61FF] to-blue-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
         <Lightbulb className="w-3.5 h-3.5" />
       </div>
 
@@ -1406,22 +1406,7 @@ function TextBlock({
         : cell.style.borderRadius
       : undefined;
 
-  const dynamicBoxShadow =
-    cell.style?.shadow !== undefined
-      ? cell.style.shadow === "none"
-        ? "none"
-        : cell.style.shadow === "sm"
-        ? "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)"
-        : cell.style.shadow === "md"
-        ? "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.08)"
-        : cell.style.shadow === "lg"
-        ? "0 10px 15px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08)"
-        : cell.style.shadow === "xl"
-        ? "0 20px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.08)"
-        : cell.style.shadow === "glow"
-        ? "0 0 24px -2px rgba(139,61,255,0.38)"
-        : cell.style.shadow
-      : undefined;
+  const dynamicBoxShadow = "none";
 
   const isContentEmpty =
     !tb.content ||
@@ -1440,7 +1425,7 @@ function TextBlock({
           handleStartEditing();
         }
       }}
-      className={`w-full h-full flex-1 min-h-0 rounded-2xl border p-4 shadow-sm transition-all duration-150 flex flex-col ${
+      className={`w-full h-full flex-1 min-h-0 rounded-2xl border p-4 transition-all duration-150 flex flex-col ${
         !activeEditing ? "cursor-text hover:border-purple-300 dark:hover:border-purple-700/60" : ""
       } ${
         !dynamicBg ? "bg-slate-50/70 dark:bg-zinc-900/50" : ""
@@ -1536,7 +1521,7 @@ function SingleBadgeEditorModal({
       }}
     >
       <div
-        className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 shadow-2xl space-y-4 animate-scaleUp text-slate-900 dark:text-white"
+        className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-5 space-y-4 animate-scaleUp text-slate-900 dark:text-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -1560,7 +1545,7 @@ function SingleBadgeEditorModal({
 
         {/* Live Preview Card */}
         <div className={`rounded-2xl border p-3 flex items-center gap-3 transition-all ${BADGE_COLOR_MAP[col]?.bg || ""} ${BADGE_COLOR_MAP[col]?.border || ""}`}>
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shadow-xs ${BADGE_COLOR_MAP[col]?.text || ""}`}>
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${BADGE_COLOR_MAP[col]?.text || ""}`}>
             <BadgeIcon name={icn} />
           </div>
           <div className="min-w-0 flex-1">
@@ -1614,11 +1599,11 @@ function SingleBadgeEditorModal({
                   type="button"
                   onClick={() => setCol(palette.id as any)}
                   className={`h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer border ${palette.bg} ${palette.border} ${
-                    col === palette.id ? "ring-2 ring-[#9D61FF] scale-105 shadow-sm font-bold" : "hover:scale-102 opacity-80 hover:opacity-100"
+                    col === palette.id ? "ring-2 ring-[#9D61FF] scale-105 font-bold" : "hover:scale-102 opacity-80 hover:opacity-100"
                   }`}
                   title={palette.label}
                 >
-                  <span className={`w-3.5 h-3.5 rounded-full ${palette.dot} shadow-xs`} />
+                  <span className={`w-3.5 h-3.5 rounded-full ${palette.dot}`} />
                 </button>
               ))}
             </div>
@@ -1640,7 +1625,7 @@ function SingleBadgeEditorModal({
                     onClick={() => setIcn(opt.id)}
                     className={`h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-[#9D61FF] text-white shadow-xs font-bold"
+                        ? "bg-[#9D61FF] text-white font-bold"
                         : "text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-zinc-800"
                     }`}
                     title={opt.label}
@@ -1691,7 +1676,7 @@ function SingleBadgeEditorModal({
                 });
                 onClose();
               }}
-              className="px-4 py-1.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+              className="px-4 py-1.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold transition-all cursor-pointer"
             >
               Save Badge
             </button>
@@ -1748,7 +1733,7 @@ function SingleBadgeItemCard({
     <>
       <div
         className={`group/single-badge relative rounded-2xl border p-3 flex flex-col gap-2 transition-all duration-150 select-none ${colors.bg} ${colors.border} ${editingField ? "z-50" : "z-10"} ${
-          !isPreview ? "hover:ring-2 hover:ring-[#9D61FF] hover:shadow-md cursor-pointer" : ""
+          !isPreview ? "hover:ring-2 hover:ring-[#9D61FF] cursor-pointer" : ""
         }`}
         onClick={(e) => {
           if (isPreview) return;
@@ -1757,7 +1742,7 @@ function SingleBadgeItemCard({
       >
         {/* Single Badge Hover Action Bar */}
         {!isPreview && (
-          <div className="absolute top-1.5 right-1.5 opacity-0 group-hover/single-badge:opacity-100 transition-opacity flex items-center gap-1 z-10 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg p-0.5 shadow-sm backdrop-blur-xs">
+          <div className="absolute top-1.5 right-1.5 opacity-0 group-hover/single-badge:opacity-100 transition-opacity flex items-center gap-1 z-10 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-lg p-0.5 backdrop-blur-xs">
             <button
               type="button"
               onClick={(e) => {
@@ -1897,7 +1882,7 @@ function BadgeStripBlock({
     (cell.colSpan !== undefined && cell.colSpan <= 2);
 
   return (
-    <div className="w-full h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-3.5 shadow-sm space-y-2.5 flex flex-col justify-between">
+    <div className="w-full h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] p-3.5 space-y-2.5 flex flex-col justify-between">
       <div className={`grid ${isCompact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"} gap-3 items-stretch`}>
         {strip.badges.length === 0 ? (
           <div className="col-span-4 text-center text-xs text-slate-400 py-4 italic">
@@ -2096,15 +2081,7 @@ export function getCellStyleClasses(style?: CanvasCell["style"]): {
   }
 
   if (style.shadow) {
-    const SHADOW_MAP: Record<string, string> = {
-      none: "none",
-      sm: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04)",
-      md: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.08)",
-      lg: "0 10px 15px -3px rgba(0,0,0,0.12), 0 4px 6px -4px rgba(0,0,0,0.08)",
-      xl: "0 20px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.08)",
-      glow: "0 0 24px -2px rgba(139,61,255,0.38)",
-    };
-    styleProps.boxShadow = SHADOW_MAP[style.shadow] || style.shadow;
+    styleProps.boxShadow = "none";
   }
 
   // Dynamic Inner Padding
@@ -2263,7 +2240,7 @@ export function CanvasBlockRenderer({
   if (styleProps.borderWidth) cardStyles.borderWidth = styleProps.borderWidth;
   if (styleProps.borderStyle) cardStyles.borderStyle = styleProps.borderStyle;
   if (styleProps.borderRadius) cardStyles.borderRadius = styleProps.borderRadius;
-  if (styleProps.boxShadow) cardStyles.boxShadow = styleProps.boxShadow;
+  cardStyles.boxShadow = "none";
   if (styleProps.padding) cardStyles.padding = styleProps.padding;
   if (styleProps.paddingTop) cardStyles.paddingTop = styleProps.paddingTop;
   if (styleProps.paddingBottom) cardStyles.paddingBottom = styleProps.paddingBottom;
