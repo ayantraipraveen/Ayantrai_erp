@@ -32,6 +32,7 @@ import {
   TrendingUp,
   ExternalLink,
   Move,
+  List,
   ChevronsUp,
   ChevronsDown,
 } from "lucide-react";
@@ -940,6 +941,7 @@ export function CanvasSidebar({
   const [selectedCategory, setSelectedCategory] = useState<"all" | "sections" | "charts" | "metrics" | "text" | "watermarks">(
     showReportSections && reportSections && reportSections.length > 0 ? "sections" : "all"
   );
+  const [stampViewMode, setStampViewMode] = useState<"float" | "list">("float");
 
   useEffect(() => {
     if (!showReportSections && selectedCategory === "sections") {
@@ -1707,31 +1709,141 @@ export function CanvasSidebar({
           )}
 
           
-          {/* ── SVG ELEMENTS AND WATERMARKS ── */}
+          {/* ── SVG ELEMENTS AND WATERMARKS (FLOAT FORM) ── */}
           {(selectedCategory === "all" || selectedCategory === "watermarks") && (
             <div className="space-y-2 pt-1">
               <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-mono uppercase font-bold text-[#8B3DFF] flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5" />
-                  SVG Elements ({filteredWatermarks.length})
-                </span>
-                <a
-                  href="/templates/Sections&Graphs/watermark"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[9px] text-[#8B3DFF] hover:underline flex items-center gap-0.5 font-semibold"
-                  title="Upload more SVG assets"
-                >
-                  <span>Upload</span>
-                  <ExternalLink className="w-2.5 h-2.5" />
-                </a>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[10px] font-mono uppercase font-bold text-[#8B3DFF] flex items-center gap-1.5 truncate">
+                    <Stamp className="w-3.5 h-3.5 flex-shrink-0" />
+                    Floating Stamps ({filteredWatermarks.length})
+                  </span>
+                  <span className="text-[8px] font-mono uppercase px-1 py-0.2 rounded font-bold bg-[#8B3DFF]/10 text-[#8B3DFF] flex-shrink-0">
+                    Float Form
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {/* View Mode Toggle: Float Grid vs List */}
+                  <div className="flex items-center bg-slate-100 dark:bg-zinc-800/80 rounded-lg p-0.5 border border-slate-200/80 dark:border-zinc-700/60">
+                    <button
+                      type="button"
+                      onClick={() => setStampViewMode("float")}
+                      className={`h-5 px-1.5 rounded flex items-center gap-1 text-[9px] font-semibold transition-all cursor-pointer ${
+                        stampViewMode === "float"
+                          ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                          : "text-slate-400 hover:text-slate-700 dark:hover:text-zinc-300"
+                      }`}
+                      title="Float Form: 2-column sticker grid"
+                    >
+                      <LayoutGrid className="w-2.5 h-2.5" />
+                      <span>Float</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStampViewMode("list")}
+                      className={`h-5 px-1.5 rounded flex items-center gap-1 text-[9px] font-semibold transition-all cursor-pointer ${
+                        stampViewMode === "list"
+                          ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                          : "text-slate-400 hover:text-slate-700 dark:hover:text-zinc-300"
+                      }`}
+                      title="List Form: Detailed single-column cards"
+                    >
+                      <List className="w-2.5 h-2.5" />
+                      <span>List</span>
+                    </button>
+                  </div>
+
+                  <a
+                    href="/templates/Sections&Graphs/watermark"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[9px] text-[#8B3DFF] hover:underline flex items-center gap-0.5 font-semibold"
+                    title="Upload more SVG assets"
+                  >
+                    <span>Upload</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
               </div>
 
               {filteredWatermarks.length === 0 ? (
                 <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 text-center text-xs text-slate-400">
-                  No SVG elements found
+                  No SVG stamps found
+                </div>
+              ) : stampViewMode === "float" ? (
+                /* ── FLOAT FORM: 2-COLUMN COMPACT FLOATING STICKER TILES ── */
+                <div className="grid grid-cols-2 gap-2">
+                  {filteredWatermarks.map((wm) => {
+                    const isApplied = activeWatermarkId === wm.id;
+                    return (
+                      <div
+                        key={wm.id}
+                        className={`group relative rounded-xl border transition-all duration-200 overflow-hidden p-2 flex flex-col justify-between ${
+                          isApplied
+                            ? "border-[#8B3DFF] bg-[#8B3DFF]/5 ring-1 ring-[#8B3DFF]"
+                            : "border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#8B3DFF]/70"
+                        }`}
+                      >
+                        {/* Top tag & watermark status */}
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <span className="text-[7.5px] font-mono uppercase px-1 py-0.5 rounded font-bold bg-purple-500/10 text-[#8B3DFF] flex items-center gap-0.5">
+                            <Move className="w-2 h-2" />
+                            <span>Float</span>
+                          </span>
+                          {isApplied && (
+                            <span className="text-[7.5px] font-mono uppercase px-1 py-0.5 rounded font-bold bg-[#8B3DFF] text-white">
+                              Watermark
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Visual SVG Stamp Preview (Click to float directly on canvas) */}
+                        <div
+                          onClick={() => onAddWatermarkElement?.(wm.id)}
+                          className="h-20 w-full rounded-lg border border-slate-100 dark:border-zinc-800/60 bg-slate-50/80 dark:bg-zinc-900/60 p-2 flex items-center justify-center cursor-pointer overflow-hidden transition-all group-hover:scale-105 group-hover:bg-purple-50/30"
+                          title={`Click to place "${wm.name}" as free-floating stamp on canvas`}
+                          dangerouslySetInnerHTML={{ __html: wm.svgContent }}
+                        />
+
+                        {/* Title */}
+                        <span
+                          className="text-[10px] font-bold text-slate-800 dark:text-zinc-200 truncate mt-1.5 block group-hover:text-[#8B3DFF] transition-colors"
+                          title={wm.name}
+                        >
+                          {wm.name}
+                        </span>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-slate-100 dark:border-zinc-800/60">
+                          <button
+                            type="button"
+                            onClick={() => onAddWatermarkElement?.(wm.id)}
+                            className="flex-1 h-6 flex items-center justify-center gap-1 rounded bg-[#8B3DFF]/10 hover:bg-[#8B3DFF] text-[#8B3DFF] hover:text-white text-[9.5px] font-bold transition-colors cursor-pointer"
+                            title="Place as free-floating stamp on canvas"
+                          >
+                            <Move className="w-2.5 h-2.5" />
+                            <span>+ Float</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onSelectWatermark?.(isApplied ? null : wm.id)}
+                            className={`h-6 px-1.5 rounded text-[9.5px] font-bold transition-colors cursor-pointer flex items-center justify-center ${
+                              isApplied
+                                ? "bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white"
+                                : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
+                            }`}
+                            title={isApplied ? "Remove Watermark" : "Set as Page Watermark"}
+                          >
+                            {isApplied ? <X className="w-2.5 h-2.5" /> : <Stamp className="w-2.5 h-2.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
+                /* ── LIST FORM: DETAILED SINGLE-COLUMN LIST WITH FLOAT BUTTONS ── */
                 <div className="space-y-2.5">
                   {filteredWatermarks.map((wm) => {
                     const isApplied = activeWatermarkId === wm.id;
@@ -1746,27 +1858,33 @@ export function CanvasSidebar({
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                              isApplied ? "bg-[#8B3DFF] text-white" : "bg-purple-500/10 text-[#8B3DFF]"
-                            }`}>
+                            <div
+                              className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                isApplied ? "bg-[#8B3DFF] text-white" : "bg-purple-500/10 text-[#8B3DFF]"
+                              }`}
+                            >
                               <Stamp className="w-3.5 h-3.5" />
                             </div>
                             <span className="text-xs font-bold text-slate-900 dark:text-white truncate">
                               {wm.name}
                             </span>
                           </div>
-                          <span className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold flex-shrink-0 ${
-                            isApplied
-                              ? "bg-[#8B3DFF] text-white"
-                              : "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"
-                          }`}>
-                            {isApplied ? "Active" : "Stamp"}
+                          <span
+                            className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold flex-shrink-0 ${
+                              isApplied
+                                ? "bg-[#8B3DFF] text-white"
+                                : "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"
+                            }`}
+                          >
+                            {isApplied ? "Active" : "Float Stamp"}
                           </span>
                         </div>
 
                         {/* SVG Visual Stamp Preview */}
                         <div
-                          className="h-16 w-full rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 p-2 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-[1.01]"
+                          onClick={() => onAddWatermarkElement?.(wm.id)}
+                          className="h-16 w-full rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 p-2 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-[1.01] cursor-pointer"
+                          title="Click to place as free-floating stamp"
                           dangerouslySetInnerHTML={{ __html: wm.svgContent }}
                         />
 
@@ -1778,19 +1896,19 @@ export function CanvasSidebar({
                             <button
                               type="button"
                               onClick={() => onAddWatermarkElement?.(wm.id)}
-                              className="flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-600 transition-colors hover:border-[#8B3DFF] hover:text-[#8B3DFF] dark:border-zinc-700 dark:text-zinc-300"
-                              title="Place this graphic on the page"
+                              className="flex items-center gap-1 rounded-md border border-[#8B3DFF]/40 bg-[#8B3DFF]/10 px-2.5 py-1 text-[10px] font-bold text-[#8B3DFF] transition-colors hover:bg-[#8B3DFF] hover:text-white cursor-pointer"
+                              title="Place as free-floating graphic on canvas"
                             >
-                              <Plus className="h-3 w-3" />
-                              <span>Element</span>
+                              <Move className="h-3 w-3" />
+                              <span>+ Float</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => onSelectWatermark?.(isApplied ? null : wm.id)}
-                              className={`flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold transition-colors ${
+                              className={`flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold transition-colors cursor-pointer ${
                                 isApplied
                                   ? "border border-rose-300 bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white"
-                                  : "bg-[#8B3DFF] text-white hover:bg-[#7c3aed]"
+                                  : "border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-300 hover:bg-slate-50"
                               }`}
                               title={isApplied ? "Remove as watermark" : "Apply as page watermark"}
                             >
