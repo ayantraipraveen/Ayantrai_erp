@@ -47,7 +47,7 @@ export function SectionEditorContainer({ sectionId, onBack }: SectionEditorConta
         <p className="text-xs text-slate-500 dark:text-zinc-400">Please select a section from the library to edit.</p>
         <button
           onClick={handleBack}
-          className="px-4 py-2 bg-[#9D61FF] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#8845fc] cursor-pointer"
+          className="px-4 py-2 bg-[#9D61FF] text-white text-xs font-bold rounded-xl hover:bg-[#8845fc] cursor-pointer"
         >
           Return to Sections
         </button>
@@ -65,7 +65,7 @@ export function SectionEditorContainer({ sectionId, onBack }: SectionEditorConta
         </p>
         <button
           onClick={handleBack}
-          className="px-4 py-2 bg-[#9D61FF] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#8845fc] cursor-pointer"
+          className="px-4 py-2 bg-[#9D61FF] text-white text-xs font-bold rounded-xl hover:bg-[#8845fc] cursor-pointer"
         >
           Return to Sections
         </button>
