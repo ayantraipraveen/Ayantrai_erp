@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Report Module – Database Schema ERD</title>
+<meta name="description" content="Interactive ERD for the ERP-Ayantrai Report & Template module tables, foreign keys, and relations.">
+<style>
+  :root{
+    --bg:#0b0f1a; --panel:#111827; --card:#0f1526; --line:#1f2a44; --text:#e5e7eb; --muted:#8b95ab;
+    --accent:#3b82f6; --pk:#ea580c; --fk:#2563eb; --uq:#7c3aed;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,sans-serif;overflow:hidden}
+  header{height:44px;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--line);background:#0a0e19;position:relative;z-index:10}
+  header .logo{font-weight:700;color:#60a5fa;letter-spacing:.04em;font-size:13px;margin-right:6px}
+  header input{background:#0f1526;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:5px 10px;font-size:12px;width:170px;outline:none}
+  header input:focus{border-color:var(--accent)}
+  header button{background:#0f1526;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:5px 11px;font-size:12px;cursor:pointer;transition:.15s}
+  header button:hover{border-color:var(--accent);background:#14203a}
+  header button.on{border-color:var(--accent);color:#93c5fd}
+  .legend{margin-left:auto;display:flex;gap:14px;font-size:11px;color:var(--muted);align-items:center}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+  #viewport{position:absolute;top:44px;left:0;right:0;bottom:0;overflow:hidden;cursor:grab;
+    background-image:radial-gradient(#1b2540 1px,transparent 1px);background-size:24px 24px}
+  #viewport.panning{cursor:grabbing}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;width:3400px;height:2600px}
+  svg#links{position:absolute;left:0;top:0;width:3400px;height:2600px;pointer-events:none;overflow:visible}
+  svg#links path{fill:none;stroke:#2f5fd0;stroke-width:1.5;opacity:.6;transition:.15s;pointer-events:stroke;cursor:pointer}
+  svg#links path:hover, svg#links path.hl{stroke:#60a5fa;stroke-width:2.6;opacity:1}
+  svg#links.hidden{display:none}
+  .group-label{position:absolute;font-size:11px;letter-spacing:.35em;color:#3a4767;font-weight:600;pointer-events:none;white-space:nowrap}
+  .card{position:absolute;width:255px;background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.45);transition:opacity .15s,box-shadow .15s;user-select:none}
+  .card:hover{box-shadow:0 8px 26px rgba(37,99,235,.35)}
+  .card.dim{opacity:.18}
+  .card.match{outline:2px solid #facc15}
+  .card header{all:unset;display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:7px 7px 0 0;cursor:move;
+    background:linear-gradient(90deg,var(--c1),var(--c2));font-weight:600;font-size:12px}
+  .card header .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tag{font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(0,0,0,.32);font-weight:600;letter-spacing:.04em}
+  .tag.ext{background:#7c2d12;color:#fed7aa}
+  .tag.req{background:#14532d;color:#bbf7d0}
+  .tag.opt{background:#713f12;color:#fde68a}
+  .desc{padding:6px 10px;font-size:10.5px;line-height:1.35;color:#9fb0d0;background:#0c1222;border-top:1px solid #151d33}
+  .chev{cursor:pointer;opacity:.85;font-size:10px;padding:2px 4px}
+  .row{display:flex;align-items:center;gap:6px;padding:4px 10px;font-size:11.5px;border-top:1px solid #151d33;transition:background .12s}
+  .row:hover{background:#151e36}
+  .row .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row .t{color:var(--muted);font-size:10.5px}
+  .b{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;color:#fff}
+  .b.PK{background:var(--pk)} .b.FK{background:var(--fk)} .b.UQ{background:var(--uq)}
+  .more{padding:5px 10px;font-size:10.5px;color:#4b5a7c;text-align:center;border-top:1px solid #151d33;cursor:pointer}
+  .more:hover{color:#93c5fd}
+  .zoom{position:absolute;right:14px;bottom:14px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);z-index:5}
+  .zoom button{width:24px;height:24px;background:#0f1526;border:1px solid var(--line);color:var(--text);border-radius:5px;cursor:pointer}
+  #flowView{position:absolute;inset:0;overflow:auto;display:none;padding:28px 36px 90px;background:var(--bg)}
+  .fsec{margin-bottom:60px}
+  .fsec h2{margin:0 0 4px;font-size:16px;color:#93c5fd}
+  .fsec p{margin:0 0 18px;color:var(--muted);font-size:12px;max-width:900px}
+  .fbox{position:relative}
+  .fbox svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+  .fbox svg path{fill:none;stroke:#60a5fa;stroke-width:1.8}
+  .fbox svg path.dash{stroke-dasharray:6 5;stroke:#7b8aa8}
+  .fbox svg text{fill:#dbe4f5;font-size:10.5px;font-weight:600}
+  .fbox svg rect.lb{fill:#0b0f1a;stroke:#1f2a44}
+  .fnode{position:absolute;width:240px;height:110px;border-radius:10px;border:1px solid var(--line);background:var(--card);box-shadow:0 6px 18px rgba(0,0,0,.4);overflow:hidden}
+  .fnode .fh{padding:6px 10px;font-size:12px;font-weight:700;background:linear-gradient(90deg,var(--c1),var(--c2))}
+  .fnode .fb{padding:6px 10px;font-size:10.5px;line-height:1.4;color:#b6c2dc}
+  .fnode code{color:#7dd3fc;font-size:10px}
+  header button.tab{font-weight:600}
+  header button.tab.on{background:#1d4ed8;border-color:#3b82f6;color:#fff}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">&#9672; ERD</span>
+  <button id="tabErd" class="tab on">ERD Tables</button>
+  <button id="tabFlow" class="tab">Flow Diagram</button>
+  <input class="erdtool" id="search" type="search" placeholder="Search tables..." aria-label="Search tables">
+  <button class="erdtool" id="btnMode">Layout: By Section</button>
+  <button class="erdtool" id="btnCollapse">Collapse Non-Keys</button>
+  <button class="erdtool" id="btnExpand">Expand All</button>
+  <button class="erdtool" id="btnReset">Reset</button>
+  <button class="erdtool on" id="btnLines">Lines</button>
+  <div class="legend">
+    <span><i class="dot" style="background:#2563eb"></i>Template tables <b id="cNew"></b></span>
+    <span><i class="dot" style="background:#ea580c"></i>Core tables <b id="cExt"></b></span>
+    <span id="cRel"></span>
+    <span>Drag cards &bull; Click card/line to highlight relations</span>
+  </div>
+</header>
+<main id="viewport">
+  <div id="world">
+    <svg id="links">
+      <defs>
+        <marker id="erd-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,1 L8,5 L0,9z" fill="#3b82f6" stroke="none"/>
+        </marker>
+        <marker id="erd-arrow-hl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10z" fill="#60a5fa" stroke="none"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="zoom"><button id="zOut">-</button><span id="zPct">100%</span><button id="zIn">+</button></div>
+  <div id="flowView"></div>
+</main>
+
+<script>
+/* Column format: "name|type|FLAGS" ; FLAGS = PK | UQ | FK>table.col  (comma separated) */
+const GROUPS = {
+  "ACCESS & SITES (EXISTING)":   ["#9a3412","#c2410c"],
+  "ASSETS & WATERMARKS":          ["#7e22ce","#a855f7"],
+  "SECTIONS BLUEPRINT":           ["#4338ca","#6366f1"],
+  "DATA ELEMENTS & GRAPHS":       ["#1d4ed8","#3b82f6"],
+  "CANVAS STUDIO LAYOUT":         ["#312e81","#4338ca"],
+  "TEMPLATES & ASSEMBLY":         ["#0e7490","#06b6d4"],
+  "AUDIT":                        ["#047857","#10b981"]
+};
+
+const T = [
+ // ---- 0. Existing ERP Core Reference Tables ----
+ {n:"users",g:0,ext:1,c:[
+   "id|uuid|PK",
+   "role_id|int|",
+   "email|string|UQ",
+   "name|string|",
+   "phone|string|",
+   "status|string|"
+ ]},
+ {n:"sites",g:0,ext:1,c:[
+   "id|uuid|PK",
+   "name|string|",
+   "project_head_id|uuid|FK>users.id",
+   "location|string|",
+   "active_workers|int|"
+ ]},
+ {n:"user_sites",g:0,ext:1,c:[
+   "id|uuid|PK",
+   "user_id|uuid|FK>users.id",
+   "site_id|uuid|FK>sites.id"
+ ]},
+
+ // ---- 1. Assets & Watermarks ----
+ {n:"element_assets",g:1,c:[
+   "id|uuid|PK",
+   "name|string|",
+   "svg_content|text|",
+   "category|string|",
+   "created_by|uuid|FK>users.id",
+   "created_at|DateTime|"
+ ]},
+ {n:"watermarks",g:1,c:[
+   "id|uuid|PK",
+   "name|string|",
+   "tag|string|",
+   "file_name|string|",
+   "svg_content|text|",
+   "opacity|float|",
+   "rotation|float|",
+   "scale|float|",
+   "placement|string|",
+   "is_default|bool|",
+   "description|text|",
+   "created_by|uuid|FK>users.id",
+   "created_at|DateTime|",
+   "updated_at|DateTime|"
+ ]},
+
+ // ---- 2. Sections Blueprint ----
+ {n:"library_sections",g:2,c:[
+   "id|uuid|PK",
+   "name|string|",
+   "title_html|text|",
+   "title_style|json|",
+   "eyebrow|string|",
+   "eyebrow_html|text|",
+   "description|text|",
+   "description_html|text|",
+   "type|string|",
+   "icon|string|",
+   "is_template|bool|",
+   "header_spacing|string|",
+   "section_style|json|",
+   "page_overrides|json|",
+   "watermark_id|uuid|FK>watermarks.id",
+   "created_by|uuid|FK>users.id",
+   "created_at|DateTime|",
+   "updated_at|DateTime|"
+ ]},
+
+ // ---- 3. Data Elements & Graphs ----
+ {n:"library_charts",g:3,c:[
+   "id|uuid|PK",
+   "section_id|uuid|FK>library_sections.id",
+   "title|string|",
+   "chart_type|string|",
+   "data_source|string|",
+   "data_source_field|string|",
+   "description|text|",
+   "color|string|",
+   "colors|json|",
+   "grid_rows|int|",
+   "grid_cols|int|",
+   "x_axis|json|",
+   "y_axis|json|",
+   "options|json|",
+   "series|json|",
+   "data_points|json|",
+   "matrix_data|json|",
+   "table_columns|json|",
+   "table_rows|json|",
+   "created_by|uuid|FK>users.id",
+   "created_at|DateTime|",
+   "updated_at|DateTime|"
+ ]},
+ {n:"library_metric_cards",g:3,c:[
+   "id|uuid|PK",
+   "section_id|uuid|FK>library_sections.id",
+   "label|string|",
+   "value|string|",
+   "data_source_field|string|",
+   "tint_color|string|",
+   "trend_direction|string|",
+   "trend_value|string|",
+   "icon|string|",
+   "created_by|uuid|FK>users.id",
+   "created_at|DateTime|"
+ ]},
+ {n:"library_key_insights",g:3,c:[
+   "id|uuid|PK",
+   "section_id|uuid|FK>library_sections.id",
+   "text|text|",
+   "variant|string|",
+   "title|string|",
+   "badge_number|int|",
+   "items|json|",
+   "quote|json|",
+   "banner|json|",
+   "created_by|uuid|FK>users.id",
+   "created_at|DateTime|"
+ ]},
+
+ // ---- 4. Canvas Studio Layout ----
+ {n:"canvas_rows",g:4,c:[
+   "id|uuid|PK",
+   "section_id|uuid|FK>library_sections.id",
+   "order_index|int|",
+   "page_break_before|bool|",
+   "style|json|",
+   "section_name|string|",
+   "section_name_html|text|",
+   "section_eyebrow|string|",
+   "section_eyebrow_html|text|"
+ ]},
+ {n:"canvas_cells",g:4,c:[
+   "id|uuid|PK",
+   "row_id|uuid|FK>canvas_rows.id",
+   "parent_cell_id|uuid|FK>canvas_cells.id",
+   "order_index|int|",
+   "col_span|int|",
+   "custom_width|float|",
+   "custom_height|int|",
+   "block_type|string|",
+   "style|json|",
+   "chart_id|uuid|FK>library_charts.id",
+   "metric_card_id|uuid|FK>library_metric_cards.id",
+   "insight_id|uuid|FK>library_key_insights.id",
+   "asset_id|uuid|FK>element_assets.id",
+   "content|json|"
+ ]},
+ {n:"section_stamps",g:4,c:[
+   "id|uuid|PK",
+   "section_id|uuid|FK>library_sections.id",
+   "source_asset_id|uuid|FK>element_assets.id",
+   "name|string|",
+   "svg_content|text|",
+   "page_index|int|",
+   "x|float|",
+   "y|float|",
+   "width|float|",
+   "height|float|",
+   "rotation|float|",
+   "opacity|float|",
+   "layer|string|",
+   "z_index|int|",
+   "locked|bool|",
+   "element_type|string|",
+   "content|json|"
+ ]},
+
+ // ---- 5. Templates & Assembly ----
+ {n:"report_templates",g:5,c:[
+   "id|text|PK",
+   "name|string|",
+   "description|text|",
+   "site_id|uuid|FK>sites.id",
+   "status|string|",
+   "version|string|",
+   "category|string|",
+   "frequency|string|",
+   "compliance_standards|json|",
+   "has_audit_hash|bool|",
+   "remarks|text|",
+   "canvas_section_id|uuid|FK>library_sections.id",
+   "cover_page_data|json|",
+   "table_of_contents_data|json|",
+   "back_cover_data|json|",
+   "created_by|uuid|FK>users.id",
+   "approved_by|uuid|FK>users.id",
+   "approved_at|DateTime|",
+   "rejection_reason|text|",
+   "created_at|DateTime|",
+   "updated_at|DateTime|"
+ ]},
+ {n:"template_sections",g:5,c:[
+   "id|uuid|PK",
+   "template_id|text|FK>report_templates.id",
+   "section_id|uuid|FK>library_sections.id",
+   "order_index|int|",
+   "enabled|bool|",
+   "block_type|string|",
+   "title_override|string|",
+   "description_override|text|"
+ ]},
+
+ // ---- 6. Audit ----
+ {n:"activity_logs",g:6,c:[
+   "id|uuid|PK",
+   "actor_id|uuid|FK>users.id",
+   "actor_name|string|",
+   "role|string|",
+   "action|string|",
+   "target|string|",
+   "type|string|",
+   "template_id|text|FK>report_templates.id",
+   "created_at|DateTime|"
+ ]}
+];
+
+const INFO={
+ users:["Core user accounts & roles (superadmin, admin, project head)."],
+ sites:["Industrial project sites templates belong to."],
+ user_sites:["Which admin or manager is assigned to which site."],
+ element_assets:["SVG library (logos, icons, badges, shapes) for stamps and cells."],
+ watermarks:["Watermark library (SVG, opacity, placement) applied to sections."],
+ library_sections:["Master section blueprints (header, title rules, page overrides, watermark)."],
+ library_charts:["Reusable chart catalog (type, axes, telemetry source, series, data)."],
+ library_metric_cards:["Reusable KPI/metric cards (label, value, trend direction/value)."],
+ library_key_insights:["Reusable key takeaway blocks (quotes, bullets, banners)."],
+ canvas_rows:["Ordered rows on a canvas section; controls page breaks and row styles."],
+ canvas_cells:["Cells within a row holding charts, KPI cards, insights, SVG assets, or text."],
+ section_stamps:["Free-floating stamps and logos placed on canvas pages (front/back layers)."],
+ report_templates:["Report blueprint: site, status, version, approval & fixed pages (Cover, TOC, Back)."],
+ template_sections:["Ordered sections assembled into a template, with enable toggles & overrides."],
+ activity_logs:["Audit log tracking creation, modifications, reviews, approvals, and rejections."]
+};
+
+const COL_W=255, GAP_X=70, GAP_Y=60, PER_ROW=4, X0=60, Y0=60;
+const world=document.getElementById('world'), svg=document.getElementById('links'), vp=document.getElementById('viewport');
+const els={}, pos={}, collapsed={}, rels=[];
+let scale=1, tx=20, ty=10;
+
+function parse(s){
+  const [name,type,fl]=s.split('|');
+  const flags=(fl||'').split(',').filter(Boolean);
+  const o={name,type,pk:false,uq:false,fk:null};
+  flags.forEach(f=>{
+    if(f==='PK')o.pk=true;
+    else if(f==='UQ')o.uq=true;
+    else if(f.startsWith('FK>'))o.fk=f.slice(3);
+  });
+  return o;
+}
+T.forEach(t=>{t.cols=t.c.map(parse);});
+
+let labels=[], mode='sec', tab='erd';
+function relayout(){ if(mode==='sec')relayoutSec(); else relayoutDep(); }
+
+function relayoutSec(){
+  labels.forEach(l=>l.remove());labels=[];
+  const names=Object.keys(GROUPS); let y=Y0+30;
+  names.forEach((gn,gi)=>{
+    const list=T.filter(t=>t.g===gi); if(!list.length) return;
+    const lab=document.createElement('div');lab.className='group-label';lab.textContent=gn+'  ('+list.length+')';
+    lab.style.left=X0+'px';lab.style.top=(y-30)+'px';world.appendChild(lab);labels.push(lab);
+    let rowMax=0,rowStart=y;
+    list.forEach((t,i)=>{
+      const col=i%PER_ROW; if(col===0&&i>0){y=rowStart+rowMax+GAP_Y;rowStart=y;rowMax=0;}
+      pos[t.n]={x:X0+col*(COL_W+GAP_X),y:y};
+      rowMax=Math.max(rowMax,els[t.n].offsetHeight);
+    });
+    y=rowStart+rowMax+GAP_Y+50;
+  });
+  T.forEach(t=>place(t.n));
+  world.style.width=(X0*2+PER_ROW*(COL_W+GAP_X))+'px';svg.style.width=world.style.width;
+  world.style.height=(y+100)+'px';svg.style.height=(y+100)+'px';
+  draw();
+}
+
+function relayoutDep(){
+  labels.forEach(l=>l.remove());labels=[];
+  const depth={};
+  const parentsOf=n=>T.find(t=>t.n===n).cols.filter(c=>c.fk).map(c=>c.fk.split('.')[0]).filter(p=>p!==n);
+  const dep=n=>{if(depth[n]!==undefined)return depth[n];depth[n]=0;const ps=parentsOf(n);depth[n]=ps.length?1+Math.max(...ps.map(dep)):0;return depth[n];};
+  T.forEach(t=>dep(t.n));
+  const maxD=Math.max(...Object.values(depth));
+  const STEP=COL_W+110; let tallest=0;
+  const titles=['BASE ROOTS','LEVEL 1 – CORE BLUEPRINTS','LEVEL 2 – COMPONENT PARTS','LEVEL 3 – ROWS & STAMPS','LEVEL 4 – CANVAS CELLS & TEMPLATES','LEVEL 5 – AUDIT & SECTIONS'];
+  for(let d=0;d<=maxD;d++){
+    const list=T.filter(t=>depth[t.n]===d).sort((a,b)=>a.g-b.g);
+    const lab=document.createElement('div');lab.className='group-label';lab.textContent=titles[d]||('LEVEL '+d);
+    lab.style.left=(X0+d*STEP)+'px';lab.style.top=(Y0-10)+'px';world.appendChild(lab);labels.push(lab);
+    let y=Y0+30;
+    list.forEach(t=>{pos[t.n]={x:X0+d*STEP,y};y+=els[t.n].offsetHeight+40;});
+    tallest=Math.max(tallest,y);
+  }
+  T.forEach(t=>place(t.n));
+  world.style.width=(X0*2+(maxD+1)*STEP)+'px';svg.style.width=world.style.width;
+  world.style.height=(tallest+100)+'px';svg.style.height=(tallest+100)+'px';
+  draw();
+}
+
+function build(){
+  const names=Object.keys(GROUPS);
+  T.forEach(t=>{
+    const [c1,c2]=GROUPS[names[t.g]]||["#1d4ed8","#3b82f6"];
+    const el=document.createElement('div');el.className='card';el.id='t_'+t.n;
+    el.style.setProperty('--c1',c1);el.style.setProperty('--c2',c2);
+    collapsed[t.n]=false; // default expanded so all FKs are immediately visible
+    els[t.n]=el;world.appendChild(el);renderCard(t);
+    t.cols.forEach(c=>{if(c.fk){const [rt,rc]=c.fk.split('.');rels.push({from:t.n,fc:c.name,to:rt,tc:rc});}});
+  });
+  relayout();
+  document.getElementById('cNew').textContent='('+T.filter(t=>!t.ext).length+')';
+  document.getElementById('cExt').textContent='('+T.filter(t=>t.ext).length+')';
+  document.getElementById('cRel').textContent=rels.length+' FK relations';
+}
+
+function renderCard(t){
+  const el=els[t.n],col=collapsed[t.n];
+  // Always show ALL PK and FK columns even when collapsed so connection lines are never orphaned
+  const show=col?t.cols.filter(c=>c.pk||c.fk):t.cols;
+  const info=INFO[t.n]||[''];
+  const req=t.ext?'':(info[1]?'<span class="tag opt">OPTIONAL</span>':'<span class="tag req">REQUIRED</span>');
+  el.innerHTML=`<header><span class="chev" data-t="${t.n}">${col?'&#9654;':'&#9660;'}</span><span class="name">${t.n}</span>${t.ext?'<span class="tag ext">EXISTING</span>':''}${req}<span class="tag">PG</span></header>`+
+    `<div class="desc">${info[0]}</div>`+
+    show.map(c=>`<div class="row" data-c="${c.name}"><span class="n">${c.name}</span>${c.pk?'<span class="b PK">PK</span>':''}${c.fk?'<span class="b FK" title="References ${c.fk}">FK</span>':''}${c.uq?'<span class="b UQ">UQ</span>':''}<span class="t">${c.type}</span></div>`).join('')+
+    (col&&t.cols.length>show.length?`<div class="more" data-t="${t.n}">+ ${t.cols.length-show.length} non-key columns</div>`:'');
+  el.querySelector('.chev').onclick=e=>{e.stopPropagation();collapsed[t.n]=!collapsed[t.n];renderCard(t);relayout();};
+  const m=el.querySelector('.more');if(m)m.onclick=()=>{collapsed[t.n]=false;renderCard(t);relayout();};
+  el.querySelector('header').addEventListener('mousedown',e=>dragStart(e,t.n));
+  el.addEventListener('mouseenter',()=>hl(t.n,true));
+  el.addEventListener('mouseleave',()=>hl(t.n,false));
+}
+
+function place(n){els[n].style.left=pos[n].x+'px';els[n].style.top=pos[n].y+'px';}
+
+function anchor(n,colName,side){
+  const el=els[n];if(!el) return {x:0,y:0};
+  const r=el.querySelector(`.row[data-c="${colName}"]`);
+  const y=pos[n].y+(r?r.offsetTop+r.offsetHeight/2:30);
+  return {x:pos[n].x+(side==='r'?el.offsetWidth:0),y};
+}
+
+function draw(){
+  svg.innerHTML=`<defs>
+    <marker id="erd-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L8,5 L0,9z" fill="#3b82f6" stroke="none"/>
+    </marker>
+    <marker id="erd-arrow-hl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10z" fill="#60a5fa" stroke="none"/>
+    </marker>
+  </defs>`;
+  rels.forEach(r=>{
+    const a=pos[r.from],b=pos[r.to];if(!a||!b)return;
+    let p1,p2,d;
+    // Child (from) references parent (to)
+    if(a.x>b.x){            // child is to the right of parent: child left edge -> parent right edge
+      p1=anchor(r.from,r.fc,'l');p2=anchor(r.to,r.tc,'r');
+      const dx=Math.max(45,(p1.x-p2.x)/2);
+      d=`M${p1.x},${p1.y} C${p1.x-dx},${p1.y} ${p2.x+dx},${p2.y} ${p2.x},${p2.y}`;
+    }else if(a.x<b.x){      // child is to the left of parent: child right edge -> parent left edge
+      p1=anchor(r.from,r.fc,'r');p2=anchor(r.to,r.tc,'l');
+      const dx=Math.max(45,(p2.x-p1.x)/2);
+      d=`M${p1.x},${p1.y} C${p1.x+dx},${p1.y} ${p2.x-dx},${p2.y} ${p2.x},${p2.y}`;
+    }else{                  // same column: curve around on the right
+      p1=anchor(r.from,r.fc,'r');p2=anchor(r.to,r.tc,'r');
+      d=`M${p1.x},${p1.y} C${p1.x+70},${p1.y} ${p2.x+70},${p2.y} ${p2.x},${p2.y}`;
+    }
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',d);
+    p.setAttribute('marker-end','url(#erd-arrow)');
+    p.dataset.f=r.from;
+    p.dataset.t=r.to;
+    const tt=document.createElementNS('http://www.w3.org/2000/svg','title');
+    tt.textContent=`${r.from}.${r.fc} ➔ ${r.to}.${r.tc}`;
+    p.appendChild(tt);
+    svg.appendChild(p);
+  });
+}
+
+function hl(n,on){
+  svg.querySelectorAll('path').forEach(p=>{
+    const match=p.dataset.f===n||p.dataset.t===n;
+    if(match){
+      p.classList.toggle('hl',on);
+      p.setAttribute('marker-end',on?'url(#erd-arrow-hl)':'url(#erd-arrow)');
+    }
+  });
+}
+
+/* pan / zoom / drag */
+function apply(){world.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;document.getElementById('zPct').textContent=Math.round(scale*100)+'%';}
+let drag=null,pan=null;
+function dragStart(e,n){e.stopPropagation();drag={n,sx:e.clientX,sy:e.clientY,ox:pos[n].x,oy:pos[n].y};}
+vp.addEventListener('mousedown',e=>{if(tab==='flow'||e.target.closest('.card'))return;pan={sx:e.clientX,sy:e.clientY,ox:tx,oy:ty};vp.classList.add('panning');});
+window.addEventListener('mousemove',e=>{
+  if(drag){pos[drag.n]={x:drag.ox+(e.clientX-drag.sx)/scale,y:drag.oy+(e.clientY-drag.sy)/scale};place(drag.n);draw();}
+  else if(pan){tx=pan.ox+e.clientX-pan.sx;ty=pan.oy+e.clientY-pan.sy;apply();}
+});
+window.addEventListener('mouseup',()=>{drag=null;pan=null;vp.classList.remove('panning');});
+function zoomAt(f,cx,cy){const ns=Math.min(1.6,Math.max(.25,scale*f));tx=cx-(cx-tx)*(ns/scale);ty=cy-(cy-ty)*(ns/scale);scale=ns;apply();}
+vp.addEventListener('wheel',e=>{if(tab==='flow')return;e.preventDefault();
+  if(e.ctrlKey){const r=vp.getBoundingClientRect();zoomAt(e.deltaY<0?1.1:.9,e.clientX-r.left,e.clientY-r.top);return;}
+  if(e.shiftKey){tx-=e.deltaY;}else{ty-=e.deltaY;}
+  const maxUp=-(parseFloat(world.style.height)||2600)*scale+vp.clientHeight-40;
+  ty=Math.min(20,Math.max(maxUp,ty));apply();},{passive:false});
+document.getElementById('zIn').onclick=()=>zoomAt(1.15,vp.clientWidth/2,vp.clientHeight/2);
+document.getElementById('zOut').onclick=()=>zoomAt(.87,vp.clientWidth/2,vp.clientHeight/2);
+
+/* toolbar */
+function setAll(v){T.forEach(t=>{collapsed[t.n]=v;renderCard(t);});relayout();}
+document.getElementById('btnCollapse').onclick=()=>setAll(true);
+document.getElementById('btnExpand').onclick=()=>setAll(false);
+document.getElementById('btnReset').onclick=()=>location.reload();
+document.getElementById('btnLines').onclick=e=>{e.target.classList.toggle('on');svg.classList.toggle('hidden');};
+document.getElementById('search').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  T.forEach(t=>{const m=q&&(t.n.includes(q)||t.cols.some(c=>c.name.includes(q)));
+    els[t.n].classList.toggle('match',!!m);els[t.n].classList.toggle('dim',!!q&&!m);});
+});
+
+/* ================= FLOW DIAGRAMS ================= */
+const CL={blue:['#1d4ed8','#3b82f6'],indigo:['#4338ca','#6366f1'],teal:['#0e7490','#06b6d4'],orange:['#9a3412','#ea580c'],green:['#047857','#10b981'],red:['#b91c1c','#ef4444'],grey:['#374151','#6b7280'],amber:['#92400e','#f59e0b']};
+const FLOWS=[
+ {title:'1. Template Lifecycle (Status & Approval Flow)',
+  desc:'Lifecycle steps of a report template: Draft → Pending → Active / Rejected, including approval tracking in activity_logs.',
+  W:960,H:700,
+  nodes:[
+   ['n1',40,40,'1. Create Blueprint','Site admin creates template (status = draft).<br>Stored in <code>report_templates</code>, logged in <code>activity_logs</code>','blue'],
+   ['n2',350,40,'2. Assemble Sections','Pick and order sections from library.<br>Writes <code>template_sections</code> ← <code>library_sections</code>','indigo'],
+   ['n3',660,40,'3. Configure Fixed Pages','Cover page, Table of Contents, Back cover.<br>Stored in <code>cover_page_data</code>, <code>toc_data</code> on <code>report_templates</code>','teal'],
+   ['n4',660,220,'4. Submit for Approval','Admin submits (status = pending).<br>Logged in <code>activity_logs</code> (action = submit)','amber'],
+   ['n5',350,220,'5. Superadmin Review','Reviewer inspects template contents.<br>Reads <code>report_templates</code> & sections','orange'],
+   ['n6',40,400,'6a. Approved → Active','status = active, approved_by / approved_at set.<br>Logged in <code>activity_logs</code>','green'],
+   ['n7',350,400,'6b. Rejected','status = rejected + rejection_reason recorded.<br>Logged in <code>activity_logs</code>','red'],
+   ['n8',660,400,'7. Revise & Resubmit','Admin updates sections/pages and resubmits.<br>status returns to pending','amber'],
+   ['n9',40,560,'Active Template Ready','Available for generating scheduled & on-demand reports for site operations.','grey']
+  ],
+  edges:[['n1','n2'],['n2','n3'],['n3','n4'],['n4','n5','review'],['n5','n6','approve'],['n5','n7','reject'],['n7','n8','revise'],['n8','n4','resubmit'],['n6','n9','',1]]},
+ {title:'2. Table Assembly & Data Flow',
+  desc:'How tables connect and assemble into a final template. Arrows show dependency flow (source data → assembly).',
+  W:1360,H:880,
+  nodes:[
+   ['element_assets',40,40,'element_assets','SVG library: icons, stamps, logos & shapes.','blue'],
+   ['watermarks',40,210,'watermarks','Watermark designs with opacity & positioning.','blue'],
+   ['library_charts',40,380,'library_charts','Chart blueprints: type, axes, data feed, series.','blue'],
+   ['library_metric_cards',40,550,'library_metric_cards','KPI cards: label, value, trend, icon.','blue'],
+   ['library_key_insights',40,720,'library_key_insights','Takeaways: quotes, bullet points, vision banners.','blue'],
+   ['section_stamps',350,40,'section_stamps','Freely positioned stamps & watermarked assets.','indigo'],
+   ['canvas_cells',350,460,'canvas_cells','Cell blocks hosting charts, KPIs, insights & SVGs.','indigo'],
+   ['canvas_rows',660,460,'canvas_rows','Ordered canvas rows controlling row flow & page breaks.','indigo'],
+   ['library_sections',660,180,'library_sections','Master section blueprint: title, watermark, rows & stamps.','blue'],
+   ['template_sections',970,180,'template_sections','Sections attached to template with order & toggles.','teal'],
+   ['sites',970,40,'sites','Industrial project sites (references existing ERP core).','orange'],
+   ['report_templates',970,460,'report_templates','THE TEMPLATE: site, status, version, approval & fixed pages.','teal'],
+   ['users',1260,180,'users','ERP user accounts (creator, approver, project head).','orange'],
+   ['activity_logs',970,720,'activity_logs','Audit trail of creation, edits, approvals & rejections.','green']
+  ],
+  edges:[
+   ['element_assets','section_stamps'],
+   ['element_assets','canvas_cells'],
+   ['watermarks','library_sections'],
+   ['library_charts','canvas_cells'],
+   ['library_metric_cards','canvas_cells'],
+   ['library_key_insights','canvas_cells'],
+   ['canvas_cells','canvas_rows','in row'],
+   ['canvas_rows','library_sections','builds'],
+   ['section_stamps','library_sections','decorates'],
+   ['library_sections','template_sections','included in'],
+   ['template_sections','report_templates','assembles'],
+   ['sites','report_templates','assigned to'],
+   ['users','report_templates','manages'],
+   ['report_templates','activity_logs','audited in']
+  ]}
+];
+
+function renderFlows(){
+  const host=document.getElementById('flowView');host.innerHTML='';
+  const NW=240,NH=110,NS='http://www.w3.org/2000/svg';
+  FLOWS.forEach(f=>{
+    const sec=document.createElement('section');sec.className='fsec';
+    sec.innerHTML=`<h2>${f.title}</h2><p>${f.desc}</p>`;
+    const box=document.createElement('div');box.className='fbox';box.style.width=f.W+'px';box.style.height=f.H+'px';
+    const sv=document.createElementNS(NS,'svg');sv.setAttribute('width',f.W);sv.setAttribute('height',f.H);
+    sv.innerHTML='<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10z" fill="#60a5fa" stroke="none"/></marker></defs>';
+    box.appendChild(sv);
+    const N={};
+    f.nodes.forEach(([id,x,y,t,b,c])=>{
+      N[id]={x,y};
+      const d=document.createElement('div');d.className='fnode';d.style.left=x+'px';d.style.top=y+'px';
+      d.style.setProperty('--c1',CL[c][0]);d.style.setProperty('--c2',CL[c][1]);
+      d.innerHTML=`<div class="fh">${t}</div><div class="fb">${b}</div>`;box.appendChild(d);
+    });
+    f.edges.forEach(([a,b,label,dash])=>{
+      const A=N[a],B=N[b],ax=A.x+NW/2,ay=A.y+NH/2,bx=B.x+NW/2,by=B.y+NH/2;
+      let x1,y1,x2,y2,c1x,c1y,c2x,c2y;
+      if(Math.abs(bx-ax)>=Math.abs(by-ay)){
+        const r=bx>ax; x1=r?A.x+NW:A.x;y1=ay;x2=r?B.x:B.x+NW;y2=by;const k=Math.abs(x2-x1)/2;
+        c1x=x1+(r?k:-k);c1y=y1;c2x=x2-(r?k:-k);c2y=y2;
+      }else{
+        const dn=by>ay; x1=ax;y1=dn?A.y+NH:A.y;x2=bx;y2=dn?B.y:B.y+NH;const k=Math.abs(y2-y1)/2;
+        c1x=x1;c1y=y1+(dn?k:-k);c2x=x2;c2y=y2-(dn?k:-k);
+      }
+      const p=document.createElementNS(NS,'path');p.setAttribute('d',`M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}`);
+      p.setAttribute('marker-end','url(#ar)');if(dash)p.setAttribute('class','dash');sv.appendChild(p);
+      if(label){
+        const mx=(x1+x2)/2,my=(y1+y2)/2,w=label.length*6+12;
+        const r=document.createElementNS(NS,'rect');r.setAttribute('class','lb');r.setAttribute('x',mx-w/2);r.setAttribute('y',my-9);r.setAttribute('width',w);r.setAttribute('height',18);r.setAttribute('rx',5);
+        const t=document.createElementNS(NS,'text');t.setAttribute('x',mx);t.setAttribute('y',my+4);t.setAttribute('text-anchor','middle');t.textContent=label;
+        sv.appendChild(r);sv.appendChild(t);
+      }
+    });
+    sec.appendChild(box);host.appendChild(sec);
+  });
+}
+
+function showTab(t){
+  tab=t;const flow=t==='flow';
+  document.getElementById('flowView').style.display=flow?'block':'none';
+  world.style.display=flow?'none':'block';
+  document.querySelector('.zoom').style.display=flow?'none':'flex';
+  document.querySelectorAll('.erdtool').forEach(e=>e.style.display=flow?'none':'');
+  document.getElementById('tabErd').classList.toggle('on',!flow);
+  document.getElementById('tabFlow').classList.toggle('on',flow);
+  vp.style.cursor=flow?'default':'';
+}
+document.getElementById('tabErd').onclick=()=>showTab('erd');
+document.getElementById('tabFlow').onclick=()=>showTab('flow');
+document.getElementById('btnMode').onclick=e=>{
+  mode=mode==='sec'?'dep':'sec';
+  e.target.textContent=mode==='sec'?'Layout: By Section':'Layout: By Dependency';
+  tx=20;ty=10;relayout();apply();
+};
+
+build();renderFlows();apply();
+</script>
+</body>
+</html>

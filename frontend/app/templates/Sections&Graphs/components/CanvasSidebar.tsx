@@ -2106,9 +2106,6 @@ export function CanvasSidebar({
                   <h2 className="text-base font-bold text-slate-900 dark:text-white">
                     {previewingChart.title}
                   </h2>
-                  <span className="text-[10px] font-mono text-slate-400">
-                    Source: {previewingChart.dataSourceField}
-                  </span>
                 </div>
               </div>
 
