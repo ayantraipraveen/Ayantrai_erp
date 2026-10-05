@@ -720,6 +720,29 @@ export interface LibrarySection {
   coverPageData?: CoverPageData;
   tableOfContentsData?: TableOfContentsData;
   backCoverData?: BackCoverData;
+  // Per-page header/title configuration overrides (e.g. Page 1 mandatory, Page 2+ editable/deletable)
+  pageOverrides?: Record<number, PageConfigOverride>;
+}
+
+export interface PageConfigOverride {
+  hideReportHeader?: boolean;
+  hideSectionTitle?: boolean;
+  sectionName?: string;
+  sectionTitleHtml?: string;
+  sectionEyebrow?: string;
+  sectionEyebrowHtml?: string;
+  sectionDescription?: string;
+  sectionDescriptionHtml?: string;
+  headerValues?: {
+    taglinePrimary?: string;
+    taglinePrimaryHtml?: string;
+    taglineSecondary?: string;
+    taglineSecondaryHtml?: string;
+    title?: string;
+    titleHtml?: string;
+    period?: string;
+    periodHtml?: string;
+  };
 }
 
 export interface WatermarkItem {

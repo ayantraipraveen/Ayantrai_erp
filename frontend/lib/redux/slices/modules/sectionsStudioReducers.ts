@@ -23,6 +23,7 @@ import {
   DEFAULT_TABLE_OF_CONTENTS_DATA,
   BackCoverData,
   DEFAULT_BACK_COVER_DATA,
+  PageConfigOverride,
 } from "../../types/reportModuleTypes";
 
 /**
@@ -171,6 +172,7 @@ export const sectionsStudioReducers = {
           if (c.icon !== undefined) sec.icon = c.icon;
           if (c.watermarkId !== undefined) sec.watermarkId = c.watermarkId;
           if (c.headerSpacing !== undefined) sec.headerSpacing = c.headerSpacing;
+          if (c.pageOverrides !== undefined) sec.pageOverrides = c.pageOverrides;
         }
         if (action.payload.name !== undefined) sec.name = action.payload.name;
         if (action.payload.titleHtml !== undefined) sec.titleHtml = action.payload.titleHtml;
@@ -182,6 +184,24 @@ export const sectionsStudioReducers = {
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
         if (action.payload.watermarkId !== undefined) sec.watermarkId = action.payload.watermarkId;
         if (action.payload.headerSpacing !== undefined) sec.headerSpacing = action.payload.headerSpacing;
+        sec.updatedAt = "Just now";
+      }
+    },
+    setSectionPageOverride: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        pageIndex: number;
+        override: Partial<PageConfigOverride>;
+      }>
+    ) => {
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === action.payload.sectionId);
+      if (sec) {
+        if (!sec.pageOverrides) sec.pageOverrides = {};
+        sec.pageOverrides[action.payload.pageIndex] = {
+          ...sec.pageOverrides[action.payload.pageIndex],
+          ...action.payload.override,
+        };
         sec.updatedAt = "Just now";
       }
     },
