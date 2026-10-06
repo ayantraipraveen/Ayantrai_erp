@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { hashPassword } from '../src/shared/utils/password';
 
 const prisma = new PrismaClient();
 
@@ -162,6 +163,35 @@ async function main() {
       }
     }
     console.log(`   🔗 Assigned ${linkedCount} permissions to ${role.name}`);
+  }
+
+  // Step 3: Seed Default Superadmin User
+  console.log('👤 Seeding default Superadmin account...');
+  const superadminRole = await prisma.role.findUnique({
+    where: { slug: 'superadmin' },
+  });
+
+  if (superadminRole) {
+    const passwordHash = await hashPassword('Sitesafe@2026');
+
+    const superadminUser = await prisma.user.upsert({
+      where: { email: 'superadmin@ayantrai.com' },
+      update: {
+        roleId: superadminRole.id,
+      },
+      create: {
+        email: 'superadmin@ayantrai.com',
+        passwordHash,
+        name: 'Superadmin',
+        company: 'AyantrAI HQ Governance',
+        status: 'active',
+        roleId: superadminRole.id,
+      },
+    });
+
+    console.log(`✅ Superadmin User Seeded: ${superadminUser.name} (${superadminUser.email})`);
+    console.log(`   🔑 Default Password: Sitesafe@2026`);
+    console.log(`   🆔 User ID: ${superadminUser.id}`);
   }
 
   console.log('🎉 Seeding completed successfully!');
