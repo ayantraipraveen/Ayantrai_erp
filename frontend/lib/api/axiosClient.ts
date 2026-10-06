@@ -83,28 +83,105 @@ axiosClient.interceptors.response.use(
 );
 
 // ============================================================================
+// REQUEST DEDUPLICATION & SHORT-TERM TTL CACHING
+// Reduces redundant network requests across the application.
+// ============================================================================
+
+// In-flight promise cache to deduplicate concurrent identical GET requests
+const inFlightRequests = new Map<string, Promise<any>>();
+
+// In-memory response cache with TTL (in milliseconds)
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  ttlMs: number;
+}
+const responseCache = new Map<string, CacheEntry<any>>();
+
+/**
+ * Manually invalidate cached GET responses
+ * @param pattern Optional keyword or endpoint prefix to invalidate
+ */
+export const clearApiCache = (pattern?: string) => {
+  if (!pattern) {
+    responseCache.clear();
+  } else {
+    for (const key of responseCache.keys()) {
+      if (key.includes(pattern)) {
+        responseCache.delete(key);
+      }
+    }
+  }
+};
+
+export interface ApiRequestOptions {
+  /** Time-To-Live in milliseconds for in-memory response caching (default: 0 / disabled) */
+  ttlMs?: number;
+  /** Force network fetch bypassing cache (default: false) */
+  forceRefresh?: boolean;
+}
+
+// ============================================================================
 // CENTRALIZED CRUD HELPER FUNCTIONS
 // Each function automatically injects Auth Token + default headers,
 // merges new custom headers, and passes endpoint & payload.
 // ============================================================================
 
 /**
- * GET Request
+ * GET Request with automatic request deduplication and optional in-memory caching
  * @param endpoint - API endpoint (relative path or from API_ENDPOINTS)
  * @param params - Optional URL query parameters (e.g. { page: 1, limit: 10 })
  * @param headers - Optional new custom headers to attach / override
+ * @param options - Optional caching parameters ({ ttlMs, forceRefresh })
  */
 export const apiGet = async <T = any>(
   endpoint: string,
   params?: Record<string, any>,
-  headers?: Record<string, string>
+  headers?: Record<string, string>,
+  options?: ApiRequestOptions
 ): Promise<T> => {
+  const cacheKey = `${endpoint}?${JSON.stringify(params || {})}`;
+  const ttlMs = options?.ttlMs ?? 0;
+  const forceRefresh = options?.forceRefresh ?? false;
+
+  // 1. Check in-memory TTL cache (serves immediately with 0 network calls)
+  if (!forceRefresh && ttlMs > 0) {
+    const cached = responseCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < cached.ttlMs) {
+      return cached.data as T;
+    }
+  }
+
+  // 2. Deduplicate in-flight concurrent requests to identical endpoint
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey) as Promise<T>;
+  }
+
+  // 3. Dispatch network request with automatic promise cleanup
   const mergedHeaders = buildHeadersWithToken(headers);
-  const response = await axiosClient.get<T>(endpoint, {
-    params,
-    headers: mergedHeaders,
-  });
-  return response.data;
+  const requestPromise = (async () => {
+    try {
+      const response = await axiosClient.get<T>(endpoint, {
+        params,
+        headers: mergedHeaders,
+      });
+
+      if (ttlMs > 0) {
+        responseCache.set(cacheKey, {
+          data: response.data,
+          timestamp: Date.now(),
+          ttlMs,
+        });
+      }
+
+      return response.data;
+    } finally {
+      inFlightRequests.delete(cacheKey);
+    }
+  })();
+
+  inFlightRequests.set(cacheKey, requestPromise);
+  return requestPromise;
 };
 
 /**

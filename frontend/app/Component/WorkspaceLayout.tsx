@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { logoutUser, restoreSession } from "@/lib/redux/slices/authSlice";
+import { logoutUser, restoreSession, fetchCurrentUser } from "@/lib/redux/slices/authSlice";
 import { setActiveRole, RoleType } from "@/lib/redux/slices/reportModuleSlice";
 import { ShieldAlert, ArrowLeft, Lock, KeyRound } from "lucide-react";
 import DashboardNavbar from "./DashboardNavbar";
@@ -75,7 +75,13 @@ export default function WorkspaceLayout({
     });
   };
 
-  // 1. Verify token & restore session on client mount
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+
+  // Guard to ensure /api/v1/auth/me is fetched strictly once per layout lifecycle
+  const hasFetchedMeRef = useRef(false);
+
+  // 1. Verify token & restore session on client mount (runs once on mount)
   useEffect(() => {
     let token = stateToken;
     let storedUserStr: string | null = null;
@@ -87,27 +93,51 @@ export default function WorkspaceLayout({
 
     // Unauthenticated: No token or user found -> redirect to sign in
     if (!token && !storedUserStr && !user) {
-      router.replace(`/signin?redirect=${encodeURIComponent(pathname)}`);
+      router.replace(`/signin?redirect=${encodeURIComponent(pathnameRef.current)}`);
       return;
     }
 
-    // Rehydrate Redux session from localStorage if needed
+    // Rehydrate Redux session from localStorage if not yet restored
     if (!user && storedUserStr) {
       dispatch(restoreSession());
     }
 
-    // Determine effective user role and sync with reportModule
-    const rawRole = user?.role || (storedUserStr ? JSON.parse(storedUserStr).role : "");
-    const lowerRole = (rawRole || "").toLowerCase();
-    const resolvedRole: RoleType = lowerRole.includes("superadmin")
-      ? "superadmin"
-      : lowerRole.includes("project")
-      ? "project_head"
-      : "admin";
+    // Query live backend /me ONLY if profile is missing in Redux and hasn't been fetched yet
+    if (!hasFetchedMeRef.current && (token || storedUserStr)) {
+      hasFetchedMeRef.current = true;
+      if (!user) {
+        dispatch(fetchCurrentUser());
+      }
+    }
 
-    dispatch(setActiveRole(resolvedRole));
     setCheckingAuth(false);
-  }, [dispatch, pathname, router, stateToken, user]);
+  }, [dispatch, router, stateToken]);
+
+  // 2. Synchronize active role whenever user role changes
+  useEffect(() => {
+    let rawRole = user?.role;
+    if (!rawRole && typeof window !== "undefined") {
+      const storedUserStr = localStorage.getItem("sitesafe_user");
+      if (storedUserStr) {
+        try {
+          rawRole = JSON.parse(storedUserStr).role;
+        } catch {
+          // ignore parse errors
+        }
+      }
+    }
+
+    if (rawRole) {
+      const lowerRole = rawRole.toLowerCase();
+      const resolvedRole: RoleType = lowerRole.includes("superadmin")
+        ? "superadmin"
+        : lowerRole.includes("project")
+        ? "project_head"
+        : "admin";
+
+      dispatch(setActiveRole(resolvedRole));
+    }
+  }, [dispatch, user?.role]);
 
   const handleLogout = async () => {
     await dispatch(logoutUser());

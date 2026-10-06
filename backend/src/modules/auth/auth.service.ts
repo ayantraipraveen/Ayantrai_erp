@@ -103,3 +103,43 @@ export async function logoutService(userId?: string) {
   return { message: 'Logged out successfully' };
 }
 
+/**
+ * Retrieve current user profile and permissions by ID
+ */
+export async function getMeService(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      role: {
+        include: {
+          permissions: {
+            include: {
+              permission: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+
+  const permissions: string[] =
+    user.role?.permissions?.map((rp: any) => rp.permission?.slug).filter(Boolean) || [];
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role?.name || 'User',
+    roleSlug: user.role?.slug || 'user',
+    company: user.company || 'AyantrAI HQ',
+    avatarUrl: user.avatarUrl,
+    phone: user.phone,
+    permissions,
+  };
+}
+
+

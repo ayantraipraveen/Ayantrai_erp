@@ -110,6 +110,30 @@ export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
   await authApi.logout();
 });
 
+/**
+ * Async Thunk: Fetch Current Authenticated User Profile (/auth/me)
+ */
+export const fetchCurrentUser = createAsyncThunk<
+  UserProfile,
+  void,
+  { rejectValue: string }
+>(
+  "auth/fetchCurrentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const user = await authApi.getCurrentUser();
+      return user;
+    } catch (error: any) {
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to fetch authenticated user profile.";
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
+
 
 export const authSlice = createSlice({
   name: "auth",
@@ -221,6 +245,26 @@ export const authSlice = createSlice({
         localStorage.removeItem("sitesafe_user");
       }
     });
+
+    // Handling fetchCurrentUser Async Thunk
+    builder
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload;
+        state.error = null;
+        if (typeof window !== "undefined") {
+          localStorage.setItem("sitesafe_user", JSON.stringify(action.payload));
+        }
+      })
+      .addCase(fetchCurrentUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 

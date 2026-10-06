@@ -1,4 +1,4 @@
-import axiosClient from "./axiosClient";
+import axiosClient, { apiGet, clearApiCache } from "./axiosClient";
 import { API_ENDPOINTS } from "./endpoints";
 import { SignInFormData, SignUpFormData, SignUpPayload } from "@/lib/validations/auth";
 import { UserProfile } from "@/lib/redux/slices/authSlice";
@@ -116,15 +116,21 @@ export const authApi = {
 
   /**
    * GET /auth/me - Fetch authenticated user profile
+   * Uses 2-minute in-memory cache and in-flight request deduplication to prevent redundant calls.
    */
-  getCurrentUser: async (): Promise<UserProfile> => {
-    const response = await axiosClient.get<{ user: UserProfile }>(API_ENDPOINTS.AUTH.ME);
-    const resPayload = (response.data as any)?.data || response.data?.user || response.data;
+  getCurrentUser: async (forceRefresh: boolean = false): Promise<UserProfile> => {
+    const data = await apiGet<{ user: UserProfile } | UserProfile>(
+      API_ENDPOINTS.AUTH.ME,
+      undefined,
+      undefined,
+      { ttlMs: 120000, forceRefresh }
+    );
+    const resPayload = (data as any)?.data || (data as any)?.user || data;
     return resPayload;
   },
 
   /**
-   * POST /auth/logout - Terminate session
+   * POST /auth/logout - Terminate session & clear cached API states
    */
   logout: async (): Promise<void> => {
     try {
@@ -132,6 +138,7 @@ export const authApi = {
     } catch (e) {
       // ignore
     } finally {
+      clearApiCache();
       if (typeof window !== "undefined") {
         localStorage.removeItem("sitesafe_token");
         localStorage.removeItem("sitesafe_user");
