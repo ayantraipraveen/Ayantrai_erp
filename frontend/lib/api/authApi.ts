@@ -1,4 +1,5 @@
 import axiosClient from "./axiosClient";
+import { API_ENDPOINTS } from "./endpoints";
 import { SignInFormData, SignUpFormData, SignUpPayload } from "@/lib/validations/auth";
 import { UserProfile } from "@/lib/redux/slices/authSlice";
 
@@ -24,14 +25,22 @@ export const authApi = {
    */
   login: async (credentials: SignInFormData): Promise<AuthResponse> => {
     try {
-      const response = await axiosClient.post<AuthResponse>(
-        "/auth/login",
+      const response = await axiosClient.post<any>(
+        API_ENDPOINTS.AUTH.LOGIN,
         credentials
       );
-      if (typeof window !== "undefined" && response.data.token) {
-        localStorage.setItem("sitesafe_token", response.data.token);
+      const resPayload = response.data?.data || response.data;
+      if (typeof window !== "undefined" && resPayload?.token) {
+        localStorage.setItem("sitesafe_token", resPayload.token);
+        if (resPayload.user) {
+          localStorage.setItem("sitesafe_user", JSON.stringify(resPayload.user));
+        }
       }
-      return response.data;
+      return {
+        user: resPayload.user,
+        token: resPayload.token,
+        message: response.data?.message || "Signed in successfully",
+      };
     } catch (error: any) {
       // If live backend is not reachable (network error), fallback to simulation
       if (!error.response || error.code === "ERR_NETWORK") {
@@ -69,7 +78,7 @@ export const authApi = {
   register: async (data: SignUpFormData | SignUpPayload): Promise<AuthResponse> => {
     try {
       const response = await axiosClient.post<AuthResponse>(
-        "/auth/register",
+        API_ENDPOINTS.AUTH.REGISTER,
         data
       );
       if (typeof window !== "undefined" && response.data.token) {
@@ -109,8 +118,9 @@ export const authApi = {
    * GET /auth/me - Fetch authenticated user profile
    */
   getCurrentUser: async (): Promise<UserProfile> => {
-    const response = await axiosClient.get<{ user: UserProfile }>("/auth/me");
-    return response.data.user;
+    const response = await axiosClient.get<{ user: UserProfile }>(API_ENDPOINTS.AUTH.ME);
+    const resPayload = (response.data as any)?.data || response.data?.user || response.data;
+    return resPayload;
   },
 
   /**
@@ -118,12 +128,13 @@ export const authApi = {
    */
   logout: async (): Promise<void> => {
     try {
-      await axiosClient.post("/auth/logout");
+      await axiosClient.post(API_ENDPOINTS.AUTH.LOGOUT);
     } catch (e) {
       // ignore
     } finally {
       if (typeof window !== "undefined") {
         localStorage.removeItem("sitesafe_token");
+        localStorage.removeItem("sitesafe_user");
       }
     }
   },

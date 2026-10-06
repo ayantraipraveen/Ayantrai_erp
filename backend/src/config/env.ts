@@ -20,7 +20,7 @@ export const env: EnvConfig = {
   PORT: parseInt(process.env.PORT || '5000', 10),
   NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
   API_PREFIX: process.env.API_PREFIX || '/api/v1',
-  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:30005',
 
   // Primary Database (PostgreSQL via Prisma)
   DATABASE_URL:
