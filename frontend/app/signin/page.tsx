@@ -47,6 +47,7 @@ export default function SignInPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [pasteNotice, setPasteNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 300);
@@ -57,10 +58,53 @@ export default function SignInPage() {
     return <AuthSkeleton isSignUp={false} />;
   }
 
+  // Prevent pasting into inputs
+  const handlePasteBlocked = (e: React.ClipboardEvent<HTMLInputElement>, fieldName: string) => {
+    e.preventDefault();
+    setPasteNotice(`Pasting into ${fieldName} is disabled for security.`);
+    setTimeout(() => setPasteNotice(null), 3000);
+  };
+
+  // Field validation on blur
+  const validateField = (name: "email" | "password", val: string) => {
+    if (name === "email") {
+      const trimmed = val.trim();
+      if (!trimmed) {
+        setErrors((prev) => ({ ...prev, email: "Work email or Operator ID is required" }));
+        return false;
+      }
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+      const isOperatorId = /^[A-Za-z0-9_-]{3,25}$/.test(trimmed);
+      if (!isEmail && !isOperatorId) {
+        setErrors((prev) => ({
+          ...prev,
+          email: "Enter a valid work email or Operator ID (e.g. name@company.com or EMP-1092)",
+        }));
+        return false;
+      }
+      setErrors((prev) => ({ ...prev, email: "" }));
+      return true;
+    }
+
+    if (name === "password") {
+      if (!val) {
+        setErrors((prev) => ({ ...prev, password: "Security password is required" }));
+        return false;
+      }
+      if (val.length < 6) {
+        setErrors((prev) => ({ ...prev, password: "Password must be at least 6 characters" }));
+        return false;
+      }
+      setErrors((prev) => ({ ...prev, password: "" }));
+      return true;
+    }
+    return true;
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
+    setPasteNotice(null);
 
     // Zod Schema Validation
     const validationResult = signInSchema.safeParse({ email, password, rememberMe });
@@ -113,17 +157,27 @@ export default function SignInPage() {
           : err?.message || "Failed to sign in. Please verify your credentials.";
       setAuthError(errorMsg);
       setFeedback(null);
-      setErrors({
-        email:
-          errorMsg.toLowerCase().includes("unrecognized") ||
-          errorMsg.toLowerCase().includes("access denied")
-            ? "Unrecognized enterprise account"
-            : "",
-        password:
-          errorMsg.toLowerCase().includes("password")
-            ? "Incorrect password"
-            : "",
-      });
+
+      const lower = errorMsg.toLowerCase();
+      const isCredentialError =
+        lower.includes("invalid") ||
+        lower.includes("credential") ||
+        lower.includes("password") ||
+        lower.includes("email") ||
+        lower.includes("unrecognized") ||
+        lower.includes("access denied");
+
+      if (isCredentialError) {
+        setErrors({
+          email: "Invalid work email or Operator ID",
+          password: "Invalid security password",
+        });
+      } else {
+        setErrors({
+          email: lower.includes("email") ? errorMsg : "",
+          password: lower.includes("password") ? errorMsg : "",
+        });
+      }
     }
   };
 
@@ -320,6 +374,14 @@ export default function SignInPage() {
                 </div>
               )}
 
+              {/* Paste Notice Warning */}
+              {pasteNotice && (
+                <div className="mb-3 rounded-lg border border-amber-500/50 bg-amber-500/10 p-2.5 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2 animate-fadeIn">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 text-amber-500" />
+                  <span>{pasteNotice}</span>
+                </div>
+              )}
+
               {/* Authentication Error Banner */}
               {authError && (
                 <div className="mb-3 rounded-xl border border-red-500/60 bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400 flex items-start gap-2.5 animate-fadeIn shadow-[0_0_15px_rgba(239,68,68,0.2)]">
@@ -353,14 +415,17 @@ export default function SignInPage() {
                       type="text"
                       autoComplete="username"
                       value={email}
+                      onPaste={(e) => handlePasteBlocked(e, "Work Email")}
+                      onBlur={() => validateField("email", email)}
                       onChange={(e) => {
-                        setEmail(e.target.value);
+                        const val = e.target.value;
+                        setEmail(val);
                         if (authError) setAuthError(null);
                         if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
                       }}
                       placeholder="name@company.com or EMP-1092"
                       className={`w-full rounded-xl bg-white dark:bg-[#080b10] pl-9 pr-3 py-2 text-sm sm:text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 transition-all ${
-                        errors.email || (authError && !errors.password)
+                        errors.email || authError
                           ? "input-error border border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.25)] focus:border-red-500 focus:ring-1 focus:ring-red-500"
                           : "border border-slate-300 dark:border-zinc-800/90 hover:border-slate-400 dark:hover:border-zinc-700 focus-glow-amber"
                       }`}
@@ -396,14 +461,17 @@ export default function SignInPage() {
                       type={showPassword ? "text" : "password"}
                       autoComplete="current-password"
                       value={password}
+                      onPaste={(e) => handlePasteBlocked(e, "Security Password")}
+                      onBlur={() => validateField("password", password)}
                       onChange={(e) => {
-                        setPassword(e.target.value);
+                        const val = e.target.value;
+                        setPassword(val);
                         if (authError) setAuthError(null);
                         if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
                       }}
                       placeholder="••••••••••••"
                       className={`w-full rounded-xl bg-white dark:bg-[#080b10] pl-9 pr-9 py-2 text-sm sm:text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 transition-all ${
-                        errors.password || (authError && !errors.email)
+                        errors.password || authError
                           ? "input-error border border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.25)] focus:border-red-500 focus:ring-1 focus:ring-red-500"
                           : "border border-slate-300 dark:border-zinc-800/90 hover:border-slate-400 dark:hover:border-zinc-700 focus-glow-amber"
                       }`}

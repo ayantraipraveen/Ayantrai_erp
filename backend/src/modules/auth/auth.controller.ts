@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../../shared/utils/asyncHandler';
 import { ApiResponse } from '../../shared/utils/apiResponse';
-import { loginService } from './auth.service';
+import { loginService, logoutService } from './auth.service';
 import { AuthenticatedRequest } from '../../shared/types';
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -16,3 +16,11 @@ export const getMe = asyncHandler(async (req: AuthenticatedRequest, res: Respons
     .status(200)
     .json(new ApiResponse(200, req.user, 'Current user profile retrieved'));
 });
+
+export const logout = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const result = await logoutService(req.user?.id);
+  res
+    .status(200)
+    .json(new ApiResponse(200, result, 'Logged out successfully'));
+});
+

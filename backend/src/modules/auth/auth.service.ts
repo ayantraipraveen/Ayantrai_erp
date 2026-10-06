@@ -89,3 +89,17 @@ export async function loginService(input: LoginInput) {
     refreshToken,
   };
 }
+
+/**
+ * Invalidate user session and clear refreshToken from database
+ */
+export async function logoutService(userId?: string) {
+  if (userId) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken: null },
+    });
+  }
+  return { message: 'Logged out successfully' };
+}
+

@@ -178,6 +178,8 @@ async function main() {
       where: { email: 'superadmin@ayantrai.com' },
       update: {
         roleId: superadminRole.id,
+        passwordHash,
+        status: 'active',
       },
       create: {
         email: 'superadmin@ayantrai.com',

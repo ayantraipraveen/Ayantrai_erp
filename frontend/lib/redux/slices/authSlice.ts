@@ -104,14 +104,12 @@ export const registerUser = createAsyncThunk(
 );
 
 /**
- * Async Thunk: Terminate session (UI-Only Mode: Zero backend API calls)
+ * Async Thunk: Terminate session via Centralized Auth API Service
  */
 export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
-  await new Promise((resolve) => setTimeout(resolve, 150));
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("sitesafe_token");
-  }
+  await authApi.logout();
 });
+
 
 export const authSlice = createSlice({
   name: "auth",
