@@ -1,0 +1,425 @@
+// Reference schema containing all future modules (Sections, Templates, Stamps, Watermarks, Canvas, etc.)
+// Will be added step-by-step in subsequent migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SectionKind {
+  core
+  custom
+}
+
+enum CellBlockType {
+  metric_card @map("metric-card")
+  chart
+  insight
+  text
+  badge_strip @map("badge-strip")
+  divider
+  element
+}
+
+enum StampLayer {
+  front
+  back
+}
+
+enum StampElementType {
+  stamp
+  chart
+  metric_card @map("metric-card")
+  text
+  insight
+  badge_strip @map("badge-strip")
+}
+
+enum TemplateStatus {
+  draft
+  pending
+  active
+  rejected
+}
+
+enum ActivityType {
+  template
+  section
+  admin
+  system
+}
+
+enum WatermarkPlace {
+  center
+  corner
+  footer
+  tiled
+  top_right    @map("top-right")
+  bottom_right @map("bottom-right")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String?   @map("password_hash")
+  name         String
+  phone        String?
+  company      String?
+  avatarUrl    String?   @map("avatar_url")
+  deviceToken  String?   @map("device_token")
+  refreshToken String?   @map("refresh_token")
+  status       String    @default("active")
+  roleId       String?   @map("role_id") @db.Uuid
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  role               Role?               @relation(fields: [roleId], references: [id], onDelete: SetNull)
+  managedSites       Site[]              @relation("SiteProjectHead")
+  userSites          UserSite[]
+  watermarks         Watermark[]         @relation("WatermarkCreator")
+  sections           LibrarySection[]    @relation("SectionCreator")
+  elementAssets      ElementAsset[]      @relation("AssetCreator")
+  libraryCharts      LibraryChart[]      @relation("ChartCreator")
+  libraryMetricCards LibraryMetricCard[] @relation("MetricCardCreator")
+  libraryInsights    LibraryKeyInsight[] @relation("InsightCreator")
+  templates          ReportTemplate[]    @relation("TemplateCreator")
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  users       User[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  module      String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String   @id @default(uuid()) @db.Uuid
+  roleId       String   @map("role_id") @db.Uuid
+  permissionId String   @map("permission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Site {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String
+  projectHeadId String?  @map("project_head_id") @db.Uuid
+  location      String?
+  activeWorkers Int?     @default(0) @map("active_workers")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  projectHead User?            @relation("SiteProjectHead", fields: [projectHeadId], references: [id], onDelete: SetNull)
+  userSites   UserSite[]
+  templates   ReportTemplate[]
+
+  @@map("sites")
+}
+
+model UserSite {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  siteId    String   @map("site_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, siteId])
+  @@map("user_sites")
+}
+
+model ElementAsset {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  svgContent String   @map("svg_content") @db.Text
+  category   String?
+  createdBy  String?  @map("created_by") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  creator     User?          @relation("AssetCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  canvasCells CanvasCell[]
+  stamps      SectionStamp[]
+
+  @@map("element_assets")
+}
+
+model Watermark {
+  id          String         @id @default(uuid()) @db.Uuid
+  name        String
+  tag         String?
+  fileName    String?        @map("file_name")
+  svgContent  String         @map("svg_content") @db.Text
+  opacity     Float          @default(10)
+  rotation    Float          @default(0)
+  scale       Float          @default(100)
+  placement   WatermarkPlace @default(center)
+  isDefault   Boolean        @default(false) @map("is_default")
+  description String?        @db.Text
+  createdBy   String?        @map("created_by") @db.Uuid
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  creator  User?            @relation("WatermarkCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  sections LibrarySection[]
+
+  @@map("watermarks")
+}
+
+model LibrarySection {
+  id              String      @id @default(uuid()) @db.Uuid
+  name            String
+  titleHtml       String?     @map("title_html") @db.Text
+  titleStyle      Json?       @map("title_style")
+  eyebrow         String?
+  eyebrowHtml     String?     @map("eyebrow_html") @db.Text
+  description     String?     @db.Text
+  descriptionHtml String?     @map("description_html") @db.Text
+  type            SectionKind @default(custom)
+  icon            String?
+  isTemplate      Boolean     @default(false) @map("is_template")
+  headerSpacing   String?     @map("header_spacing")
+  sectionStyle    Json?       @map("section_style")
+  pageOverrides   Json        @default("{}") @map("page_overrides")
+  watermarkId     String?     @map("watermark_id") @db.Uuid
+  createdBy       String?     @map("created_by") @db.Uuid
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  watermark   Watermark?          @relation(fields: [watermarkId], references: [id], onDelete: SetNull)
+  creator     User?               @relation("SectionCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  charts      LibraryChart[]
+  metricCards LibraryMetricCard[]
+  insights    LibraryKeyInsight[]
+  rows        CanvasRow[]
+  stamps      SectionStamp[]
+  templates   TemplateSection[]
+
+  @@map("library_sections")
+}
+
+model LibraryChart {
+  id              String   @id @default(uuid()) @db.Uuid
+  sectionId       String?  @map("section_id") @db.Uuid
+  title           String
+  chartType       String   @map("chart_type")
+  dataSource      String?  @map("data_source")
+  dataSourceField String?  @map("data_source_field")
+  description     String?  @db.Text
+  color           String?
+  colors          Json?
+  gridRows        Int?     @map("grid_rows")
+  gridCols        Int?     @map("grid_cols")
+  xAxis           Json?    @map("x_axis")
+  yAxis           Json?    @map("y_axis")
+  options         Json?
+  series          Json?
+  dataPoints      Json?    @map("data_points")
+  matrixData      Json?    @map("matrix_data")
+  matrixRowLabels Json?    @map("matrix_row_labels")
+  matrixColLabels Json?    @map("matrix_col_labels")
+  tableColumns    Json?    @map("table_columns")
+  tableRows       Json?    @map("table_rows")
+  createdBy       String?  @map("created_by") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  section     LibrarySection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  creator     User?           @relation("ChartCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  canvasCells CanvasCell[]
+
+  @@map("library_charts")
+}
+
+model LibraryMetricCard {
+  id              String   @id @default(uuid()) @db.Uuid
+  sectionId       String?  @map("section_id") @db.Uuid
+  label           String
+  value           String
+  dataSourceField String?  @map("data_source_field")
+  tintColor       String   @default("blue") @map("tint_color")
+  trendDirection  String   @default("no-change") @map("trend_direction")
+  trendValue      String?  @map("trend_value")
+  icon            String?
+  createdBy       String?  @map("created_by") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  section     LibrarySection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  creator     User?           @relation("MetricCardCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  canvasCells CanvasCell[]
+
+  @@map("library_metric_cards")
+}
+
+model LibraryKeyInsight {
+  id          String   @id @default(uuid()) @db.Uuid
+  sectionId   String?  @map("section_id") @db.Uuid
+  text        String   @db.Text
+  variant     String?
+  title       String?
+  badgeNumber Int?     @map("badge_number")
+  items       Json?
+  quote       Json?
+  banner      Json?
+  createdBy   String?  @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  section     LibrarySection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  creator     User?           @relation("InsightCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  canvasCells CanvasCell[]
+
+  @@map("library_key_insights")
+}
+
+model CanvasRow {
+  id                 String   @id @default(uuid()) @db.Uuid
+  sectionId          String   @map("section_id") @db.Uuid
+  orderIndex         Int      @map("order_index")
+  pageBreakBefore    Boolean  @default(false) @map("page_break_before")
+  style              Json?
+  sectionName        String?  @map("section_name")
+  sectionNameHtml    String?  @map("section_name_html") @db.Text
+  sectionEyebrow     String?  @map("section_eyebrow")
+  sectionEyebrowHtml String?  @map("section_eyebrow_html") @db.Text
+
+  section LibrarySection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  cells   CanvasCell[]
+
+  @@unique([sectionId, orderIndex])
+  @@map("canvas_rows")
+}
+
+model CanvasCell {
+  id           String        @id @default(uuid()) @db.Uuid
+  rowId        String        @map("row_id") @db.Uuid
+  parentCellId String?       @map("parent_cell_id") @db.Uuid
+  orderIndex   Int           @default(0) @map("order_index")
+  colSpan      Int           @default(1) @map("col_span")
+  customWidth  Float?        @map("custom_width")
+  customHeight Int?          @map("custom_height")
+  blockType    CellBlockType @map("block_type")
+  style        Json?
+  chartId      String?       @map("chart_id") @db.Uuid
+  metricCardId String?       @map("metric_card_id") @db.Uuid
+  insightId    String?       @map("insight_id") @db.Uuid
+  assetId      String?       @map("asset_id") @db.Uuid
+  content      Json?
+
+  row         CanvasRow          @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  parentCell  CanvasCell?        @relation("StackedSubCells", fields: [parentCellId], references: [id], onDelete: Cascade)
+  childCells  CanvasCell[]       @relation("StackedSubCells")
+  chart       LibraryChart?      @relation(fields: [chartId], references: [id], onDelete: SetNull)
+  metricCard  LibraryMetricCard? @relation(fields: [metricCardId], references: [id], onDelete: SetNull)
+  insight     LibraryKeyInsight? @relation(fields: [insightId], references: [id], onDelete: SetNull)
+  asset       ElementAsset?      @relation(fields: [assetId], references: [id], onDelete: SetNull)
+
+  @@map("canvas_cells")
+}
+
+model SectionStamp {
+  id            String           @id @default(uuid()) @db.Uuid
+  sectionId     String           @map("section_id") @db.Uuid
+  sourceAssetId String?          @map("source_asset_id") @db.Uuid
+  name          String
+  svgContent    String?          @map("svg_content") @db.Text
+  pageIndex     Int              @map("page_index")
+  x             Float
+  y             Float
+  width         Float
+  height        Float
+  rotation      Float            @default(0)
+  opacity       Float            @default(100)
+  layer         StampLayer       @default(front)
+  zIndex        Int              @default(0) @map("z_index")
+  locked        Boolean          @default(false)
+  elementType   StampElementType @default(stamp) @map("element_type")
+  content       Json?
+
+  section LibrarySection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  asset   ElementAsset?  @relation(fields: [sourceAssetId], references: [id], onDelete: SetNull)
+
+  @@map("section_stamps")
+}
+
+model ReportTemplate {
+  id           String         @id
+  name         String
+  description  String?        @db.Text
+  siteId       String?        @map("site_id") @db.Uuid
+  status       TemplateStatus @default(draft)
+  version      String         @default("v1.0")
+  category     String?
+  frequency    String?
+  coverPage    Json?          @map("cover_page")
+  tocPage      Json?          @map("toc_page")
+  backCoverPage Json?         @map("back_cover_page")
+  createdBy    String?        @map("created_by") @db.Uuid
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  site     Site?             @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  creator  User?             @relation("TemplateCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  sections TemplateSection[]
+
+  @@map("report_templates")
+}
+
+model TemplateSection {
+  id         String   @id @default(uuid()) @db.Uuid
+  templateId String   @map("template_id")
+  sectionId  String   @map("section_id") @db.Uuid
+  orderIndex Int      @map("order_index")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  template ReportTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  section  LibrarySection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, sectionId])
+  @@map("template_sections")
+}
+
+model ActivityLog {
+  id           String       @id @default(uuid()) @db.Uuid
+  activityType ActivityType @map("activity_type")
+  action       String
+  entityId     String?      @map("entity_id")
+  entityName   String?      @map("entity_name")
+  details      Json?
+  userId       String?      @map("user_id") @db.Uuid
+  userName     String?      @map("user_name")
+  userEmail    String?      @map("user_email")
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("activity_logs")
+}
