@@ -1,9 +1,0 @@
-$kind: http-request
-url: http://localhost:5000/api/v1/auth/login
-method: POST
-headers:
-  Content-Type: application/json
-body:
-  type: json
-  content: '{"email":"superadmin@ayantrai.com","password":"Sitesafe@2026"}'
-order: 2000

@@ -243,36 +243,36 @@ function MetricCardBlock({
       : cell.style?.fontSize === "sm"
       ? "text-lg sm:text-xl"
       : cell.style?.fontSize === "lg"
-      ? "text-[26px] sm:text-[28px]"
+      ? "text-[24px] sm:text-[26px]"
       : cell.style?.fontSize === "xl"
-      ? "text-3xl sm:text-[34px]"
-      : "text-2xl sm:text-[25px]"; // default compact A4 scale
+      ? "text-[28px] sm:text-[30px]"
+      : "text-xl sm:text-[22px]"; // default compact authentic A4 scale
 
   const labelFontSizeClass =
     cell.style?.fontSize === "xs"
-      ? "text-[10px]"
+      ? "text-[9.5px]"
       : cell.style?.fontSize === "sm"
-      ? "text-[10.5px]"
+      ? "text-[10px]"
       : cell.style?.fontSize === "lg"
-      ? "text-[12.5px]"
+      ? "text-[11.5px]"
       : cell.style?.fontSize === "xl"
-      ? "text-[13.5px]"
-      : "text-[11px] sm:text-[11.5px]";
+      ? "text-[12.5px]"
+      : "text-[10px] sm:text-[10.5px]";
 
   const customPx = cell.style?.customFontSize ?? cell.style?.fontSizeCustom;
 
   const defaultValFontSize =
     customPx ||
-    (cell.style?.fontSize === "xs" ? 18 : cell.style?.fontSize === "sm" ? 21 : cell.style?.fontSize === "lg" ? 28 : cell.style?.fontSize === "xl" ? 34 : 25);
+    (cell.style?.fontSize === "xs" ? 18 : cell.style?.fontSize === "sm" ? 20 : cell.style?.fontSize === "lg" ? 26 : cell.style?.fontSize === "xl" ? 30 : 22);
 
   return (
     <div
       style={cell.customHeight ? { minHeight: `${cell.customHeight}px` } : undefined}
-      className={`w-full h-auto min-h-[118px] sm:min-h-[125px] rounded-xl sm:rounded-2xl border p-2.5 sm:p-3 transition-all duration-200 select-none flex flex-col justify-between overflow-visible ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} ${editingField ? "relative z-50" : "relative z-10"}`}
+      className={`w-full h-auto min-h-[105px] sm:min-h-[110px] rounded-xl sm:rounded-2xl border p-2 sm:p-2.5 transition-all duration-200 select-none flex flex-col justify-between overflow-visible ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} ${editingField ? "relative z-50" : "relative z-10"}`}
     >
       <div>
         {/* Circular Icon Badge matching Dummy_report.pdf */}
-        <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shrink-0 mb-1.5 shadow-none ${ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50"} ${ramp.iconColor || "text-blue-600 dark:text-blue-300"}`}>
+        <div className={`w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 mb-1 shadow-none ${ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50"} ${ramp.iconColor || "text-blue-600 dark:text-blue-300"}`}>
           {renderCardIcon(card.icon)}
         </div>
 
