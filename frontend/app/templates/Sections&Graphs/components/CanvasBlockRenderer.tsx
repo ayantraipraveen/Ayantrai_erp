@@ -963,27 +963,27 @@ function InsightBlock({
   if (variant === "vertical-takeaways") {
     const takeawayFontSizeClass =
       cell.style?.fontSize === "xs"
-        ? "text-[9.5px] leading-tight"
+        ? "text-[8.5px] leading-tight"
         : cell.style?.fontSize === "sm"
-        ? "text-[10px] leading-tight"
+        ? "text-[9px] leading-tight"
         : cell.style?.fontSize === "lg"
-        ? "text-[12px] leading-normal"
+        ? "text-[11px] leading-snug"
         : cell.style?.fontSize === "xl"
-        ? "text-[13px] leading-relaxed"
-        : "text-[10.5px] sm:text-[11px] leading-tight";
+        ? "text-[12px] leading-relaxed"
+        : "text-[9.5px] sm:text-[10px] leading-tight";
 
     return (
       <div
-        className="w-full h-auto min-h-fit flex-1 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-[#f8fafc] dark:bg-[#0c1017] p-2.5 sm:p-3 space-y-1.5 overflow-visible shadow-none"
+        className="w-full h-auto min-h-fit rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-[#f8fafc]/90 dark:bg-[#0c1017] px-3 py-2 space-y-1 overflow-visible shadow-none"
         style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
         <div className="flex items-center justify-between pb-1 border-b border-slate-200/80 dark:border-zinc-800">
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold shrink-0">
-              <FileText className="w-3 h-3" />
+            <div className="w-4.5 h-4.5 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold shrink-0">
+              <FileText className="w-2.5 h-2.5" />
             </div>
             <div>
-              <h3 className="text-xs sm:text-sm font-black text-[#0f172a] dark:text-blue-400 tracking-tight leading-none">
+              <h3 className="text-xs font-black text-[#0f172a] dark:text-blue-400 tracking-tight leading-none">
                 {insight.title || "Key Takeaways"}
               </h3>
             </div>
@@ -992,14 +992,14 @@ function InsightBlock({
             <button
               type="button"
               onClick={() => handleAddItem({ title: "New Metric" })}
-              className="text-[9.5px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900/50 flex items-center gap-1 cursor-pointer transition-colors"
+              className="text-[9px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900/50 flex items-center gap-1 cursor-pointer transition-colors"
             >
               <Plus className="w-2.5 h-2.5" /> Add Takeaway
             </button>
           )}
         </div>
 
-        <div className="space-y-0.5 sm:space-y-1">
+        <div className="space-y-0.5">
           {(insight.items || []).map((item, idx) => {
             const defaultColors = [
               "bg-[#3b82f6] text-white",
@@ -1017,8 +1017,8 @@ function InsightBlock({
             const isEditing = editingTarget === `item-${item.id}`;
 
             return (
-              <div key={item.id} className={`relative group/row flex items-start gap-1.5 ${takeawayFontSizeClass} text-slate-700 dark:text-zinc-300`}>
-                <span className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full flex items-center justify-center text-[8.5px] sm:text-[9px] font-black shrink-0 mt-0.5 ${badgeColorClass}`}>
+              <div key={item.id} className={`relative group/row flex items-start gap-1.5 ${takeawayFontSizeClass} text-slate-700 dark:text-zinc-300 py-0.5`}>
+                <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black shrink-0 mt-0.5 ${badgeColorClass}`}>
                   {item.num ?? idx + 1}
                 </span>
 
@@ -1027,10 +1027,10 @@ function InsightBlock({
                     <DynamicTextEditor
                       initialValue={item.text}
                       initialHtml={item.text}
-                      defaultFontSize={11}
+                      defaultFontSize={10}
                       multiline={true}
                       toolbarPosition="top"
-                      className="text-[11px] leading-tight"
+                      className="text-[10px] leading-tight"
                       onSave={(_plain, html) => handleItemTextUpdate(item.id, html)}
                       onCancel={finishEdit}
                     />

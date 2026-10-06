@@ -61,10 +61,10 @@ export function CanvasSectionHeader({
     <div
       className={`relative ${editingSectionField ? "z-50" : "z-10"} px-0 group/section-header transition-all select-text ${
         section.headerSpacing === "compact"
-          ? "pt-2 pb-1.5"
+          ? "pt-1.5 pb-1"
           : section.headerSpacing === "spacious"
-          ? "pt-7 pb-6"
-          : "pt-4 pb-3.5"
+          ? "pt-5 pb-4"
+          : "pt-2.5 pb-2"
       }`}
       style={{ backgroundColor: getPaperToneColor(paperTone) }}
     >
@@ -209,7 +209,7 @@ export function CanvasSectionHeader({
                 e.stopPropagation();
                 open("name");
               }}
-              className="text-3xl sm:text-[36px] lg:text-[38px] font-black tracking-[-0.03em] leading-[1.1] cursor-pointer"
+              className="text-2xl sm:text-[27px] font-black tracking-[-0.03em] leading-[1.15] cursor-pointer"
               title="Double-click to format title (Word style)"
             >
               {renderDynamicTitle(section.titleHtml, section.name, sectionTextColor, isDarkPaper)}
@@ -222,10 +222,10 @@ export function CanvasSectionHeader({
               initialValue={section.description}
               initialHtml={section.descriptionHtml}
               isDarkPaper={isDarkPaper}
-              defaultFontSize={14}
+              defaultFontSize={13}
               multiline={true}
               toolbarPosition="bottom"
-              className="text-[14px] sm:text-[14.5px] leading-relaxed font-normal min-h-[50px]"
+              className="text-[13px] leading-relaxed font-normal min-h-[40px]"
               placeholder="Section description..."
               onSave={(newVal, newHtml) => {
                 onUpdateSection({ description: newVal, descriptionHtml: newHtml });
@@ -239,7 +239,7 @@ export function CanvasSectionHeader({
                 e.stopPropagation();
                 open("description");
               }}
-              className={`text-[13.5px] sm:text-[14px] mt-1.5 max-w-3xl leading-relaxed cursor-pointer font-normal ${
+              className={`text-[12.5px] mt-1 max-w-3xl leading-relaxed cursor-pointer font-normal ${
                 isDarkPaper && !sectionTextColor
                   ? "text-zinc-300"
                   : !sectionTextColor
@@ -256,26 +256,26 @@ export function CanvasSectionHeader({
 
         {/* Right Side Project / Site Info Card (Matching Dummy_report.pdf Page 3) */}
         {(section.projectSite || section.reportingPeriod) && (
-          <div className="hidden sm:flex flex-col gap-2 p-2.5 sm:p-3 bg-slate-50/90 dark:bg-zinc-800/80 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 text-xs shrink-0 min-w-[240px] shadow-none">
+          <div className="hidden sm:flex flex-col gap-1.5 p-2 bg-slate-50/90 dark:bg-zinc-800/80 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 text-xs shrink-0 min-w-[190px] max-w-[210px] shadow-none">
             {section.projectSite && (
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                  <Building2 className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <Building2 className="w-3 h-3" />
                 </div>
-                <div>
-                  <div className="text-[10px] text-slate-400 font-medium">Project / Site</div>
-                  <div className="font-bold text-slate-800 dark:text-zinc-100">{section.projectSite}</div>
+                <div className="min-w-0">
+                  <div className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Project / Site</div>
+                  <div className="font-bold text-[11px] text-slate-800 dark:text-zinc-100 truncate">{section.projectSite}</div>
                 </div>
               </div>
             )}
             {section.reportingPeriod && (
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                  <Calendar className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <Calendar className="w-3 h-3" />
                 </div>
-                <div>
-                  <div className="text-[10px] text-slate-400 font-medium">Reporting Period</div>
-                  <div className="font-bold text-slate-800 dark:text-zinc-100">{section.reportingPeriod}</div>
+                <div className="min-w-0">
+                  <div className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Reporting Period</div>
+                  <div className="font-bold text-[11px] text-slate-800 dark:text-zinc-100 truncate">{section.reportingPeriod}</div>
                 </div>
               </div>
             )}

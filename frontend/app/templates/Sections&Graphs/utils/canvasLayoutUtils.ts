@@ -21,42 +21,56 @@ export function getDefaultBlockHeight(blockType?: string, cellOrVariant?: Canvas
     const variant = typeof cellOrVariant === "string" 
       ? cellOrVariant 
       : (cellOrVariant?.insight?.variant || "single");
+    const cellObj = typeof cellOrVariant === "object" ? cellOrVariant : undefined;
+    const itemsCount = cellObj?.insight?.items?.length;
+
     switch (variant) {
-      case "vertical-takeaways":
-        return 220;
-      case "priority-actions":
-        return 200;
+      case "vertical-takeaways": {
+        const count = itemsCount ?? 4;
+        // Header + padding + item rows (each compact item is ~20px)
+        return Math.max(100, 38 + count * 20);
+      }
+      case "priority-actions": {
+        const count = itemsCount ?? 4;
+        return Math.max(100, 40 + count * 22);
+      }
+      case "bullet-observations":
+      case "risk-factors": {
+        const count = itemsCount ?? 3;
+        return Math.max(90, 36 + count * 18);
+      }
+      case "columns-numbered": {
+        const count = itemsCount ?? 4;
+        return Math.max(120, 40 + Math.ceil(count / 2) * 45);
+      }
       case "split-quote":
-        return 190;
+        return 170;
       case "columns-titled":
       case "narrative-summary":
-        return 180;
-      case "columns-numbered":
-      case "vision-banner":
-      case "risk-factors":
-      case "bullet-observations":
         return 160;
+      case "vision-banner":
+        return 140;
       case "quote-card":
-        return 130;
+        return 120;
       case "single":
       default:
-        return 110;
+        return 100;
     }
   }
 
   switch (blockType) {
     case "chart":
-      return 370;
+      return 360;
     case "metric-card":
-      return 135;
+      return 110;
     case "badge-strip":
-      return 140;
+      return 130;
     case "text":
-      return 90;
+      return 85;
     case "divider":
-      return 32;
+      return 28;
     default:
-      return 140;
+      return 120;
   }
 }
 
@@ -141,11 +155,11 @@ export function partitionCanvasPages(
   const page1MarginY = (marginConfig?.top ?? 24) + (marginConfig?.bottom ?? 24);
 
   // Exact physical A4 sheet height: 842px (Standard ISO PDF Page)
-  // All pages have standard Header (Sitesafe + Section Bar) and Footer
+  // All pages have standard Header (Sitesafe ~56px + Section Bar ~72px) and Footer (~36px)
   const standardCapacity = Math.round(
     Math.max(
       480,
-      Math.min(620, sheetHeight - page1MarginY - 95 - 65 - 35)
+      Math.min(630, sheetHeight - page1MarginY - 56 - 72 - 36)
     )
   );
 
