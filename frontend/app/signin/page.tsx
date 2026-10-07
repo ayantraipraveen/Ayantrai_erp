@@ -136,7 +136,6 @@ export default function SignInPage() {
       }
 
       setAuthError(null);
-      setFeedback(`Authenticated as ${result.user.name} (${result.user.role}) with active security token. Redirecting...`);
 
       let targetRedirect = "/dashboard";
       if (typeof window !== "undefined") {
@@ -147,9 +146,7 @@ export default function SignInPage() {
         }
       }
 
-      setTimeout(() => {
-        router.push(targetRedirect);
-      }, 500);
+      router.push(targetRedirect);
     } catch (err: any) {
       const errorMsg =
         typeof err === "string"
