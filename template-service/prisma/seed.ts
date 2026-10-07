@@ -276,10 +276,56 @@ async function seed() {
     console.log(`✅ Seeded watermark: [${wm.id}] ${wm.name}`);
   }
 
+  // 3. Seed Canonical Core Standards for Sections & Graphs Library
+  const { coreSectionsData } = await import('./seedSectionsData');
+  for (const sec of coreSectionsData) {
+    await (prisma as any).templateSection.upsert({
+      where: { id: sec.id },
+      update: {
+        name: sec.name,
+        titleHtml: sec.titleHtml,
+        eyebrow: sec.eyebrow,
+        eyebrowHtml: sec.eyebrowHtml,
+        description: sec.description,
+        type: sec.type,
+        icon: sec.icon,
+        orderIndex: sec.orderIndex,
+        watermarkId: sec.watermarkId,
+        projectSite: sec.projectSite,
+        reportingPeriod: sec.reportingPeriod,
+        metricCards: sec.metricCards as any,
+        charts: sec.charts as any,
+        keyInsights: sec.keyInsights as any,
+        canvasRows: (sec as any).canvasRows as any,
+      },
+      create: {
+        id: sec.id,
+        name: sec.name,
+        titleHtml: sec.titleHtml,
+        eyebrow: sec.eyebrow,
+        eyebrowHtml: sec.eyebrowHtml,
+        description: sec.description,
+        type: sec.type,
+        icon: sec.icon,
+        orderIndex: sec.orderIndex,
+        watermarkId: sec.watermarkId,
+        projectSite: sec.projectSite,
+        reportingPeriod: sec.reportingPeriod,
+        metricCards: sec.metricCards as any,
+        charts: sec.charts as any,
+        keyInsights: sec.keyInsights as any,
+        canvasRows: (sec as any).canvasRows as any,
+      },
+    });
+    console.log(`✅ Seeded Core Standard Section: [${sec.id}] ${sec.name}`);
+  }
+
   const count = await prisma.reportTemplate.count();
   const wmCount = await (prisma as any).watermark.count();
-  console.log(`\n🎉 Seed finished! Total blueprints: ${count}, Total watermarks: ${wmCount} in database ayantrai_templates`);
+  const secCount = await (prisma as any).templateSection.count();
+  console.log(`\n🎉 Seed finished! Total blueprints: ${count}, Total watermarks: ${wmCount}, Total sections: ${secCount} in database ayantrai_templates`);
 }
+
 
 seed()
   .catch(async (e) => {
