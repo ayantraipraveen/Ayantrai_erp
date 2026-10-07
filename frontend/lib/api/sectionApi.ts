@@ -19,12 +19,12 @@ export interface CreateSectionPayload {
   description?: string;
   type?: "core" | "custom";
   icon?: string;
-  titleHtml?: string;
-  titleStyle?: any;
-  eyebrowHtml?: string;
-  descriptionHtml?: string;
+  titleHtml?: string | null;
+  titleStyle?: any | null;
+  eyebrowHtml?: string | null;
+  descriptionHtml?: string | null;
   headerSpacing?: "compact" | "normal" | "spacious";
-  sectionStyle?: any;
+  sectionStyle?: any | null;
   metricCards?: any[];
   charts?: any[];
   keyInsights?: any[];
@@ -33,10 +33,10 @@ export interface CreateSectionPayload {
   watermarkId?: string | null;
   projectSite?: string | null;
   reportingPeriod?: string | null;
-  coverPageData?: any;
-  tableOfContentsData?: any;
-  backCoverData?: any;
-  pageOverrides?: any;
+  coverPageData?: any | null;
+  tableOfContentsData?: any | null;
+  backCoverData?: any | null;
+  pageOverrides?: any | null;
 }
 
 export type UpdateSectionPayload = Partial<CreateSectionPayload>;
