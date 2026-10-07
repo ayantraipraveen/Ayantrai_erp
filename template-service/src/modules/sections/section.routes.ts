@@ -10,6 +10,7 @@ import {
 } from './section.controller';
 import { validate } from '../../shared/middlewares/validate';
 import {
+  listSectionsSchema,
   createSectionSchema,
   updateSectionSchema,
   cloneSectionSchema,
@@ -24,7 +25,8 @@ const router = Router();
  * @desc    Query template section library with filters, search, and aggregate stats
  * @access  Public / Authenticated
  */
-router.get('/', listSections);
+router.get('/', validate(listSectionsSchema), listSections);
+
 
 /**
  * @route   PUT /api/v1/sections/reorder

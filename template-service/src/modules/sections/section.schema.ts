@@ -1,6 +1,26 @@
 import { z } from 'zod';
 
+export const listSectionsSchema = z.object({
+  query: z
+    .object({
+      search: z.string().trim().optional(),
+      type: z.enum(['all', 'core', 'custom']).optional().default('all'),
+      watermarkId: z.string().optional(),
+      projectSite: z.string().optional(),
+      sortBy: z
+        .enum(['orderIndex', 'name', 'createdAt', 'updatedAt', 'id'])
+        .optional()
+        .default('orderIndex'),
+
+      sortOrder: z.enum(['asc', 'desc']).optional().default('asc'),
+      page: z.coerce.number().int().min(1).optional().default(1),
+      limit: z.coerce.number().int().min(1).max(100).optional().default(10),
+    })
+    .optional(),
+});
+
 export const createSectionSchema = z.object({
+
   body: z.object({
     name: z
       .string({ required_error: 'Section name is required' })
@@ -23,9 +43,9 @@ export const createSectionSchema = z.object({
     keyInsights: z.array(z.any()).optional().default([]),
     canvasRows: z.array(z.any()).optional().default([]),
     stamps: z.array(z.any()).optional().default([]),
-    watermarkId: z.string().optional(),
-    projectSite: z.string().optional(),
-    reportingPeriod: z.string().optional(),
+    watermarkId: z.string().nullable().optional(),
+    projectSite: z.string().nullable().optional(),
+    reportingPeriod: z.string().nullable().optional(),
     coverPageData: z.record(z.any()).optional(),
     tableOfContentsData: z.record(z.any()).optional(),
     backCoverData: z.record(z.any()).optional(),

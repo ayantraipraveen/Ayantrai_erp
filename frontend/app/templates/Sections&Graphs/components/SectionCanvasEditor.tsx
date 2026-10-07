@@ -54,7 +54,9 @@ import {
   addStampToSection,
   updateStampInSection,
   CanvasCoordinateStamp,
+  addOrReplaceLibrarySection,
 } from "@/lib/redux/slices/reportModuleSlice";
+import { sectionApi } from "@/lib/api/sectionApi";
 import { CanvasSidebar, SidebarAddBlockEvent, ReportOutlineItem } from "./CanvasSidebar";
 import {
   getUploadedWatermarks,
@@ -88,7 +90,7 @@ import {
   CanvasTableOfContentsPage,
   CanvasBackCoverPage,
 } from "./CanvasStudioComponent";
-import { AlertCircle, ArrowLeft, Building, Check, Edit2, Eye, Redo2, Save, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Building, Check, Edit2, Eye, Loader2, Redo2, Save, Undo2 } from "lucide-react";
 
 export { PALETTE_RAMPS } from "./constants/chartTypes";
 
@@ -225,6 +227,94 @@ export default function SectionCanvasEditor({
     setCanRedo(redoStackRef.current.length > 0);
     dispatch(showGlobalToast({ message: "Redo: Reapplied layout (Ctrl+Y)", type: "info" }));
   }, [dispatch, sectionId, section?.canvasRows]);
+
+  // ── Database Persistence (Zero-Fallback Policy) ─────────────────────────
+  const [isSavingToDb, setIsSavingToDb] = useState(false);
+
+  const handleSaveToLibrary = useCallback(
+    async (shouldExit = true) => {
+      if (!section) return;
+      setIsSavingToDb(true);
+      try {
+        // Scan canvasRows for all cards, charts, and insights to ensure aggregate stats in DB are synchronized
+        const extractedCards: LibraryMetricCard[] = [];
+        const extractedCharts: LibraryChartCard[] = [];
+        const extractedInsights: LibraryKeyInsightItem[] = [];
+        const seenCardIds = new Set<string>();
+        const seenChartIds = new Set<string>();
+        const seenInsightIds = new Set<string>();
+
+        const scanCell = (cell: CanvasCell) => {
+          if (cell.blockType === "metric-card" && cell.metricCard && !seenCardIds.has(cell.metricCard.id)) {
+            seenCardIds.add(cell.metricCard.id);
+            extractedCards.push(cell.metricCard);
+          } else if (cell.blockType === "chart" && cell.chart && !seenChartIds.has(cell.chart.id)) {
+            seenChartIds.add(cell.chart.id);
+            extractedCharts.push(cell.chart);
+          } else if (cell.blockType === "insight" && cell.insight && !seenInsightIds.has(cell.insight.id)) {
+            seenInsightIds.add(cell.insight.id);
+            extractedInsights.push(cell.insight);
+          }
+          if (cell.stackedCells && cell.stackedCells.length > 0) {
+            cell.stackedCells.forEach(scanCell);
+          }
+        };
+
+        if (section.canvasRows) {
+          section.canvasRows.forEach((row) => {
+            row.cells.forEach(scanCell);
+          });
+        }
+
+        const payload = {
+          name: section.name,
+          eyebrow: section.eyebrow,
+          description: section.description,
+          icon: section.icon,
+          titleHtml: section.titleHtml,
+          titleStyle: section.titleStyle,
+          eyebrowHtml: section.eyebrowHtml,
+          descriptionHtml: section.descriptionHtml,
+          headerSpacing: section.headerSpacing,
+          sectionStyle: section.sectionStyle,
+          metricCards: extractedCards,
+          charts: extractedCharts,
+          keyInsights: extractedInsights,
+          canvasRows: section.canvasRows,
+          stamps: section.stamps,
+          watermarkId: watermarkConfig.watermarkId,
+          projectSite: section.projectSite,
+          reportingPeriod: section.reportingPeriod,
+          coverPageData: section.coverPageData,
+          tableOfContentsData: section.tableOfContentsData,
+          backCoverData: section.backCoverData,
+          pageOverrides: section.pageOverrides,
+        };
+
+        const res = await sectionApi.updateSection(section.id, payload);
+        dispatch(addOrReplaceLibrarySection(res.data));
+        dispatch(
+          showGlobalToast({
+            message: `Saved "${res.data.name}" to Library!`,
+            type: "success",
+          })
+        );
+        if (shouldExit) {
+          onBack();
+        }
+      } catch (err: any) {
+        console.error("Failed to save section:", err);
+        const msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to save section changes.";
+        dispatch(showGlobalToast({ message: msg, type: "error" }));
+      } finally {
+        setIsSavingToDb(false);
+      }
+    },
+    [section, watermarkConfig, dispatch, onBack]
+  );
 
   // Derive active selected cell
   
@@ -1641,6 +1731,13 @@ export default function SectionCanvasEditor({
         return;
       }
 
+      // Save: Ctrl+S or Cmd+S
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleSaveToLibrary(false);
+        return;
+      }
+
       // Shift+R toggles canvas dimension rulers
       if (e.shiftKey && e.key.toLowerCase() === "r" && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
@@ -1651,20 +1748,13 @@ export default function SectionCanvasEditor({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPreview, selectedCellId, selectedRowId, handleDeleteActive, handleDuplicateActive, handleUndo, handleRedo]);
+  }, [isPreview, selectedCellId, selectedRowId, handleDeleteActive, handleDuplicateActive, handleUndo, handleRedo, handleSaveToLibrary]);
 
   if (!section) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3">
-        <AlertCircle className="w-10 h-10 text-rose-500" />
-        <h3 className="text-base font-bold text-slate-800 dark:text-zinc-200">Section Not Found</h3>
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2 rounded-xl bg-purple-600 text-white text-xs font-semibold cursor-pointer"
-        >
-          Return to Sections
-        </button>
+      <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-3 bg-white dark:bg-[#07090d]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#9D61FF]" />
+        <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-200">Loading Section Canvas...</h3>
       </div>
     );
   }
@@ -1934,14 +2024,17 @@ export default function SectionCanvasEditor({
             {/* Save to Library */}
             <button
               type="button"
-              onClick={() => {
-                dispatch(showGlobalToast({ message: "Section saved to Library!", type: "success" }));
-                onBack();
-              }}
-              className="h-8 px-4 rounded-xl glow-btn-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer text-white"
+              disabled={isSavingToDb}
+              onClick={() => handleSaveToLibrary(true)}
+              className="h-8 px-4 rounded-xl glow-btn-primary text-xs font-bold flex items-center gap-1.5 cursor-pointer text-white disabled:opacity-60"
+              title="Save Section to Library (Ctrl+S)"
             >
-              <Save className="w-3.5 h-3.5" />
-              <span>Save to Library</span>
+              {isSavingToDb ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
+              <span>{isSavingToDb ? "Saving..." : "Save to Library"}</span>
             </button>
           </div>
         </div>

@@ -838,6 +838,7 @@ const BASE_BLOCK_DEFS: BaseBlockDef[] = [
             "Provide supervisor training",
           ],
         },
+        {id:"pa-3.2",num:3,color:"amber",title:"Improve PPE-Specific Compliance",text:"Target helmet & vest enforcement",subItems:["Focus on high-violation categories","Run on-site awareness drives","Track improvement trends"]},
         {
           id: "pa-3",
           num: 3,

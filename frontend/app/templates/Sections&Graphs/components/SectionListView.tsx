@@ -28,15 +28,19 @@ import {
   X,
   PlusCircle,
   Stamp,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   LibrarySection,
-  createLibrarySection,
-  duplicateLibrarySection,
+  setLibrarySections,
+  addOrReplaceLibrarySection,
   deleteLibrarySection,
   showGlobalToast,
 } from "@/lib/redux/slices/reportModuleSlice";
+import { sectionApi } from "@/lib/api/sectionApi";
 import { Tooltip } from "@/app/Component";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -62,6 +66,12 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<FilterType>("all");
 
+  // API State
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
+
   // Create section modal state
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [newSectionName, setNewSectionName] = useState("");
@@ -70,6 +80,33 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
 
   // Delete confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Live API Fetcher
+  const fetchSections = React.useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await sectionApi.getSections({
+        type: filterType === "all" ? undefined : filterType,
+        search: search.trim() || undefined,
+        limit: 100,
+      });
+      dispatch(setLibrarySections(res.data));
+    } catch (err: any) {
+      console.error("Failed to load sections from API:", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Unable to connect to template service. Please verify template-service (port 5001) is running.";
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch, filterType, search]);
+
+  React.useEffect(() => {
+    fetchSections();
+  }, [fetchSections]);
 
   // Statistics
   const coreSectionsCount = useMemo(
@@ -114,7 +151,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
     return list;
   }, [librarySections, filterType, search]);
 
-  const handleCreateSection = () => {
+  const handleCreateSection = async () => {
     if (!newSectionName.trim()) {
       dispatch(showGlobalToast({ message: "Please provide a section name.", type: "warning" }));
       return;
@@ -123,43 +160,68 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
     const name = newSectionName.trim();
     const eyebrow = newSectionEyebrow.trim() || "CUSTOM MODULE";
     const description = newSectionDesc.trim() || "Custom reusable report section with attached telemetry.";
-    const newId = `sec-custom-${Date.now()}`;
 
-    dispatch(
-      createLibrarySection({
-        id: newId,
+    setIsCreating(true);
+    try {
+      const res = await sectionApi.createSection({
         name,
         eyebrow,
         description,
+        type: "custom",
         metricCards: [],
         charts: [],
         keyInsights: [],
         canvasRows: [],
-      })
-    );
+      });
 
-    dispatch(showGlobalToast({ message: `Section "${name}" created! Opening canvas...`, type: "success" }));
-    setNewSectionName("");
-    setNewSectionEyebrow("");
-    setNewSectionDesc("");
-    setCreateModalOpen(false);
+      dispatch(addOrReplaceLibrarySection(res.data));
+      dispatch(showGlobalToast({ message: `Section "${res.data.name}" (${res.data.id}) created!`, type: "success" }));
+      setNewSectionName("");
+      setNewSectionEyebrow("");
+      setNewSectionDesc("");
+      setCreateModalOpen(false);
 
-    // Directly open and render the Canva canvas editor for this new section!
-    if (typeof onSelectSection === "function") {
-      onSelectSection(newId);
+      if (typeof onSelectSection === "function") {
+        onSelectSection(res.data.id);
+      }
+      router.push(`/templates/Sections&Graphs/edit?id=${res.data.id}`);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Failed to create section.";
+      dispatch(showGlobalToast({ message: msg, type: "error" }));
+    } finally {
+      setIsCreating(false);
     }
   };
 
-  const handleDuplicate = (id: string, name: string) => {
-    dispatch(duplicateLibrarySection(id));
-    dispatch(showGlobalToast({ message: `Duplicated "${name}".`, type: "success" }));
+  const handleDuplicate = async (id: string, name: string) => {
+    setActionId(id);
+    try {
+      const res = await sectionApi.cloneSection(id, `${name} (Copy)`);
+      dispatch(addOrReplaceLibrarySection(res.data));
+      dispatch(showGlobalToast({ message: `Duplicated "${name}" to "${res.data.name}".`, type: "success" }));
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Failed to clone section.";
+      dispatch(showGlobalToast({ message: msg, type: "error" }));
+    } finally {
+      setActionId(null);
+    }
   };
 
-  const handleDelete = (id: string, name: string) => {
-    dispatch(deleteLibrarySection(id));
-    setDeleteConfirmId(null);
-    dispatch(showGlobalToast({ message: `Deleted custom section "${name}".`, type: "info" }));
+  const handleDelete = async (id: string, name: string) => {
+    setActionId(id);
+    try {
+      await sectionApi.deleteSection(id);
+      dispatch(deleteLibrarySection(id));
+      setDeleteConfirmId(null);
+      dispatch(showGlobalToast({ message: `Deleted custom section "${name}".`, type: "info" }));
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Failed to delete section.";
+      dispatch(showGlobalToast({ message: msg, type: "error" }));
+    } finally {
+      setActionId(null);
+    }
   };
+
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-4 sm:px-6 lg:px-7 space-y-3.5 animate-fadeIn">
@@ -286,33 +348,56 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           </Link>
 
 
-          {/* Create Section Action navigating to /templates/Sections&Graphs/create */}
-          <Link
-            href="/templates/Sections&Graphs/create"
+          {/* Create Section Action Modal Trigger */}
+          <button
+            type="button"
+            onClick={() => setCreateModalOpen(true)}
             className="h-9 px-4 rounded-xl bg-gradient-to-r from-[#9D61FF] to-[#8B4CF0] hover:from-[#9254f8] hover:to-[#7e3beb] text-white font-bold text-xs cursor-pointer flex items-center gap-2 flex-shrink-0 transition-all active:scale-[0.98] border border-purple-400/20"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Create Section</span>
-          </Link>
+          </button>
         </div>
       </div>
 
       {/* 3. SECTION CARDS GRID */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-        {filteredSections.length === 0 ? (
+        {isLoading ? (
+          <div className="py-24 text-center flex flex-col items-center justify-center space-y-3">
+            <Loader2 className="w-8 h-8 animate-spin text-[#9D61FF]" />
+            <p className="text-xs font-semibold text-slate-500 dark:text-zinc-400">
+              Loading report sections...
+            </p>
+          </div>
+        ) : error ? (
+          <div className="py-16 text-center border border-rose-500/20 rounded-2xl bg-rose-500/5 p-6 max-w-lg mx-auto space-y-3">
+            <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Unable to Load Sections</h3>
+            <p className="text-xs text-rose-600 dark:text-rose-400 leading-relaxed">{error}</p>
+            <button
+              type="button"
+              onClick={fetchSections}
+              className="px-4 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8b4cf0] text-white text-xs font-bold inline-flex items-center gap-2 cursor-pointer transition-all shadow-md"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Retry Connection</span>
+            </button>
+          </div>
+        ) : filteredSections.length === 0 ? (
           <div className="py-20 text-center border border-dashed border-slate-200 dark:border-zinc-800 rounded-3xl bg-white/40 dark:bg-[#0c1017]/40 p-8 space-y-3">
             <Layers className="w-10 h-10 text-slate-400 mx-auto" />
             <h3 className="text-sm font-bold text-slate-800 dark:text-zinc-200">No sections found</h3>
             <p className="text-xs text-slate-500 dark:text-zinc-400 max-w-sm mx-auto">
               No report sections matched your search criteria. Try modifying your filter or create a new section.
             </p>
-            <Link
-              href="/templates/Sections&Graphs/create"
+            <button
+              type="button"
+              onClick={() => setCreateModalOpen(true)}
               className="mt-2 px-4 py-2 rounded-xl bg-[#9D61FF] text-white text-xs font-bold hover:bg-[#8845fc] inline-flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Create New Section</span>
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5 pb-6">
@@ -410,22 +495,32 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                       {/* Duplicate */}
                       <button
                         type="button"
+                        disabled={actionId === sec.id}
                         onClick={() => handleDuplicate(sec.id, sec.name)}
-                        className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer disabled:opacity-50"
                         title="Duplicate Section"
                       >
-                        <Copy className="w-3.5 h-3.5" />
+                        {actionId === sec.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-[#9D61FF]" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
                       </button>
 
                       {/* Delete (only for custom) */}
                       {sec.type === "custom" && (
                         <button
                           type="button"
+                          disabled={actionId === sec.id}
                           onClick={() => setDeleteConfirmId(sec.id)}
-                          className="p-1.5 rounded-lg border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg border border-rose-500/30 text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer disabled:opacity-50"
                           title="Delete Custom Section"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          {actionId === sec.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-500" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
                         </button>
                       )}
 
@@ -465,8 +560,9 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
               </div>
               <button
                 type="button"
+                disabled={isCreating}
                 onClick={() => setCreateModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 cursor-pointer disabled:opacity-50"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -479,10 +575,11 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                 </label>
                 <input
                   type="text"
+                  disabled={isCreating}
                   value={newSectionName}
                   onChange={(e) => setNewSectionName(e.target.value)}
                   placeholder="e.g. Geotechnical Settlement & Excavation Telemetry"
-                  className="w-full mt-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#9D61FF]"
+                  className="w-full mt-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#9D61FF] disabled:opacity-60"
                 />
               </div>
 
@@ -492,10 +589,11 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                 </label>
                 <input
                   type="text"
+                  disabled={isCreating}
                   value={newSectionEyebrow}
                   onChange={(e) => setNewSectionEyebrow(e.target.value)}
                   placeholder="e.g. GEOTECHNICAL ANALYSIS"
-                  className="w-full mt-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono uppercase text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#9D61FF]"
+                  className="w-full mt-1 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono uppercase text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#9D61FF] disabled:opacity-60"
                 />
               </div>
 
@@ -505,10 +603,11 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                 </label>
                 <textarea
                   rows={3}
+                  disabled={isCreating}
                   value={newSectionDesc}
                   onChange={(e) => setNewSectionDesc(e.target.value)}
                   placeholder="Describe the compliance criteria, safety thresholds, and telemetry metrics tracked in this block."
-                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#9D61FF]"
+                  className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#9D61FF] disabled:opacity-60"
                 />
               </div>
             </div>
@@ -516,18 +615,26 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
             <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-zinc-800">
               <button
                 type="button"
+                disabled={isCreating}
                 onClick={() => setCreateModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleCreateSection}
-                disabled={!newSectionName.trim()}
-                className="px-5 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8845fc] text-white text-xs font-bold disabled:opacity-50 cursor-pointer"
+                disabled={!newSectionName.trim() || isCreating}
+                className="px-5 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8845fc] text-white text-xs font-bold disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
               >
-                Create Section
+                {isCreating ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Creating Section...</span>
+                  </>
+                ) : (
+                  <span>Create Section</span>
+                )}
               </button>
             </div>
           </div>

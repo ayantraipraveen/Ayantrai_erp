@@ -75,9 +75,21 @@ export function findCellInRow(
 }
 
 export const sectionsStudioReducers = {
+    setLibrarySections: (state: ReportModuleState, action: PayloadAction<LibrarySection[]>) => {
+      state.librarySections = action.payload;
+    },
+    addOrReplaceLibrarySection: (state: ReportModuleState, action: PayloadAction<LibrarySection>) => {
+      const idx = state.librarySections.findIndex((s) => s.id === action.payload.id);
+      if (idx !== -1) {
+        state.librarySections[idx] = action.payload;
+      } else {
+        state.librarySections.unshift(action.payload);
+      }
+    },
     setSelectedLibrarySectionId: (state: ReportModuleState, action: PayloadAction<string | null>) => {
       state.selectedLibrarySectionId = action.payload;
     },
+
     createLibrarySection: (
       state: ReportModuleState,
       action: PayloadAction<{

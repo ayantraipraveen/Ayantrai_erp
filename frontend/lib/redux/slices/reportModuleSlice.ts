@@ -122,8 +122,11 @@ export const {
   addGraphToGlobalSection,
   updateGraphInGlobalSection,
   deleteGraphFromGlobalSection,
+  setLibrarySections,
+  addOrReplaceLibrarySection,
   setSelectedLibrarySectionId,
   createLibrarySection,
+
   updateLibrarySection,
   setSectionPageOverride,
   setSectionWatermark,

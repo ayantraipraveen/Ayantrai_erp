@@ -912,40 +912,15 @@ export const initialLibrarySections: LibrarySection[] = [
   },
 ];
 
-export const SECTIONS_STORAGE_KEY = "ayantrai_library_sections";
-
 export function getInitialLibrarySections(): LibrarySection[] {
+  // Zero-Fallback Policy: Database is the single source of truth.
+  // Purge any stale legacy localStorage entries
   if (typeof window !== "undefined") {
     try {
-      const stored = localStorage.getItem(SECTIONS_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // If cached sec-core-1 has outdated dummy data or < 8 metric cards, sync with canonical initialLibrarySections[0]
-          const core1 = parsed.find((s: LibrarySection) => s.id === "sec-core-1");
-          if (
-            core1 &&
-            (!core1.canvasRows ||
-              !core1.metricCards ||
-              core1.metricCards.length < 8 ||
-              !core1.projectSite ||
-              core1.updatedAt !== initialLibrarySections[0].updatedAt)
-          ) {
-            const idx = parsed.findIndex((s: LibrarySection) => s.id === "sec-core-1");
-            if (idx !== -1) {
-              parsed[idx] = initialLibrarySections[0];
-              try {
-                localStorage.setItem(SECTIONS_STORAGE_KEY, JSON.stringify(parsed));
-              } catch (_) {}
-            }
-          }
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.warn("Could not read library sections from localStorage:", e);
-    }
+      localStorage.removeItem("ayantrai_library_sections");
+    } catch (_) {}
   }
-  return initialLibrarySections;
+  return [];
 }
+
 

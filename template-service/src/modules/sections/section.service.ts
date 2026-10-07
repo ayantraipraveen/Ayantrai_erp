@@ -11,32 +11,39 @@ import crypto from 'crypto';
 export interface ListSectionsQuery {
   search?: string;
   type?: 'all' | 'core' | 'custom' | string;
+  watermarkId?: string;
+  projectSite?: string;
+  sortBy?: 'orderIndex' | 'name' | 'createdAt' | 'updatedAt' | 'id';
+  sortOrder?: 'asc' | 'desc';
   page?: string | number;
   limit?: string | number;
 }
+
 
 function getSectionModel() {
   const model = (prisma as any).templateSection;
   if (!model) {
     throw ApiError.internal(
-      "Prisma 'templateSection' model is not generated yet in @prisma/client. Please run 'npx prisma generate' and restart the dev server."
+      "Prisma 'templateSection' model is not generated yet in @prisma/client. Please run 'npx prisma db push' and restart the dev server."
     );
   }
   return model;
 }
 
 /**
- * List all template library sections with filters, search, and aggregate telemetry counts
+ * List all template library sections with full filters, search, aggregate telemetry counts, and pagination
  */
 export async function listSectionsService(query: ListSectionsQuery) {
   const sectionModel = getSectionModel();
 
   const where: any = {};
 
+  // 1. Filter by Section Type (core | custom | all)
   if (query.type && query.type !== 'all') {
     where.type = query.type;
   }
 
+  // 2. Filter by Search keyword across name, eyebrow, and description
   if (query.search && query.search.trim()) {
     const s = query.search.trim();
     where.OR = [
@@ -46,17 +53,36 @@ export async function listSectionsService(query: ListSectionsQuery) {
     ];
   }
 
-  const limit = query.limit ? Math.max(1, Math.min(200, Number(query.limit))) : 100;
+  // 3. Filter by Watermark ID
+  if (query.watermarkId && query.watermarkId.trim()) {
+    where.watermarkId = query.watermarkId.trim();
+  }
+
+  // 4. Filter by Project / Site name
+  if (query.projectSite && query.projectSite.trim()) {
+    where.projectSite = { contains: query.projectSite.trim(), mode: 'insensitive' };
+  }
+
+  // 5. Pagination calculations
+  const limit = query.limit ? Math.max(1, Math.min(100, Number(query.limit))) : 10;
   const page = query.page ? Math.max(1, Number(query.page)) : 1;
   const skip = (page - 1) * limit;
 
-  // Retrieve matching sections ordered by orderIndex asc, then updatedAt desc
+  // 6. Dynamic Sorting
+  const sortBy = query.sortBy || 'orderIndex';
+  const sortOrder = query.sortOrder || (sortBy === 'orderIndex' ? 'asc' : 'desc');
+  const orderBy: any = [{ [sortBy]: sortOrder }];
+  if (sortBy !== 'id') {
+    orderBy.push({ id: 'asc' });
+  }
+
+  // Retrieve matching sections ordered by user request
   const [items, totalFiltered, allSections] = await Promise.all([
     sectionModel.findMany({
       where,
       skip,
       take: limit,
-      orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
+      orderBy,
     }),
     sectionModel.count({ where }),
     sectionModel.findMany({
@@ -83,6 +109,8 @@ export async function listSectionsService(query: ListSectionsQuery) {
     if (Array.isArray(s.charts)) totalChartsCount += s.charts.length;
   }
 
+  const totalPages = Math.ceil(totalFiltered / limit) || 1;
+
   return {
     items,
     stats: {
@@ -96,10 +124,13 @@ export async function listSectionsService(query: ListSectionsQuery) {
       total: totalFiltered,
       page,
       limit,
-      totalPages: Math.ceil(totalFiltered / limit) || 1,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
     },
   };
 }
+
 
 /**
  * Retrieve a single section by ID
@@ -158,7 +189,8 @@ async function getMaxItemIdInDb(
         const match = item?.id?.match(new RegExp(`^${prefix}-(\\d+)$`));
         if (match) {
           const num = parseInt(match[1], 10);
-          if (num > maxNum) maxNum = num;
+          // Only treat realistic sequential numbers as valid sequential IDs (ignore millisecond timestamps)
+          if (num > maxNum && num < 1000000) maxNum = num;
         }
       }
     }
@@ -181,8 +213,19 @@ async function assignNextSequentialItemIds(
   let currentMax = await getMaxItemIdInDb(sectionModel, field, prefix);
 
   return items.map((item) => {
-    // If the item already has a non-temporary ID, preserve it; otherwise allocate DB last + 1
-    if (item?.id && typeof item.id === 'string' && item.id.trim() && !item.id.includes('temp') && !item.id.includes('Date.now')) {
+    // If the item already has a non-temporary sequential ID, preserve it; otherwise allocate DB last + 1
+    const isTimestampOrTemp =
+      !item?.id ||
+      typeof item.id !== 'string' ||
+      item.id.includes('temp') ||
+      item.id.includes('Date.now') ||
+      item.id.includes('mock') ||
+      (() => {
+        const m = item.id.match(new RegExp(`^${prefix}-(\\d+)$`));
+        return m ? parseInt(m[1], 10) >= 1000000 : false;
+      })();
+
+    if (!isTimestampOrTemp && item?.id?.startsWith(`${prefix}-`)) {
       return item;
     }
     currentMax += 1;
