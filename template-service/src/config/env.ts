@@ -18,9 +18,7 @@ export const env: EnvConfig = {
   NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
   API_PREFIX: process.env.API_PREFIX || '/api/v1',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  DATABASE_URL:
-    process.env.DATABASE_URL ||
-    'postgresql://postgres:postgres@localhost:5432/ayantrai_erp?schema=public',
+  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/ayantrai_templates?schema=public',
   JWT_SECRET: process.env.JWT_SECRET || 'ayantrai-erp-development-secret-key-change-in-production',
 };
 

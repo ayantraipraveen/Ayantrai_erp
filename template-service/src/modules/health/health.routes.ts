@@ -12,19 +12,23 @@ router.get('/', async (_req: Request, res: Response) => {
     dbStatus = `degraded: ${e.message}`;
   }
 
-  res.status(200).json(
+  const isHealthy = dbStatus === 'healthy';
+  const statusCode = isHealthy ? 200 : 503;
+
+  res.status(statusCode).json(
     new ApiResponse(
-      200,
+      statusCode,
       {
         service: 'template-service',
-        status: dbStatus === 'healthy' ? 'healthy' : 'degraded',
+        status: isHealthy ? 'healthy' : 'degraded',
         uptime: process.uptime(),
         database: {
           postgresql: dbStatus,
         },
-        timestamp: new Date().toISOString(),
       },
-      'Template Microservice health probe'
+      isHealthy
+        ? 'Template Microservice is healthy'
+        : 'Template Microservice database connection degraded'
     )
   );
 });

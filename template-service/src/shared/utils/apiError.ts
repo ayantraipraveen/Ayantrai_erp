@@ -1,23 +1,37 @@
 export class ApiError extends Error {
   public statusCode: number;
+  public success: boolean;
   public errors?: any[];
+  public isOperational: boolean;
 
-  constructor(statusCode: number, message: string, errors?: any[]) {
+  constructor(
+    statusCode: number,
+    message: string = 'Something went wrong',
+    errors?: any[],
+    stack: string = ''
+  ) {
     super(message);
     this.statusCode = statusCode;
+    this.success = false;
     this.errors = errors;
-    Error.captureStackTrace(this, this.constructor);
+    this.isOperational = true;
+
+    if (stack) {
+      this.stack = stack;
+    } else {
+      Error.captureStackTrace(this, this.constructor);
+    }
   }
 
   static badRequest(message: string = 'Bad Request', errors?: any[]): ApiError {
     return new ApiError(400, message, errors);
   }
 
-  static unauthorized(message: string = 'Unauthorized'): ApiError {
+  static unauthorized(message: string = 'Unauthorized: Access token is missing or invalid'): ApiError {
     return new ApiError(401, message);
   }
 
-  static forbidden(message: string = 'Forbidden'): ApiError {
+  static forbidden(message: string = 'Forbidden: You do not have permission to access this resource'): ApiError {
     return new ApiError(403, message);
   }
 
@@ -25,11 +39,17 @@ export class ApiError extends Error {
     return new ApiError(404, message);
   }
 
-  static conflict(message: string = 'Conflict'): ApiError {
+  static conflict(message: string = 'Conflict: Resource already exists'): ApiError {
     return new ApiError(409, message);
+  }
+
+  static unprocessable(message: string = 'Unprocessable Entity', errors?: any[]): ApiError {
+    return new ApiError(422, message, errors);
   }
 
   static internal(message: string = 'Internal Server Error'): ApiError {
     return new ApiError(500, message);
   }
 }
+
+export default ApiError;

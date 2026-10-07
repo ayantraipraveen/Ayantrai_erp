@@ -19,14 +19,14 @@ export const listTemplates = asyncHandler(async (req: AuthenticatedRequest, res:
   const result = await listTemplatesService(req.query);
   res
     .status(200)
-    .json(new ApiResponse(200, result, 'Templates retrieved successfully'));
+    .json(new ApiResponse(200, result.items, 'Templates retrieved successfully', result.pagination));
 });
 
 /**
  * GET /api/v1/templates/:id - Get single template details
  */
 export const getTemplateById = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const template = await getTemplateByIdService(req.params.id);
+  const template = await getTemplateByIdService(req.params.id as string);
   res
     .status(200)
     .json(new ApiResponse(200, template, 'Template details retrieved successfully'));
@@ -49,7 +49,7 @@ export const createTemplate = asyncHandler(async (req: AuthenticatedRequest, res
  * PUT /api/v1/templates/:id - Update an existing template
  */
 export const updateTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const updated = await updateTemplateService(req.params.id, req.body, {
+  const updated = await updateTemplateService(req.params.id as string, req.body, {
     id: req.user!.id,
   });
   res
@@ -61,7 +61,7 @@ export const updateTemplate = asyncHandler(async (req: AuthenticatedRequest, res
  * DELETE /api/v1/templates/:id - Delete a template
  */
 export const deleteTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const result = await deleteTemplateService(req.params.id);
+  const result = await deleteTemplateService(req.params.id as string);
   res
     .status(200)
     .json(new ApiResponse(200, result, 'Template deleted successfully'));
@@ -71,7 +71,7 @@ export const deleteTemplate = asyncHandler(async (req: AuthenticatedRequest, res
  * POST /api/v1/templates/:id/approve - Superadmin approves template
  */
 export const approveTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const approved = await approveTemplateService(req.params.id, req.body, {
+  const approved = await approveTemplateService(req.params.id as string, req.body, {
     id: req.user!.id,
     name: 'Superadmin Governance',
   });
@@ -84,7 +84,7 @@ export const approveTemplate = asyncHandler(async (req: AuthenticatedRequest, re
  * POST /api/v1/templates/:id/reject - Superadmin rejects template
  */
 export const rejectTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-  const rejected = await rejectTemplateService(req.params.id, req.body, {
+  const rejected = await rejectTemplateService(req.params.id as string, req.body, {
     id: req.user!.id,
     name: 'Superadmin Governance',
   });
