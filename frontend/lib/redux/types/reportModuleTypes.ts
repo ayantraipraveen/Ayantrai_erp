@@ -288,6 +288,24 @@ export interface LibraryMetricCard {
   cardVariant?: "default" | "project-meta";
   projectSite?: string;
   reportingPeriod?: string;
+  // Dynamic visual styling & icon overrides:
+  customBgColor?: string;
+  customBorderColor?: string;
+  customBorderWidth?: number;
+  customBorderRadius?: number;
+  customPadding?: number;
+  customHeight?: number;
+  customWidth?: number;
+  customTextColor?: string;
+  customValueColor?: string;
+  customIconColor?: string;
+  customIconBg?: string;
+  iconSize?: number;
+  iconShape?: "circle" | "rounded" | "none";
+  fontSizeValue?: number;
+  fontSizeLabel?: number;
+  labelHtml?: string;
+  valueHtml?: string;
 }
 
 export interface ChartDataPoint {
@@ -411,12 +429,43 @@ export interface CanvasBadgeItem {
   label: string;
   value: string;
   icon?: string; // lucide icon name
-  color: "blue" | "green" | "purple" | "amber" | "rose" | "cyan";
+  color: "blue" | "green" | "purple" | "amber" | "rose" | "cyan" | "slate" | "indigo" | "emerald" | "orange";
+  // Dynamic visual styling properties:
+  customBgColor?: string;
+  customBorderColor?: string;
+  customTextColor?: string;
+  customLabelColor?: string;
+  customIconColor?: string;
+  customIconBg?: string;
+  iconSize?: number; // px, e.g. 14, 16, 20, 24, 28
+  iconShape?: "rounded" | "circle" | "square" | "none";
+  borderRadius?: number; // px, e.g. 0, 8, 12, 16, 24, 9999
+  borderWidth?: number; // px, e.g. 0, 1, 2, 3
+  borderStyle?: "solid" | "dashed" | "dotted" | "none";
+  padding?: number; // px, e.g. 6, 8, 12, 16, 20
+  fontSizeValue?: number; // px
+  fontSizeLabel?: number; // px
+  valueHtml?: string;
+  labelHtml?: string;
+  customHeight?: number;
+  customWidth?: number;
+  minHeight?: number;
 }
 
 export interface CanvasBadgeStrip {
   id: string;
   badges: CanvasBadgeItem[];
+  // Dynamic layout & container styling properties:
+  columns?: number; // 1 | 2 | 3 | 4 | 5 | 6 (default 2 or 4)
+  customColumns?: number; // any custom number of columns e.g. 1-12
+  customGridTemplate?: string; // e.g. "repeat(auto-fit, minmax(130px, 1fr))"
+  gap?: number; // px, e.g. 0, 4, 8, 12, 16, 24
+  padding?: number; // px, e.g. 0, 6, 10, 14, 18, 24
+  borderRadius?: number; // px, e.g. 0, 8, 12, 16, 24
+  borderWidth?: number; // px, e.g. 0, 1, 2
+  borderColor?: string;
+  backgroundColor?: string;
+  isTransparent?: boolean; // if true, no outer card background or border
 }
 
 export type CanvasBlockType =

@@ -63,20 +63,32 @@ export interface SidebarAddBlockEvent {
   chartType?: GraphType;
   customChart?: LibraryChartCard;
   customInsight?: LibraryKeyInsightItem;
+  customMetricCard?: LibraryMetricCard;
   targetRowId?: string;
   targetCellIndex?: number;
   insertRowAtIndex?: number;
   targetStackCellId?: string;
   sectionRows?: CanvasRow[];
   sectionName?: string;
+  dropX?: number;
+  dropY?: number;
+  pageIndex?: number;
 }
 
 export function handleBlockDragStart(
   e: React.DragEvent,
   payload: SidebarAddBlockEvent
 ) {
-  e.dataTransfer.setData("application/json", JSON.stringify(payload));
-  e.dataTransfer.setData("text/plain", payload.blockType);
+  const jsonStr = JSON.stringify(payload);
+  if (typeof window !== "undefined") {
+    (window as any).__draggedSidebarBlock = payload;
+  }
+  try {
+    e.dataTransfer.setData("application/json", jsonStr);
+  } catch {}
+  try {
+    e.dataTransfer.setData("text/plain", jsonStr);
+  } catch {}
   e.dataTransfer.effectAllowed = "copy";
 }
 
@@ -2082,21 +2094,23 @@ export function CanvasSidebar({
                   return (
                     <div
                       key={def.id}
-                      draggable={!isMetricCategory}
+                      draggable={true}
                       onDragStart={(e) => {
-                        if (isMetricCategory) {
-                          e.preventDefault();
-                          return;
-                        }
                         handleBlockDragStart(e, {
                           blockType: def.type,
                           customInsight: def.defaultInsight,
+                          customMetricCard: def.defaultMetricCard,
                         });
                       }}
                       onClick={() => {
                         if (isMetricCategory) {
                           if (onAddFloatingElement) {
                             onAddFloatingElement("metric-card", def.defaultMetricCard);
+                          } else {
+                            onAddBlock({
+                              blockType: def.type,
+                              customMetricCard: def.defaultMetricCard,
+                            });
                           }
                           return;
                         }
@@ -2105,12 +2119,8 @@ export function CanvasSidebar({
                           customInsight: def.defaultInsight,
                         });
                       }}
-                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 transition-all duration-200 cursor-pointer overflow-hidden p-3 space-y-2"
-                      title={
-                        isMetricCategory
-                          ? "Click to float onto canvas (freely adjustable position, width & height)"
-                          : "Drag anywhere on report to place, or click to add"
-                      }
+                      className="group relative rounded-2xl border border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60 transition-all duration-200 cursor-grab active:cursor-grabbing overflow-hidden p-3 space-y-2"
+                      title="Drag anywhere on report canvas to place, or click to add"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">

@@ -71,22 +71,30 @@ export const CARD_BG_PRESETS: { id: string; label: string; color: string; border
 ];
 
 export const BADGE_COLOR_PALETTES = [
-  { id: "blue", label: "Blue", bg: "bg-blue-500/10", border: "border-blue-400/30", text: "text-blue-600 dark:text-blue-300", dot: "bg-blue-500" },
-  { id: "green", label: "Green", bg: "bg-emerald-500/10", border: "border-emerald-400/30", text: "text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
-  { id: "purple", label: "Purple", bg: "bg-purple-500/10", border: "border-purple-400/30", text: "text-purple-600 dark:text-purple-300", dot: "bg-purple-500" },
-  { id: "amber", label: "Amber", bg: "bg-amber-500/10", border: "border-amber-400/30", text: "text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
-  { id: "rose", label: "Rose", bg: "bg-rose-500/10", border: "border-rose-400/30", text: "text-rose-600 dark:text-rose-300", dot: "bg-rose-500" },
-  { id: "cyan", label: "Cyan", bg: "bg-cyan-500/10", border: "border-cyan-400/30", text: "text-cyan-600 dark:text-cyan-300", dot: "bg-cyan-500" },
+  { id: "blue", label: "Blue", bg: "bg-blue-500/10", border: "border-blue-400/30", text: "text-blue-600 dark:text-blue-300", dot: "bg-blue-500", hex: "#3b82f6" },
+  { id: "green", label: "Green", bg: "bg-emerald-500/10", border: "border-emerald-400/30", text: "text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500", hex: "#10b981" },
+  { id: "purple", label: "Purple", bg: "bg-purple-500/10", border: "border-purple-400/30", text: "text-purple-600 dark:text-purple-300", dot: "bg-purple-500", hex: "#a855f7" },
+  { id: "amber", label: "Amber", bg: "bg-amber-500/10", border: "border-amber-400/30", text: "text-amber-600 dark:text-amber-300", dot: "bg-amber-500", hex: "#f59e0b" },
+  { id: "rose", label: "Rose", bg: "bg-rose-500/10", border: "border-rose-400/30", text: "text-rose-600 dark:text-rose-300", dot: "bg-rose-500", hex: "#f43f5e" },
+  { id: "cyan", label: "Cyan", bg: "bg-cyan-500/10", border: "border-cyan-400/30", text: "text-cyan-600 dark:text-cyan-300", dot: "bg-cyan-500", hex: "#06b6d4" },
+  { id: "slate", label: "Slate", bg: "bg-slate-500/10", border: "border-slate-400/30", text: "text-slate-600 dark:text-slate-300", dot: "bg-slate-500", hex: "#64748b" },
+  { id: "indigo", label: "Indigo", bg: "bg-indigo-500/10", border: "border-indigo-400/30", text: "text-indigo-600 dark:text-indigo-300", dot: "bg-indigo-500", hex: "#6366f1" },
+  { id: "emerald", label: "Mint", bg: "bg-teal-500/10", border: "border-teal-400/30", text: "text-teal-600 dark:text-teal-300", dot: "bg-teal-500", hex: "#14b8a6" },
+  { id: "orange", label: "Orange", bg: "bg-orange-500/10", border: "border-orange-400/30", text: "text-orange-600 dark:text-orange-300", dot: "bg-orange-500", hex: "#f97316" },
 ] as const;
 
 export const BADGE_COLOR_MAP: Record<
   string,
-  { bg: string; border: string; text: string; dot: string }
+  { bg: string; border: string; text: string; dot: string; hex?: string }
 > = {
-  blue: { bg: "bg-blue-500/10", border: "border-blue-400/30", text: "text-blue-600 dark:text-blue-300", dot: "bg-blue-500" },
-  green: { bg: "bg-emerald-500/10", border: "border-emerald-400/30", text: "text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500" },
-  purple: { bg: "bg-purple-500/10", border: "border-purple-400/30", text: "text-purple-600 dark:text-purple-300", dot: "bg-purple-500" },
-  amber: { bg: "bg-amber-500/10", border: "border-amber-400/30", text: "text-amber-600 dark:text-amber-300", dot: "bg-amber-500" },
-  rose: { bg: "bg-rose-500/10", border: "border-rose-400/30", text: "text-rose-600 dark:text-rose-300", dot: "bg-rose-500" },
-  cyan: { bg: "bg-cyan-500/10", border: "border-cyan-400/30", text: "text-cyan-600 dark:text-cyan-300", dot: "bg-cyan-500" },
+  blue: { bg: "bg-blue-500/10", border: "border-blue-400/30", text: "text-blue-600 dark:text-blue-300", dot: "bg-blue-500", hex: "#3b82f6" },
+  green: { bg: "bg-emerald-500/10", border: "border-emerald-400/30", text: "text-emerald-600 dark:text-emerald-300", dot: "bg-emerald-500", hex: "#10b981" },
+  purple: { bg: "bg-purple-500/10", border: "border-purple-400/30", text: "text-purple-600 dark:text-purple-300", dot: "bg-purple-500", hex: "#a855f7" },
+  amber: { bg: "bg-amber-500/10", border: "border-amber-400/30", text: "text-amber-600 dark:text-amber-300", dot: "bg-amber-500", hex: "#f59e0b" },
+  rose: { bg: "bg-rose-500/10", border: "border-rose-400/30", text: "text-rose-600 dark:text-rose-300", dot: "bg-rose-500", hex: "#f43f5e" },
+  cyan: { bg: "bg-cyan-500/10", border: "border-cyan-400/30", text: "text-cyan-600 dark:text-cyan-300", dot: "bg-cyan-500", hex: "#06b6d4" },
+  slate: { bg: "bg-slate-500/10", border: "border-slate-400/30", text: "text-slate-600 dark:text-slate-300", dot: "bg-slate-500", hex: "#64748b" },
+  indigo: { bg: "bg-indigo-500/10", border: "border-indigo-400/30", text: "text-indigo-600 dark:text-indigo-300", dot: "bg-indigo-500", hex: "#6366f1" },
+  emerald: { bg: "bg-teal-500/10", border: "border-teal-400/30", text: "text-teal-600 dark:text-teal-300", dot: "bg-teal-500", hex: "#14b8a6" },
+  orange: { bg: "bg-orange-500/10", border: "border-orange-400/30", text: "text-orange-600 dark:text-orange-300", dot: "bg-orange-500", hex: "#f97316" },
 };

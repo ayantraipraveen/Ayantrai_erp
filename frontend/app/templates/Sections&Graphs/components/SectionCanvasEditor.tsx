@@ -75,6 +75,8 @@ import {
   reorderReportSectionGroups,
   calculateSectionGroupPageNumbers,
   partitionCanvasPages,
+  convertRowsToFloatingStamps,
+  resolveSectionFloatingStamps,
   ReportSectionGroup,
   AccurateReportSectionGroup,
 } from "../utils/canvasLayoutUtils";
@@ -146,6 +148,22 @@ export default function SectionCanvasEditor({
   useEffect(() => {
     if (section && !section.canvasRows) {
       dispatch(migrateToCanvasRows(section.id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [section?.id]);
+
+  // Auto-resolve / convert rows to precision floating stamps for Float-Only Canvas
+  useEffect(() => {
+    if (section) {
+      const hasContentStamps = (section.stamps || []).some(
+        (s) => s.elementType && s.elementType !== "stamp" && (s.metricCard || s.chart || s.insight || s.textBlock || s.badgeStrip)
+      );
+      if (!hasContentStamps) {
+        const converted = resolveSectionFloatingStamps(section);
+        if (converted.length > 0) {
+          dispatch(updateLibrarySection({ id: section.id, changes: { stamps: converted } }));
+        }
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section?.id]);
@@ -263,6 +281,23 @@ export default function SectionCanvasEditor({
         if (section.canvasRows) {
           section.canvasRows.forEach((row) => {
             row.cells.forEach(scanCell);
+          });
+        }
+
+        if (section.stamps) {
+          section.stamps.forEach((stamp) => {
+            if (stamp.metricCard && !seenCardIds.has(stamp.metricCard.id)) {
+              seenCardIds.add(stamp.metricCard.id);
+              extractedCards.push(stamp.metricCard);
+            }
+            if (stamp.chart && !seenChartIds.has(stamp.chart.id)) {
+              seenChartIds.add(stamp.chart.id);
+              extractedCharts.push(stamp.chart);
+            }
+            if (stamp.insight && !seenInsightIds.has(stamp.insight.id)) {
+              seenInsightIds.add(stamp.insight.id);
+              extractedInsights.push(stamp.insight);
+            }
           });
         }
 
@@ -890,99 +925,218 @@ export default function SectionCanvasEditor({
   };
 
   // ── Block Creation (Sidebar Click/Drop) ──────────────────────────────────────
+  // ── Block Creation (Sidebar Click/Drop -> 100% Float-Only Stamps) ────────────
   const handleSidebarAddBlock = useCallback(
     (e: SidebarAddBlockEvent) => {
       if (!section) return;
 
+      const targetPage = e.pageIndex !== undefined ? e.pageIndex : (canvasActivePageIndex >= 0 ? canvasActivePageIndex : 0);
+      const currentStamps = section.stamps || [];
+      const pageStamps = currentStamps.filter((s) => (s.pageIndex ?? 0) === targetPage);
+
+      // Find bottom-most edge on target page to place new elements neatly below existing content
+      const lowestBottom = pageStamps.reduce((max, s) => {
+        const bottom = (s.y || 0) + (s.height || 0);
+        return Math.max(max, bottom);
+      }, 130);
+
+      const ts = Date.now();
+
       if (e.blockType === "section") {
         const rowsToInsert = e.sectionRows && e.sectionRows.length > 0 ? e.sectionRows : [];
-        handleAddSectionRows(rowsToInsert, e.sectionName || "New Section", e.insertRowAtIndex);
+        if (rowsToInsert.length > 0) {
+          const converted = convertRowsToFloatingStamps(rowsToInsert, Math.max(140, lowestBottom + 12), e.sectionName);
+          converted.forEach((st) => {
+            dispatch(addStampToSection({ sectionId, stamp: { ...st, pageIndex: targetPage } }));
+          });
+          dispatch(
+            showGlobalToast({
+              message: `Placed "${e.sectionName || "Section"}" floating elements on page ${targetPage + 1}!`,
+              type: "success",
+            })
+          );
+        }
         return;
       }
 
-      const ts = Date.now();
-      let cell: CanvasCell | null = null;
+      let newStamp: CanvasCoordinateStamp | null = null;
+      let label = "Element";
+
       switch (e.blockType) {
-        case "metric-card":
-          cell = {
-            id: `cell-mc-${ts}`,
-            colSpan: 1,
-            blockType: "metric-card",
-            metricCard: {
-              id: `mc-${ts}`,
-              label: "New KPI Indicator",
-              value: "96.5%",
-              tintColor: "blue",
-              trendDirection: "up",
-              trendValue: "+1.8% vs last shift",
-            },
+        case "metric-card": {
+          label = e.customMetricCard?.label || "Metric Card";
+          const defaultMetric: LibraryMetricCard = e.customMetricCard
+            ? { ...e.customMetricCard, id: `mc-${ts}` }
+            : {
+                id: `mc-${ts}`,
+                label: "New KPI Indicator",
+                value: "96.5%",
+                tintColor: "blue",
+                trendDirection: "up",
+                trendValue: "+1.8% vs last shift",
+              };
+
+          const isProjectMeta = defaultMetric.cardVariant === "project-meta";
+          const cardWidth = isProjectMeta ? 269 : 130;
+
+          // Position in a 4-column row if dropped by click, or use cursor coordinates
+          let posX: number;
+          let posY: number;
+          if (e.dropX !== undefined && e.dropY !== undefined) {
+            posX = e.dropX;
+            posY = e.dropY;
+          } else {
+            const pageMetrics = pageStamps.filter((s) => s.elementType === "metric-card");
+            const mCount = pageMetrics.length;
+            const col = mCount % 4;
+            const row = Math.floor(mCount / 4);
+            posX = 24 + col * (130 + 9);
+            posY = 140 + row * (92 + 10);
+          }
+
+          newStamp = {
+            id: `coord-mc-${ts}`,
+            sourceId: `mc-${ts}`,
+            name: defaultMetric.label,
+            pageIndex: targetPage,
+            x: posX,
+            y: posY,
+            width: cardWidth,
+            height: 92,
+            rotation: 0,
+            opacity: 100,
+            layer: "front",
+            elementType: "metric-card",
+            metricCard: defaultMetric,
           };
           break;
-        case "chart":
-          if (e.customChart) {
-            cell = {
-              id: `cell-ch-${ts}`,
-              colSpan: 4,
-              blockType: "chart",
-              chart: {
+        }
+
+        case "chart": {
+          label = "Chart";
+          const chartData: LibraryChartCard = e.customChart
+            ? {
                 ...e.customChart,
                 id: `ch-${ts}`,
                 title: `${e.customChart.title} (Copy)`,
-              },
-            };
-          } else {
-            const selectedChartType = e.chartType || "bar";
-            const chartOption = CHART_TYPE_OPTIONS.find((c) => c.id === selectedChartType);
-            cell = {
-              id: `cell-ch-${ts}`,
-              colSpan: 4,
-              blockType: "chart",
-              chart: {
+              }
+            : {
                 id: `ch-${ts}`,
-                title: `Telemetry ${chartOption?.label || "Chart"}`,
-                chartType: selectedChartType,
+                title: `Telemetry ${CHART_TYPE_OPTIONS.find((c) => c.id === (e.chartType || "bar"))?.label || "Chart"}`,
+                chartType: e.chartType || "bar",
                 dataSourceField: "ppe_sensor_compliance",
                 description: "",
                 color: "#9D61FF",
-                gridRows: (selectedChartType === "heatmap" || selectedChartType === "table") ? 4 : undefined,
-                gridCols: (selectedChartType === "heatmap" || selectedChartType === "table") ? 7 : undefined,
-              },
-            };
-          }
-          break;
-        case "insight":
-          cell = {
-            id: `cell-ki-${ts}`,
-            colSpan: 4,
-            blockType: "insight",
-            insight: e.customInsight
-              ? {
-                  ...e.customInsight,
-                  id: `ki-${ts}`,
-                  items: e.customInsight.items
-                    ? e.customInsight.items.map((item, idx) => ({ ...item, id: `kib-${ts}-${idx}` }))
-                    : undefined,
-                }
-              : {
-                  id: `ki-${ts}`,
-                  variant: "single",
-                  text: "Key operational observation recorded during routine industrial monitoring.",
-                },
+                colors: ["#9D61FF"],
+                gridRows: (e.chartType === "heatmap" || e.chartType === "table") ? 4 : undefined,
+                gridCols: (e.chartType === "heatmap" || e.chartType === "table") ? 7 : undefined,
+              };
+
+          const posX = e.dropX !== undefined ? e.dropX : 24;
+          const posY = e.dropY !== undefined ? e.dropY : Math.max(140, lowestBottom + 12);
+
+          newStamp = {
+            id: `coord-ch-${ts}`,
+            sourceId: chartData.id,
+            name: chartData.title,
+            pageIndex: targetPage,
+            x: posX,
+            y: posY,
+            width: 547,
+            height: 250,
+            rotation: 0,
+            opacity: 100,
+            layer: "front",
+            elementType: "chart",
+            chart: chartData,
           };
           break;
-        case "text":
-          cell = {
-            id: `cell-tb-${ts}`,
-            colSpan: 4,
-            blockType: "text",
-            textBlock: { id: `tb-${ts}`, content: "" },
+        }
+
+        case "insight": {
+          label = "Key Insight";
+          const insightData: LibraryKeyInsightItem = e.customInsight
+            ? {
+                ...e.customInsight,
+                id: `ki-${ts}`,
+                items: e.customInsight.items
+                  ? e.customInsight.items.map((item, idx) => ({ ...item, id: `kib-${ts}-${idx}` }))
+                  : undefined,
+              }
+            : {
+                id: `ki-${ts}`,
+                variant: "single",
+                text: "Key operational observation recorded during routine industrial monitoring.",
+              };
+
+          const posX = e.dropX !== undefined ? e.dropX : 24;
+          const posY = e.dropY !== undefined ? e.dropY : Math.max(140, lowestBottom + 12);
+          const height = insightData.variant === "vertical-takeaways"
+            ? Math.max(90, 28 + (insightData.items?.length || 4) * 16)
+            : 110;
+
+          newStamp = {
+            id: `coord-ki-${ts}`,
+            sourceId: insightData.id,
+            name: insightData.title || "Key Observation",
+            pageIndex: targetPage,
+            x: posX,
+            y: posY,
+            width: 547,
+            height,
+            rotation: 0,
+            opacity: 100,
+            layer: "front",
+            elementType: "insight",
+            insight: insightData,
           };
           break;
-        case "badge-strip":
-          cell = {
-            id: `cell-bs-${ts}`,
-            colSpan: 4,
-            blockType: "badge-strip",
+        }
+
+        case "text": {
+          label = "Text Block";
+          const posX = e.dropX !== undefined ? e.dropX : 24;
+          const posY = e.dropY !== undefined ? e.dropY : Math.max(140, lowestBottom + 12);
+
+          newStamp = {
+            id: `coord-tb-${ts}`,
+            sourceId: `tb-${ts}`,
+            name: "Text Block",
+            pageIndex: targetPage,
+            x: posX,
+            y: posY,
+            width: 547,
+            height: 85,
+            rotation: 0,
+            opacity: 100,
+            layer: "front",
+            elementType: "text",
+            textBlock: {
+              id: `tb-${ts}`,
+              content: "<p>Double-click to edit text commentary and operational notes directly on canvas.</p>",
+            },
+          };
+          break;
+        }
+
+        case "badge-strip": {
+          label = "Badge Strip";
+          const posX = e.dropX !== undefined ? e.dropX : 24;
+          const posY = e.dropY !== undefined ? e.dropY : Math.max(140, lowestBottom + 12);
+
+          newStamp = {
+            id: `coord-bs-${ts}`,
+            sourceId: `bs-${ts}`,
+            name: "Badge Strip",
+            pageIndex: targetPage,
+            x: posX,
+            y: posY,
+            width: 547,
+            height: 70,
+            rotation: 0,
+            opacity: 100,
+            layer: "front",
+            elementType: "badge-strip",
             badgeStrip: {
               id: `bs-${ts}`,
               badges: [
@@ -994,98 +1148,44 @@ export default function SectionCanvasEditor({
             },
           };
           break;
-        case "divider":
-          cell = { id: `cell-div-${ts}`, colSpan: 4, blockType: "divider" };
-          break;
-        case "element":
+        }
+
+        case "element": {
           if (e.elementBlock) {
-            cell = {
-              id: `cell-el-${ts}`,
-              colSpan: 4,
-              blockType: "element",
-              elementBlock: { ...e.elementBlock, isWatermark: false },
+            label = e.elementBlock.name || "Custom Element";
+            const posX = e.dropX !== undefined ? e.dropX : 24;
+            const posY = e.dropY !== undefined ? e.dropY : Math.max(140, lowestBottom + 12);
+            newStamp = {
+              id: `coord-el-${ts}`,
+              sourceId: `el-${ts}`,
+              name: label,
+              svgContent: e.elementBlock.svgContent,
+              pageIndex: targetPage,
+              x: posX,
+              y: posY,
+              width: 380,
+              height: 120,
+              rotation: 0,
+              opacity: 100,
+              layer: "front",
+              elementType: "stamp",
             };
           }
           break;
-      }
-
-      if (cell !== null) {
-        if (e.targetStackCellId && e.targetRowId) {
-          dispatch(
-            stackCellBelow({
-              sectionId: section.id,
-              rowId: e.targetRowId,
-              targetCellId: e.targetStackCellId,
-              cell,
-            })
-          );
-          dispatch(
-            showGlobalToast({
-              message: `${e.blockType.replace("-", " ")} stacked directly below card!`,
-              type: "success",
-            })
-          );
-        } else if (e.targetRowId) {
-          dispatch(
-            addCellToRow({
-              sectionId: section.id,
-              rowId: e.targetRowId,
-              cell,
-              insertAtIndex: e.targetCellIndex,
-            })
-          );
-          dispatch(
-            showGlobalToast({
-              message: `${e.blockType.replace("-", " ")} added to row!`,
-              type: "success",
-            })
-          );
-        } else if (typeof e.insertRowAtIndex === "number") {
-          dispatch(
-            addRowWithCell({
-              sectionId: section.id,
-              cell,
-              insertAtIndex: e.insertRowAtIndex,
-            })
-          );
-          dispatch(
-            showGlobalToast({
-              message: `${e.blockType.replace("-", " ")} inserted at position ${e.insertRowAtIndex + 1}!`,
-              type: "success",
-            })
-          );
-        } else {
-          // If a row is currently selected and has room (< 4 cells), add directly into that row
-          if (selectedRowId) {
-            const activeRow = section.canvasRows?.find((r) => r.id === selectedRowId);
-            if (activeRow && activeRow.cells.length < 4) {
-              dispatch(
-                addCellToRow({
-                  sectionId: section.id,
-                  rowId: selectedRowId,
-                  cell,
-                })
-              );
-              dispatch(
-                showGlobalToast({
-                  message: `${e.blockType.replace("-", " ")} added to selected row!`,
-                  type: "success",
-                })
-              );
-              return;
-            }
-          }
-          dispatch(addRowWithCell({ sectionId: section.id, cell }));
-          dispatch(
-            showGlobalToast({
-              message: `${e.blockType.replace("-", " ")} added to canvas!`,
-              type: "success",
-            })
-          );
         }
       }
+
+      if (newStamp) {
+        dispatch(addStampToSection({ sectionId: section.id, stamp: newStamp }));
+        dispatch(
+          showGlobalToast({
+            message: `Added floating ${label} to page ${targetPage + 1}! Drag, resize or rotate it freely.`,
+            type: "success",
+          })
+        );
+      }
     },
-    [dispatch, section]
+    [dispatch, section, sectionId, canvasActivePageIndex]
   );
 
   const handleAddWatermarkElement = useCallback(
@@ -1834,12 +1934,7 @@ export default function SectionCanvasEditor({
             </div>
 
             <span className="text-[10.5px] text-slate-400 dark:text-zinc-500 hidden xl:inline flex-shrink-0">
-              {section.canvasRows?.length || 0} rows &middot;{" "}
-              {section.canvasRows?.reduce(
-                (acc, r) => acc + r.cells.reduce((cAcc, c) => cAcc + 1 + (c.stackedCells?.length || 0), 0),
-                0
-              ) || 0}{" "}
-              blocks
+              {(section.stamps || []).length} floating {((section.stamps || []).length === 1) ? "element" : "elements"}
             </span>
           </div>
 
@@ -1968,12 +2063,7 @@ export default function SectionCanvasEditor({
           {/* Global Actions */}
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-slate-400 dark:text-zinc-500 hidden md:block">
-              {section.canvasRows?.length || 0} rows &middot;{" "}
-              {section.canvasRows?.reduce(
-                (acc, r) => acc + r.cells.reduce((cAcc, c) => cAcc + 1 + (c.stackedCells?.length || 0), 0),
-                0
-              ) || 0}{" "}
-              blocks
+              {(section.stamps || []).length} floating {((section.stamps || []).length === 1) ? "element" : "elements"}
             </span>
 
             {/* Undo / Redo Toolbar Buttons */}

@@ -1,4 +1,4 @@
-import { CanvasRow, CanvasCell, LibrarySection, PageConfigOverride } from "@/lib/redux/slices/reportModuleSlice";
+import { CanvasRow, CanvasCell, LibrarySection, PageConfigOverride, CanvasCoordinateStamp } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasMarginConfig, DEFAULT_CANVAS_MARGIN } from "./canvasStyleUtils";
 
 // ─── Standard ISO A4 PDF Dimensions (595 × 842 px / pt at 72 DPI) ───────────
@@ -528,3 +528,140 @@ export function calculateSectionGroupPageNumbers(
     };
   });
 }
+
+/**
+ * Converts existing structured canvasRows into freeform CanvasCoordinateStamps.
+ * Places 4-col metric cards neatly in rows, full-width insights/charts, with automatic page breaking.
+ */
+export function convertRowsToFloatingStamps(
+  rows: CanvasRow[],
+  startY = 145,
+  sectionName?: string
+): CanvasCoordinateStamp[] {
+  if (!rows || rows.length === 0) return [];
+  const stamps: CanvasCoordinateStamp[] = [];
+  const pageWidth = A4_WIDTH_PX; // 595
+  const marginLeft = 24;
+  const marginRight = 24;
+  const contentWidth = pageWidth - marginLeft - marginRight; // 547px
+  const bottomLimit = 780; // keep above footer
+  const rowGap = 10;
+  const colGap = 9;
+
+  let currentPageIndex = 0;
+  let currentY = startY;
+
+  rows.forEach((row, rowIdx) => {
+    if (!row.cells || row.cells.length === 0) return;
+
+    // Check forced page break
+    if (rowIdx > 0 && row.pageBreakBefore) {
+      currentPageIndex++;
+      currentY = 130;
+    }
+
+    const cellCount = row.cells.length;
+    let rowMaxHeight = 0;
+
+    row.cells.forEach((cell) => {
+      const h = cell.customHeight || getDefaultBlockHeight(cell.blockType, cell);
+      if (h > rowMaxHeight) rowMaxHeight = h;
+    });
+
+    // Check if this row would overflow page
+    if (currentY + rowMaxHeight > bottomLimit && currentY > 150) {
+      currentPageIndex++;
+      currentY = 130;
+    }
+
+    let cellWidth = contentWidth;
+    if (cellCount === 1) {
+      cellWidth = contentWidth;
+    } else if (cellCount === 2) {
+      cellWidth = Math.round((contentWidth - colGap) / 2);
+    } else if (cellCount === 3) {
+      cellWidth = Math.round((contentWidth - colGap * 2) / 3);
+    } else if (cellCount >= 4) {
+      cellWidth = Math.round((contentWidth - colGap * 3) / 4);
+    }
+
+    row.cells.forEach((cell, cIdx) => {
+      const cellHeight = cell.customHeight || getDefaultBlockHeight(cell.blockType, cell);
+      const cellX = marginLeft + cIdx * (cellWidth + colGap);
+      const cellY = currentY;
+
+      let name = "Block";
+      let elementType: CanvasCoordinateStamp["elementType"] = "text";
+      if (cell.blockType === "metric-card" && cell.metricCard) {
+        name = cell.metricCard.label || "Metric Card";
+        elementType = "metric-card";
+      } else if (cell.blockType === "chart" && cell.chart) {
+        name = cell.chart.title || "Chart";
+        elementType = "chart";
+      } else if (cell.blockType === "insight" && cell.insight) {
+        name = cell.insight.title || "Key Insight";
+        elementType = "insight";
+      } else if (cell.blockType === "text" && cell.textBlock) {
+        name = "Text Block";
+        elementType = "text";
+      } else if (cell.blockType === "badge-strip" && cell.badgeStrip) {
+        name = "Badge Strip";
+        elementType = "badge-strip";
+      }
+
+      stamps.push({
+        id: `coord-${cell.id || `${Date.now()}-${cIdx}`}`,
+        sourceId: cell.id,
+        name,
+        pageIndex: currentPageIndex,
+        x: cellX,
+        y: cellY,
+        width: cellWidth,
+        height: cellHeight,
+        rotation: 0,
+        opacity: 100,
+        layer: "front",
+        elementType,
+        metricCard: cell.metricCard,
+        chart: cell.chart,
+        insight: cell.insight,
+        textBlock: cell.textBlock,
+        badgeStrip: cell.badgeStrip,
+      });
+    });
+
+    currentY += rowMaxHeight + rowGap;
+  });
+
+  return stamps;
+}
+
+/**
+ * Resolves or auto-converts floating stamps for any section.
+ * If section already has content stamps (not just watermark stickers), returns them.
+ * Otherwise, converts canvasRows (or seeds) into precision coordinate stamps.
+ */
+export function resolveSectionFloatingStamps(sec: LibrarySection): CanvasCoordinateStamp[] {
+  const existingStamps = sec.stamps || [];
+  const contentStamps = existingStamps.filter(
+    (s) => s.elementType && s.elementType !== "stamp" && (s.metricCard || s.chart || s.insight || s.textBlock || s.badgeStrip)
+  );
+
+  if (contentStamps.length > 0) {
+    return existingStamps;
+  }
+
+  // Convert canvasRows if present
+  if (sec.canvasRows && sec.canvasRows.length > 0) {
+    const converted = convertRowsToFloatingStamps(sec.canvasRows, 145, sec.name);
+    const decorativeStamps = existingStamps.filter((s) => !s.elementType || s.elementType === "stamp");
+    return [...decorativeStamps, ...converted];
+  }
+
+  // Or resolve from base telemetry (metricCards, charts, keyInsights)
+  const defaultRows = resolveSectionCanvasRows(sec);
+  const converted = convertRowsToFloatingStamps(defaultRows, 145, sec.name);
+  const decorativeStamps = existingStamps.filter((s) => !s.elementType || s.elementType === "stamp");
+  return [...decorativeStamps, ...converted];
+}
+

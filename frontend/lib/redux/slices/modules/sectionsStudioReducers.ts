@@ -167,6 +167,8 @@ export const sectionsStudioReducers = {
         titleStyle?: Partial<LibrarySection["titleStyle"]>;
         eyebrowHtml?: string;
         descriptionHtml?: string;
+        stamps?: CanvasCoordinateStamp[];
+        pageOverrides?: Record<number, PageConfigOverride>;
         changes?: Partial<LibrarySection>;
       }>
     ) => {
@@ -185,6 +187,7 @@ export const sectionsStudioReducers = {
           if (c.watermarkId !== undefined) sec.watermarkId = c.watermarkId;
           if (c.headerSpacing !== undefined) sec.headerSpacing = c.headerSpacing;
           if (c.pageOverrides !== undefined) sec.pageOverrides = c.pageOverrides;
+          if (c.stamps !== undefined) sec.stamps = c.stamps;
         }
         if (action.payload.name !== undefined) sec.name = action.payload.name;
         if (action.payload.titleHtml !== undefined) sec.titleHtml = action.payload.titleHtml;
@@ -196,6 +199,8 @@ export const sectionsStudioReducers = {
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
         if (action.payload.watermarkId !== undefined) sec.watermarkId = action.payload.watermarkId;
         if (action.payload.headerSpacing !== undefined) sec.headerSpacing = action.payload.headerSpacing;
+        if (action.payload.stamps !== undefined) sec.stamps = action.payload.stamps;
+        if (action.payload.pageOverrides !== undefined) sec.pageOverrides = action.payload.pageOverrides;
         sec.updatedAt = "Just now";
       }
     },

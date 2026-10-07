@@ -170,10 +170,29 @@ export function CanvasStudio({
     [dispatch, section.id]
   );
 
-  // Multi-page layout engine: partitions rows across authentic A4 sheets (calibrated for standard 842px sheet height)
+  // Multi-page layout engine: 100% Float-Only Canvas Architecture
   const pages = useMemo(() => {
-    return partitionCanvasPages(rows, marginConfig, pageNumber, activePageHeight, pageOverrides);
-  }, [rows, marginConfig, pageNumber, activePageHeight, pageOverrides]);
+    const maxStampPageIndex = (section.stamps || []).reduce((max, s) => Math.max(max, s.pageIndex ?? 0), 0);
+    const maxOverrideIndex = Object.keys(pageOverrides).reduce((max, k) => {
+      const idx = parseInt(k, 10);
+      return isNaN(idx) ? max : Math.max(max, idx);
+    }, 0);
+    const requiredPages = Math.max(1, maxStampPageIndex + 1, maxOverrideIndex + 1);
+
+    const pagesList: PagePartition[] = [];
+    for (let pIdx = 0; pIdx < requiredPages; pIdx++) {
+      pagesList.push({
+        pageIndex: pIdx,
+        pageNumber: pageNumber + pIdx,
+        rows: [],
+        isFirstPage: pIdx === 0,
+        isLastPage: pIdx === requiredPages - 1,
+        usedHeight: 0,
+        maxCapacity: activePageHeight,
+      });
+    }
+    return pagesList;
+  }, [pageNumber, activePageHeight, pageOverrides, section.stamps]);
 
   const computedTotalPages = useMemo(() => {
     return (
@@ -643,186 +662,7 @@ export function CanvasStudio({
     [dispatch, section.id, handleSelectCell]
   );
 
-  const handleDockStampToGrid = useCallback(
-    (stamp: CanvasCoordinateStamp) => {
-      let cell: CanvasCell | null = null;
-      const isChart = stamp.elementType === "chart" || Boolean(stamp.chart);
-      const isText = stamp.elementType === "text" || Boolean(stamp.textBlock);
-      const isInsight = stamp.elementType === "insight" || Boolean(stamp.insight);
-      const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
-      const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
 
-      if (isChart && stamp.chart) {
-        cell = {
-          id: `cell-chart-${Date.now()}`,
-          colSpan: 4,
-          blockType: "chart",
-          chart: stamp.chart,
-          customHeight: stamp.height,
-        };
-      } else if (isText) {
-        cell = {
-          id: `cell-text-${Date.now()}`,
-          colSpan: 4,
-          blockType: "text",
-          textBlock: stamp.textBlock || { id: stamp.id, content: stamp.name || "Text block" },
-          customHeight: stamp.height,
-        };
-      } else if (isInsight) {
-        cell = {
-          id: `cell-insight-${Date.now()}`,
-          colSpan: 4,
-          blockType: "insight",
-          insight: stamp.insight || { id: stamp.id, text: stamp.name || "Key Insight" },
-          customHeight: stamp.height,
-        };
-      } else if (isMetric) {
-        cell = {
-          id: `cell-metric-${Date.now()}`,
-          colSpan: 2,
-          blockType: "metric-card",
-          metricCard: stamp.metricCard || {
-            id: stamp.id,
-            label: stamp.name || "Metric",
-            value: "98.4%",
-            tintColor: "purple",
-            trendDirection: "up",
-            trendValue: "+2.4%",
-          },
-          customHeight: stamp.height,
-        };
-      } else if (isBadgeStrip && stamp.badgeStrip) {
-        cell = {
-          id: `cell-badge-${Date.now()}`,
-          colSpan: 4,
-          blockType: "badge-strip",
-          badgeStrip: stamp.badgeStrip,
-          customHeight: stamp.height,
-        };
-      }
-
-      if (cell) {
-        dispatch(addRowWithCell({ sectionId: section.id, cell }));
-        dispatch(deleteStampFromSection({ sectionId: section.id, stampId: stamp.id }));
-        dispatch(
-          showGlobalToast({
-            message: `"${stamp.name || "Element"}" docked back into report grid rows!`,
-            type: "success",
-          })
-        );
-      }
-    },
-    [dispatch, section.id]
-  );
-
-  const handleFloatCell = useCallback(
-    (cell: CanvasCell, rowId: string) => {
-      const ts = Date.now();
-      let newCoord: CanvasCoordinateStamp | null = null;
-      let label = "Element";
-
-      if (cell.blockType === "chart" && cell.chart) {
-        label = cell.chart.title;
-        newCoord = {
-          id: `coord-chart-${ts}`,
-          sourceId: cell.chart.id,
-          name: cell.chart.title,
-          pageIndex: 0,
-          x: 50,
-          y: 130,
-          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 380,
-          height: cell.customHeight || 250,
-          rotation: 0,
-          opacity: 100,
-          layer: "front",
-          elementType: "chart",
-          chart: cell.chart,
-        };
-      } else if (cell.blockType === "text") {
-        label = "Text Block";
-        const content = cell.textBlock?.content || "Editable text block";
-        newCoord = {
-          id: `coord-text-${ts}`,
-          sourceId: cell.textBlock?.id || cell.id,
-          name: content.slice(0, 30) || "Text Block",
-          pageIndex: 0,
-          x: 50,
-          y: 130,
-          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 360,
-          height: cell.customHeight || 120,
-          rotation: 0,
-          opacity: 100,
-          layer: "front",
-          elementType: "text",
-          textBlock: cell.textBlock || { id: cell.id, content },
-        };
-      } else if (cell.blockType === "insight") {
-        label = cell.insight?.title || "Key Insight";
-        newCoord = {
-          id: `coord-insight-${ts}`,
-          sourceId: cell.insight?.id || cell.id,
-          name: label,
-          pageIndex: 0,
-          x: 50,
-          y: 130,
-          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 380,
-          height: cell.customHeight || 130,
-          rotation: 0,
-          opacity: 100,
-          layer: "front",
-          elementType: "insight",
-          insight: cell.insight || { id: cell.id, text: "Key operational observation" },
-        };
-      } else if (cell.blockType === "metric-card" && cell.metricCard) {
-        label = cell.metricCard.label || "Metric Card";
-        newCoord = {
-          id: `coord-metric-${ts}`,
-          sourceId: cell.metricCard.id,
-          name: label,
-          pageIndex: 0,
-          x: 50,
-          y: 130,
-          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 220,
-          height: cell.customHeight || 110,
-          rotation: 0,
-          opacity: 100,
-          layer: "front",
-          elementType: "metric-card",
-          metricCard: cell.metricCard,
-        };
-      } else if (cell.blockType === "badge-strip" && cell.badgeStrip) {
-        label = "Badge Strip";
-        newCoord = {
-          id: `coord-badge-${ts}`,
-          sourceId: cell.badgeStrip.id,
-          name: label,
-          pageIndex: 0,
-          x: 50,
-          y: 130,
-          width: cell.customWidth ? Math.round((cell.customWidth / 100) * 550) : 380,
-          height: cell.customHeight || 80,
-          rotation: 0,
-          opacity: 100,
-          layer: "front",
-          elementType: "badge-strip",
-          badgeStrip: cell.badgeStrip,
-        };
-      }
-
-      if (newCoord) {
-        dispatch(addStampToSection({ sectionId: section.id, stamp: newCoord }));
-        dispatch(deleteCanvasCell({ sectionId: section.id, rowId, cellId: cell.id }));
-        handleSelectCell(null, null);
-        dispatch(
-          showGlobalToast({
-            message: `Detached "${label}" to free-floating element with 360° axis rotation!`,
-            type: "success",
-          })
-        );
-      }
-    },
-    [dispatch, section.id, handleSelectCell]
-  );
 
   const handleColSpanChange = useCallback(
     (cellId: string, rowId: string, colSpan: 1 | 2 | 3 | 4) => {
@@ -849,40 +689,11 @@ export function CanvasStudio({
     [dispatch, section.id, onHeightChange]
   );
 
-  const handleAddRow = useCallback(() => {
-    dispatch(addCanvasRow(section.id));
-    dispatch(showGlobalToast({ message: "New row added to section", type: "success" }));
-  }, [dispatch, section.id]);
-
-  const handleInsertRowAtIndex = useCallback(
-    (insertIndex: number) => {
-      dispatch(addCanvasRow({ sectionId: section.id, insertAtIndex: insertIndex }));
-      dispatch(showGlobalToast({ message: "New row added to section", type: "success" }));
-    },
-    [dispatch, section.id]
-  );
-
   const handleAddPage = useCallback(() => {
-    dispatch(addCanvasRow({ sectionId: section.id, pageBreakBefore: true }));
-    dispatch(showGlobalToast({ message: "New A4 page created", type: "success" }));
-  }, [dispatch, section.id]);
-
-  const handleTogglePageBreak = useCallback(
-    (rowId: string) => {
-      dispatch(toggleRowPageBreak({ sectionId: section.id, rowId }));
-      dispatch(showGlobalToast({ message: "Page break toggled", type: "info" }));
-    },
-    [dispatch, section.id]
-  );
-
-  const handleRemoveRow = useCallback(
-    (rowId: string) => {
-      dispatch(removeCanvasRow({ sectionId: section.id, rowId }));
-      handleSelectCell(null, null);
-      dispatch(showGlobalToast({ message: "Row removed", type: "info" }));
-    },
-    [dispatch, section.id, handleSelectCell]
-  );
+    const nextPageIndex = pages.length;
+    patchPageOverride(nextPageIndex, { hideReportHeader: false });
+    dispatch(showGlobalToast({ message: `New A4 page ${nextPageIndex + 1} created`, type: "success" }));
+  }, [pages.length, patchPageOverride, dispatch]);
 
   const handleConfirmDeletePage = useCallback(
     (targetPage: PagePartition) => {
@@ -897,125 +708,117 @@ export function CanvasStudio({
         return;
       }
 
-      const rowIdsToDelete = new Set(targetPage.rows.map((r) => r.id));
-      const remainingRows = (section.canvasRows || [])
-        .filter((r) => !rowIdsToDelete.has(r.id))
-        .map((r, idx) => {
-          // If page 1 was deleted, clear manual page break on the new first row so content starts cleanly on Page 1
-          if (idx === 0 && r.pageBreakBefore) {
-            return { ...r, pageBreakBefore: false };
+      // Delete all stamps on this page and shift remaining stamps with higher pageIndex down
+      const currentStamps = section.stamps || [];
+      const updatedStamps = currentStamps
+        .filter((s) => (s.pageIndex ?? 0) !== targetPage.pageIndex)
+        .map((s) => {
+          if ((s.pageIndex ?? 0) > targetPage.pageIndex) {
+            return { ...s, pageIndex: (s.pageIndex ?? 0) - 1 };
           }
-          return r;
+          return s;
         });
 
+      // Shift page overrides down
+      const nextOverrides: Record<number, PageConfigOverride> = {};
+      Object.entries(pageOverridesRef.current).forEach(([key, val]) => {
+        const pIdx = parseInt(key, 10);
+        if (pIdx < targetPage.pageIndex) {
+          nextOverrides[pIdx] = val;
+        } else if (pIdx > targetPage.pageIndex) {
+          nextOverrides[pIdx - 1] = val;
+        }
+      });
+
       dispatch(
-        setSectionCanvasRows({
-          sectionId: section.id,
-          canvasRows: remainingRows,
+        updateLibrarySection({
+          id: section.id,
+          stamps: updatedStamps,
+          pageOverrides: nextOverrides,
         })
       );
+      setPageOverrides(nextOverrides);
+      pageOverridesRef.current = nextOverrides;
 
-      handleSelectCell(null, null);
       setActiveViewPageIndex((prev) => Math.max(0, Math.min(prev, pages.length - 2)));
       setPageToDelete(null);
 
-      const rowCount = targetPage.rows.length;
       dispatch(
         showGlobalToast({
-          message: `Page ${targetPage.pageNumber} deleted (${rowCount} ${rowCount === 1 ? "row" : "rows"} removed).`,
+          message: `Page ${targetPage.pageNumber} deleted.`,
           type: "info",
         })
       );
     },
-    [dispatch, section.id, section.canvasRows, pages.length, handleSelectCell]
+    [dispatch, section.id, section.stamps, pages.length, setActiveViewPageIndex]
   );
 
   const handleMovePageUp = useCallback(
     (pageIndex: number) => {
       if (pageIndex <= 0 || pageIndex >= pages.length) return;
       const targetPage = pages[pageIndex];
-      const prevPage = pages[pageIndex - 1];
-      if (!targetPage || !prevPage) return;
-
-      const currentRows = section.canvasRows || [];
-      const targetIds = new Set(targetPage.rows.map((r) => r.id));
-      const prevIds = new Set(prevPage.rows.map((r) => r.id));
-
-      const firstPrevIdx = currentRows.findIndex((r) => prevIds.has(r.id));
-      if (firstPrevIdx === -1) return;
-
-      const rowsWithoutTarget = currentRows.filter((r) => !targetIds.has(r.id));
-      const targetRows = targetPage.rows;
-
-      const nextRows = [
-        ...rowsWithoutTarget.slice(0, firstPrevIdx),
-        ...targetRows,
-        ...rowsWithoutTarget.slice(firstPrevIdx),
-      ].map((r, idx) => {
-        if (idx === 0) {
-          return { ...r, pageBreakBefore: false };
-        }
-        if (prevIds.has(r.id) && r.id === prevPage.rows[0]?.id) {
-          return { ...r, pageBreakBefore: true };
-        }
-        return r;
+      const currentStamps = section.stamps || [];
+      const updatedStamps = currentStamps.map((s) => {
+        const p = s.pageIndex ?? 0;
+        if (p === pageIndex) return { ...s, pageIndex: pageIndex - 1 };
+        if (p === pageIndex - 1) return { ...s, pageIndex };
+        return s;
       });
+      const nextOverrides = { ...pageOverridesRef.current };
+      const temp = nextOverrides[pageIndex];
+      nextOverrides[pageIndex] = nextOverrides[pageIndex - 1];
+      nextOverrides[pageIndex - 1] = temp;
 
-      dispatch(setSectionCanvasRows({ sectionId: section.id, canvasRows: nextRows }));
-      dispatch(showGlobalToast({ message: `Moved Page ${targetPage.pageNumber} up!`, type: "success" }));
+      dispatch(
+        updateLibrarySection({
+          id: section.id,
+          stamps: updatedStamps,
+          pageOverrides: nextOverrides,
+        })
+      );
+      setPageOverrides(nextOverrides);
+      pageOverridesRef.current = nextOverrides;
       setActiveViewPageIndex(pageIndex - 1);
+      dispatch(showGlobalToast({ message: `Moved Page ${targetPage?.pageNumber || pageIndex + 1} up!`, type: "success" }));
       setTimeout(() => {
         document.getElementById(`canvas-page-${pageIndex - 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
     },
-    [dispatch, section.id, section.canvasRows, pages, setActiveViewPageIndex]
+    [dispatch, section.id, section.stamps, pages, setActiveViewPageIndex]
   );
 
   const handleMovePageDown = useCallback(
     (pageIndex: number) => {
       if (pageIndex < 0 || pageIndex >= pages.length - 1) return;
       const targetPage = pages[pageIndex];
-      const nextPage = pages[pageIndex + 1];
-      if (!targetPage || !nextPage) return;
-
-      const currentRows = section.canvasRows || [];
-      const targetIds = new Set(targetPage.rows.map((r) => r.id));
-      const nextIds = new Set(nextPage.rows.map((r) => r.id));
-
-      let lastNextIdx = -1;
-      for (let i = 0; i < currentRows.length; i++) {
-        if (nextIds.has(currentRows[i].id)) lastNextIdx = i;
-      }
-      if (lastNextIdx === -1) return;
-
-      const rowsWithoutTarget = currentRows.filter((r) => !targetIds.has(r.id));
-      let insertIdx = 0;
-      for (let i = 0; i < rowsWithoutTarget.length; i++) {
-        if (nextIds.has(rowsWithoutTarget[i].id)) insertIdx = i + 1;
-      }
-
-      const nextRows = [
-        ...rowsWithoutTarget.slice(0, insertIdx),
-        ...targetPage.rows,
-        ...rowsWithoutTarget.slice(insertIdx),
-      ].map((r, idx) => {
-        if (idx === 0) {
-          return { ...r, pageBreakBefore: false };
-        }
-        if (targetIds.has(r.id) && r.id === targetPage.rows[0]?.id) {
-          return { ...r, pageBreakBefore: true };
-        }
-        return r;
+      const currentStamps = section.stamps || [];
+      const updatedStamps = currentStamps.map((s) => {
+        const p = s.pageIndex ?? 0;
+        if (p === pageIndex) return { ...s, pageIndex: pageIndex + 1 };
+        if (p === pageIndex + 1) return { ...s, pageIndex };
+        return s;
       });
+      const nextOverrides = { ...pageOverridesRef.current };
+      const temp = nextOverrides[pageIndex];
+      nextOverrides[pageIndex] = nextOverrides[pageIndex + 1];
+      nextOverrides[pageIndex + 1] = temp;
 
-      dispatch(setSectionCanvasRows({ sectionId: section.id, canvasRows: nextRows }));
-      dispatch(showGlobalToast({ message: `Moved Page ${targetPage.pageNumber} down!`, type: "success" }));
+      dispatch(
+        updateLibrarySection({
+          id: section.id,
+          stamps: updatedStamps,
+          pageOverrides: nextOverrides,
+        })
+      );
+      setPageOverrides(nextOverrides);
+      pageOverridesRef.current = nextOverrides;
       setActiveViewPageIndex(pageIndex + 1);
+      dispatch(showGlobalToast({ message: `Moved Page ${targetPage?.pageNumber || pageIndex + 1} down!`, type: "success" }));
       setTimeout(() => {
         document.getElementById(`canvas-page-${pageIndex + 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
     },
-    [dispatch, section.id, section.canvasRows, pages, setActiveViewPageIndex]
+    [dispatch, section.id, section.stamps, pages, setActiveViewPageIndex]
   );
 
   const handleAddBlockBeside = useCallback(
@@ -1370,12 +1173,7 @@ export function CanvasStudio({
             </div>
           )}
 
-          <SortableContext
-            items={rows.map((r) => r.id)}
-            strategy={verticalListSortingStrategy}
-            disabled={activeIsPreview}
-          >
-            {pages.map((page, pageIdx) => {
+          {pages.map((page, pageIdx) => {
               const isEditingHere = editingPageIndex === page.pageIndex;
               const isFirstPage = page.pageIndex === 0;
               const pageOverride = pageOverrides[page.pageIndex];
@@ -1455,7 +1253,7 @@ export function CanvasStudio({
                           Page {page.pageNumber} of {computedTotalPages}
                         </span>
                         <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">
-                          &bull; {page.rows.length} {page.rows.length === 1 ? "row" : "rows"}
+                          &bull; {(section.stamps || []).filter((s) => (s.pageIndex ?? 0) === page.pageIndex).length} {((section.stamps || []).filter((s) => (s.pageIndex ?? 0) === page.pageIndex).length === 1) ? "element" : "elements"}
                         </span>
                         <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono bg-slate-100 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded border border-slate-200/80 dark:border-zinc-700/60">
                           A4 595×842
@@ -1586,6 +1384,56 @@ export function CanvasStudio({
                     <div
                       id={`canvas-page-${page.pageIndex}`}
                       onClick={() => setActiveViewPageIndex(page.pageIndex)}
+                      onDragEnter={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = "copy";
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          let data: any = null;
+                          const rawJson = e.dataTransfer.getData("application/json");
+                          const rawText = e.dataTransfer.getData("text/plain");
+                          if (rawJson) {
+                            try { data = JSON.parse(rawJson); } catch {}
+                          }
+                          if (!data && rawText && (rawText.startsWith("{") || rawText.startsWith("["))) {
+                            try { data = JSON.parse(rawText); } catch {}
+                          }
+                          if (!data && typeof window !== "undefined" && (window as any).__draggedSidebarBlock) {
+                            data = (window as any).__draggedSidebarBlock;
+                          }
+                          if (!data) return;
+
+                          const pageEl = document.getElementById(`canvas-page-${page.pageIndex}`);
+                          let dropX = 24;
+                          let dropY = 140;
+                          if (pageEl) {
+                            const rect = pageEl.getBoundingClientRect();
+                            const zoomFactor = activeZoom || 1;
+                            const rawX = (e.clientX - rect.left) / zoomFactor;
+                            const rawY = (e.clientY - rect.top) / zoomFactor;
+                            dropX = Math.round(rawX / 8) * 8;
+                            dropY = Math.round(rawY / 8) * 8;
+                          }
+                          if (onDropBlock) {
+                            onDropBlock({
+                              ...data,
+                              dropX,
+                              dropY,
+                              pageIndex: page.pageIndex,
+                            });
+                          }
+                        } catch (err) {
+                          console.error("Canvas artboard drop error:", err);
+                        }
+                      }}
                       style={{
                         ...customPaperStyle,
                         borderRadius: "2px",
@@ -1661,12 +1509,12 @@ export function CanvasStudio({
                         onSendBackward={(stampId) => {
                           dispatch(sendStampBackward({ sectionId: section.id, stampId }));
                         }}
-                        onDockToGrid={handleDockStampToGrid}
                         onOpenChartEditor={onOpenChartEditor}
                         selectedStampId={selectedStampId}
                         onSelectStamp={setSelectedStampId}
                         pageWidth={activePageWidth}
                         pageHeight={activePageHeight}
+                        zoom={activeZoom}
                       />
 
                       {/* Fixed Sitesafe Running Report Header (Edge-to-edge flush with top of A4 sheet) */}
@@ -1828,110 +1676,28 @@ export function CanvasStudio({
                           )}
                         </div>
 
-                        {/* Canvas Rows Container for this Page */}
+                        {/* 100% Float-Only Open Canvas Surface for this Page */}
                         <div
-                          className="relative z-10 space-y-2 flex-1 min-h-0 overflow-visible transition-all duration-150"
-                            style={{
-                              paddingTop: section.sectionStyle?.paddingTop !== undefined ? `${section.sectionStyle.paddingTop}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "6px",
-                              paddingBottom: section.sectionStyle?.paddingBottom !== undefined ? `${section.sectionStyle.paddingBottom}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "4px",
-                              paddingLeft: section.sectionStyle?.paddingLeft !== undefined ? `${section.sectionStyle.paddingLeft}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
-                              paddingRight: section.sectionStyle?.paddingRight !== undefined ? `${section.sectionStyle.paddingRight}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
-                              backgroundColor: section.sectionStyle?.backgroundColor,
-                              borderRadius: section.sectionStyle?.borderRadius !== undefined ? (typeof section.sectionStyle.borderRadius === "number" ? `${section.sectionStyle.borderRadius}px` : section.sectionStyle.borderRadius) : undefined,
-                              borderWidth: section.sectionStyle?.borderWidth !== undefined ? `${section.sectionStyle.borderWidth}px` : undefined,
-                              borderColor: section.sectionStyle?.borderColor,
-                              borderStyle: section.sectionStyle?.borderStyle || (section.sectionStyle?.borderWidth ? "solid" : undefined),
-                            }}
-                          >
-                            {page.rows.length === 0 ? (
-                              <div
-                                onDragOver={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  e.dataTransfer.dropEffect = "copy";
-                                }}
-                                onDrop={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  try {
-                                    const raw = e.dataTransfer.getData("application/json");
-                                    if (!raw) return;
-                                    const data = JSON.parse(raw);
-                                    if (onDropBlock) onDropBlock({ ...data, insertRowAtIndex: 0 });
-                                  } catch (err) {
-                                    console.error("Empty canvas drop error:", err);
-                                  }
-                                }}
-                                className="text-center py-16 border-2 border-dashed border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF] hover:bg-[#9D61FF]/5 transition-all rounded-2xl text-slate-400 dark:text-zinc-600 space-y-3 cursor-copy"
-                              >
-                                <p className="text-sm font-medium">Canvas is empty</p>
-                                <p className="text-xs">Drag any block from the left sidebar or click to add</p>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                {/* Drop zone at the top of this page */}
-                                {/* {!activeIsPreview && page.rows.length > 0 && (
-                              <DropInsertZone
-                                insertIndex={Math.max(0, rows.findIndex((r) => r.id === page.rows[0]?.id))}
-                                onAddRow={handleInsertRowAtIndex}
-                                onDropBlock={onDropBlock}
-                                label={page.isFirstPage ? "Drop to insert at top of report" : `Drop to insert at top of Page ${page.pageNumber}`}
-                              />
-                            )} */}
-
-                                {page.rows.map((row, rowIdx) => {
-                                  const globalRowIndex = rows.findIndex((r) => r.id === row.id);
-                                  return (
-                                    <React.Fragment key={row.id}>
-                                      <SortableRow
-                                        sectionId={section.id}
-                                        row={row}
-                                        selectedCellId={activeSelectedCellId}
-                                        selectedRowId={activeSelectedRowId}
-                                        isPreview={activeIsPreview}
-                                        currentPageNumber={page.pageNumber}
-                                        zoom={activeZoom}
-                                        onSelectCell={handleSelectCell}
-                                        onEditCell={onEditCell}
-                                        onDuplicateCell={handleDuplicateCell}
-                                        onDeleteCell={handleDeleteCell}
-                                        onFloatCell={handleFloatCell}
-                                        onColSpanChange={handleColSpanChange}
-                                        onWidthChange={handleWidthChange}
-                                        onHeightChange={handleHeightChange}
-                                        onUpdateMetricCard={onUpdateMetricCardInCell}
-                                        onUpdateChart={onUpdateChartInCell}
-                                        onUpdateInsight={onUpdateInsightInCell}
-                                        onUpdateTextBlock={onUpdateTextBlockInCell}
-                                        onUpdateBadgeStrip={onUpdateBadgeStripInCell}
-                                        onAddBadge={onAddBadgeToStripInCell}
-                                        onDeleteBadge={onDeleteBadgeFromStripInCell}
-                                        onRemoveRow={handleRemoveRow}
-                                        onTogglePageBreak={handleTogglePageBreak}
-                                        onUpdateRowStyle={onUpdateRowStyle}
-                                        onDropBlock={onDropBlock}
-                                        onMoveCellToStackBelow={onMoveCellToStackBelow}
-                                        onStackCellBelow={onStackCellBelow}
-                                        onUnstackCell={onUnstackCell}
-                                        onReorderStacked={onReorderStacked}
-                                        activeDragCellId={activeDragCell?.id || null}
-                                        onAddBlockBeside={handleAddBlockBeside}
-                                      />
-                                      {/* Drop zone below this row */}
-                                      {!activeIsPreview && rowIdx === page.rows.length - 1 && (
-                                        <DropInsertZone
-                                          insertIndex={globalRowIndex + 1}
-                                          onAddRow={handleInsertRowAtIndex}
-                                          onDropBlock={onDropBlock}
-                                          label={`Drop to insert new row below row ${globalRowIndex + 1}`}
-                                        />
-                                      )}
-                                    </React.Fragment>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
+                          className="relative z-10 flex-1 min-h-0 overflow-visible transition-all duration-150 flex flex-col"
+                          style={{
+                            paddingTop: section.sectionStyle?.paddingTop !== undefined ? `${section.sectionStyle.paddingTop}px` : "6px",
+                            paddingBottom: section.sectionStyle?.paddingBottom !== undefined ? `${section.sectionStyle.paddingBottom}px` : "4px",
+                            paddingLeft: section.sectionStyle?.paddingLeft !== undefined ? `${section.sectionStyle.paddingLeft}px` : "0px",
+                            paddingRight: section.sectionStyle?.paddingRight !== undefined ? `${section.sectionStyle.paddingRight}px` : "0px",
+                          }}
+                        >
+                          {/* Empty Page Guidance Callout (only when no floating elements exist on this page) */}
+                          {!activeIsPreview && (section.stamps || []).filter(
+                            (s) => (s.pageIndex ?? 0) === page.pageIndex && s.elementType && s.elementType !== "stamp"
+                          ).length === 0 && (
+                            <div className="flex-1 min-h-[220px] flex flex-col items-center justify-center p-8 m-2 border-2 border-dashed border-slate-200/90 dark:border-zinc-800 hover:border-[#9D61FF]/60 hover:bg-[#9D61FF]/5 transition-all rounded-2xl text-slate-400 dark:text-zinc-600 space-y-2 select-none text-center">
+                              <p className="text-sm font-semibold text-slate-600 dark:text-zinc-300">Canvas Page {page.pageNumber} is ready</p>
+                              <p className="text-xs text-slate-400 dark:text-zinc-500 max-w-xs">
+                                Drag any card, chart, insight or badge strip from the left sidebar to position it freely anywhere on this page
+                              </p>
+                            </div>
+                          )}
+                        </div>
 
                         </div>
 
@@ -1974,12 +1740,12 @@ export function CanvasStudio({
                         onSendBackward={(stampId) => {
                           dispatch(sendStampBackward({ sectionId: section.id, stampId }));
                         }}
-                        onDockToGrid={handleDockStampToGrid}
                         onOpenChartEditor={onOpenChartEditor}
                         selectedStampId={selectedStampId}
                         onSelectStamp={setSelectedStampId}
                         pageWidth={activePageWidth}
                         pageHeight={activePageHeight}
+                        zoom={activeZoom}
                       />
                     </div>
 
@@ -2011,7 +1777,6 @@ export function CanvasStudio({
                 </React.Fragment>
               );
             })}
-          </SortableContext>
 
           {/* After Content Slot — e.g. Back Cover Page */}
           {afterContent && (
