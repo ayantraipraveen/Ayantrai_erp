@@ -25,12 +25,18 @@ import {
   X,
 } from "lucide-react";
 import { Tooltip } from "@/app/Component";
-import {
-  UploadedSvgWatermark,
-  STORAGE_KEY,
-  INITIAL_SEEDS,
-  formatBytes,
-} from "./utils";
+import { UploadedSvgWatermark, formatBytes } from "./utils";
+import { watermarkApi, WatermarkItem } from "@/lib/api";
+
+const mapApiItemToSvg = (item: WatermarkItem): UploadedSvgWatermark => ({
+  id: item.id,
+  name: item.name,
+  fileName: item.fileName,
+  svgContent: item.svgContent,
+  uploadedAt: (item.createdAt || new Date().toISOString()).replace("T", " ").substring(0, 16),
+  sizeBytes: item.sizeBytes,
+  scale: item.scale ?? 100,
+});
 
 export default function WatermarkPage() {
   const [watermarks, setWatermarks] = useState<UploadedSvgWatermark[]>([]);
@@ -52,46 +58,57 @@ export default function WatermarkPage() {
   // Preview & Scale controls (Scale can be negative e.g. -200% to +200%)
   const [previewTheme, setPreviewTheme] = useState<"light" | "dark" | "grid">("light");
   const [sizeScale, setSizeScale] = useState<number>(100);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load from localStorage on mount
+  // Strictly fetch from database on mount via Watermark API & purge legacy localStorage
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored !== null) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setWatermarks(parsed);
-          if (parsed.length > 0) {
-            setSelectedId(parsed[0].id);
-            setSizeScale(parsed[0].scale ?? 100);
+    let isMounted = true;
+
+    // Purge legacy client-side localStorage entries so browser storage remains empty
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("ayantrai_uploaded_watermark_svgs");
+      } catch (_) {}
+    }
+
+    async function loadWatermarks() {
+      try {
+        const response = await watermarkApi.getWatermarks();
+        if (isMounted) {
+          if (response?.data && Array.isArray(response.data)) {
+            const mapped = response.data.map(mapApiItemToSvg);
+            setWatermarks(mapped);
+            if (mapped.length > 0) {
+              setSelectedId(mapped[0].id);
+              setSizeScale(mapped[0].scale ?? 100);
+            } else {
+              setSelectedId(null);
+            }
           } else {
+            setWatermarks([]);
             setSelectedId(null);
           }
           setIsLoaded(true);
-          return;
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setWatermarks([]);
+          setSelectedId(null);
+          setIsLoaded(true);
+          setUploadError(
+            err.response?.data?.message ||
+            "Unable to connect to Watermark database API. Please ensure template-service is running on port 5001."
+          );
         }
       }
-      // First visit: start with empty list so only user-uploaded SVGs are shown
-      setWatermarks([]);
-      setSelectedId(null);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
-    } catch (e) {
-      console.warn("Failed to load watermarks from localStorage:", e);
-      setWatermarks([]);
-      setSelectedId(null);
     }
-    setIsLoaded(true);
-  }, []);
 
-  // Save to localStorage
-  const persistWatermarks = (updated: UploadedSvgWatermark[]) => {
-    setWatermarks(updated);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.warn("Failed to save watermarks to localStorage:", e);
-    }
-  };
+    loadWatermarks();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Sync sizeScale when selected watermark changes
   const handleSelectWatermark = (wm: UploadedSvgWatermark) => {
@@ -100,23 +117,33 @@ export default function WatermarkPage() {
     setUploadError(null);
   };
 
-  // Update scale for currently selected watermark and persist
+  // Update scale for currently selected watermark directly in database
   const handleUpdateScale = (newScale: number) => {
     const clamped = Math.max(-200, Math.min(200, newScale));
     setSizeScale(clamped);
 
     if (selectedId) {
-      const updated = watermarks.map((w) =>
-        w.id === selectedId ? { ...w, scale: clamped } : w
+      setWatermarks((prev) =>
+        prev.map((w) => (w.id === selectedId ? { ...w, scale: clamped } : w))
       );
-      persistWatermarks(updated);
+
+      if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
+      updateTimeoutRef.current = setTimeout(async () => {
+        try {
+          await watermarkApi.updateWatermark(selectedId, { scale: clamped });
+        } catch (err: any) {
+          setUploadError(
+            err.response?.data?.message || "Failed to update scale in database."
+          );
+        }
+      }, 500);
     }
   };
 
   // Selected watermark
   const selectedWatermark = watermarks.find((w) => w.id === selectedId) || null;
 
-  // Process uploaded SVG files (accepts ANY valid SVG file)
+  // Process uploaded SVG files (saves to PostgreSQL via Watermark API)
   const handleProcessFiles = async (files: FileList | File[]) => {
     setUploadError(null);
     setUploadSuccess(null);
@@ -130,7 +157,6 @@ export default function WatermarkPage() {
     for (const file of fileList) {
       try {
         const text = await file.text();
-        // Check for presence of <svg tag (case-insensitive)
         if (!/<svg[\s>]/i.test(text)) {
           errors.push(`"${file.name}" does not appear to contain valid <svg> vector markup.`);
           continue;
@@ -141,36 +167,44 @@ export default function WatermarkPage() {
           .replace(/[-_]/g, " ")
           .trim();
         const formattedName = cleanName ? cleanName.charAt(0).toUpperCase() + cleanName.slice(1) : file.name;
+        const fileName = file.name.endsWith(".svg") ? file.name : `${file.name}.svg`;
 
-        newEntries.push({
-          id: `wm-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-          name: formattedName || file.name,
-          fileName: file.name.endsWith(".svg") ? file.name : `${file.name}.svg`,
-          svgContent: text,
-          uploadedAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-          sizeBytes: file.size,
-          scale: 100,
-        });
+        try {
+          const response = await watermarkApi.createWatermark({
+            name: formattedName || file.name,
+            fileName,
+            svgContent: text,
+            scale: 100,
+            sizeBytes: file.size,
+          });
+
+          if (response?.data) {
+            newEntries.push(mapApiItemToSvg(response.data));
+          } else {
+            errors.push(`Failed to save "${file.name}" to database.`);
+          }
+        } catch (apiErr: any) {
+          errors.push(apiErr.response?.data?.message || `Failed to save "${file.name}" to database.`);
+        }
       } catch (err: any) {
         errors.push(`Failed to read "${file.name}".`);
       }
     }
 
     if (errors.length > 0) {
-      setUploadError(errors.join(" "));
+      setUploadError(errors.join(" | "));
     }
 
     if (newEntries.length > 0) {
-      const updated = [...newEntries, ...watermarks];
-      persistWatermarks(updated);
+      setWatermarks((prev) => [...newEntries, ...prev]);
       setSelectedId(newEntries[0].id);
       setSizeScale(100);
-      setUploadSuccess(`Uploaded ${newEntries.length} vector SVG${newEntries.length > 1 ? "s" : ""} to library!`);
+      setUploadSuccess(`Saved ${newEntries.length} vector SVG${newEntries.length > 1 ? "s" : ""} to database!`);
     }
   };
 
-  // Add SVG by direct code paste
-  const handleAddPastedSvg = () => {
+  // Add SVG by direct code paste (strictly saves to database)
+  const handleAddPastedSvg = async () => {
     setPasteError(null);
     if (!pasteSvgContent.trim()) {
       setPasteError("Please paste your SVG markup code.");
@@ -185,24 +219,30 @@ export default function WatermarkPage() {
     const name = pasteSvgName.trim() || `Pasted SVG ${watermarks.length + 1}`;
     const cleanFileName = `${name.toLowerCase().replace(/[^a-z0-9]/g, "-")}.svg`;
 
-    const newEntry: UploadedSvgWatermark = {
-      id: `wm-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      name,
-      fileName: cleanFileName,
-      svgContent: pasteSvgContent.trim(),
-      uploadedAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-      sizeBytes: new Blob([pasteSvgContent]).size,
-      scale: 100,
-    };
+    try {
+      const response = await watermarkApi.createWatermark({
+        name,
+        fileName: cleanFileName,
+        svgContent: pasteSvgContent.trim(),
+        scale: 100,
+        sizeBytes: new Blob([pasteSvgContent]).size,
+      });
 
-    const updated = [newEntry, ...watermarks];
-    persistWatermarks(updated);
-    setSelectedId(newEntry.id);
-    setSizeScale(100);
-    setIsPasteModalOpen(false);
-    setPasteSvgContent("");
-    setPasteSvgName("");
-    setUploadSuccess(`Added "${name}" to watermark library!`);
+      if (response?.data) {
+        const newEntry = mapApiItemToSvg(response.data);
+        setWatermarks((prev) => [newEntry, ...prev]);
+        setSelectedId(newEntry.id);
+        setSizeScale(100);
+        setIsPasteModalOpen(false);
+        setPasteSvgContent("");
+        setPasteSvgName("");
+        setUploadSuccess(`Saved "${name}" to database!`);
+      } else {
+        setPasteError("Database did not return saved watermark.");
+      }
+    } catch (apiErr: any) {
+      setPasteError(apiErr.response?.data?.message || "Failed to save watermark to database.");
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,37 +269,40 @@ export default function WatermarkPage() {
     }
   };
 
-  // Delete a single watermark from the list & localStorage
-  const handleDelete = (id: string, name: string) => {
-    const updated = watermarks.filter((w) => w.id !== id);
-    persistWatermarks(updated);
-    if (selectedId === id) {
-      const next = updated[0] || null;
-      setSelectedId(next ? next.id : null);
-      setSizeScale(next?.scale ?? 100);
+  // Delete a single watermark from database
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      await watermarkApi.deleteWatermark(id);
+      setWatermarks((prev) => {
+        const updated = prev.filter((w) => w.id !== id);
+        if (selectedId === id) {
+          const next = updated[0] || null;
+          setSelectedId(next ? next.id : null);
+          setSizeScale(next?.scale ?? 100);
+        }
+        return updated;
+      });
+      setUploadSuccess(`Deleted "${name}" from database.`);
+    } catch (err: any) {
+      setUploadError(err.response?.data?.message || `Failed to delete "${name}" from database.`);
     }
-    setUploadSuccess(`Deleted "${name}" from watermark library.`);
   };
 
-  // Clear all watermarks from list & localStorage
-  const handleClearAll = () => {
+  // Clear all watermarks from database
+  const handleClearAll = async () => {
     if (watermarks.length === 0) return;
-    if (typeof window !== "undefined" && !window.confirm("Are you sure you want to remove all uploaded SVGs from this library?")) {
+    if (typeof window !== "undefined" && !window.confirm("Are you sure you want to delete all watermarks from the database?")) {
       return;
     }
-    persistWatermarks([]);
-    setSelectedId(null);
-    setSizeScale(100);
-    setUploadSuccess("Cleared all watermarks from local storage.");
-  };
-
-  // Reset to default seeds
-  const handleResetToSeeds = () => {
-    persistWatermarks(INITIAL_SEEDS);
-    setSelectedId(INITIAL_SEEDS[0].id);
-    setSizeScale(INITIAL_SEEDS[0].scale ?? 100);
-    setUploadSuccess("Restored default vector watermark presets.");
-    setUploadError(null);
+    try {
+      await Promise.all(watermarks.map((w) => watermarkApi.deleteWatermark(w.id)));
+      setWatermarks([]);
+      setSelectedId(null);
+      setSizeScale(100);
+      setUploadSuccess("All watermarks deleted from database.");
+    } catch (err: any) {
+      setUploadError(err.response?.data?.message || "Failed to clear watermarks from database.");
+    }
   };
 
   const formatBytes = (bytes?: number) => {
@@ -354,7 +397,7 @@ export default function WatermarkPage() {
                   Drop any SVG file here, or <span className="text-[#9D61FF] underline">browse</span>
                 </p>
                 <p className="text-[10.5px] text-slate-500 dark:text-zinc-400 mt-0.5">
-                  Accepts any vector SVG • Saved in local storage
+                  Accepts any vector SVG • Stored in PostgreSQL database
                 </p>
               </div>
             </div>
@@ -402,7 +445,7 @@ export default function WatermarkPage() {
                 type="button"
                 onClick={handleClearAll}
                 className="text-[10.5px] font-medium text-slate-400 hover:text-rose-500 cursor-pointer transition-colors"
-                title="Delete all SVGs from list"
+                title="Delete all SVGs from database"
               >
                 Clear All
               </button>
@@ -413,7 +456,7 @@ export default function WatermarkPage() {
           <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-3 space-y-2">
             {!isLoaded ? (
               <div className="p-8 text-center text-xs text-slate-400">
-                Loading watermarks...
+                Loading watermarks from database...
               </div>
             ) : watermarks.length === 0 ? (
               <div className="p-8 text-center text-xs text-slate-400 space-y-2.5">
@@ -422,20 +465,11 @@ export default function WatermarkPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-slate-700 dark:text-zinc-300 text-xs">
-                    No SVGs uploaded yet
+                    No SVGs in database yet
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     Drop your SVG file above or browse to upload.
                   </p>
-                </div>
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={handleResetToSeeds}
-                    className="text-[10.5px] text-[#9D61FF] hover:underline cursor-pointer"
-                  >
-                    + Load sample vector stamps
-                  </button>
                 </div>
               </div>
             ) : (

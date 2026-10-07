@@ -124,14 +124,12 @@ export function getUploadedWatermarks(): UploadedSvgWatermark[] {
   }
 }
 
-/** Save updated watermarks array to localStorage */
-export function saveUploadedWatermarks(items: UploadedSvgWatermark[]): void {
+/** Save updated watermarks array (no-op; database is the single source of truth) */
+export function saveUploadedWatermarks(_items: UploadedSvgWatermark[]): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch (e) {
-    console.warn("Failed to save watermarks to localStorage", e);
-  }
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (_) {}
 }
 
 /** Retrieve watermark stamping settings for a section */
