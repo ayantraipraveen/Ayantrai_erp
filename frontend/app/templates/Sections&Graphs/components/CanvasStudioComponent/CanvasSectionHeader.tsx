@@ -61,10 +61,10 @@ export function CanvasSectionHeader({
     <div
       className={`relative ${editingSectionField ? "z-50" : "z-10"} px-0 group/section-header transition-all select-text ${
         section.headerSpacing === "compact"
-          ? "pt-1.5 pb-1"
+          ? "pt-1 pb-0.5"
           : section.headerSpacing === "spacious"
-          ? "pt-5 pb-4"
-          : "pt-2.5 pb-2"
+          ? "pt-4 pb-3"
+          : "pt-1.5 pb-1"
       }`}
       style={{ backgroundColor: getPaperToneColor(paperTone) }}
     >
@@ -187,7 +187,7 @@ export function CanvasSectionHeader({
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mt-1">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mt-0.5">
         <div className="flex-1 min-w-0">
           {/* Main Section Title */}
           {editingSectionField === "name" ? (
@@ -257,25 +257,25 @@ export function CanvasSectionHeader({
         {/* Right Side Project / Site Info Card (Matching Dummy_report.pdf Page 3) */}
         {(section.projectSite || section.reportingPeriod) && (
           <div className="hidden sm:flex flex-col gap-1.5 p-2 bg-slate-50/90 dark:bg-zinc-800/80 rounded-xl border border-slate-200/80 dark:border-zinc-700/60 text-xs shrink-0 min-w-[190px] max-w-[210px] shadow-none">
-            {section.projectSite && (
+            {(section.projectSite || "ABC Infrastructure Project") && (
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                   <Building2 className="w-3 h-3" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Project / Site</div>
-                  <div className="font-bold text-[11px] text-slate-800 dark:text-zinc-100 truncate">{section.projectSite}</div>
+                  <div className="font-bold text-[11px] text-slate-800 dark:text-zinc-100 truncate">{section.projectSite || "ABC Infrastructure Project"}</div>
                 </div>
               </div>
             )}
-            {section.reportingPeriod && (
+            {(section.reportingPeriod || "01 Sept 2025 – 30 Sept 2025") && (
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                   <Calendar className="w-3 h-3" />
                 </div>
                 <div className="min-w-0">
                   <div className="text-[9px] text-slate-400 font-medium leading-none mb-0.5">Reporting Period</div>
-                  <div className="font-bold text-[11px] text-slate-800 dark:text-zinc-100 truncate">{section.reportingPeriod}</div>
+                  <div className="font-bold text-[11px] text-slate-800 dark:text-zinc-100 truncate">{section.reportingPeriod || "01 Sept 2025 – 30 Sept 2025"}</div>
                 </div>
               </div>
             )}

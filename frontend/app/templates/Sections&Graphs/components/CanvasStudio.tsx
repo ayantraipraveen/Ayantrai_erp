@@ -1726,7 +1726,7 @@ export function CanvasStudio({
 
                       {/* Inner Page Content with Margins */}
                       <div
-                        className="relative z-10 flex-1 min-h-0 flex flex-col justify-between w-full max-w-full box-border"
+                        className="relative z-10 flex-1 min-h-0 flex flex-col w-full max-w-full box-border"
                         style={{
                           paddingTop: isReportHeaderHidden ? 20 : 10,
                           paddingRight: marginConfig.right,
@@ -1872,7 +1872,7 @@ export function CanvasStudio({
                                 <p className="text-xs">Drag any block from the left sidebar or click to add</p>
                               </div>
                             ) : (
-                              <div className="space-y-3.5">
+                              <div className="space-y-2.5">
                                 {/* Drop zone at the top of this page */}
                                 {/* {!activeIsPreview && page.rows.length > 0 && (
                               <DropInsertZone
@@ -1908,7 +1908,6 @@ export function CanvasStudio({
                                         onUpdateInsight={onUpdateInsightInCell}
                                         onUpdateTextBlock={onUpdateTextBlockInCell}
                                         onUpdateBadgeStrip={onUpdateBadgeStripInCell}
-                                        onUpdateSingleBadge={onUpdateSingleBadgeInCell}
                                         onAddBadge={onAddBadgeToStripInCell}
                                         onDeleteBadge={onDeleteBadgeFromStripInCell}
                                         onRemoveRow={handleRemoveRow}
@@ -1934,45 +1933,6 @@ export function CanvasStudio({
                                     </React.Fragment>
                                   );
                                 })}
-                              </div>
-                            )}
-
-                            {/* Add Row Button on this page (Hidden in preview) */}
-                            {!activeIsPreview && (
-                              <div className="flex items-center gap-2 pt-2">
-                                {/* {(() => {
-                              const lastRowOfPage = page.rows[page.rows.length - 1];
-                              const pageEndInsertIndex = lastRowOfPage
-                                ? rows.findIndex((r) => r.id === lastRowOfPage.id) + 1
-                                : rows.length;
-                              return (
-                                <PageAddRowDropZone
-                                  pageNumber={page.pageNumber}
-                                  insertIndex={pageEndInsertIndex}
-                                  onAddRow={() => handleInsertRowAtIndex(pageEndInsertIndex)}
-                                  onDropBlock={onDropBlock}
-                                />
-                              );
-                            })()} */}
-
-
-
-                                {page.isLastPage && (
-                                  <button
-                                    type="button"
-                                    onClick={handleAddPage}
-                                    className="
-                                  px-3.5 py-2.5 rounded-xl border border-dashed border-[#8B3DFF]/40
-                                  text-xs font-bold text-[#8B3DFF] bg-[#8B3DFF]/5
-                                  hover:bg-[#8B3DFF]/10 hover:border-[#8B3DFF]
-                                  transition-all flex items-center gap-1.5 cursor-pointer
-                                "
-                                    title="Create a new blank A4 page"
-                                  >
-                                    <Layers className="w-3.5 h-3.5" />
-                                    <span>+ New Page</span>
-                                  </button>
-                                )}
                               </div>
                             )}
                           </div>
@@ -2026,6 +1986,32 @@ export function CanvasStudio({
                         pageHeight={activePageHeight}
                       />
                     </div>
+
+                    {/* Desk Add Page Button below the last A4 sheet */}
+                    {!activeIsPreview && page.isLastPage && (
+                      <div
+                        className="flex items-center justify-center pt-4 pb-2 select-none"
+                        style={{
+                          width: `${activePageWidth}px`,
+                          marginLeft: activeShowRulers && !activeIsPreview ? "32px" : undefined,
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={handleAddPage}
+                          className="
+                            px-4 py-2 rounded-xl border border-dashed border-[#8B3DFF]/40
+                            text-xs font-bold text-[#8B3DFF] bg-white dark:bg-[#0c1017]
+                            hover:bg-[#8B3DFF]/10 hover:border-[#8B3DFF] shadow-xs
+                            transition-all flex items-center gap-1.5 cursor-pointer
+                          "
+                          title="Create a new blank A4 page"
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                          <span>+ New Page</span>
+                        </button>
+                      </div>
+                    )}
                 </React.Fragment>
               );
             })}

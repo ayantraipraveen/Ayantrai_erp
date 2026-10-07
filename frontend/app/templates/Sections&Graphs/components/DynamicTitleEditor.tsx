@@ -1139,7 +1139,8 @@ export function renderDynamicEyebrow(
   sectionTextColor?: string,
   isDarkPaper?: boolean
 ): React.ReactNode {
-  if (eyebrowHtml && eyebrowHtml.trim()) {
+  const strippedHtml = eyebrowHtml ? eyebrowHtml.replace(/<[^>]*>/g, "").trim() : "";
+  if (eyebrowHtml && strippedHtml) {
     return (
       <span
         dangerouslySetInnerHTML={{ __html: eyebrowHtml }}
@@ -1177,7 +1178,8 @@ export function renderDynamicTitle(
   sectionTextColor?: string,
   isDarkPaper?: boolean
 ): React.ReactNode {
-  if (titleHtml && titleHtml.trim()) {
+  const strippedHtml = titleHtml ? titleHtml.replace(/<[^>]*>/g, "").trim() : "";
+  if (titleHtml && strippedHtml) {
     return (
       <span
         dangerouslySetInnerHTML={{ __html: titleHtml }}

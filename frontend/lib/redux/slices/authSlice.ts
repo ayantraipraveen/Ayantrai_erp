@@ -68,8 +68,9 @@ export const loginUser = createAsyncThunk<
       const errorMsg =
         error.response?.data?.message ||
         error.response?.data?.error ||
-        error.message ||
-        "Failed to sign in. Please verify your credentials.";
+        (!error.response || error.code === "ERR_NETWORK"
+          ? "Unable to connect to backend authentication server. Please ensure the server is running."
+          : error.message || "Failed to sign in. Please verify your credentials.");
       return rejectWithValue(errorMsg);
     }
   }

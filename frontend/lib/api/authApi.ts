@@ -10,13 +10,6 @@ export interface AuthResponse {
 }
 
 /**
- * Helper to simulate realistic network delay and mock user profile
- * when backend API server is offline or in development prototype mode.
- */
-const simulateDelay = (ms: number = 650) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
-/**
  * Centralized Auth API Service using Axios
  */
 export const authApi = {
@@ -24,94 +17,36 @@ export const authApi = {
    * POST /auth/login - Authenticate user credentials
    */
   login: async (credentials: SignInFormData): Promise<AuthResponse> => {
-    try {
-      const response = await axiosClient.post<any>(
-        API_ENDPOINTS.AUTH.LOGIN,
-        credentials
-      );
-      const resPayload = response.data?.data || response.data;
-      if (typeof window !== "undefined" && resPayload?.token) {
-        localStorage.setItem("sitesafe_token", resPayload.token);
-        if (resPayload.user) {
-          localStorage.setItem("sitesafe_user", JSON.stringify(resPayload.user));
-        }
+    const response = await axiosClient.post<any>(
+      API_ENDPOINTS.AUTH.LOGIN,
+      credentials
+    );
+    const resPayload = response.data?.data || response.data;
+    if (typeof window !== "undefined" && resPayload?.token) {
+      localStorage.setItem("sitesafe_token", resPayload.token);
+      if (resPayload.user) {
+        localStorage.setItem("sitesafe_user", JSON.stringify(resPayload.user));
       }
-      return {
-        user: resPayload.user,
-        token: resPayload.token,
-        message: response.data?.message || "Signed in successfully",
-      };
-    } catch (error: any) {
-      // If live backend is not reachable (network error), fallback to simulation
-      if (!error.response || error.code === "ERR_NETWORK") {
-        await simulateDelay();
-        const simulatedToken = "jwt_sitesafe_" + Math.random().toString(36).substring(2);
-        const namePart = credentials.email.split("@")[0].replace(".", " ");
-        const simulatedUser: UserProfile = {
-          id: `usr_${Date.now()}`,
-          name: namePart
-            .split(" ")
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(" "),
-          email: credentials.email,
-          role: "Safety Head / EHS",
-          company: "Industrial Site Operator",
-        };
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("sitesafe_token", simulatedToken);
-        }
-
-        return {
-          user: simulatedUser,
-          token: simulatedToken,
-          message: "Signed in successfully (Development Mode)",
-        };
-      }
-      throw error;
     }
+    return {
+      user: resPayload.user,
+      token: resPayload.token,
+      message: response.data?.message || "Signed in successfully",
+    };
   },
 
   /**
    * POST /auth/register - Provision new enterprise site account
    */
   register: async (data: SignUpFormData | SignUpPayload): Promise<AuthResponse> => {
-    try {
-      const response = await axiosClient.post<AuthResponse>(
-        API_ENDPOINTS.AUTH.REGISTER,
-        data
-      );
-      if (typeof window !== "undefined" && response.data.token) {
-        localStorage.setItem("sitesafe_token", response.data.token);
-      }
-      return response.data;
-    } catch (error: any) {
-      // If live backend is not reachable, fallback to simulation
-      if (!error.response || error.code === "ERR_NETWORK") {
-        await simulateDelay();
-        const simulatedToken = "jwt_sitesafe_" + Math.random().toString(36).substring(2);
-        const simulatedUser: UserProfile = {
-          id: `usr_${Date.now()}`,
-          name: data.name,
-          email: data.email,
-          company: data.company,
-          industry: data.industry,
-          role: data.role,
-          fleetSize: data.fleetSize,
-        };
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("sitesafe_token", simulatedToken);
-        }
-
-        return {
-          user: simulatedUser,
-          token: simulatedToken,
-          message: "Enterprise workspace provisioned (Development Mode)",
-        };
-      }
-      throw error;
+    const response = await axiosClient.post<AuthResponse>(
+      API_ENDPOINTS.AUTH.REGISTER,
+      data
+    );
+    if (typeof window !== "undefined" && response.data.token) {
+      localStorage.setItem("sitesafe_token", response.data.token);
     }
+    return response.data;
   },
 
   /**
