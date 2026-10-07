@@ -5,6 +5,9 @@ import { API_ENDPOINTS } from "./endpoints";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
+export const TEMPLATE_API_BASE_URL =
+  process.env.NEXT_PUBLIC_TEMPLATE_API_URL || "http://localhost:5001/api/v1";
+
 /**
  * Centralized Enterprise Axios Client for AyantrAI Sitesafe ERP
  * Automatically handles:
@@ -15,6 +18,18 @@ const API_BASE_URL =
  */
 export const axiosClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+});
+
+/**
+ * Dedicated Axios Client for the Template & Canvas Blueprint Microservice (port 5001)
+ */
+export const templateAxiosClient: AxiosInstance = axios.create({
+  baseURL: TEMPLATE_API_BASE_URL,
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
@@ -54,6 +69,19 @@ export const buildHeadersWithToken = (
 
 // Request Interceptor: Secondary fallback to ensure Bearer token is attached
 axiosClient.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("sitesafe_token");
+      if (token && config.headers && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+templateAxiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("sitesafe_token");

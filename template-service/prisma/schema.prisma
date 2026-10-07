@@ -48,3 +48,23 @@ model ReportTemplate {
 
   @@map("report_templates")
 }
+
+model Watermark {
+  id          String   @id @default(uuid())
+  name        String
+  fileName    String   @map("file_name")
+  svgContent  String   @map("svg_content") @db.Text
+  sizeBytes   Int      @default(0) @map("size_bytes")
+  scale       Float    @default(100.0)
+  opacity     Float    @default(18.0)
+  rotation    Float    @default(0.0)
+  placement   String   @default("center")
+  tag         String?  @default("custom")
+  isDefault   Boolean  @default(false) @map("is_default")
+  description String?  @db.Text
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("watermarks")
+}

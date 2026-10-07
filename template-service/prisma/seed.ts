@@ -199,8 +199,86 @@ async function seed() {
     console.log(`✅ Seeded template: [${tpl.id}] ${tpl.name} (${tpl.status})`);
   }
 
+  const watermarks = [
+    {
+      id: 'wm-seed-1',
+      name: 'AyantrAI Official Approved Stamp',
+      fileName: 'ayantrai-official-stamp.svg',
+      svgContent: `<svg viewBox="0 0 380 120" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#9D61FF" stroke-width="2.5">
+    <rect x="6" y="6" width="368" height="108" rx="14" stroke-dasharray="6 4" />
+    <path d="M 50 60 L 70 40 L 90 60 L 70 80 Z" fill="#9D61FF" fill-opacity="0.2" />
+    <text x="110" y="54" font-family="monospace" font-size="22" font-weight="900" fill="#9D61FF" letter-spacing="3">AYANTRAI</text>
+    <text x="110" y="76" font-family="monospace" font-size="10.5" font-weight="700" fill="#9D61FF" letter-spacing="2">OFFICIAL COMPLIANCE STAMP</text>
+  </g>
+</svg>`,
+      sizeBytes: 1420,
+      scale: 100,
+      opacity: 18,
+      rotation: 0,
+      placement: 'center',
+      tag: 'compliance',
+      isDefault: true,
+      description: 'Official AyantrAI statutory compliance approval seal',
+    },
+    {
+      id: 'wm-seed-2',
+      name: 'ISO 45001:2018 Certified Stamp',
+      fileName: 'iso-45001-certified.svg',
+      svgContent: `<svg viewBox="0 0 380 120" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#10B981" stroke-width="2.5">
+    <circle cx="60" cy="60" r="42" stroke-dasharray="4 3" />
+    <circle cx="60" cy="60" r="32" fill="#10B981" fill-opacity="0.15" />
+    <path d="M 48 60 L 56 68 L 74 48" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <text x="120" y="52" font-family="monospace" font-size="20" font-weight="900" fill="#10B981" letter-spacing="2">ISO 45001:2018</text>
+    <text x="120" y="74" font-family="monospace" font-size="11" font-weight="700" fill="#10B981" letter-spacing="1.5">OCCUPATIONAL SAFETY VERIFIED</text>
+  </g>
+</svg>`,
+      sizeBytes: 1180,
+      scale: 100,
+      opacity: 18,
+      rotation: 0,
+      placement: 'center',
+      tag: 'certified',
+      isDefault: false,
+      description: 'ISO 45001 Occupational Health & Safety Management certification seal',
+    },
+    {
+      id: 'wm-seed-3',
+      name: 'Confidential Security Seal',
+      fileName: 'confidential-telemetry.svg',
+      svgContent: `<svg viewBox="0 0 380 120" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#EF4444" stroke-width="2.5">
+    <rect x="8" y="8" width="364" height="104" rx="10" stroke-width="3" />
+    <line x1="8" y1="28" x2="372" y2="28" stroke-width="1.5" />
+    <line x1="8" y1="92" x2="372" y2="92" stroke-width="1.5" />
+    <text x="190" y="66" text-anchor="middle" font-family="monospace" font-size="24" font-weight="900" fill="#EF4444" letter-spacing="6">CONFIDENTIAL</text>
+    <text x="190" y="21" text-anchor="middle" font-family="monospace" font-size="8.5" font-weight="700" fill="#EF4444" letter-spacing="2">PROPRIETARY INFRASTRUCTURE TELEMETRY</text>
+  </g>
+</svg>`,
+      sizeBytes: 1350,
+      scale: 100,
+      opacity: 18,
+      rotation: 0,
+      placement: 'center',
+      tag: 'security',
+      isDefault: false,
+      description: 'Confidential infrastructure telemetry watermark',
+    },
+  ];
+
+  for (const wm of watermarks) {
+    await (prisma as any).watermark.upsert({
+      where: { id: wm.id },
+      update: wm,
+      create: wm,
+    });
+    console.log(`✅ Seeded watermark: [${wm.id}] ${wm.name}`);
+  }
+
   const count = await prisma.reportTemplate.count();
-  console.log(`\n🎉 Seed finished! Total blueprints in database ayantrai_templates: ${count}`);
+  const wmCount = await (prisma as any).watermark.count();
+  console.log(`\n🎉 Seed finished! Total blueprints: ${count}, Total watermarks: ${wmCount} in database ayantrai_templates`);
 }
 
 seed()
