@@ -23,6 +23,7 @@ import {
   Code2,
   Check,
   X,
+  Loader2,
 } from "lucide-react";
 import { Tooltip } from "@/app/Component";
 import { UploadedSvgWatermark, formatBytes } from "./utils";
@@ -38,6 +39,15 @@ const mapApiItemToSvg = (item: WatermarkItem): UploadedSvgWatermark => ({
   scale: item.scale ?? 100,
 });
 
+interface PendingUploadItem {
+  file?: File;
+  name: string;
+  fileName: string;
+  svgContent: string;
+  sizeBytes: number;
+  scale: number;
+}
+
 export default function WatermarkPage() {
   const [watermarks, setWatermarks] = useState<UploadedSvgWatermark[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -48,6 +58,11 @@ export default function WatermarkPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Pre-upload SVG Preview & Confirmation Modal State
+  const [pendingUploads, setPendingUploads] = useState<PendingUploadItem[]>([]);
+  const [previewModalIndex, setPreviewModalIndex] = useState<number>(0);
+  const [isUploadingPending, setIsUploadingPending] = useState<boolean>(false);
 
   // Paste Raw SVG Modal State
   const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
@@ -143,7 +158,7 @@ export default function WatermarkPage() {
   // Selected watermark
   const selectedWatermark = watermarks.find((w) => w.id === selectedId) || null;
 
-  // Process uploaded SVG files (saves to PostgreSQL via Watermark API)
+  // Process uploaded SVG files: validate markup and open Preview Modal before uploading
   const handleProcessFiles = async (files: FileList | File[]) => {
     setUploadError(null);
     setUploadSuccess(null);
@@ -151,7 +166,7 @@ export default function WatermarkPage() {
     const fileList = Array.from(files);
     if (fileList.length === 0) return;
 
-    const newEntries: UploadedSvgWatermark[] = [];
+    const parsedItems: PendingUploadItem[] = [];
     const errors: string[] = [];
 
     for (const file of fileList) {
@@ -169,23 +184,14 @@ export default function WatermarkPage() {
         const formattedName = cleanName ? cleanName.charAt(0).toUpperCase() + cleanName.slice(1) : file.name;
         const fileName = file.name.endsWith(".svg") ? file.name : `${file.name}.svg`;
 
-        try {
-          const response = await watermarkApi.createWatermark({
-            name: formattedName || file.name,
-            fileName,
-            svgContent: text,
-            scale: 100,
-            sizeBytes: file.size,
-          });
-
-          if (response?.data) {
-            newEntries.push(mapApiItemToSvg(response.data));
-          } else {
-            errors.push(`Failed to save "${file.name}" to database.`);
-          }
-        } catch (apiErr: any) {
-          errors.push(apiErr.response?.data?.message || `Failed to save "${file.name}" to database.`);
-        }
+        parsedItems.push({
+          file,
+          name: formattedName || file.name,
+          fileName,
+          svgContent: text,
+          sizeBytes: file.size,
+          scale: 100,
+        });
       } catch (err: any) {
         errors.push(`Failed to read "${file.name}".`);
       }
@@ -195,13 +201,58 @@ export default function WatermarkPage() {
       setUploadError(errors.join(" | "));
     }
 
-    if (newEntries.length > 0) {
-      setWatermarks((prev) => [...newEntries, ...prev]);
-      setSelectedId(newEntries[0].id);
-      setSizeScale(100);
-      setUploadSuccess(`Saved ${newEntries.length} vector SVG${newEntries.length > 1 ? "s" : ""} to database!`);
+    if (parsedItems.length > 0) {
+      // Stage items and open Preview Modal (zero direct blind uploads)
+      setPendingUploads(parsedItems);
+      setPreviewModalIndex(0);
     }
   };
+
+  // Confirm and upload previewed SVG(s) directly to PostgreSQL database
+  const handleConfirmUpload = async () => {
+    if (pendingUploads.length === 0) return;
+    setIsUploadingPending(true);
+    setUploadError(null);
+
+    const newlySaved: UploadedSvgWatermark[] = [];
+    const errors: string[] = [];
+
+    for (const item of pendingUploads) {
+      try {
+        const response = await watermarkApi.createWatermark({
+          name: item.name,
+          fileName: item.fileName,
+          svgContent: item.svgContent,
+          scale: item.scale,
+          sizeBytes: item.sizeBytes,
+        });
+
+        if (response?.data) {
+          newlySaved.push(mapApiItemToSvg(response.data));
+        } else {
+          errors.push(`Database did not return saved record for "${item.fileName}"`);
+        }
+      } catch (err: any) {
+        errors.push(err.response?.data?.message || `Failed to save "${item.fileName}" to database.`);
+      }
+    }
+
+    setIsUploadingPending(false);
+
+    if (errors.length > 0) {
+      setUploadError(errors.join(" | "));
+    }
+
+    if (newlySaved.length > 0) {
+      setWatermarks((prev) => [...newlySaved, ...prev]);
+      setSelectedId(newlySaved[0].id);
+      setSizeScale(newlySaved[0].scale ?? 100);
+      setPendingUploads([]);
+      setPreviewModalIndex(0);
+      setUploadSuccess(`Saved ${newlySaved.length} vector SVG${newlySaved.length > 1 ? "s" : ""} to database!`);
+    }
+  };
+
 
   // Add SVG by direct code paste (strictly saves to database)
   const handleAddPastedSvg = async () => {
@@ -872,13 +923,31 @@ export default function WatermarkPage() {
                 SVG Markup Code *
               </label>
               <textarea
-                rows={6}
+                rows={5}
                 value={pasteSvgContent}
-                onChange={(e) => setPasteSvgContent(e.target.value)}
+                onChange={(e) => {
+                  setPasteSvgContent(e.target.value);
+                  setPasteError(null);
+                }}
                 placeholder={`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">\n  <circle cx="50" cy="50" r="40" stroke="#9D61FF" stroke-width="3" fill="none" />\n</svg>`}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/40 text-xs font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF] custom-scrollbar"
               />
             </div>
+
+            {/* Live Vector Preview in Paste Modal */}
+            {/<svg[\s>]/i.test(pasteSvgContent) && (
+              <div className="space-y-1.5 animate-fadeIn">
+                <span className="text-[10.5px] font-bold text-slate-500 dark:text-zinc-400 font-mono">
+                  LIVE VECTOR PREVIEW
+                </span>
+                <div className="w-full h-28 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/60 flex items-center justify-center p-3 relative overflow-hidden">
+                  <div
+                    className="w-full h-full max-w-[200px] max-h-[96px] flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
+                    dangerouslySetInnerHTML={{ __html: pasteSvgContent }}
+                  />
+                </div>
+              </div>
+            )}
 
             {pasteError && (
               <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-start gap-2">
@@ -898,12 +967,222 @@ export default function WatermarkPage() {
               <button
                 type="button"
                 onClick={handleAddPastedSvg}
-                className="px-4 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4FE8] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4FE8] text-white text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-sm shadow-[#9D61FF]/30"
               >
                 <Check className="w-3.5 h-3.5" />
-                <span>Add to Library</span>
+                <span>Confirm & Upload</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* MODAL: Pre-Upload SVG Preview & Confirmation                         */}
+      {/* ==================================================================== */}
+      {pendingUploads.length > 0 && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 space-y-4 animate-scaleUp">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200/60 dark:border-zinc-800/60">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-purple-500/10 text-[#9D61FF] border border-purple-500/20 flex items-center justify-center">
+                  <Eye className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Preview Watermark SVG
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                    Review how your vector stamp looks before saving to database
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {pendingUploads.length > 1 && (
+                  <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#9D61FF] bg-[#9D61FF]/10 px-2.5 py-1 rounded-lg">
+                    <span>{previewModalIndex + 1} / {pendingUploads.length}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  disabled={isUploadingPending}
+                  onClick={() => {
+                    setPendingUploads([]);
+                    setPreviewModalIndex(0);
+                  }}
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-xs font-mono p-1 cursor-pointer disabled:opacity-40"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Current Item Preview */}
+            {(() => {
+              const current = pendingUploads[previewModalIndex] || pendingUploads[0];
+              if (!current) return null;
+
+              return (
+                <div className="space-y-4">
+                  {/* Visual Render Box */}
+                  <div className="w-full h-52 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/60 relative flex flex-col items-center justify-center p-4 overflow-hidden">
+                    {/* Subtle dot pattern */}
+                    <div
+                      className="absolute inset-0 pointer-events-none opacity-20"
+                      style={{
+                        backgroundImage: "radial-gradient(#CBD5E1 1px, transparent 1px)",
+                        backgroundSize: "16px 16px",
+                      }}
+                    />
+                    {/* Center crosshair */}
+                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-30">
+                      <div className="w-full h-[1px] bg-[#9D61FF]" />
+                      <div className="h-full w-[1px] bg-[#9D61FF] absolute" />
+                    </div>
+
+                    {/* Rendered SVG */}
+                    <div
+                      className="relative z-10 w-full h-full max-w-[320px] max-h-[160px] flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full transition-transform"
+                      style={{
+                        transform: `scale(${current.scale / 100})`,
+                        transformOrigin: "center center",
+                      }}
+                      dangerouslySetInnerHTML={{ __html: current.svgContent }}
+                    />
+
+                    {/* Scale badge */}
+                    <div className="absolute bottom-2.5 right-3 text-[10px] font-mono font-bold text-slate-500 dark:text-zinc-400 bg-white/80 dark:bg-zinc-900/80 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-zinc-800/60">
+                      {current.scale}% SCALE
+                    </div>
+                  </div>
+
+                  {/* Metadata inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">
+                        Stamp Name
+                      </label>
+                      <input
+                        type="text"
+                        value={current.name}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setPendingUploads((prev) =>
+                            prev.map((item, idx) =>
+                              idx === previewModalIndex ? { ...item, name: val } : item
+                            )
+                          );
+                        }}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/40 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">
+                        Initial Scale ({current.scale}%)
+                      </label>
+                      <div className="flex items-center gap-2 pt-1">
+                        <input
+                          type="range"
+                          min="30"
+                          max="200"
+                          step="5"
+                          value={current.scale}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setPendingUploads((prev) =>
+                              prev.map((item, idx) =>
+                                idx === previewModalIndex ? { ...item, scale: val } : item
+                              )
+                            );
+                          }}
+                          className="flex-1 accent-[#9D61FF] cursor-pointer"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPendingUploads((prev) =>
+                              prev.map((item, idx) =>
+                                idx === previewModalIndex ? { ...item, scale: 100 } : item
+                              )
+                            );
+                          }}
+                          className="text-[10px] font-mono font-bold text-[#9D61FF] hover:underline"
+                        >
+                          100%
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Badges footer */}
+                  <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 dark:text-zinc-400 bg-slate-50 dark:bg-zinc-950/40 px-3 py-2 rounded-xl border border-slate-200/60 dark:border-zinc-800/60">
+                    <span className="truncate max-w-[220px]">FILE: {current.fileName}</span>
+                    <span>SIZE: {formatBytes(current.sizeBytes)}</span>
+                  </div>
+
+                  {/* Multi-item pagination buttons */}
+                  {pendingUploads.length > 1 && (
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        type="button"
+                        disabled={previewModalIndex === 0}
+                        onClick={() => setPreviewModalIndex((prev) => Math.max(0, prev - 1))}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                      >
+                        ← Previous SVG
+                      </button>
+                      <button
+                        type="button"
+                        disabled={previewModalIndex === pendingUploads.length - 1}
+                        onClick={() => setPreviewModalIndex((prev) => Math.min(pendingUploads.length - 1, prev + 1))}
+                        className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                      >
+                        Next SVG →
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200/60 dark:border-zinc-800/60">
+                    <button
+                      type="button"
+                      disabled={isUploadingPending}
+                      onClick={() => {
+                        setPendingUploads([]);
+                        setPreviewModalIndex(0);
+                      }}
+                      className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-40 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isUploadingPending}
+                      onClick={handleConfirmUpload}
+                      className="px-5 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4FE8] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-[#9D61FF]/30 disabled:opacity-50 cursor-pointer"
+                    >
+                      {isUploadingPending ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Uploading to DB...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>
+                            {pendingUploads.length > 1
+                              ? `Upload All (${pendingUploads.length}) to Database`
+                              : "Confirm & Upload to Database"}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
