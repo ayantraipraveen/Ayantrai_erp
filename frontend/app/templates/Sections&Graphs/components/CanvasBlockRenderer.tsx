@@ -175,27 +175,27 @@ function MetricCardBlock({
   const renderCardIcon = (iconName?: string) => {
     switch (iconName) {
       case "Users":
-        return <Users className="w-5 h-5" />;
+        return <Users className="w-3.5 h-3.5" />;
       case "ShieldCheck":
       case "Shield":
-        return <ShieldCheck className="w-5 h-5" />;
+        return <ShieldCheck className="w-3.5 h-3.5" />;
       case "Package":
       case "Box":
-        return <Package className="w-5 h-5" />;
+        return <Package className="w-3.5 h-3.5" />;
       case "AlertTriangle":
-        return <AlertTriangle className="w-5 h-5" />;
+        return <AlertTriangle className="w-3.5 h-3.5" />;
       case "Clock":
-        return <Clock className="w-5 h-5" />;
+        return <Clock className="w-3.5 h-3.5" />;
       case "UserCheck":
       case "UserCog":
-        return <UserCheck className="w-5 h-5" />;
+        return <UserCheck className="w-3.5 h-3.5" />;
       case "Settings":
       case "Gear":
-        return <Settings className="w-5 h-5" />;
+        return <Settings className="w-3.5 h-3.5" />;
       case "History":
-        return <History className="w-5 h-5" />;
+        return <History className="w-3.5 h-3.5" />;
       default:
-        return <Activity className="w-5 h-5" />;
+        return <Activity className="w-3.5 h-3.5" />;
     }
   };
 
@@ -239,45 +239,45 @@ function MetricCardBlock({
   // Dynamic Font Size resolution from cell.style or default A4 scale
   const valueFontSizeClass =
     cell.style?.fontSize === "xs"
-      ? "text-base sm:text-lg"
+      ? "text-sm sm:text-base"
       : cell.style?.fontSize === "sm"
-      ? "text-lg sm:text-xl"
+      ? "text-base sm:text-lg"
       : cell.style?.fontSize === "lg"
-      ? "text-[24px] sm:text-[26px]"
+      ? "text-[22px] sm:text-[24px]"
       : cell.style?.fontSize === "xl"
-      ? "text-[28px] sm:text-[30px]"
-      : "text-xl sm:text-[22px]"; // default compact authentic A4 scale
+      ? "text-[26px] sm:text-[28px]"
+      : "text-lg sm:text-xl"; // calibrated compact authentic A4 scale
 
   const labelFontSizeClass =
     cell.style?.fontSize === "xs"
-      ? "text-[9.5px]"
+      ? "text-[9px]"
       : cell.style?.fontSize === "sm"
-      ? "text-[10px]"
+      ? "text-[9.5px]"
       : cell.style?.fontSize === "lg"
-      ? "text-[11.5px]"
+      ? "text-[11px]"
       : cell.style?.fontSize === "xl"
-      ? "text-[12.5px]"
-      : "text-[10px] sm:text-[10.5px]";
+      ? "text-[12px]"
+      : "text-[9.5px] sm:text-[10px]";
 
   const customPx = cell.style?.customFontSize ?? cell.style?.fontSizeCustom;
 
   const defaultValFontSize =
     customPx ||
-    (cell.style?.fontSize === "xs" ? 18 : cell.style?.fontSize === "sm" ? 20 : cell.style?.fontSize === "lg" ? 26 : cell.style?.fontSize === "xl" ? 30 : 22);
+    (cell.style?.fontSize === "xs" ? 16 : cell.style?.fontSize === "sm" ? 18 : cell.style?.fontSize === "lg" ? 24 : cell.style?.fontSize === "xl" ? 28 : 20);
 
   return (
     <div
       style={cell.customHeight ? { minHeight: `${cell.customHeight}px` } : undefined}
-      className={`w-full h-auto min-h-[105px] sm:min-h-[110px] rounded-xl sm:rounded-2xl border p-2 sm:p-2.5 transition-all duration-200 select-none flex flex-col justify-between overflow-visible ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} ${editingField ? "relative z-50" : "relative z-10"}`}
+      className={`w-full h-auto min-h-[88px] sm:min-h-[92px] max-h-[96px] rounded-xl border p-2 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${ramp.bgLight} ${ramp.bgDark} ${ramp.borderLight} ${ramp.borderDark} ${editingField ? "relative z-50" : "relative z-10"}`}
     >
       <div>
-        {/* Circular Icon Badge matching Dummy_report.pdf */}
-        <div className={`w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shrink-0 mb-1 shadow-none ${ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50"} ${ramp.iconColor || "text-blue-600 dark:text-blue-300"}`}>
+        {/* Circular Icon Badge matching Dummy_report.pdf Page 3 */}
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mb-0.5 shadow-none ${ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50"} ${ramp.iconColor || "text-blue-600 dark:text-blue-300"}`}>
           {renderCardIcon(card.icon)}
         </div>
 
         {/* Label (inline editable on double click) */}
-        <div className={`${labelFontSizeClass} font-bold text-slate-800 dark:text-zinc-200 ${editingField === "label" ? "" : "line-clamp-3 sm:line-clamp-none"} leading-tight mb-0.5`}>
+        <div className={`${labelFontSizeClass} font-bold text-slate-800 dark:text-zinc-200 ${editingField === "label" ? "" : "line-clamp-2 sm:line-clamp-1"} leading-tight mb-0.5`}>
           {!isPreview && editingField === "label" ? (
             <DynamicTextEditor
               initialValue={card.label}
@@ -354,13 +354,13 @@ function MetricCardBlock({
       </div>
 
       {/* Trend Row: ▲ +2.1%  vs. last month */}
-      <div className="pt-1.5 flex flex-col gap-0.5">
-        <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="pt-0.5 flex flex-col gap-0">
+        <div className="flex items-center gap-1 flex-wrap">
           <button
             type="button"
             onClick={cycleTrend}
             title={!isPreview ? "Click to cycle trend: Up → Down → Neutral" : undefined}
-            className={`inline-flex items-center gap-1 text-[11px] sm:text-[11.5px] font-bold font-sans transition-transform ${trendTextColor} ${!isPreview ? "hover:scale-105 cursor-pointer" : ""}`}
+            className={`inline-flex items-center gap-0.5 text-[10px] sm:text-[10.5px] font-bold font-sans transition-transform ${trendTextColor} ${!isPreview ? "hover:scale-105 cursor-pointer" : ""}`}
           >
             {card.trendDirection === "up" && <span>▲</span>}
             {card.trendDirection === "down" && <span>▼</span>}
@@ -371,8 +371,8 @@ function MetricCardBlock({
                 <DynamicTextEditor
                   initialValue={card.trendValue}
                   initialHtml={(card as any).trendValueHtml}
-                  defaultFontSize={11.5}
-                  className="text-[11.5px] font-bold"
+                  defaultFontSize={11}
+                  className="text-[11px] font-bold"
                   onSave={(plain, html) => {
                     commitCardChange({ trendValue: plain, trendValueHtml: html } as any);
                   }}
@@ -395,12 +395,12 @@ function MetricCardBlock({
 
           {/* Subtitle e.g. "vs. last month" */}
           {card.trendSubtitle && !card.trendSubtitle.includes("(Lower is better)") && (
-            <span className="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-zinc-500 font-normal">
+            <span className="text-[9.5px] sm:text-[10px] text-slate-400 dark:text-zinc-500 font-normal">
               {card.trendSubtitle}
             </span>
           )}
           {!card.trendSubtitle && (
-            <span className="text-[10px] sm:text-[10.5px] text-slate-400 dark:text-zinc-500 font-normal">
+            <span className="text-[9.5px] sm:text-[10px] text-slate-400 dark:text-zinc-500 font-normal">
               vs. last month
             </span>
           )}
@@ -408,7 +408,7 @@ function MetricCardBlock({
 
         {/* Special subtitle for metrics where lower is better */}
         {(card.trendSubtitle?.includes("(Lower is better)") || (isNegativeMetric && card.trendDirection === "down")) && (
-          <div className="text-[9.5px] sm:text-[10px] text-slate-400 dark:text-zinc-500 font-medium leading-none">
+          <div className="text-[9px] text-slate-400 dark:text-zinc-500 font-medium leading-none">
             (Lower is better)
           </div>
         )}
@@ -963,27 +963,27 @@ function InsightBlock({
   if (variant === "vertical-takeaways") {
     const takeawayFontSizeClass =
       cell.style?.fontSize === "xs"
-        ? "text-[8.5px] leading-tight"
+        ? "text-[8px] leading-[1.2]"
         : cell.style?.fontSize === "sm"
-        ? "text-[9px] leading-tight"
+        ? "text-[8.5px] leading-[1.2]"
         : cell.style?.fontSize === "lg"
-        ? "text-[11px] leading-snug"
+        ? "text-[10px] leading-snug"
         : cell.style?.fontSize === "xl"
-        ? "text-[12px] leading-relaxed"
-        : "text-[9.5px] sm:text-[10px] leading-tight";
+        ? "text-[11px] leading-relaxed"
+        : "text-[8.5px] sm:text-[9px] leading-[1.25]";
 
     return (
       <div
-        className="w-full h-auto min-h-fit rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-[#f8fafc]/90 dark:bg-[#0c1017] px-3 py-2 space-y-1 overflow-visible shadow-none"
+        className="w-full h-auto min-h-fit rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-[#f8fafc]/90 dark:bg-[#0c1017] px-3.5 py-1.5 space-y-0.5 overflow-hidden shadow-none"
         style={{ borderRadius: dynamicBorderRadius, boxShadow: "none", ...style }}
       >
-        <div className="flex items-center justify-between pb-1 border-b border-slate-200/80 dark:border-zinc-800">
+        <div className="flex items-center justify-between pb-1 mb-1 border-b border-slate-200/80 dark:border-zinc-800">
           <div className="flex items-center gap-1.5">
-            <div className="w-4.5 h-4.5 rounded-md bg-blue-600 text-white flex items-center justify-center font-bold shrink-0">
+            <div className="w-4 h-4 rounded bg-[#2563eb] text-white flex items-center justify-center font-bold shrink-0">
               <FileText className="w-2.5 h-2.5" />
             </div>
             <div>
-              <h3 className="text-xs font-black text-[#0f172a] dark:text-blue-400 tracking-tight leading-none">
+              <h3 className="text-[11px] sm:text-xs font-black text-[#0f172a] dark:text-blue-400 tracking-tight leading-none">
                 {insight.title || "Key Takeaways"}
               </h3>
             </div>
@@ -999,7 +999,7 @@ function InsightBlock({
           )}
         </div>
 
-        <div className="space-y-0.5">
+        <div className="space-y-[2px]">
           {(insight.items || []).map((item, idx) => {
             const defaultColors = [
               "bg-[#3b82f6] text-white",
@@ -1017,8 +1017,8 @@ function InsightBlock({
             const isEditing = editingTarget === `item-${item.id}`;
 
             return (
-              <div key={item.id} className={`relative group/row flex items-start gap-1.5 ${takeawayFontSizeClass} text-slate-700 dark:text-zinc-300 py-0.5`}>
-                <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-black shrink-0 mt-0.5 ${badgeColorClass}`}>
+              <div key={item.id} className={`relative group/row flex items-start gap-1.5 ${takeawayFontSizeClass} text-slate-700 dark:text-zinc-300 py-[1px]`}>
+                <span className={`w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7.5px] font-black shrink-0 mt-[1px] ${badgeColorClass}`}>
                   {item.num ?? idx + 1}
                 </span>
 
@@ -1027,10 +1027,10 @@ function InsightBlock({
                     <DynamicTextEditor
                       initialValue={item.text}
                       initialHtml={item.text}
-                      defaultFontSize={10}
+                      defaultFontSize={9}
                       multiline={true}
                       toolbarPosition="top"
-                      className="text-[10px] leading-tight"
+                      className="text-[9px] leading-tight"
                       onSave={(_plain, html) => handleItemTextUpdate(item.id, html)}
                       onCancel={finishEdit}
                     />
@@ -1038,7 +1038,7 @@ function InsightBlock({
                     <div
                       onDoubleClick={() => startEdit(`item-${item.id}`)}
                       title={!isPreview ? "Double-click to format takeaway (Word style)" : undefined}
-                      className={`select-text ${!isPreview ? "hover:bg-blue-500/5 rounded px-1 py-0.5 cursor-text transition-colors" : ""}`}
+                      className={`select-text ${!isPreview ? "hover:bg-blue-500/5 rounded px-0.5 py-0 cursor-text transition-colors" : ""}`}
                     >
                       {item.title && <b className="text-slate-900 dark:text-white mr-1 font-bold">{item.title}:</b>}
                       <span dangerouslySetInnerHTML={{ __html: item.text }} />

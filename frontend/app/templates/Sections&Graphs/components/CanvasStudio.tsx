@@ -1746,9 +1746,6 @@ export function CanvasStudio({
                               sectionTextColor={sectionTextColor}
                               editingSectionField={isEditingHere ? editingSectionField : null}
                               activeIsPreview={activeIsPreview}
-                              activeWatermark={activeWatermark}
-                              isWatermarkSelected={isWatermarkSelected}
-                              wmScale={wmScale}
                               isMandatory={isFirstPage}
                               onDelete={
                                 !isFirstPage
@@ -1811,7 +1808,6 @@ export function CanvasStudio({
                               onUpdateSpacing={(space) => {
                                 dispatch(updateLibrarySection({ id: section.id, headerSpacing: space }));
                               }}
-                              onToggleWatermarkSelect={() => setIsWatermarkSelected(!isWatermarkSelected)}
                             />
                           ) : (
                             !activeIsPreview && (
@@ -1836,8 +1832,8 @@ export function CanvasStudio({
                         <div
                           className="relative z-10 space-y-2 flex-1 min-h-0 overflow-visible transition-all duration-150"
                             style={{
-                              paddingTop: section.sectionStyle?.paddingTop !== undefined ? `${section.sectionStyle.paddingTop}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "12px",
-                              paddingBottom: section.sectionStyle?.paddingBottom !== undefined ? `${section.sectionStyle.paddingBottom}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "6px",
+                              paddingTop: section.sectionStyle?.paddingTop !== undefined ? `${section.sectionStyle.paddingTop}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "6px",
+                              paddingBottom: section.sectionStyle?.paddingBottom !== undefined ? `${section.sectionStyle.paddingBottom}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "4px",
                               paddingLeft: section.sectionStyle?.paddingLeft !== undefined ? `${section.sectionStyle.paddingLeft}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
                               paddingRight: section.sectionStyle?.paddingRight !== undefined ? `${section.sectionStyle.paddingRight}px` : section.sectionStyle?.padding !== undefined ? `${section.sectionStyle.padding}px` : "0px",
                               backgroundColor: section.sectionStyle?.backgroundColor,
@@ -1872,7 +1868,7 @@ export function CanvasStudio({
                                 <p className="text-xs">Drag any block from the left sidebar or click to add</p>
                               </div>
                             ) : (
-                              <div className="space-y-2.5">
+                              <div className="space-y-2">
                                 {/* Drop zone at the top of this page */}
                                 {/* {!activeIsPreview && page.rows.length > 0 && (
                               <DropInsertZone

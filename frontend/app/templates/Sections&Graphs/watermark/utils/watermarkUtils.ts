@@ -36,7 +36,7 @@ export const STORAGE_KEY = "ayantrai_uploaded_watermark_svgs";
 export const WATERMARK_CONFIG_PREFIX = "ayantrai_canvas_wm_config_";
 
 export const DEFAULT_WATERMARK_CONFIG: WatermarkStampConfig = {
-  watermarkId: "wm-seed-1",
+  watermarkId: null,
   opacity: 18,
   scale: 100,
   rotation: -18,
@@ -135,12 +135,14 @@ export function saveUploadedWatermarks(_items: UploadedSvgWatermark[]): void {
 /** Retrieve watermark stamping settings for a section */
 export function getSectionWatermarkConfig(
   sectionId: string,
-  fallbackWatermarkId?: string
+  fallbackWatermarkId?: string | null
 ): WatermarkStampConfig {
+  const resolvedWatermarkId = fallbackWatermarkId !== undefined ? fallbackWatermarkId : null;
+
   if (typeof window === "undefined") {
     return {
       ...DEFAULT_WATERMARK_CONFIG,
-      watermarkId: fallbackWatermarkId || DEFAULT_WATERMARK_CONFIG.watermarkId,
+      watermarkId: resolvedWatermarkId,
     };
   }
   try {
@@ -151,9 +153,11 @@ export function getSectionWatermarkConfig(
         ...DEFAULT_WATERMARK_CONFIG,
         ...parsed,
         watermarkId:
-          parsed.watermarkId !== undefined
+          fallbackWatermarkId !== undefined
+            ? fallbackWatermarkId
+            : parsed.watermarkId !== undefined
             ? parsed.watermarkId
-            : fallbackWatermarkId || DEFAULT_WATERMARK_CONFIG.watermarkId,
+            : null,
       };
     }
   } catch (e) {
@@ -161,7 +165,7 @@ export function getSectionWatermarkConfig(
   }
   return {
     ...DEFAULT_WATERMARK_CONFIG,
-    watermarkId: fallbackWatermarkId || DEFAULT_WATERMARK_CONFIG.watermarkId,
+    watermarkId: resolvedWatermarkId,
   };
 }
 

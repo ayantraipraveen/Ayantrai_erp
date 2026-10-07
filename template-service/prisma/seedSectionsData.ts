@@ -5,11 +5,11 @@ export const coreSectionsData = [
     titleHtml: '<span style="color:#0f172a">Key Metrics </span><span style="color:#2563eb">This Month</span>',
     eyebrow: "PROJECT OVERVIEW",
     eyebrowHtml: '<span style="color:#64748b">PROJECT OVERVIEW</span>',
-    description: "A comprehensive high-level executive summary of workforce safety, site compliance and IoT hardware health.",
+    description: "A snapshot of your site's safety, compliance and device performance.",
     type: "core",
     icon: "Activity",
     orderIndex: 1,
-    watermarkId: "wm-approved",
+    watermarkId: null,
     projectSite: "ABC Infrastructure Project",
     reportingPeriod: "01 Sept 2025 – 30 Sept 2025",
     metricCards: [

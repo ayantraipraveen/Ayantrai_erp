@@ -1,8 +1,7 @@
 "use client";
 
-import { Building2, Calendar, Edit2, Stamp, Trash2 } from "lucide-react";
+import { Building2, Calendar, Edit2, Trash2 } from "lucide-react";
 import { LibrarySection } from "@/lib/redux/slices/reportModuleSlice";
-import { UploadedSvgWatermark } from "../../watermark/utils";
 import {
   DynamicTitleEditor,
   DynamicTextEditor,
@@ -23,16 +22,12 @@ export interface CanvasSectionHeaderProps {
   sectionTextColor?: string;
   editingSectionField: SectionField | null;
   activeIsPreview: boolean;
-  activeWatermark?: UploadedSvgWatermark | null;
-  isWatermarkSelected: boolean;
-  wmScale: number;
   isMandatory?: boolean;
   onDelete?: () => void;
   onStartEditing: (field: SectionField) => void;
   onFinishEditing: () => void;
   onUpdateSection: (patch: Partial<LibrarySection>) => void;
   onUpdateSpacing: (spacing: "compact" | "normal" | "spacious") => void;
-  onToggleWatermarkSelect: () => void;
 }
 
 export function CanvasSectionHeader({
@@ -42,16 +37,12 @@ export function CanvasSectionHeader({
   sectionTextColor,
   editingSectionField,
   activeIsPreview,
-  activeWatermark,
-  isWatermarkSelected,
-  wmScale,
   isMandatory = false,
   onDelete,
   onStartEditing,
   onFinishEditing,
   onUpdateSection,
   onUpdateSpacing,
-  onToggleWatermarkSelect,
 }: CanvasSectionHeaderProps) {
   const open = (field: SectionField) => {
     if (!activeIsPreview) onStartEditing(field);
@@ -126,26 +117,6 @@ export function CanvasSectionHeader({
                   </button>
                 ))}
               </div>
-
-              {activeWatermark && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleWatermarkSelect();
-                  }}
-                  className={`inline-flex items-center gap-1.5 text-[10px] font-mono uppercase px-2 py-0.5 rounded transition-all cursor-pointer ${
-                    isWatermarkSelected
-                      ? "bg-purple-600 text-white ring-2 ring-purple-400 font-bold"
-                      : "bg-purple-500/10 text-[#8B3DFF] border border-purple-500/20 hover:bg-purple-500/20 font-bold"
-                  }`}
-                  title={isWatermarkSelected ? "Click to deselect watermark" : "Click to select, resize & locate watermark on canvas"}
-                >
-                  <Stamp className="w-2.5 h-2.5" />
-                  <span>{activeWatermark.name}</span>
-                  <span className="text-[9px] opacity-80">({Math.round(wmScale * 100)}%)</span>
-                </button>
-              )}
 
               {/* Mandatory on Page 1 or Delete on Next Pages */}
               {isMandatory ? (

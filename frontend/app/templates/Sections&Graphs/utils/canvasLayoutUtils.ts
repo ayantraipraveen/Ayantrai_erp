@@ -27,8 +27,8 @@ export function getDefaultBlockHeight(blockType?: string, cellOrVariant?: Canvas
     switch (variant) {
       case "vertical-takeaways": {
         const count = itemsCount ?? 4;
-        // Header + padding + item rows (each compact item is ~20px)
-        return Math.max(100, 38 + count * 20);
+        // Header + padding + item rows (each compact item is ~16px)
+        return Math.max(90, 28 + count * 16);
       }
       case "priority-actions": {
         const count = itemsCount ?? 4;
@@ -44,7 +44,6 @@ export function getDefaultBlockHeight(blockType?: string, cellOrVariant?: Canvas
         return Math.max(120, 40 + Math.ceil(count / 2) * 45);
       }
       case "split-quote":
-        return 170;
       case "columns-titled":
       case "narrative-summary":
         return 160;
@@ -62,7 +61,7 @@ export function getDefaultBlockHeight(blockType?: string, cellOrVariant?: Canvas
     case "chart":
       return 360;
     case "metric-card":
-      return 110;
+      return 92;
     case "badge-strip":
       return 130;
     case "text":
