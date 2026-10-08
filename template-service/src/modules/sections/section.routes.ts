@@ -21,6 +21,7 @@ import {
   requirePermission,
 } from '../../shared/middlewares/auth.middleware';
 import { mutationLimiter } from '../../shared/middlewares/rateLimiter';
+import { methodNotAllowed } from '../../shared/middlewares/methodNotAllowed';
 
 const router = Router();
 
@@ -40,6 +41,21 @@ router.get(
 );
 
 /**
+ * @route   POST /api/v1/sections
+ * @desc    Create a new custom reusable section
+ * @access  Private (templates:create)
+ */
+router.post(
+  '/',
+  mutationLimiter,
+  requirePermission('templates:create'),
+  validate(createSectionSchema),
+  createSection
+);
+
+router.all('/', methodNotAllowed(['GET', 'POST']));
+
+/**
  * @route   PUT /api/v1/sections/reorder
  * @desc    Bulk update order indices of sections
  * @access  Private (templates:update)
@@ -52,25 +68,29 @@ router.put(
   reorderSections
 );
 
+router.all('/reorder', methodNotAllowed(['PUT']));
+
+/**
+ * @route   POST /api/v1/sections/:id/clone
+ * @desc    Clone an existing core or custom section into a new custom section
+ * @access  Private (templates:create)
+ */
+router.post(
+  '/:id/clone',
+  mutationLimiter,
+  requirePermission('templates:create'),
+  validate(cloneSectionSchema),
+  cloneSection
+);
+
+router.all('/:id/clone', methodNotAllowed(['POST']));
+
 /**
  * @route   GET /api/v1/sections/:id
  * @desc    Retrieve single section by ID with all canvas rows, telemetry, and styles
  * @access  Private (templates:read)
  */
 router.get('/:id', requirePermission('templates:read'), getSectionById);
-
-/**
- * @route   POST /api/v1/sections
- * @desc    Create a new custom reusable section
- * @access  Private (templates:create)
- */
-router.post(
-  '/',
-  mutationLimiter,
-  requirePermission('templates:create'),
-  validate(createSectionSchema),
-  createSection
-);
 
 /**
  * @route   PUT /api/v1/sections/:id
@@ -86,19 +106,6 @@ router.put(
 );
 
 /**
- * @route   POST /api/v1/sections/:id/clone
- * @desc    Clone an existing core or custom section into a new custom section
- * @access  Private (templates:create)
- */
-router.post(
-  '/:id/clone',
-  mutationLimiter,
-  requirePermission('templates:create'),
-  validate(cloneSectionSchema),
-  cloneSection
-);
-
-/**
  * @route   DELETE /api/v1/sections/:id
  * @desc    Delete a custom section (prevents deleting core standard templates)
  * @access  Private (templates:delete)
@@ -109,5 +116,7 @@ router.delete(
   requirePermission('templates:delete'),
   deleteSection
 );
+
+router.all('/:id', methodNotAllowed(['GET', 'PUT', 'DELETE']));
 
 export default router;

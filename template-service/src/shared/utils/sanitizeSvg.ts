@@ -43,7 +43,21 @@ export function sanitizeSvg(rawSvg: string): string {
   sanitized = sanitized.replace(/expression\s*\([^)]*\)/gi, 'none');
   sanitized = sanitized.replace(/url\s*\(\s*(['\"]?)\s*javascript:[^)]*\1\s*\)/gi, 'none');
 
-  // 7. Verify the output still contains valid SVG envelope
+  // 7. Prevent SSRF (Server-Side Request Forgery) via external resource links
+  // Disallow remote http/https/file/ftp references in href, xlink:href, src
+  sanitized = sanitized.replace(
+    /(href|xlink:href|src)\s*=\s*(['\"])\s*(https?|file|ftp|gopher|dict):[^'\"]*\2/gi,
+    '$1=""'
+  );
+
+  // Disallow external CSS @import directives inside <style> tags
+  sanitized = sanitized.replace(/@import\s+[^;]+;/gi, '');
+
+  // Strip external <image> and <feImage> elements pointing to remote resources
+  sanitized = sanitized.replace(/<image[^>]*(href|xlink:href)\s*=\s*['\"](https?|file|ftp):[^'\"]*['\"][^>]*\/?>/gi, '');
+  sanitized = sanitized.replace(/<feimage[^>]*(href|xlink:href)\s*=\s*['\"](https?|file|ftp):[^'\"]*['\"][^>]*\/?>/gi, '');
+
+  // 8. Verify the output still contains valid SVG envelope
   if (!sanitized.includes('<svg') || !sanitized.includes('</svg>')) {
     throw ApiError.badRequest('Provided content is not valid SVG markup.');
   }

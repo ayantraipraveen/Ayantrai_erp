@@ -26,6 +26,7 @@ import {
   requireRole,
 } from '../../shared/middlewares/auth.middleware';
 import { mutationLimiter } from '../../shared/middlewares/rateLimiter';
+import { methodNotAllowed } from '../../shared/middlewares/methodNotAllowed';
 
 const router = Router();
 
@@ -56,6 +57,68 @@ router.post(
   validate(createTemplateSchema),
   createTemplate
 );
+
+router.all('/', methodNotAllowed(['GET', 'POST']));
+
+/**
+ * @route   POST /api/v1/templates/:id/clone
+ * @desc    Duplicate an existing template blueprint
+ * @access  Private (templates:create)
+ */
+router.post(
+  '/:id/clone',
+  mutationLimiter,
+  requirePermission('templates:create'),
+  validate(cloneTemplateSchema),
+  cloneTemplate
+);
+
+router.all('/:id/clone', methodNotAllowed(['POST']));
+
+/**
+ * @route   POST /api/v1/templates/:id/approve
+ * @desc    Superadmin Governance: Approve template
+ * @access  Private (Superadmin only)
+ */
+router.post(
+  '/:id/approve',
+  mutationLimiter,
+  requireRole('superadmin'),
+  validate(approveTemplateSchema),
+  approveTemplate
+);
+
+router.all('/:id/approve', methodNotAllowed(['POST']));
+
+/**
+ * @route   POST /api/v1/templates/:id/reject
+ * @desc    Superadmin Governance: Reject template
+ * @access  Private (Superadmin only)
+ */
+router.post(
+  '/:id/reject',
+  mutationLimiter,
+  requireRole('superadmin'),
+  validate(rejectTemplateSchema),
+  rejectTemplate
+);
+
+router.all('/:id/reject', methodNotAllowed(['POST']));
+
+/**
+ * @route   POST /api/v1/templates/:id/resubmit
+ * @desc    Resubmit rejected template for approval review
+ * @access  Private (templates:update)
+ */
+router.post(
+  '/:id/resubmit',
+  mutationLimiter,
+  requirePermission('templates:update'),
+  validate(resubmitTemplateSchema),
+  resubmitTemplate
+);
+
+router.all('/:id/resubmit', methodNotAllowed(['POST']));
 
 /**
  * @route   GET /api/v1/templates/:id
@@ -89,56 +152,6 @@ router.delete(
   deleteTemplate
 );
 
-/**
- * @route   POST /api/v1/templates/:id/clone
- * @desc    Duplicate an existing template blueprint
- * @access  Private (templates:create)
- */
-router.post(
-  '/:id/clone',
-  mutationLimiter,
-  requirePermission('templates:create'),
-  validate(cloneTemplateSchema),
-  cloneTemplate
-);
-
-/**
- * @route   POST /api/v1/templates/:id/approve
- * @desc    Superadmin Governance: Approve template
- * @access  Private (Superadmin only)
- */
-router.post(
-  '/:id/approve',
-  mutationLimiter,
-  requireRole('superadmin'),
-  validate(approveTemplateSchema),
-  approveTemplate
-);
-
-/**
- * @route   POST /api/v1/templates/:id/reject
- * @desc    Superadmin Governance: Reject template
- * @access  Private (Superadmin only)
- */
-router.post(
-  '/:id/reject',
-  mutationLimiter,
-  requireRole('superadmin'),
-  validate(rejectTemplateSchema),
-  rejectTemplate
-);
-
-/**
- * @route   POST /api/v1/templates/:id/resubmit
- * @desc    Resubmit rejected template for approval review
- * @access  Private (templates:update)
- */
-router.post(
-  '/:id/resubmit',
-  mutationLimiter,
-  requirePermission('templates:update'),
-  validate(resubmitTemplateSchema),
-  resubmitTemplate
-);
+router.all('/:id', methodNotAllowed(['GET', 'PUT', 'DELETE']));
 
 export default router;

@@ -17,6 +17,7 @@ import {
   requirePermission,
 } from '../../shared/middlewares/auth.middleware';
 import { mutationLimiter } from '../../shared/middlewares/rateLimiter';
+import { methodNotAllowed } from '../../shared/middlewares/methodNotAllowed';
 
 const router = Router();
 
@@ -36,13 +37,6 @@ router.get(
 );
 
 /**
- * @route   GET /api/v1/watermarks/:id
- * @desc    Retrieve single watermark by ID
- * @access  Private (templates:read)
- */
-router.get('/:id', requirePermission('templates:read'), getWatermarkById);
-
-/**
  * @route   POST /api/v1/watermarks
  * @desc    Upload or create a new SVG watermark stamp
  * @access  Private (templates:create)
@@ -54,6 +48,15 @@ router.post(
   validate(createWatermarkSchema),
   createWatermark
 );
+
+router.all('/', methodNotAllowed(['GET', 'POST']));
+
+/**
+ * @route   GET /api/v1/watermarks/:id
+ * @desc    Retrieve single watermark by ID
+ * @access  Private (templates:read)
+ */
+router.get('/:id', requirePermission('templates:read'), getWatermarkById);
 
 /**
  * @route   PUT /api/v1/watermarks/:id
@@ -79,5 +82,7 @@ router.delete(
   requirePermission('templates:delete'),
   deleteWatermark
 );
+
+router.all('/:id', methodNotAllowed(['GET', 'PUT', 'DELETE']));
 
 export default router;

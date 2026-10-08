@@ -39,6 +39,17 @@ export class ApiError extends Error {
     return new ApiError(404, message);
   }
 
+  static methodNotAllowed(
+    message: string = 'Method Not Allowed',
+    allowedMethods?: string[]
+  ): ApiError {
+    const detail =
+      allowedMethods && allowedMethods.length > 0
+        ? `${message}. Allowed methods: ${allowedMethods.join(', ')}`
+        : message;
+    return new ApiError(405, detail);
+  }
+
   static conflict(message: string = 'Conflict: Resource already exists'): ApiError {
     return new ApiError(409, message);
   }

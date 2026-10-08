@@ -6,6 +6,7 @@ import compression from 'compression';
 import { env } from './config/env';
 import apiRoutes from './modules';
 import { apiLimiter } from './shared/middlewares/rateLimiter';
+import { ssrfProtection } from './shared/middlewares/ssrfProtection';
 import { notFound } from './shared/middlewares/notFound';
 import { errorHandler } from './shared/middlewares/errorHandler';
 
@@ -29,8 +30,8 @@ export function createApp(): Application {
     app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined'));
   }
 
-  // Mount API modules under configured prefix (/api/v1) with rate limiting
-  app.use(env.API_PREFIX, apiLimiter, apiRoutes);
+  // Mount API modules under configured prefix (/api/v1) with rate limiting & SSRF protection
+  app.use(env.API_PREFIX, apiLimiter, ssrfProtection, apiRoutes);
 
   // 404 Route Not Found handler
   app.use(notFound);

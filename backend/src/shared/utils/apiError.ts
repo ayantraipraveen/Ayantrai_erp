@@ -39,6 +39,17 @@ export class ApiError extends Error {
     return new ApiError(404, msg);
   }
 
+  static methodNotAllowed(
+    msg: string = 'Method not allowed',
+    allowedMethods?: string[]
+  ): ApiError {
+    const detail =
+      allowedMethods && allowedMethods.length > 0
+        ? `${msg}. Allowed methods: ${allowedMethods.join(', ')}`
+        : msg;
+    return new ApiError(405, detail);
+  }
+
   static conflict(msg: string = 'Resource conflict'): ApiError {
     return new ApiError(409, msg);
   }

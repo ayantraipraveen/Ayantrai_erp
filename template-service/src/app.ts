@@ -6,6 +6,7 @@ import compression from 'compression';
 import { env } from './config/env';
 import apiRoutes from './modules';
 import { apiLimiter } from './shared/middlewares/rateLimiter';
+import { ssrfProtection } from './shared/middlewares/ssrfProtection';
 import { notFound } from './shared/middlewares/notFound';
 import { errorHandler } from './shared/middlewares/errorHandler';
 
@@ -28,8 +29,8 @@ export function createApp(): Application {
     app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined'));
   }
 
-  // Mount API Routes (/api/v1) with Global Rate Limiter
-  app.use(env.API_PREFIX, apiLimiter, apiRoutes);
+  // Mount API Routes (/api/v1) with Global Rate Limiter & SSRF Protection
+  app.use(env.API_PREFIX, apiLimiter, ssrfProtection, apiRoutes);
 
   // 404 & Error Handlers
   app.use(notFound);

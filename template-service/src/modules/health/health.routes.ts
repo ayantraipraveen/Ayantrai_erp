@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../../config/prisma';
 import { ApiResponse } from '../../shared/utils/apiResponse';
+import { methodNotAllowed } from '../../shared/middlewares/methodNotAllowed';
 
 const router = Router();
 
@@ -32,5 +33,8 @@ router.get('/', async (_req: Request, res: Response) => {
     )
   );
 });
+
+// Any other HTTP method on /api/v1/health is rejected with 405 Method Not Allowed
+router.all('/', methodNotAllowed(['GET']));
 
 export default router;
