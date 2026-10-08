@@ -1574,7 +1574,7 @@ export function CanvasStudio({
 
                       {/* Inner Page Content with Margins */}
                       <div
-                        className="relative z-10 flex-1 min-h-0 flex flex-col w-full max-w-full box-border"
+                        className="relative z-10 flex-1 min-h-0 flex flex-col w-full max-w-full box-border pointer-events-none"
                         style={{
                           paddingTop: isReportHeaderHidden ? 20 : 10,
                           paddingRight: marginConfig.right,
@@ -1584,7 +1584,7 @@ export function CanvasStudio({
                         }}
                       >
                         {/* Top Content Area */}
-                        <div>
+                        <div className="pointer-events-auto">
                           {/* Section-specific Header Bar */}
                           {!isSectionTitleHidden ? (
                             <CanvasSectionHeader
@@ -1659,7 +1659,7 @@ export function CanvasStudio({
                             />
                           ) : (
                             !activeIsPreview && (
-                              <div className="group/restore-title w-full border-b border-dashed border-slate-200 dark:border-zinc-800 hover:border-purple-400 py-1.5 flex items-center justify-center transition-colors mb-2">
+                              <div className="group/restore-title w-full border-b border-dashed border-slate-200 dark:border-zinc-800 hover:border-purple-400 py-1.5 flex items-center justify-center transition-colors mb-2 pointer-events-auto">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1678,7 +1678,7 @@ export function CanvasStudio({
 
                         {/* 100% Float-Only Open Canvas Surface for this Page */}
                         <div
-                          className="relative z-10 flex-1 min-h-0 overflow-visible transition-all duration-150 flex flex-col"
+                          className="relative z-10 flex-1 min-h-0 overflow-visible transition-all duration-150 flex flex-col pointer-events-none"
                           style={{
                             paddingTop: section.sectionStyle?.paddingTop !== undefined ? `${section.sectionStyle.paddingTop}px` : "6px",
                             paddingBottom: section.sectionStyle?.paddingBottom !== undefined ? `${section.sectionStyle.paddingBottom}px` : "4px",
@@ -1690,7 +1690,7 @@ export function CanvasStudio({
                           {!activeIsPreview && (section.stamps || []).filter(
                             (s) => (s.pageIndex ?? 0) === page.pageIndex && s.elementType && s.elementType !== "stamp"
                           ).length === 0 && (
-                            <div className="flex-1 min-h-[220px] flex flex-col items-center justify-center p-8 m-2 border-2 border-dashed border-slate-200/90 dark:border-zinc-800 hover:border-[#9D61FF]/60 hover:bg-[#9D61FF]/5 transition-all rounded-2xl text-slate-400 dark:text-zinc-600 space-y-2 select-none text-center">
+                            <div className="flex-1 min-h-[220px] flex flex-col items-center justify-center p-8 m-2 border-2 border-dashed border-slate-200/90 dark:border-zinc-800 hover:border-[#9D61FF]/60 hover:bg-[#9D61FF]/5 transition-all rounded-2xl text-slate-400 dark:text-zinc-600 space-y-2 select-none text-center pointer-events-auto">
                               <p className="text-sm font-semibold text-slate-600 dark:text-zinc-300">Canvas Page {page.pageNumber} is ready</p>
                               <p className="text-xs text-slate-400 dark:text-zinc-500 max-w-xs">
                                 Drag any card, chart, insight or badge strip from the left sidebar to position it freely anywhere on this page
@@ -1698,19 +1698,20 @@ export function CanvasStudio({
                             </div>
                           )}
                         </div>
-
                         </div>
 
                         {/* Footer: Full Sitesafe Footer on Last Page, Running footer on earlier pages (Edge-to-edge) */}
-                        <CanvasReportFooter
-                          paperTone={paperTone}
-                          footerValues={footerValues}
-                          editingFooterValue={isEditingHere ? editingFooterValue : null}
-                          activeIsPreview={activeIsPreview}
-                          onStartEditing={openFooter}
-                          onSave={updateFooterValueWithHtml}
-                          onCancel={() => setEditingFooterValue(null)}
-                        />
+                        <div className="pointer-events-auto">
+                          <CanvasReportFooter
+                            paperTone={paperTone}
+                            footerValues={footerValues}
+                            editingFooterValue={isEditingHere ? editingFooterValue : null}
+                            activeIsPreview={activeIsPreview}
+                            onStartEditing={openFooter}
+                            onSave={updateFooterValueWithHtml}
+                            onCancel={() => setEditingFooterValue(null)}
+                          />
+                        </div>
                       </div>
 
                       {/* Front-layer Stamps: render above all report content (floating charts, overlays) */}
