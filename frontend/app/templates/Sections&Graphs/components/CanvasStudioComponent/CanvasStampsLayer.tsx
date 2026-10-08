@@ -404,7 +404,10 @@ export function CanvasStampsLayer({
       const target = e.target as HTMLElement | null;
       if (
         !target?.closest(".canvas-coordinate-stamp") &&
-        !target?.closest(".stamp-toolbar-portal")
+        !target?.closest(".stamp-toolbar-portal") &&
+        !target?.closest(".draggable-popover-shell") &&
+        !target?.closest("[class*='portal-']") &&
+        !target?.closest("[role='dialog']")
       ) {
         setSelected(null);
       }
@@ -454,15 +457,16 @@ export function CanvasStampsLayer({
   if (pageStamps.length === 0) return null;
 
   // Determine wrapper z-index and overflow based on layerFilter:
-  // "back"  → z-[5]  overflow-hidden  (renders behind report content)
-  // "front" → z-[50] overflow-visible (renders above report content)
-  // "all"   → z-[20] overflow-hidden
+  // When an element in the back layer is selected, elevate its wrapper to z-[55] overflow-visible
+  // so dragging handles, rotating stem, and toolbar portals are fully interactive and unclipped.
+  const hasSelectedStamp = pageStamps.some((s) => s.id === activeSelectedId && !activeIsPreview);
+
   const wrapperClass =
     layerFilter === "back"
-      ? "absolute inset-0 pointer-events-none z-[5] overflow-hidden"
+      ? `absolute inset-0 pointer-events-none ${hasSelectedStamp ? "z-[55] overflow-visible" : "z-[5] overflow-visible"}`
       : layerFilter === "front"
       ? "absolute inset-0 pointer-events-none z-[50] overflow-visible"
-      : "absolute inset-0 pointer-events-none z-[20] overflow-hidden";
+      : "absolute inset-0 pointer-events-none z-[20] overflow-visible";
 
   return (
     <div className={wrapperClass}>

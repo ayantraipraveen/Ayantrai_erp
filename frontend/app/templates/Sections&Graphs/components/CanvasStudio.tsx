@@ -1714,41 +1714,41 @@ export function CanvasStudio({
                         </div>
                       </div>
 
-                      {/* Front-layer Stamps: render above all report content (floating charts, overlays) */}
-                      <CanvasStampsLayer
-                        pageIndex={page.pageIndex}
-                        stamps={section.stamps || []}
-                        layerFilter="front"
-                        activeIsPreview={activeIsPreview}
-                        onUpdateStamp={(stampId, patch) => {
-                          dispatch(updateStampInSection({ sectionId: section.id, stampId, patch }));
-                        }}
-                        onDeleteStamp={(stampId) => {
-                          dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
-                          dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
-                        }}
-                        onBringToFront={(stampId) => {
-                          dispatch(bringStampToFront({ sectionId: section.id, stampId }));
-                          dispatch(showGlobalToast({ message: "Brought to front!", type: "info" }));
-                        }}
-                        onSendToBack={(stampId) => {
-                          dispatch(sendStampToBack({ sectionId: section.id, stampId }));
-                          dispatch(showGlobalToast({ message: "Sent to back!", type: "info" }));
-                        }}
-                        onBringForward={(stampId) => {
-                          dispatch(bringStampForward({ sectionId: section.id, stampId }));
-                        }}
-                        onSendBackward={(stampId) => {
-                          dispatch(sendStampBackward({ sectionId: section.id, stampId }));
-                        }}
-                        onOpenChartEditor={onOpenChartEditor}
-                        selectedStampId={selectedStampId}
-                        onSelectStamp={setSelectedStampId}
-                        pageWidth={activePageWidth}
-                        pageHeight={activePageHeight}
-                        zoom={activeZoom}
-                      />
-                    </div>
+                        {/* Front-layer Stamps: render above all report content (floating charts, overlays) */}
+                        <CanvasStampsLayer
+                          pageIndex={page.pageIndex}
+                          stamps={section.stamps || []}
+                          layerFilter="front"
+                          activeIsPreview={activeIsPreview}
+                          onUpdateStamp={(stampId, patch) => {
+                            dispatch(updateStampInSection({ sectionId: section.id, stampId, patch }));
+                          }}
+                          onDeleteStamp={(stampId) => {
+                            dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
+                            dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
+                          }}
+                          onBringToFront={(stampId) => {
+                            dispatch(bringStampToFront({ sectionId: section.id, stampId }));
+                            dispatch(showGlobalToast({ message: "Brought to front!", type: "info" }));
+                          }}
+                          onSendToBack={(stampId) => {
+                            dispatch(sendStampToBack({ sectionId: section.id, stampId }));
+                            dispatch(showGlobalToast({ message: "Sent to back!", type: "info" }));
+                          }}
+                          onBringForward={(stampId) => {
+                            dispatch(bringStampForward({ sectionId: section.id, stampId }));
+                          }}
+                          onSendBackward={(stampId) => {
+                            dispatch(sendStampBackward({ sectionId: section.id, stampId }));
+                          }}
+                          onOpenChartEditor={onOpenChartEditor}
+                          selectedStampId={selectedStampId}
+                          onSelectStamp={setSelectedStampId}
+                          pageWidth={activePageWidth}
+                          pageHeight={activePageHeight}
+                          zoom={activeZoom}
+                        />
+                      </div>
 
                     {/* Desk Add Page Button below the last A4 sheet */}
                     {!activeIsPreview && page.isLastPage && (
