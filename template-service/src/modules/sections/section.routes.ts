@@ -16,26 +16,36 @@ import {
   cloneSectionSchema,
   reorderSectionsSchema,
 } from './section.schema';
-import { optionalAuth } from '../../shared/middlewares/auth.middleware';
+import {
+  requireAuth,
+  requirePermission,
+} from '../../shared/middlewares/auth.middleware';
 
 const router = Router();
+
+// All section operations require authentication
+router.use(requireAuth);
 
 /**
  * @route   GET /api/v1/sections
  * @desc    Query template section library with filters, search, and aggregate stats
- * @access  Public / Authenticated
+ * @access  Private (templates:read)
  */
-router.get('/', optionalAuth,validate(listSectionsSchema), listSections);
-
+router.get(
+  '/',
+  requirePermission('templates:read'),
+  validate(listSectionsSchema),
+  listSections
+);
 
 /**
  * @route   PUT /api/v1/sections/reorder
  * @desc    Bulk update order indices of sections
- * @access  Public (Dev) / Authenticated (Prod)
+ * @access  Private (templates:update)
  */
 router.put(
   '/reorder',
-  optionalAuth,
+  requirePermission('templates:update'),
   validate(reorderSectionsSchema),
   reorderSections
 );
@@ -43,18 +53,18 @@ router.put(
 /**
  * @route   GET /api/v1/sections/:id
  * @desc    Retrieve single section by ID with all canvas rows, telemetry, and styles
- * @access  Public / Authenticated
+ * @access  Private (templates:read)
  */
-router.get('/:id', optionalAuth,getSectionById);
+router.get('/:id', requirePermission('templates:read'), getSectionById);
 
 /**
  * @route   POST /api/v1/sections
  * @desc    Create a new custom reusable section
- * @access  Public (Dev) / Authenticated (Prod)
+ * @access  Private (templates:create)
  */
 router.post(
   '/',
-  optionalAuth,
+  requirePermission('templates:create'),
   validate(createSectionSchema),
   createSection
 );
@@ -62,11 +72,11 @@ router.post(
 /**
  * @route   PUT /api/v1/sections/:id
  * @desc    Update section properties, canvas rows, or title formatting
- * @access  Public (Dev) / Authenticated (Prod)
+ * @access  Private (templates:update)
  */
 router.put(
   '/:id',
-  optionalAuth,
+  requirePermission('templates:update'),
   validate(updateSectionSchema),
   updateSection
 );
@@ -74,11 +84,11 @@ router.put(
 /**
  * @route   POST /api/v1/sections/:id/clone
  * @desc    Clone an existing core or custom section into a new custom section
- * @access  Public (Dev) / Authenticated (Prod)
+ * @access  Private (templates:create)
  */
 router.post(
   '/:id/clone',
-  optionalAuth,
+  requirePermission('templates:create'),
   validate(cloneSectionSchema),
   cloneSection
 );
@@ -86,8 +96,8 @@ router.post(
 /**
  * @route   DELETE /api/v1/sections/:id
  * @desc    Delete a custom section (prevents deleting core standard templates)
- * @access  Public (Dev) / Authenticated (Prod)
+ * @access  Private (templates:delete)
  */
-router.delete('/:id', optionalAuth, deleteSection);
+router.delete('/:id', requirePermission('templates:delete'), deleteSection);
 
 export default router;

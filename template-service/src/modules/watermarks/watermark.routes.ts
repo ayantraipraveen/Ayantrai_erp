@@ -11,32 +11,38 @@ import {
   createWatermarkSchema,
   updateWatermarkSchema,
 } from './watermark.schema';
-import { optionalAuth } from '../../shared/middlewares/auth.middleware';
+import {
+  requireAuth,
+  requirePermission,
+} from '../../shared/middlewares/auth.middleware';
 
 const router = Router();
+
+// All watermark operations require authentication
+router.use(requireAuth);
 
 /**
  * @route   GET /api/v1/watermarks
  * @desc    Query watermark stamp catalog with optional search and filters
- * @access  Public / Authenticated
+ * @access  Private (templates:read)
  */
-router.get('/', optionalAuth,listWatermarks);
+router.get('/', requirePermission('templates:read'), listWatermarks);
 
 /**
  * @route   GET /api/v1/watermarks/:id
  * @desc    Retrieve single watermark by ID
- * @access  Public / Authenticated
+ * @access  Private (templates:read)
  */
-router.get('/:id', optionalAuth,getWatermarkById);
+router.get('/:id', requirePermission('templates:read'), getWatermarkById);
 
 /**
  * @route   POST /api/v1/watermarks
  * @desc    Upload or create a new SVG watermark stamp
- * @access  Public (Dev) / Authenticated (Prod)
+ * @access  Private (templates:create)
  */
 router.post(
   '/',
-  optionalAuth,
+  requirePermission('templates:create'),
   validate(createWatermarkSchema),
   createWatermark
 );
@@ -44,11 +50,11 @@ router.post(
 /**
  * @route   PUT /api/v1/watermarks/:id
  * @desc    Update watermark properties (scale, rotation, opacity, placement)
- * @access  Public (Dev) / Authenticated (Prod)
+ * @access  Private (templates:update)
  */
 router.put(
   '/:id',
-  optionalAuth,
+  requirePermission('templates:update'),
   validate(updateWatermarkSchema),
   updateWatermark
 );
@@ -56,8 +62,8 @@ router.put(
 /**
  * @route   DELETE /api/v1/watermarks/:id
  * @desc    Delete a watermark stamp
- * @access  Public (Dev) / Authenticated (Prod)
+ * @access  Private (templates:delete)
  */
-router.delete('/:id', optionalAuth, deleteWatermark);
+router.delete('/:id', requirePermission('templates:delete'), deleteWatermark);
 
 export default router;
