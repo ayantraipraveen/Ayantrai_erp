@@ -26,6 +26,7 @@ import {
   PageConfigOverride,
   CanvasDividerBlock,
   CanvasElementBlock,
+  SectionMeta
 } from "../../types/reportModuleTypes";
 
 /**
@@ -77,6 +78,9 @@ export function findCellInRow(
 }
 
 export const sectionsStudioReducers = {
+  setSectionMeta: (state: ReportModuleState, action: PayloadAction<SectionMeta>) => {
+    state.sectionMeta = action.payload;
+  },
     setLibrarySections: (state: ReportModuleState, action: PayloadAction<LibrarySection[]>) => {
       state.librarySections = action.payload;
     },

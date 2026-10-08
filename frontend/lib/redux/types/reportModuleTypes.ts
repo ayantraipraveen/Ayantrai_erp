@@ -69,7 +69,13 @@ export interface TemplateBlock {
   graphs?: TemplateGraphConfig[];
 }
 
-
+export interface SectionMeta {
+  totalSections: number;
+  coreStandardsCount: number;
+  customModulesCount: number;
+  totalCardsCount: number;
+  totalChartsCount: number;
+}
 export interface ReportTemplate {
   id: string;
   name: string;
@@ -946,6 +952,7 @@ export interface WatermarkStampConfig {
 
 // 5. Main Root Redux Slice State
 export interface ReportModuleState {
+  sectionMeta: SectionMeta;
   activeRole: RoleType;
   templates: ReportTemplate[];
   reports: GeneratedReport[];

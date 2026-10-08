@@ -19,6 +19,7 @@ export const TEMPLATE_API_BASE_URL =
 export const axiosClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -31,6 +32,7 @@ export const axiosClient: AxiosInstance = axios.create({
 export const templateAxiosClient: AxiosInstance = axios.create({
   baseURL: TEMPLATE_API_BASE_URL,
   timeout: 15000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -67,9 +69,10 @@ export const buildHeadersWithToken = (
   return headers;
 };
 
-// Request Interceptor: Secondary fallback to ensure Bearer token is attached
+// Request Interceptor: Ensure withCredentials and fallback Bearer token are attached
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    config.withCredentials = true;
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("sitesafe_token");
       if (token && config.headers && !config.headers.Authorization) {
@@ -83,6 +86,7 @@ axiosClient.interceptors.request.use(
 
 templateAxiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    config.withCredentials = true;
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("sitesafe_token");
       if (token && config.headers && !config.headers.Authorization) {
@@ -106,6 +110,16 @@ axiosClient.interceptors.response.use(
       }
     }
 
+    return Promise.reject(error);
+  }
+);
+
+templateAxiosClient.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error) => {
+    if (error.response?.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("sitesafe_token");
+    }
     return Promise.reject(error);
   }
 );

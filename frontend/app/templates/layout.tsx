@@ -22,8 +22,8 @@ export default function TemplatesLayout({
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const templates = useAppSelector((state) => state.reportModule.templates || []);
-  const librarySections = useAppSelector(
-    (state) => state.reportModule.librarySections || []
+  const sections = useAppSelector(
+    (state) => state.reportModule.sectionMeta || []
   );
   const selectedLibrarySectionId = useAppSelector(
     (state) => state.reportModule.selectedLibrarySectionId
@@ -88,7 +88,7 @@ export default function TemplatesLayout({
                     : "bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"
                 }`}
               >
-                {librarySections.length}
+                {sections.totalSections}
               </span>
             </Link>
           </div>

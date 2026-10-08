@@ -98,7 +98,6 @@ export function errorHandler(
     statusCode,
     message,
     errors: errors.length > 0 ? errors : undefined,
-    stack: env.NODE_ENV === 'development' ? err?.stack : undefined,
     timestamp: new Date().toISOString(),
   });
 }

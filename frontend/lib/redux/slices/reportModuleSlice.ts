@@ -26,6 +26,13 @@ export * from "../types/reportModuleTypes";
 export * from "../mockData";
 
 export const initialState: ReportModuleState = {
+  sectionMeta: {
+    totalSections: 0,
+    coreStandardsCount: 0,
+    customModulesCount: 0,
+    totalCardsCount: 0,
+    totalChartsCount: 0,
+  },
   activeRole: "superadmin",
   templates: initialTemplates,
   reports: initialReports,
@@ -61,7 +68,6 @@ export const initialState: ReportModuleState = {
   librarySections: getInitialLibrarySections(),
   selectedLibrarySectionId: null,
 
-
   // Master Document Watermark Library & Studio
   watermarks: initialWatermarks,
   selectedWatermarkId: "wm-approved",
@@ -81,6 +87,7 @@ export const reportModuleSlice = createSlice({
   name: "reportModule",
   initialState,
   reducers: {
+    
     ...governanceReducers,
     ...templatesReducers,
     ...sectionsStudioReducers,
@@ -125,6 +132,7 @@ export const {
   updateGraphInGlobalSection,
   deleteGraphFromGlobalSection,
   setLibrarySections,
+  setSectionMeta,
   addOrReplaceLibrarySection,
   setSelectedLibrarySectionId,
   createLibrarySection,

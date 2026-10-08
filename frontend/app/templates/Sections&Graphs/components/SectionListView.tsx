@@ -39,6 +39,7 @@ import {
   addOrReplaceLibrarySection,
   deleteLibrarySection,
   showGlobalToast,
+  setSectionMeta,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { sectionApi } from "@/lib/api/sectionApi";
 import { Tooltip } from "@/app/Component";
@@ -59,6 +60,7 @@ type FilterType = "all" | "core" | "custom";
 export default function SectionListView({ onSelectSection, onBackToTemplates }: SectionListViewProps) {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const sectionMeta = useAppSelector((state) => state.reportModule.sectionMeta);
   const librarySections = useAppSelector((state) => state.reportModule.librarySections || []);
   const watermarks = useAppSelector((state) => state.reportModule.watermarks || []);
   const activeRole = useAppSelector((state) => state.reportModule.activeRole);
@@ -92,6 +94,9 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
         limit: 100,
       });
       dispatch(setLibrarySections(res.data));
+      if (res.meta?.stats) {
+        dispatch(setSectionMeta(res.meta.stats));
+      }
     } catch (err: any) {
       console.error("Failed to load sections from API:", err);
       const msg =
@@ -108,25 +113,9 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
     fetchSections();
   }, [fetchSections]);
 
-  // Statistics
-  const coreSectionsCount = useMemo(
-    () => librarySections.filter((s) => s.type === "core").length,
-    [librarySections]
-  );
-  const customSectionsCount = useMemo(
-    () => librarySections.filter((s) => s.type === "custom").length,
-    [librarySections]
-  );
-  const totalCardsCount = useMemo(
-    () => librarySections.reduce((sum, s) => sum + (s.metricCards?.length || 0), 0),
-    [librarySections]
-  );
-  const totalChartsCount = useMemo(
-    () => librarySections.reduce((sum, s) => sum + (s.charts?.length || 0), 0),
-    [librarySections]
-  );
 
-  // Filtered sections list
+
+   // Filtered sections list
   const filteredSections = useMemo(() => {
     let list = librarySections;
 
@@ -222,7 +211,6 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
     }
   };
 
-
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-4 sm:px-6 lg:px-7 space-y-3.5 animate-fadeIn">
       {/* 1. TOP METRICS STRIP */}
@@ -231,7 +219,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           <div>
             <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Total Sections</div>
             <div className="text-lg font-bold text-slate-900 dark:text-white font-mono mt-0.5">
-              {librarySections.length}
+              {sectionMeta?.totalSections || 0}
             </div>
           </div>
           <div className="p-2.5 rounded-xl bg-purple-500/10 text-[#9D61FF]">
@@ -243,7 +231,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           <div>
             <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Core Standards</div>
             <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
-              {coreSectionsCount}
+              {sectionMeta?.coreStandardsCount || 0}
             </div>
           </div>
           <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
@@ -255,7 +243,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           <div>
             <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Custom Modules</div>
             <div className="text-lg font-bold text-amber-500 font-mono mt-0.5">
-              {customSectionsCount}
+              {sectionMeta?.customModulesCount || 0}
             </div>
           </div>
           <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500">
@@ -267,7 +255,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
           <div>
             <div className="text-[11px] font-medium text-slate-500 dark:text-zinc-400">Total Visualizations</div>
             <div className="text-lg font-bold text-sky-600 dark:text-sky-400 font-mono mt-0.5">
-              {totalCardsCount} cards • {totalChartsCount} charts
+              {sectionMeta?.totalCardsCount || 0} cards • {sectionMeta?.totalChartsCount || 0} charts
             </div>
           </div>
           <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-500">
@@ -301,7 +289,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                 : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            All ({librarySections.length})
+            All ({sectionMeta?.totalSections || 0})
           </button>
           <button
             type="button"
@@ -312,7 +300,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                 : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            Core Standards ({coreSectionsCount})
+            Core Standards ({sectionMeta?.coreStandardsCount || 0})
           </button>
           <button
             type="button"
@@ -323,7 +311,7 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
                 : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            Custom Added ({customSectionsCount})
+            Custom Added ({sectionMeta?.customModulesCount || 0})
           </button>
         </div>
 
