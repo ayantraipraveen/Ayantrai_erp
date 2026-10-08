@@ -15,6 +15,7 @@ import {
   CanvasCoordinateStamp,
   LibraryChartCard,
   CanvasBlockType,
+  CanvasTextBlock,
 } from "@/lib/redux/types/reportModuleTypes";
 import { CanvasBlockRenderer } from "../CanvasBlockComponent";
 
@@ -539,6 +540,8 @@ export function CanvasStampsLayer({
                       onUpdateStamp(stamp.id, {
                         name: card.label || stamp.name,
                         metricCard: card,
+                        width: card.customWidth ?? stamp.width,
+                        height: card.customHeight ?? stamp.height,
                       });
                     }
                   }}
@@ -547,6 +550,8 @@ export function CanvasStampsLayer({
                       onUpdateStamp(stamp.id, {
                         name: chart.title || stamp.name,
                         chart,
+                        width: chart.customWidth ?? stamp.width,
+                        height: chart.customHeight ?? stamp.height,
                       });
                     }
                   }}
@@ -563,19 +568,31 @@ export function CanvasStampsLayer({
                       onUpdateStamp(stamp.id, {
                         name: updatedInsight.title || stamp.name,
                         insight: updatedInsight,
+                        width: updatedInsight.customWidth ?? stamp.width,
+                        height: updatedInsight.customHeight ?? stamp.height,
                       });
                     }
                   }}
-                  onUpdateTextBlock={(content) => {
+                  onUpdateTextBlock={(contentOrBlock) => {
                     if (onUpdateStamp) {
+                      const updatedTb: CanvasTextBlock = typeof contentOrBlock === "string"
+                        ? { ...(stamp.textBlock || { id: stamp.id, content: "" }), content: contentOrBlock }
+                        : contentOrBlock;
                       onUpdateStamp(stamp.id, {
-                        textBlock: { id: stamp.id, content },
+                        name: updatedTb.title || stamp.name,
+                        textBlock: updatedTb,
+                        width: updatedTb.customWidth ?? stamp.width,
+                        height: updatedTb.customHeight ?? stamp.height,
                       });
                     }
                   }}
                   onUpdateBadgeStrip={(strip) => {
                     if (onUpdateStamp) {
-                      onUpdateStamp(stamp.id, { badgeStrip: strip });
+                      onUpdateStamp(stamp.id, {
+                        badgeStrip: strip,
+                        width: strip.customWidth ?? stamp.width,
+                        height: strip.customHeight ?? stamp.height,
+                      });
                     }
                   }}
                 />

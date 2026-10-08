@@ -4,7 +4,15 @@ import {
   DYNAMIC_METRIC_ICONS,
   CARD_BG_PRESETS,
 } from "../../../utils";
-import { CanvasCell, LibraryMetricCard, LibraryChartCard, LibraryKeyInsightItem, CanvasBadgeStrip, CanvasBadgeItem } from "@/lib/redux/slices/reportModuleSlice";
+import {
+  CanvasCell,
+  LibraryMetricCard,
+  LibraryChartCard,
+  LibraryKeyInsightItem,
+  CanvasBadgeStrip,
+  CanvasBadgeItem,
+  CanvasTextBlock,
+} from "@/lib/redux/slices/reportModuleSlice";
 
 export { BADGE_COLOR_PALETTES, BADGE_COLOR_MAP, DYNAMIC_METRIC_ICONS };
 
@@ -75,7 +83,7 @@ export interface BlockRendererProps {
   onUpdateChart?: (chart: LibraryChartCard) => void;
   onOpenChartEditor?: () => void;
   onUpdateInsight?: (textOrInsight: string | LibraryKeyInsightItem) => void;
-  onUpdateTextBlock?: (content: string) => void;
+  onUpdateTextBlock?: (contentOrBlock: string | CanvasTextBlock) => void;
   onUpdateBadgeStrip?: (strip: CanvasBadgeStrip) => void;
   onUpdateSingleBadge?: (badgeId: string, patch: Partial<CanvasBadgeItem>) => void;
   onAddBadge?: () => void;

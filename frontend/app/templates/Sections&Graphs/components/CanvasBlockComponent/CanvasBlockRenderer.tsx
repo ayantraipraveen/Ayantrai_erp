@@ -2,14 +2,6 @@
 
 import React from "react";
 import {
-  CanvasCell,
-  LibraryMetricCard,
-  LibraryKeyInsightItem,
-  LibraryChartCard,
-  CanvasBadgeStrip,
-  CanvasBadgeItem,
-} from "@/lib/redux/slices/reportModuleSlice";
-import {
   // Constants & Types
   BADGE_COLOR_PALETTES,
   BADGE_COLOR_MAP,
@@ -40,6 +32,7 @@ import {
   BadgeStripInspectorPopover,
   KeyInsightInspectorPopover,
   ChartInspectorPopover,
+  TextBlockInspectorPopover,
 } from "./inspectors";
 import {
   // Blocks
@@ -78,6 +71,7 @@ export {
   BadgeStripInspectorPopover,
   KeyInsightInspectorPopover,
   ChartInspectorPopover,
+  TextBlockInspectorPopover,
   MetricCardBlock,
   SingleBadgeItemView,
   BadgeStripBlock,
@@ -148,6 +142,7 @@ export function CanvasBlockRenderer({
         return (
           <TextBlock
             cell={cell}
+            isSelected={isSelected}
             isPreview={isPreview}
             isForceEditing={isForceEditing}
             onEditingChange={onEditingChange}

@@ -461,9 +461,26 @@ export interface LibraryKeyInsightItem {
 }
 
 // ── Canvas Row / Cell Types (Canva-like Section Editor) ──────────────────────
+export type TextCalloutType = "none" | "info" | "warning" | "success" | "neutral" | "quote";
+
 export interface CanvasTextBlock {
   id: string;
   content: string; // rich plain text paragraph
+  title?: string;
+  fontSize?: "xs" | "sm" | "base" | "lg" | "xl" | "2xl";
+  customFontSize?: number; // px, 10 to 48
+  lineHeight?: "tight" | "snug" | "normal" | "relaxed" | "loose";
+  textAlign?: "left" | "center" | "right" | "justify";
+  textColor?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+  isTransparent?: boolean;
+  padding?: number; // px
+  customHeight?: number;
+  customWidth?: number;
+  calloutType?: TextCalloutType;
 }
 
 export interface CanvasBadgeItem {
@@ -497,6 +514,8 @@ export interface CanvasBadgeItem {
 export interface CanvasBadgeStrip {
   id: string;
   badges: CanvasBadgeItem[];
+  customWidth?: number;
+  customHeight?: number;
   // Dynamic layout & container styling properties:
   columns?: number; // 1 | 2 | 3 | 4 | 5 | 6 (default 2 or 4)
   customColumns?: number; // any custom number of columns e.g. 1-12

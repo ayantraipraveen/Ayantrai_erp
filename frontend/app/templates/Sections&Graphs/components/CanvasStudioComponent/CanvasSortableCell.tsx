@@ -826,8 +826,9 @@ export function SortableCell({
             onUpdateInsight={(textOrInsight) => {
               if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, cell.id, textOrInsight);
             }}
-            onUpdateTextBlock={(content) => {
-              if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, cell.id, content);
+            onUpdateTextBlock={(contentOrBlock) => {
+              const str = typeof contentOrBlock === "string" ? contentOrBlock : contentOrBlock.content;
+              if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, cell.id, str);
             }}
             onUpdateBadgeStrip={(strip) => {
               if (typeof onUpdateBadgeStrip === "function") onUpdateBadgeStrip(rowId, cell.id, strip);
@@ -1023,8 +1024,9 @@ export function SortableCell({
                       onUpdateInsight={(textOrInsight) => {
                         if (typeof onUpdateInsight === "function") onUpdateInsight(rowId, sc.id, textOrInsight);
                       }}
-                      onUpdateTextBlock={(content) => {
-                        if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, sc.id, content);
+                      onUpdateTextBlock={(contentOrBlock) => {
+                        const str = typeof contentOrBlock === "string" ? contentOrBlock : contentOrBlock.content;
+                        if (typeof onUpdateTextBlock === "function") onUpdateTextBlock(rowId, sc.id, str);
                       }}
                       onUpdateBadgeStrip={(strip) => {
                         if (typeof onUpdateBadgeStrip === "function") onUpdateBadgeStrip(rowId, sc.id, strip);

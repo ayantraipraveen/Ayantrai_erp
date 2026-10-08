@@ -7,3 +7,4 @@ export * from "./MetricCardInspectorPopover";
 export * from "./BadgeStripInspectorPopover";
 export * from "./KeyInsightInspectorPopover";
 export * from "./ChartInspectorPopover";
+export * from "./TextBlockInspectorPopover";

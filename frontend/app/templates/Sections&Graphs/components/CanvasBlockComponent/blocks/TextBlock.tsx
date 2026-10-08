@@ -1,20 +1,36 @@
-import React, { useState, useEffect } from "react";
-import { CanvasCell } from "@/lib/redux/slices/reportModuleSlice";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
+import {
+  Type,
+  Pencil,
+  SlidersHorizontal,
+  Info,
+  AlertTriangle,
+  CheckCircle2,
+  Quote,
+  Sparkles,
+  FileText,
+} from "lucide-react";
+import { CanvasCell, CanvasTextBlock, TextCalloutType } from "@/lib/redux/slices/reportModuleSlice";
 import { CARD_BG_PRESETS } from "../../../utils";
 import { withAlpha } from "../common/blockConstants";
+import { calculateTopBarPosition } from "../common/blockUtils";
 import { DynamicTextEditor } from "../../DynamicTitleEditor";
+import { TextBlockInspectorPopover } from "../inspectors/TextBlockInspectorPopover";
 
 export interface TextBlockProps {
   cell: CanvasCell;
+  isSelected?: boolean;
   isPreview?: boolean;
   isForceEditing?: boolean;
   onEditingChange?: (isEditing: boolean) => void;
-  onUpdateTextBlock?: (content: string) => void;
+  onUpdateTextBlock?: (contentOrBlock: string | CanvasTextBlock) => void;
   style?: React.CSSProperties;
 }
 
 export function TextBlock({
   cell,
+  isSelected,
   isPreview,
   isForceEditing,
   onEditingChange,
@@ -24,14 +40,49 @@ export function TextBlock({
   const tb = cell.textBlock;
   if (!tb) return null;
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Inspector and floating action bar states
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
+  const [inspectorTab, setInspectorTab] = useState<"typography" | "layout">("typography");
+  const [portalCoords, setPortalCoords] = useState<{ top: number; left: number } | null>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
   const [isEditing, setIsEditing] = useState(false);
   const activeEditing = isEditing || isForceEditing;
+
+  useEffect(() => {
+    if (!isSelected) {
+      setIsInspectorOpen(false);
+    }
+  }, [isSelected]);
 
   useEffect(() => {
     if (isForceEditing) {
       setIsEditing(true);
     }
   }, [isForceEditing]);
+
+  const updatePortalPos = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setAnchorRect(rect);
+    setPortalCoords(calculateTopBarPosition(rect));
+  }, []);
+
+  useEffect(() => {
+    if (isSelected && !isPreview) {
+      updatePortalPos();
+      const interval = setInterval(updatePortalPos, 400);
+      window.addEventListener("scroll", updatePortalPos, true);
+      window.addEventListener("resize", updatePortalPos);
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener("scroll", updatePortalPos, true);
+        window.removeEventListener("resize", updatePortalPos);
+      };
+    }
+  }, [isSelected, isPreview, updatePortalPos]);
 
   const handleStartEditing = () => {
     if (isPreview || activeEditing) return;
@@ -44,9 +95,18 @@ export function TextBlock({
     if (onEditingChange) onEditingChange(false);
   };
 
-  // Compute dynamic card background & border from cell.style or passed style
+  const handleUpdate = (patch: Partial<CanvasTextBlock>) => {
+    if (!onUpdateTextBlock) return;
+    const updated: CanvasTextBlock = {
+      ...tb,
+      ...patch,
+    };
+    onUpdateTextBlock(updated);
+  };
+
+  // Compute dynamic card background & border from tb or cell.style
   const cardBgPreset = cell.style?.cardBg ? (CARD_BG_PRESETS as Array<{ id: string; color: string; border: string }>).find((p) => p.id === cell.style?.cardBg) : undefined;
-  const rawBgColor = cardBgPreset?.color || cell.style?.cardBg;
+  const rawBgColor = tb.backgroundColor || cardBgPreset?.color || cell.style?.cardBg;
   const dynamicBg = rawBgColor
     ? cell.style?.backgroundOpacity !== undefined
       ? withAlpha(rawBgColor, cell.style.backgroundOpacity)
@@ -54,12 +114,14 @@ export function TextBlock({
     : undefined;
 
   const dynamicBorderColor =
-    cell.style?.borderColor === "none" || cell.style?.borderColor === "transparent"
+    tb.borderColor === "none" || tb.borderColor === "transparent" || cell.style?.borderColor === "none" || cell.style?.borderColor === "transparent"
       ? "transparent"
-      : cell.style?.borderColor || cardBgPreset?.border;
+      : tb.borderColor || cell.style?.borderColor || cardBgPreset?.border;
 
   const dynamicBorderWidth =
-    cell.style?.borderWidth !== undefined
+    tb.borderWidth !== undefined
+      ? `${tb.borderWidth}px`
+      : cell.style?.borderWidth !== undefined
       ? `${cell.style.borderWidth}px`
       : cell.style?.borderStyle === "none" || cell.style?.borderColor === "transparent" || cell.style?.borderColor === "none"
         ? "0px"
@@ -68,7 +130,9 @@ export function TextBlock({
   const dynamicBorderStyle = cell.style?.borderStyle || undefined;
 
   const dynamicBorderRadius =
-    cell.style?.borderRadius !== undefined
+    tb.borderRadius !== undefined
+      ? `${tb.borderRadius}px`
+      : cell.style?.borderRadius !== undefined
       ? typeof cell.style.borderRadius === "number"
         ? `${cell.style.borderRadius}px`
         : cell.style.borderRadius === "none"
@@ -88,7 +152,13 @@ export function TextBlock({
                       : cell.style.borderRadius
       : undefined;
 
-  const dynamicBoxShadow = "none";
+  const isTransparent = Boolean(tb.isTransparent);
+  const calloutType: TextCalloutType = tb.calloutType || "none";
+  const customFontSize = tb.customFontSize ?? (tb.fontSize === "xs" ? 11 : tb.fontSize === "sm" ? 13 : tb.fontSize === "lg" ? 16 : tb.fontSize === "xl" ? 20 : tb.fontSize === "2xl" ? 24 : 14);
+  const textAlign = tb.textAlign || "left";
+  const lineHeight = tb.lineHeight === "tight" ? 1.3 : tb.lineHeight === "relaxed" ? 1.75 : 1.5;
+  const textColor = tb.textColor || undefined;
+  const paddingVal = tb.padding !== undefined ? `${tb.padding}px` : "16px";
 
   const isContentEmpty =
     !tb.content ||
@@ -99,64 +169,230 @@ export function TextBlock({
 
   const contentToEdit = isContentEmpty ? "" : tb.content;
 
+  // Callout specific styling decorations
+  const getCalloutDecorations = () => {
+    switch (calloutType) {
+      case "info":
+        return {
+          stripeClass: "border-l-4 border-l-blue-500",
+          bgClass: !dynamicBg ? "bg-blue-50/70 dark:bg-blue-950/25" : "",
+          borderClass: !dynamicBorderColor ? "border-blue-200 dark:border-blue-900/60" : "",
+          badgeBg: "bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300",
+          badgeLabel: "Info Note",
+          icon: Info,
+        };
+      case "warning":
+        return {
+          stripeClass: "border-l-4 border-l-amber-500",
+          bgClass: !dynamicBg ? "bg-amber-50/70 dark:bg-amber-950/25" : "",
+          borderClass: !dynamicBorderColor ? "border-amber-200 dark:border-amber-900/60" : "",
+          badgeBg: "bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300",
+          badgeLabel: "Warning",
+          icon: AlertTriangle,
+        };
+      case "success":
+        return {
+          stripeClass: "border-l-4 border-l-emerald-500",
+          bgClass: !dynamicBg ? "bg-emerald-50/70 dark:bg-emerald-950/25" : "",
+          borderClass: !dynamicBorderColor ? "border-emerald-200 dark:border-emerald-900/60" : "",
+          badgeBg: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300",
+          badgeLabel: "Compliance Pass",
+          icon: CheckCircle2,
+        };
+      case "quote":
+        return {
+          stripeClass: "border-l-4 border-l-purple-500 italic font-serif",
+          bgClass: !dynamicBg ? "bg-purple-50/50 dark:bg-purple-950/20" : "",
+          borderClass: !dynamicBorderColor ? "border-purple-200 dark:border-purple-900/60" : "",
+          badgeBg: "bg-purple-100 text-[#8B3DFF] dark:bg-purple-950/80 dark:text-purple-300",
+          badgeLabel: "Quote",
+          icon: Quote,
+        };
+      case "neutral":
+        return {
+          stripeClass: "border-l-4 border-l-slate-400 dark:border-l-zinc-500",
+          bgClass: !dynamicBg ? "bg-slate-100/60 dark:bg-zinc-800/40" : "",
+          borderClass: !dynamicBorderColor ? "border-slate-200 dark:border-zinc-700" : "",
+          badgeBg: "bg-slate-200 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300",
+          badgeLabel: "Neutral",
+          icon: Sparkles,
+        };
+      default:
+        return {
+          stripeClass: "",
+          bgClass: !dynamicBg ? "bg-slate-50/70 dark:bg-zinc-900/50" : "",
+          borderClass: !dynamicBorderColor ? "border-slate-200 dark:border-zinc-800" : "",
+          badgeBg: "bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300",
+          badgeLabel: "Note",
+          icon: FileText,
+        };
+    }
+  };
+
+  const calloutDec = getCalloutDecorations();
+  const CalloutIcon = calloutDec.icon;
+
+  const containerStyle: React.CSSProperties = {
+    height: tb.customHeight ? `${tb.customHeight}px` : "100%",
+    maxHeight: "100%",
+    width: tb.customWidth ? `${tb.customWidth}px` : "100%",
+    backgroundColor: isTransparent ? "transparent" : dynamicBg,
+    borderColor: isTransparent ? "transparent" : dynamicBorderColor,
+    borderWidth: isTransparent ? 0 : dynamicBorderWidth,
+    borderStyle: isTransparent ? "none" : dynamicBorderStyle,
+    borderRadius: isTransparent ? 0 : dynamicBorderRadius,
+    padding: paddingVal,
+    boxShadow: "none",
+    ...style,
+  };
+
   return (
-    <div
-      onDoubleClick={(e) => {
-        if (!isPreview && !activeEditing) {
-          e.stopPropagation();
-          handleStartEditing();
-        }
-      }}
-      className={`w-full h-full flex-1 min-h-0 rounded-2xl border p-4 transition-all duration-150 flex flex-col ${
-        !activeEditing ? "cursor-text hover:border-purple-300 dark:hover:border-purple-700/60" : ""
-      } ${!dynamicBg ? "bg-slate-50/70 dark:bg-zinc-900/50" : ""} ${
-        !dynamicBorderColor ? "border-slate-200 dark:border-zinc-800" : ""
-      }`}
-      style={{
-        backgroundColor: dynamicBg,
-        borderColor: dynamicBorderColor,
-        borderWidth: dynamicBorderWidth,
-        borderStyle: dynamicBorderStyle,
-        borderRadius: dynamicBorderRadius,
-        boxShadow: dynamicBoxShadow,
-        ...style,
-      }}
-    >
-      {!isPreview && activeEditing ? (
-        <DynamicTextEditor
-          initialValue={contentToEdit}
-          initialHtml={contentToEdit}
-          defaultFontSize={14}
-          multiline={true}
-          toolbarPosition="top"
-          editorBorderColor={dynamicBorderColor && dynamicBorderColor !== "transparent" ? dynamicBorderColor : undefined}
-          editorBgColor={dynamicBg}
-          className="text-sm leading-relaxed w-full h-full min-h-[60px] flex-1"
-          placeholder="Empty text block — click to type content."
-          onSave={(_plain, html) => {
-            if (onUpdateTextBlock) {
-              onUpdateTextBlock(html);
-            }
-            handleFinishEditing();
-          }}
-          onCancel={handleFinishEditing}
-        />
-      ) : (
-        <div
-          title={!isPreview ? "Double-click to format text block (Word style)" : undefined}
-          onDoubleClick={(e) => {
-            if (isPreview) return;
+    <>
+      <div
+        ref={containerRef}
+        onDoubleClick={(e) => {
+          if (!isPreview && !activeEditing) {
             e.stopPropagation();
             handleStartEditing();
+          }
+        }}
+        className={`w-full max-h-full flex-1 min-h-0 rounded-2xl border transition-all duration-150 flex flex-col justify-between ${
+          !activeEditing ? "cursor-text hover:border-purple-300 dark:hover:border-purple-700/60" : ""
+        } ${isTransparent ? "border-0 bg-transparent shadow-none" : `${calloutDec.stripeClass} ${calloutDec.bgClass} ${calloutDec.borderClass}`}`}
+        style={containerStyle}
+      >
+        {/* Callout Header Badge (if not none) */}
+        {calloutType !== "none" && !activeEditing && (
+          <div className="flex items-center gap-1.5 mb-2 flex-shrink-0 select-none">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${calloutDec.badgeBg}`}>
+              <CalloutIcon className="w-2.5 h-2.5" />
+              <span>{calloutDec.badgeLabel}</span>
+            </span>
+          </div>
+        )}
+
+        {/* Word-Style Rich Text Editor / Static Render */}
+        {!isPreview && activeEditing ? (
+          <DynamicTextEditor
+            initialValue={contentToEdit}
+            initialHtml={contentToEdit}
+            defaultFontSize={customFontSize}
+            multiline={true}
+            toolbarPosition="top"
+            editorBorderColor={dynamicBorderColor && dynamicBorderColor !== "transparent" ? dynamicBorderColor : undefined}
+            editorBgColor={dynamicBg}
+            className="w-full h-full min-h-[60px] flex-1 text-sm leading-relaxed"
+            placeholder="Empty text block — click to type content."
+            onSave={(_plain, html) => {
+              handleUpdate({ content: html });
+              handleFinishEditing();
+            }}
+            onCancel={handleFinishEditing}
+          />
+        ) : (
+          <div
+            title={!isPreview ? "Double-click to format text block (Word style)" : undefined}
+            onDoubleClick={(e) => {
+              if (isPreview) return;
+              e.stopPropagation();
+              handleStartEditing();
+            }}
+            style={{
+              fontSize: `${customFontSize}px`,
+              textAlign,
+              lineHeight,
+              color: textColor,
+            }}
+            className="w-full h-full min-h-[40px] flex-1 select-text overflow-y-auto leading-relaxed text-slate-800 dark:text-zinc-200"
+            dangerouslySetInnerHTML={{
+              __html: isContentEmpty
+                ? "<p class='text-sm text-slate-400 italic'>Empty text block — double click to type content.</p>"
+                : tb.content,
+            }}
+          />
+        )}
+      </div>
+
+      {/* ── Floating Top Selection Action Bar (Portal) ── */}
+      {isSelected && !isPreview && portalCoords && typeof document !== "undefined" && createPortal(
+        <div
+          style={{
+            position: "fixed",
+            top: `${portalCoords.top}px`,
+            left: `${portalCoords.left}px`,
+            zIndex: 99999,
           }}
-          className="w-full h-full min-h-[60px] flex-1 select-text leading-relaxed text-sm text-slate-800 dark:text-zinc-200 overflow-y-auto"
-          dangerouslySetInnerHTML={{
-            __html: isContentEmpty
-              ? "<p class='text-sm text-slate-400 italic'>Empty text block — double click to type content.</p>"
-              : tb.content,
-          }}
-        />
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="portal-text-topbar bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-md border border-slate-200 dark:border-zinc-800 rounded-full shadow-2xl px-2 py-1 flex items-center gap-1.5 transition-all animate-in fade-in zoom-in-95 duration-100 select-none pointer-events-auto"
+        >
+          {/* Block Indicator Pill */}
+          <div className="flex items-center gap-1 pl-1 pr-1.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200/60 dark:border-purple-800/60 text-[#8B3DFF] text-[10px] font-bold">
+            <Type className="w-3 h-3 text-[#8B3DFF]" />
+            <span>Text & Notes</span>
+          </div>
+
+          <div className="h-3 w-px bg-slate-200 dark:bg-zinc-800 mx-0.5" />
+
+          {/* Quick Edit Text Button */}
+          <button
+            type="button"
+            onClick={handleStartEditing}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            title="Edit text content (Word style)"
+          >
+            <Pencil className="w-3 h-3 text-purple-600" />
+            <span>Edit Text</span>
+          </button>
+
+          {/* Typography & Style Inspector Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              setInspectorTab("typography");
+              setIsInspectorOpen((prev) => !prev);
+            }}
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors cursor-pointer ${
+              isInspectorOpen && inspectorTab === "typography"
+                ? "bg-[#8B3DFF] text-white shadow-xs"
+                : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+            }`}
+            title="Configure Typography, Alignment & Callout Type"
+          >
+            <SlidersHorizontal className="w-3 h-3" />
+            <span>Typography</span>
+          </button>
+
+          {/* Sizing & Frame Inspector Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              setInspectorTab("layout");
+              setIsInspectorOpen((prev) => !prev);
+            }}
+            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors cursor-pointer ${
+              isInspectorOpen && inspectorTab === "layout"
+                ? "bg-[#8B3DFF] text-white shadow-xs"
+                : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+            }`}
+            title="Adjust Dimensions, Padding & Frame"
+          >
+            <span>Frame</span>
+          </button>
+        </div>,
+        document.body
       )}
-    </div>
+
+      {/* ── Draggable TextBlock Inspector Popover ── */}
+      <TextBlockInspectorPopover
+        textBlock={tb}
+        activeTab={inspectorTab}
+        onTabChange={setInspectorTab}
+        isOpen={isInspectorOpen && !isPreview && Boolean(isSelected)}
+        anchorRect={anchorRect}
+        onClose={() => setIsInspectorOpen(false)}
+        onUpdateTextBlock={handleUpdate}
+      />
+    </>
   );
 }
