@@ -138,20 +138,48 @@ interface BlockRendererProps {
   onDeleteBadge?: (badgeId: string) => void;
 }
 
-// ── Dynamic Floating Positioning Helper ──────────────────────────────────────
+// ── Dynamic Top Action Bar Positioning Helper ─────────────────────────────────
+function calculateTopBarPosition(rect: DOMRect | null): { top: number; left: number } | null {
+  if (!rect) return null;
+  const viewportW = typeof window !== "undefined" ? window.innerWidth : 1200;
+  const viewportH = typeof window !== "undefined" ? window.innerHeight : 900;
+  const topNavbarHeight = 72; // Safe area below header navigation and breadcrumbs
+
+  // If the target element is completely scrolled out of the viewport, do NOT render the floating action bar
+  if (rect.bottom < topNavbarHeight + 10 || rect.top > viewportH - 20) {
+    return null;
+  }
+
+  // Normal position: 44px above the top edge of the card
+  let top = rect.top - 44;
+  // If placing it 44px above would clip under or collide with top navbar (<= 72px):
+  if (top < topNavbarHeight) {
+    // If card has room, place it neatly docked just below navbar or near card top
+    top = Math.max(topNavbarHeight + 4, Math.min(rect.top + 8, viewportH - 60));
+  }
+
+  // Center horizontally over card, bounded within viewport margins
+  const halfBarWidth = 150;
+  const left = Math.max(halfBarWidth + 16, Math.min(viewportW - halfBarWidth - 16, rect.left + rect.width / 2));
+
+  return { top: Math.round(top), left: Math.round(left) };
+}
+
+// ── Dynamic Floating Popover Positioning Helper ──────────────────────────────
 function calculateFloatingPosition(
   targetRect: DOMRect | null,
-  popoverWidth = 315,
-  popoverHeight = 480,
+  popoverWidth = 385,
+  popoverHeight = 520,
   preferredSide: "right" | "left" | "top" | "bottom" = "right"
 ): { top: number; left: number; placement: "right" | "left" | "top" | "bottom" } {
-  const margin = 12;
+  const margin = 14;
+  const topNavbarHeight = 72; // Never overlap top navigation header
   const viewportW = typeof window !== "undefined" ? window.innerWidth : 1200;
   const viewportH = typeof window !== "undefined" ? window.innerHeight : 900;
 
   if (!targetRect) {
     return {
-      top: 80,
+      top: topNavbarHeight + 10,
       left: Math.max(margin, viewportW - popoverWidth - margin),
       placement: "right",
     };
@@ -159,7 +187,7 @@ function calculateFloatingPosition(
 
   const spaceOnRight = viewportW - (targetRect.right + margin);
   const spaceOnLeft = targetRect.left - margin;
-  const spaceAbove = targetRect.top - margin;
+  const spaceAbove = targetRect.top - topNavbarHeight - margin;
   const spaceBelow = viewportH - (targetRect.bottom + margin);
 
   let placement: "right" | "left" | "top" | "bottom" = preferredSide;
@@ -170,25 +198,35 @@ function calculateFloatingPosition(
     if (spaceOnRight >= popoverWidth) {
       placement = "right";
       left = targetRect.right + margin;
-      top = Math.max(margin, Math.min(targetRect.top, viewportH - popoverHeight - margin));
+      top = Math.max(topNavbarHeight, Math.min(targetRect.top, viewportH - popoverHeight - margin));
     } else if (spaceOnLeft >= popoverWidth) {
       placement = "left";
       left = targetRect.left - popoverWidth - margin;
-      top = Math.max(margin, Math.min(targetRect.top, viewportH - popoverHeight - margin));
+      top = Math.max(topNavbarHeight, Math.min(targetRect.top, viewportH - popoverHeight - margin));
     } else if (spaceAbove >= popoverHeight) {
       placement = "top";
       left = Math.max(margin, Math.min(targetRect.left, viewportW - popoverWidth - margin));
       top = targetRect.top - popoverHeight - margin;
-    } else {
+    } else if (spaceBelow >= popoverHeight) {
       placement = "bottom";
       left = Math.max(margin, Math.min(targetRect.left, viewportW - popoverWidth - margin));
       top = targetRect.bottom + margin;
+    } else {
+      // Pick whichever side has more space
+      if (spaceOnRight >= spaceOnLeft) {
+        placement = "right";
+        left = Math.max(margin, viewportW - popoverWidth - margin);
+      } else {
+        placement = "left";
+        left = margin;
+      }
+      top = Math.max(topNavbarHeight, Math.min(targetRect.top, viewportH - popoverHeight - margin));
     }
   }
 
-  // Final viewport boundary protection
+  // Strict boundary protection: ALWAYS fully inside viewport
   left = Math.max(margin, Math.min(left, viewportW - popoverWidth - margin));
-  top = Math.max(margin, Math.min(top, viewportH - popoverHeight - margin));
+  top = Math.max(topNavbarHeight, Math.min(top, viewportH - popoverHeight - margin));
 
   return { top: Math.round(top), left: Math.round(left), placement };
 }
@@ -238,7 +276,7 @@ function MetricCardInspectorPopover({
 
   if (!isOpen || typeof document === "undefined") return null;
 
-  const pos = calculateFloatingPosition(anchorRect, 315, 480, "right");
+  const pos = calculateFloatingPosition(anchorRect, 385, 520, "right");
 
   const filteredIcons = iconSearch
     ? DYNAMIC_METRIC_ICONS.filter(
@@ -257,8 +295,8 @@ function MetricCardInspectorPopover({
         position: "fixed",
         top: `${pos.top}px`,
         left: `${pos.left}px`,
-        width: "315px",
-        maxHeight: "86vh",
+        width: "385px",
+        maxHeight: "calc(100vh - 88px)",
         zIndex: 99999,
       }}
       className="portal-metric-card-inspector flex flex-col bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-100"
@@ -697,10 +735,7 @@ function MetricCardBlock({
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     setAnchorRect(rect);
-    setPortalCoords({
-      top: Math.max(8, rect.top - 46),
-      left: rect.left + rect.width / 2,
-    });
+    setPortalCoords(calculateTopBarPosition(rect));
   }, []);
 
   useEffect(() => {
@@ -2372,6 +2407,7 @@ function BadgeStripInspectorPopover({
   const popoverRef = useRef<HTMLDivElement>(null);
   const [iconSearch, setIconSearch] = useState("");
   const activeBadge = strip.badges.find((b) => b.id === selectedBadgeId) || strip.badges[0];
+  const activeBadgeIdx = strip.badges.findIndex((b) => b.id === (activeBadge?.id || selectedBadgeId));
 
   useEffect(() => {
     if (!isOpen) return;
@@ -2401,7 +2437,7 @@ function BadgeStripInspectorPopover({
 
   if (!isOpen || !activeBadge || typeof document === "undefined") return null;
 
-  const pos = calculateFloatingPosition(anchorRect, 315, 480, "right");
+  const pos = calculateFloatingPosition(anchorRect, 385, 520, "right");
 
   const filteredIcons = iconSearch
     ? DYNAMIC_METRIC_ICONS.filter(
@@ -2420,14 +2456,14 @@ function BadgeStripInspectorPopover({
         position: "fixed",
         top: `${pos.top}px`,
         left: `${pos.left}px`,
-        width: "315px",
-        maxHeight: "86vh",
+        width: "385px",
+        maxHeight: "calc(100vh - 88px)",
         zIndex: 99999,
       }}
       className="portal-badge-strip-inspector flex flex-col bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-100"
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
+      {/* Header (Pinned) */}
+      <div className="shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-lg bg-[#9D61FF]/15 text-[#9D61FF] flex items-center justify-center font-bold text-xs">
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -2448,8 +2484,8 @@ function BadgeStripInspectorPopover({
         </button>
       </div>
 
-      {/* Inside Badge Switcher Bar */}
-      <div className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 overflow-x-auto no-scrollbar">
+      {/* Inside Badge Switcher Bar (Pinned) */}
+      <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-slate-50/50 dark:bg-zinc-900/50 border-b border-slate-200 dark:border-zinc-800 overflow-x-auto no-scrollbar">
         {strip.badges.map((b, idx) => {
           const isCurrent = (selectedBadgeId || strip.badges[0]?.id) === b.id;
           return (
@@ -2460,14 +2496,14 @@ function BadgeStripInspectorPopover({
                 onSelectBadgeId(b.id);
                 if (activeTab !== "badge") onTabChange("badge");
               }}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 isCurrent
                   ? "bg-[#9D61FF] text-white shadow-xs font-bold"
                   : "bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:text-[#9D61FF] border border-slate-200 dark:border-zinc-700"
               }`}
             >
               <span className="opacity-70">#{idx + 1}</span>
-              <span className="truncate max-w-[70px]">{b.label || b.value}</span>
+              <span className="truncate max-w-[80px]">{b.label || b.value}</span>
             </button>
           );
         })}
@@ -2484,8 +2520,8 @@ function BadgeStripInspectorPopover({
         )}
       </div>
 
-      {/* Sub Tabs */}
-      <div className="px-3 pt-2 pb-1.5">
+      {/* Sub Tabs (Pinned) */}
+      <div className="shrink-0 px-3.5 pt-2 pb-1.5">
         <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-zinc-800 rounded-xl">
           <button
             type="button"
@@ -2621,8 +2657,99 @@ function BadgeStripInspectorPopover({
               </div>
             </div>
 
+            {/* Single Card Sizing (Height & Width) - MOVED UP FOR IMMEDIATE VISIBILITY */}
+            <div className="pt-2 border-t border-slate-200/80 dark:border-zinc-800/80">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-slate-700 dark:text-zinc-300 text-xs">
+                    Card Sizing (Card #{strip.badges.findIndex((b) => b.id === activeBadge.id) + 1})
+                  </span>
+                  {(activeBadge.customHeight || activeBadge.customWidth) && (
+                    <span className="px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-900/40 text-[9.5px] font-bold text-[#9D61FF]">
+                      Custom
+                    </span>
+                  )}
+                </div>
+                {(activeBadge.customHeight || activeBadge.customWidth) && (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateSingleBadge(activeBadge.id, { customHeight: undefined, customWidth: undefined })}
+                    className="text-[10px] text-[#9D61FF] hover:underline cursor-pointer font-semibold flex items-center gap-1"
+                    title="Reset this card to auto stretch"
+                  >
+                    <RotateCcw className="w-2.5 h-2.5" />
+                    <span>Reset Auto</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[11px] text-slate-600 dark:text-zinc-400">Card Height</span>
+                    <span className="font-mono text-[11px] font-bold text-[#9D61FF]">
+                      {activeBadge.customHeight ? `${activeBadge.customHeight}px` : "Auto"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="range"
+                      min={50}
+                      max={280}
+                      value={activeBadge.customHeight || 90}
+                      onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customHeight: Number(e.target.value) })}
+                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1.5"
+                    />
+                    <input
+                      type="number"
+                      min={40}
+                      max={400}
+                      value={activeBadge.customHeight ?? ""}
+                      placeholder="Auto"
+                      onChange={(e) => {
+                        const val = e.target.value ? Number(e.target.value) : undefined;
+                        onUpdateSingleBadge(activeBadge.id, { customHeight: val });
+                      }}
+                      className="w-13 px-1.5 py-0.5 text-[11px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono bg-white dark:bg-zinc-900"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[11px] text-slate-600 dark:text-zinc-400">Card Width</span>
+                    <span className="font-mono text-[11px] font-bold text-[#9D61FF]">
+                      {activeBadge.customWidth ? `${activeBadge.customWidth}px` : "Auto"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="range"
+                      min={60}
+                      max={280}
+                      value={activeBadge.customWidth || 110}
+                      onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customWidth: Number(e.target.value) })}
+                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1.5"
+                    />
+                    <input
+                      type="number"
+                      min={50}
+                      max={400}
+                      value={activeBadge.customWidth ?? ""}
+                      placeholder="Auto"
+                      onChange={(e) => {
+                        const val = e.target.value ? Number(e.target.value) : undefined;
+                        onUpdateSingleBadge(activeBadge.id, { customWidth: val });
+                      }}
+                      className="w-13 px-1.5 py-0.5 text-[11px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono bg-white dark:bg-zinc-900"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Icon Shape & Size */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5 pt-1 border-t border-slate-200/80 dark:border-zinc-800/80">
               <div>
                 <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[11px]">
                   Icon Shape
@@ -2659,7 +2786,7 @@ function BadgeStripInspectorPopover({
                   max={32}
                   value={activeBadge.iconSize || 18}
                   onChange={(e) => onUpdateSingleBadge(activeBadge.id, { iconSize: Number(e.target.value) })}
-                  className="w-full accent-[#9D61FF] cursor-pointer h-1"
+                  className="w-full accent-[#9D61FF] cursor-pointer h-1.5"
                 />
               </div>
             </div>
@@ -2675,10 +2802,10 @@ function BadgeStripInspectorPopover({
                   value={iconSearch}
                   onChange={(e) => setIconSearch(e.target.value)}
                   placeholder="Filter icons..."
-                  className="w-24 px-1.5 py-0.5 text-[10px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900"
+                  className="w-28 px-2 py-0.5 text-[10px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900"
                 />
               </div>
-              <div className="grid grid-cols-7 gap-1 p-1 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 max-h-20 overflow-y-auto">
+              <div className="grid grid-cols-8 gap-1 p-1.5 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 max-h-24 overflow-y-auto">
                 {filteredIcons.map((opt) => {
                   const IconComp = opt.icon;
                   const isSel = (activeBadge.icon || "Shield") === opt.id;
@@ -2701,95 +2828,13 @@ function BadgeStripInspectorPopover({
               </div>
             </div>
 
-            {/* Single Card Sizing (Height & Width) */}
-            <div className="pt-2 border-t border-slate-200/80 dark:border-zinc-800/80">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-semibold text-slate-700 dark:text-zinc-300 text-xs">
-                  Card Sizing (Card #{strip.badges.findIndex((b) => b.id === activeBadge.id) + 1})
-                </span>
-                {(activeBadge.customHeight || activeBadge.customWidth) && (
-                  <button
-                    type="button"
-                    onClick={() => onUpdateSingleBadge(activeBadge.id, { customHeight: undefined, customWidth: undefined })}
-                    className="text-[10px] text-[#9D61FF] hover:underline cursor-pointer font-semibold"
-                  >
-                    Reset Auto
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[11px] text-slate-600 dark:text-zinc-400">Card Height</span>
-                    <span className="font-mono text-[11px] font-bold text-[#9D61FF]">
-                      {activeBadge.customHeight ? `${activeBadge.customHeight}px` : "Auto"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="range"
-                      min={50}
-                      max={260}
-                      value={activeBadge.customHeight || 90}
-                      onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customHeight: Number(e.target.value) })}
-                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1"
-                    />
-                    <input
-                      type="number"
-                      min={40}
-                      max={400}
-                      value={activeBadge.customHeight || ""}
-                      placeholder="Auto"
-                      onChange={(e) => {
-                        const val = e.target.value ? Number(e.target.value) : undefined;
-                        onUpdateSingleBadge(activeBadge.id, { customHeight: val });
-                      }}
-                      className="w-12 px-1.5 py-0.5 text-[11px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[11px] text-slate-600 dark:text-zinc-400">Card Width</span>
-                    <span className="font-mono text-[11px] font-bold text-[#9D61FF]">
-                      {activeBadge.customWidth ? `${activeBadge.customWidth}px` : "Auto"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="range"
-                      min={60}
-                      max={360}
-                      value={activeBadge.customWidth || 130}
-                      onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customWidth: Number(e.target.value) })}
-                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1"
-                    />
-                    <input
-                      type="number"
-                      min={50}
-                      max={600}
-                      value={activeBadge.customWidth || ""}
-                      placeholder="Auto"
-                      onChange={(e) => {
-                        const val = e.target.value ? Number(e.target.value) : undefined;
-                        onUpdateSingleBadge(activeBadge.id, { customWidth: val });
-                      }}
-                      className="w-12 px-1.5 py-0.5 text-[11px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Delete current card if more than 1 */}
             {strip.badges.length > 1 && (
               <div className="pt-1">
                 <button
                   type="button"
                   onClick={() => onDeleteBadge?.(activeBadge.id)}
-                  className="w-full flex items-center justify-center gap-1.5 py-1 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors font-semibold text-[11px]"
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors font-semibold text-[11px] cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Remove Card #{strip.badges.findIndex((b) => b.id === activeBadge.id) + 1}</span>
@@ -3058,18 +3103,45 @@ function BadgeStripInspectorPopover({
                     )}
                   </div>
                 </div>
+
+                {/* All Cards Sizing Helper (Reset All to Auto) */}
+                <div className="pt-2 border-t border-slate-200/80 dark:border-zinc-800/80">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-slate-700 dark:text-zinc-300 text-xs">All Cards Sizing</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = {
+                          ...strip,
+                          badges: strip.badges.map((b) => ({ ...b, customHeight: undefined, customWidth: undefined })),
+                        };
+                        onUpdateBadgeStrip(updated);
+                      }}
+                      className="text-[10px] text-[#9D61FF] hover:underline cursor-pointer font-semibold flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-2.5 h-2.5" />
+                      <span>Reset All to Auto</span>
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    Reset all cards in this strip to auto stretch so they fill the row height and column width evenly.
+                  </p>
+                </div>
               </div>
             )}
           </>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-end px-3.5 py-2 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
+      {/* Footer (Pinned) */}
+      <div className="shrink-0 flex items-center justify-between px-4 py-2 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70">
+        <span className="text-[10.5px] font-medium text-slate-500 dark:text-zinc-400">
+          Card #{activeBadgeIdx + 1} of {strip.badges.length}
+        </span>
         <button
           type="button"
           onClick={onClose}
-          className="px-3.5 py-1 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+          className="px-4 py-1.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
         >
           Done
         </button>
@@ -3333,8 +3405,11 @@ function BadgeStripBlock({
 
   const colCount = strip.columns || (isCompact ? 2 : (strip.badges.length >= 4 ? 4 : strip.badges.length || 2));
 
+  const hasAnyCustomHeight = strip.badges.some((b) => Boolean(b.customHeight));
+
   const gridStyle: React.CSSProperties = {
     gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
+    gridAutoRows: hasAnyCustomHeight ? "minmax(min-content, 1fr)" : "1fr",
     gap: strip.gap !== undefined ? `${strip.gap}px` : "12px",
     width: "100%",
     height: "100%",
@@ -3358,10 +3433,7 @@ function BadgeStripBlock({
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     setAnchorRect(rect);
-    setPortalCoords({
-      top: Math.max(8, rect.top - 46),
-      left: rect.left + rect.width / 2,
-    });
+    setPortalCoords(calculateTopBarPosition(rect));
   }, []);
 
   useEffect(() => {
@@ -3439,9 +3511,10 @@ function BadgeStripBlock({
               className="flex min-h-0 min-w-0"
               style={{
                 width: "100%",
-                height: "100%",
+                height: badge.customHeight ? "auto" : "100%",
+                minHeight: badge.customHeight ? `${badge.customHeight}px` : undefined,
                 justifyContent: badge.customWidth ? "center" : "stretch",
-                alignItems: badge.customHeight ? "center" : "stretch",
+                alignItems: "stretch",
               }}
             >
               <SingleBadgeItemView
