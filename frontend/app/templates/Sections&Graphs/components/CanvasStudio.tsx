@@ -52,7 +52,7 @@ import {
   sendStampBackward,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasCoordinateStamp } from "@/lib/redux/types/reportModuleTypes";
-import { CanvasBlockRenderer } from "./CanvasBlockRenderer";
+import { CanvasBlockRenderer } from "./CanvasBlockComponent";
 import { CanvasRuler } from "./CanvasRuler";
 
 import {

@@ -16,7 +16,7 @@ import {
   LibraryChartCard,
   CanvasBlockType,
 } from "@/lib/redux/types/reportModuleTypes";
-import { CanvasBlockRenderer } from "../CanvasBlockRenderer";
+import { CanvasBlockRenderer } from "../CanvasBlockComponent";
 
 export interface CanvasStampsLayerProps {
   pageIndex: number;

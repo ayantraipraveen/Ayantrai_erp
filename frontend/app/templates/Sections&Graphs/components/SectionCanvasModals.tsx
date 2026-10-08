@@ -28,7 +28,7 @@ import {
   CanvasBadgeItem,
   PaletteRamp,
 } from "@/lib/redux/slices/reportModuleSlice";
-import { BADGE_COLOR_PALETTES, BADGE_AVAILABLE_ICONS } from "./CanvasBlockRenderer";
+import { BADGE_COLOR_PALETTES, BADGE_AVAILABLE_ICONS } from "./CanvasBlockComponent";
 import { PALETTE_RAMPS } from "./constants/chartTypes";
 import { DynamicTextEditor } from "./DynamicTitleEditor";
 

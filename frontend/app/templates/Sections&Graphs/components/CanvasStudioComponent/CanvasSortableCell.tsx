@@ -22,7 +22,7 @@ import {
   Minus,
   Move,
 } from "lucide-react";
-import { CanvasBlockRenderer } from "../CanvasBlockRenderer";
+import { CanvasBlockRenderer } from "../CanvasBlockComponent";
 import { SortableCellProps, getCellWidthStyle, getDefaultBlockHeight } from "../../utils";
 import { useAppSelector } from "@/lib/redux/hooks";
 

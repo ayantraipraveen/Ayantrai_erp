@@ -527,6 +527,7 @@ export interface CanvasCellStyle {
 }
 
 export interface CanvasCell {
+  element?: any;
   id: string;
   colSpan: 1 | 2 | 3 | 4; // column span within the row (out of 4)
   customWidth?: number; // fluid/adjustable width percentage (15% to 100%) - not locked to fixed ratio!
