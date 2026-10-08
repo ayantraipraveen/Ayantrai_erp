@@ -41,6 +41,7 @@ import {
   Search,
   RotateCcw,
   Check,
+  GripHorizontal,
 } from "lucide-react";
 import {
   CanvasCell,
@@ -168,8 +169,8 @@ function calculateTopBarPosition(rect: DOMRect | null): { top: number; left: num
 // ── Dynamic Floating Popover Positioning Helper ──────────────────────────────
 function calculateFloatingPosition(
   targetRect: DOMRect | null,
-  popoverWidth = 385,
-  popoverHeight = 520,
+  popoverWidth = 485,
+  popoverHeight = 390,
   preferredSide: "right" | "left" | "top" | "bottom" = "right"
 ): { top: number; left: number; placement: "right" | "left" | "top" | "bottom" } {
   const margin = 14;
@@ -231,6 +232,154 @@ function calculateFloatingPosition(
   return { top: Math.round(top), left: Math.round(left), placement };
 }
 
+// ── Hook: Draggable Floating Popover Engine ──────────────────────────────────
+function useDraggableFloatingPopover({
+  anchorRect,
+  isOpen,
+  popoverWidth = 485,
+  popoverHeight = 390,
+  preferredSide = "right",
+}: {
+  anchorRect: DOMRect | null;
+  isOpen: boolean;
+  popoverWidth?: number;
+  popoverHeight?: number;
+  preferredSide?: "right" | "left" | "top" | "bottom";
+}) {
+  const defaultPos = calculateFloatingPosition(anchorRect, popoverWidth, popoverHeight, preferredSide);
+  const [customPos, setCustomPos] = useState<{ top: number; left: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{
+    startX: number;
+    startY: number;
+    origTop: number;
+    origLeft: number;
+  } | null>(null);
+
+  // Reset custom position when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCustomPos(null);
+    }
+  }, [isOpen]);
+
+  // Clean up any remaining document drag styles if component unmounts mid-drag
+  useEffect(() => {
+    return () => {
+      if (typeof document !== "undefined") {
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+  }, []);
+
+  const currentPos = customPos || defaultPos;
+  const clampedPos = {
+    top: Math.max(72, Math.min(currentPos.top, typeof window !== "undefined" ? window.innerHeight - 80 : 800)),
+    left: Math.max(10, Math.min(currentPos.left, typeof window !== "undefined" ? window.innerWidth - popoverWidth - 10 : 800)),
+  };
+
+  const resetPosition = useCallback(() => {
+    setCustomPos(null);
+  }, []);
+
+  const handleHeaderMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
+      const target = e.target as HTMLElement;
+      if (target.closest("button") || target.closest("input") || target.closest("select") || target.closest("a")) {
+        return;
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const activeTop = customPos ? customPos.top : defaultPos.top;
+      const activeLeft = customPos ? customPos.left : defaultPos.left;
+
+      dragStartRef.current = {
+        startX: e.clientX,
+        startY: e.clientY,
+        origTop: activeTop,
+        origLeft: activeLeft,
+      };
+      setIsDragging(true);
+
+      const origCursor = document.body.style.cursor;
+      const origUserSelect = document.body.style.userSelect;
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!dragStartRef.current) return;
+        const dx = moveEvent.clientX - dragStartRef.current.startX;
+        const dy = moveEvent.clientY - dragStartRef.current.startY;
+
+        const topNavbarHeight = 72;
+        const margin = 10;
+        const maxLeft = Math.max(margin, window.innerWidth - popoverWidth - margin);
+        const maxTop = Math.max(topNavbarHeight, window.innerHeight - 80);
+
+        const nextLeft = Math.max(margin, Math.min(dragStartRef.current.origLeft + dx, maxLeft));
+        const nextTop = Math.max(topNavbarHeight, Math.min(dragStartRef.current.origTop + dy, maxTop));
+
+        setCustomPos({
+          top: Math.round(nextTop),
+          left: Math.round(nextLeft),
+        });
+      };
+
+      const handleMouseUp = () => {
+        setIsDragging(false);
+        dragStartRef.current = null;
+        document.body.style.cursor = origCursor;
+        document.body.style.userSelect = origUserSelect;
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    },
+    [customPos, defaultPos.left, defaultPos.top, popoverWidth]
+  );
+
+  return {
+    pos: clampedPos,
+    isCustomPos: Boolean(customPos),
+    isDragging,
+    resetPosition,
+    handleHeaderMouseDown,
+  };
+}
+
+// ── Custom Sleek Color Swatch Picker ─────────────────────────────────────────
+function ColorSwatchPicker({
+  value,
+  onChange,
+  className = "w-5 h-5",
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  className?: string;
+}) {
+  const safeColor = value && value.startsWith("#") ? value : "#ffffff";
+  return (
+    <div
+      className={`relative ${className} rounded-md border border-slate-200 dark:border-zinc-700 shadow-xs shrink-0 overflow-hidden cursor-pointer transition-transform hover:scale-105 active:scale-95`}
+      style={{ backgroundColor: safeColor }}
+      title="Click to open color picker"
+    >
+      <input
+        type="color"
+        value={safeColor}
+        onChange={(e) => onChange(e.target.value)}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+      />
+    </div>
+  );
+}
+
 // ── React Portal Popover: KPI Metric Card Inspector (Anchored beside card) ───
 function MetricCardInspectorPopover({
   card,
@@ -248,6 +397,9 @@ function MetricCardInspectorPopover({
   const popoverRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<"content" | "colors">("content");
   const [iconSearch, setIconSearch] = useState("");
+
+  const { pos, isCustomPos, isDragging, resetPosition, handleHeaderMouseDown } =
+    useDraggableFloatingPopover({ anchorRect, isOpen, popoverWidth: 485, popoverHeight: 390 });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -276,8 +428,6 @@ function MetricCardInspectorPopover({
 
   if (!isOpen || typeof document === "undefined") return null;
 
-  const pos = calculateFloatingPosition(anchorRect, 385, 520, "right");
-
   const filteredIcons = iconSearch
     ? DYNAMIC_METRIC_ICONS.filter(
         (i) =>
@@ -295,41 +445,78 @@ function MetricCardInspectorPopover({
         position: "fixed",
         top: `${pos.top}px`,
         left: `${pos.left}px`,
-        width: "385px",
-        maxHeight: "calc(100vh - 88px)",
+        width: "485px",
+        maxWidth: "calc(100vw - 20px)",
+        maxHeight: "calc(100vh - 84px)",
         zIndex: 99999,
       }}
-      className="portal-metric-card-inspector flex flex-col bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+      className={`portal-metric-card-inspector flex flex-col bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${
+        isDragging ? "ring-2 ring-[#9D61FF] shadow-purple-500/25" : ""
+      }`}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-[#9D61FF]/15 text-[#9D61FF] flex items-center justify-center font-bold text-xs">
-            <Sparkles className="w-3.5 h-3.5" />
+      {/* Header (Pinned & Draggable) */}
+      <div
+        onMouseDown={handleHeaderMouseDown}
+        onDoubleClick={isCustomPos ? resetPosition : undefined}
+        className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70 cursor-grab active:cursor-grabbing select-none"
+        title="Drag header to reposition • Double-click to snap back"
+      >
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="flex items-center justify-center p-0.5 rounded text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">
+            <GripHorizontal className="w-3.5 h-3.5" />
           </div>
-          <div>
-            <h3 className="text-xs font-bold leading-tight">KPI Metric Inspector</h3>
-            <p className="text-[9.5px] text-slate-500 dark:text-zinc-400">
+          <div className="w-5 h-5 rounded-md bg-[#9D61FF]/15 text-[#9D61FF] flex items-center justify-center font-bold text-xs shrink-0">
+            <Sparkles className="w-3 h-3" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-[11px] font-bold leading-tight truncate text-slate-900 dark:text-white">KPI Metric Inspector</h3>
+              {isCustomPos && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-purple-100 dark:bg-purple-900/50 text-[8px] font-bold text-[#9D61FF] shrink-0 border border-purple-200 dark:border-purple-800/50">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#9D61FF] animate-pulse" />
+                  <span>Floating</span>
+                </span>
+              )}
+            </div>
+            <p className="text-[8.5px] text-slate-500 dark:text-zinc-400 truncate leading-none mt-0.5">
               Live editing • Direct canvas effect
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 cursor-pointer"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+
+        <div className="flex items-center gap-1 shrink-0">
+          {isCustomPos && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                resetPosition();
+              }}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-[9px] text-[#9D61FF] font-bold border border-purple-200 dark:border-purple-800 hover:bg-[#9D61FF] hover:text-white cursor-pointer transition-all shadow-xs"
+              title="Snap back to anchored position beside card"
+            >
+              <RotateCcw className="w-2.5 h-2.5" />
+              <span>Snap</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+            title="Close inspector"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
-      <div className="px-3 pt-2 pb-1.5">
-        <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-zinc-800 rounded-xl">
+      <div className="shrink-0 px-3 pt-1 pb-0.5">
+        <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-zinc-800/80 rounded-lg">
           <button
             type="button"
             onClick={() => setActiveTab("content")}
-            className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
               activeTab === "content"
                 ? "bg-white dark:bg-zinc-900 text-[#9D61FF] shadow-xs"
                 : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -340,7 +527,7 @@ function MetricCardInspectorPopover({
           <button
             type="button"
             onClick={() => setActiveTab("colors")}
-            className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
               activeTab === "colors"
                 ? "bg-white dark:bg-zinc-900 text-[#9D61FF] shadow-xs"
                 : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -352,12 +539,12 @@ function MetricCardInspectorPopover({
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto px-3.5 py-2 space-y-2.5 text-xs">
+      <div className="flex-1 overflow-y-auto px-3 py-1.5 space-y-1.5 text-xs [scrollbar-width:thin] [scrollbar-color:rgba(157,97,255,0.3)_transparent]">
         {activeTab === "content" ? (
           <>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[11px]">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[9.5px]">
                   Metric Value
                 </label>
                 <input
@@ -365,11 +552,11 @@ function MetricCardInspectorPopover({
                   value={card.value || ""}
                   onChange={(e) => onUpdateCard({ value: e.target.value })}
                   placeholder="e.g. 98.4%"
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 font-mono font-bold text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 font-mono font-bold text-[11px] text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
                 />
               </div>
               <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[11px]">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[9.5px]">
                   Metric Label
                 </label>
                 <input
@@ -377,20 +564,20 @@ function MetricCardInspectorPopover({
                   value={card.label || ""}
                   onChange={(e) => onUpdateCard({ label: e.target.value })}
                   placeholder="e.g. Compliance Rate"
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[11px] text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[11px]">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[9.5px]">
                   Trend Indicator
                 </label>
                 <select
                   value={card.trendDirection || "up"}
                   onChange={(e) => onUpdateCard({ trendDirection: e.target.value as any })}
-                  className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[11px] focus:outline-none focus:border-[#9D61FF]"
+                  className="w-full px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] focus:outline-none focus:border-[#9D61FF]"
                 >
                   <option value="up">▲ Upward Trend</option>
                   <option value="down">▼ Downward Trend</option>
@@ -398,7 +585,7 @@ function MetricCardInspectorPopover({
                 </select>
               </div>
               <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[11px]">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[9.5px]">
                   Comparison Text
                 </label>
                 <input
@@ -406,19 +593,19 @@ function MetricCardInspectorPopover({
                   value={card.trendValue || ""}
                   onChange={(e) => onUpdateCard({ trendValue: e.target.value })}
                   placeholder="e.g. +2.4% vs last shift"
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs focus:outline-none focus:border-[#9D61FF]"
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] focus:outline-none focus:border-[#9D61FF]"
                 />
               </div>
             </div>
 
             {/* Font Size Sliders */}
-            <div className="grid grid-cols-2 gap-2 pt-0.5">
+            <div className="grid grid-cols-2 gap-1.5 pt-0.5">
               <div>
                 <div className="flex items-center justify-between mb-0.5">
-                  <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[11px]">
+                  <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9.5px]">
                     Value Font
                   </label>
-                  <span className="font-mono text-xs font-bold text-[#9D61FF]">
+                  <span className="font-mono text-[9.5px] font-bold text-[#9D61FF]">
                     {card.fontSizeValue || 20}px
                   </span>
                 </div>
@@ -428,15 +615,15 @@ function MetricCardInspectorPopover({
                   max={36}
                   value={card.fontSizeValue || 20}
                   onChange={(e) => onUpdateCard({ fontSizeValue: Number(e.target.value) })}
-                  className="w-full accent-[#9D61FF] cursor-pointer h-1"
+                  className="w-full accent-[#9D61FF] cursor-pointer h-1 bg-slate-200 dark:bg-zinc-700 rounded-lg"
                 />
               </div>
               <div>
                 <div className="flex items-center justify-between mb-0.5">
-                  <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[11px]">
+                  <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9.5px]">
                     Label Font
                   </label>
-                  <span className="font-mono text-xs font-bold text-[#9D61FF]">
+                  <span className="font-mono text-[9.5px] font-bold text-[#9D61FF]">
                     {card.fontSizeLabel || 10}px
                   </span>
                 </div>
@@ -446,44 +633,45 @@ function MetricCardInspectorPopover({
                   max={18}
                   value={card.fontSizeLabel || 10}
                   onChange={(e) => onUpdateCard({ fontSizeLabel: Number(e.target.value) })}
-                  className="w-full accent-[#9D61FF] cursor-pointer h-1"
+                  className="w-full accent-[#9D61FF] cursor-pointer h-1 bg-slate-200 dark:bg-zinc-700 rounded-lg"
                 />
               </div>
             </div>
 
             {/* Card Dimensions (Height & Width) */}
-            <div className="pt-2 border-t border-slate-200/80 dark:border-zinc-800/80">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="font-semibold text-slate-700 dark:text-zinc-300 text-xs">
+            <div className="pt-1 border-t border-slate-200/80 dark:border-zinc-800/80">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="font-semibold text-slate-700 dark:text-zinc-300 text-[9.5px]">
                   Card Sizing (Height & Width)
                 </span>
                 {(card.customHeight || card.customWidth) && (
                   <button
                     type="button"
                     onClick={() => onUpdateCard({ customHeight: undefined, customWidth: undefined })}
-                    className="text-[10px] text-[#9D61FF] hover:underline cursor-pointer font-semibold"
+                    className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-semibold flex items-center gap-0.5"
                   >
-                    Reset Auto
+                    <RotateCcw className="w-2 h-2" />
+                    <span>Reset Auto</span>
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[11px] text-slate-600 dark:text-zinc-400">Card Height</span>
-                    <span className="font-mono text-[11px] font-bold text-[#9D61FF]">
+                    <span className="text-[9px] text-slate-600 dark:text-zinc-400">Card Height</span>
+                    <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
                       {card.customHeight ? `${card.customHeight}px` : "Auto"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <input
                       type="range"
                       min={50}
                       max={280}
                       value={card.customHeight || 90}
                       onChange={(e) => onUpdateCard({ customHeight: Number(e.target.value) })}
-                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1"
+                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1 bg-slate-200 dark:bg-zinc-700 rounded-lg"
                     />
                     <input
                       type="number"
@@ -495,26 +683,26 @@ function MetricCardInspectorPopover({
                         const val = e.target.value ? Number(e.target.value) : undefined;
                         onUpdateCard({ customHeight: val });
                       }}
-                      className="w-12 px-1.5 py-0.5 text-[11px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono"
+                      className="w-11 px-1 py-0.2 text-[9.5px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                     />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[11px] text-slate-600 dark:text-zinc-400">Card Width</span>
-                    <span className="font-mono text-[11px] font-bold text-[#9D61FF]">
+                    <span className="text-[9px] text-slate-600 dark:text-zinc-400">Card Width</span>
+                    <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
                       {card.customWidth ? `${card.customWidth}px` : "Auto"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <input
                       type="range"
                       min={70}
                       max={360}
                       value={card.customWidth || 150}
                       onChange={(e) => onUpdateCard({ customWidth: Number(e.target.value) })}
-                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1"
+                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1 bg-slate-200 dark:bg-zinc-700 rounded-lg"
                     />
                     <input
                       type="number"
@@ -526,7 +714,7 @@ function MetricCardInspectorPopover({
                         const val = e.target.value ? Number(e.target.value) : undefined;
                         onUpdateCard({ customWidth: val });
                       }}
-                      className="w-12 px-1.5 py-0.5 text-[11px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono"
+                      className="w-11 px-1 py-0.2 text-[9.5px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                     />
                   </div>
                 </div>
@@ -537,10 +725,10 @@ function MetricCardInspectorPopover({
           <>
             {/* 9 Palette Ramps */}
             <div>
-              <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-1.5">
+              <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-1 text-[9.5px]">
                 Card Preset Tint
               </label>
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-3 gap-1">
                 {PALETTE_RAMPS.map((ramp) => (
                   <button
                     key={ramp.id}
@@ -552,124 +740,212 @@ function MetricCardInspectorPopover({
                         customBorderColor: undefined,
                       })
                     }
-                    className={`p-1.5 rounded-xl border flex items-center gap-1.5 cursor-pointer transition-all ${
+                    className={`p-1 rounded-lg border flex items-center gap-1 cursor-pointer transition-all ${
                       card.tintColor === ramp.id && !card.customBgColor
-                        ? "border-[#9D61FF] ring-2 ring-purple-500/30 font-bold bg-purple-50 dark:bg-purple-950/30"
+                        ? "border-[#9D61FF] ring-1.5 ring-purple-500/30 font-bold bg-purple-50 dark:bg-purple-950/30"
                         : "border-slate-200 dark:border-zinc-800 opacity-80 hover:opacity-100"
                     }`}
                   >
                     <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: ramp.accent }}
                     />
-                    <span className="text-[10px] truncate">{ramp.label}</span>
+                    <span className="text-[9px] truncate">{ramp.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Custom Colors */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-1.5">
               <div>
-                <label className="text-[11px] text-slate-600 dark:text-zinc-400 block mb-1">
-                  Background Color
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[9px] text-slate-600 dark:text-zinc-400">
+                    Background Color
+                  </label>
+                  {card.customBgColor && (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateCard({ customBgColor: undefined })}
+                      className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-medium"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <ColorSwatchPicker
                     value={card.customBgColor || "#ffffff"}
-                    onChange={(e) => onUpdateCard({ customBgColor: e.target.value })}
-                    className="w-7 h-7 rounded-lg border border-slate-200 dark:border-zinc-800 cursor-pointer p-0.5 bg-transparent"
+                    onChange={(hex) => onUpdateCard({ customBgColor: hex })}
                   />
                   <input
                     type="text"
                     value={card.customBgColor || ""}
                     onChange={(e) => onUpdateCard({ customBgColor: e.target.value })}
                     placeholder="#ffffff"
-                    className="flex-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono"
+                    className="flex-1 min-w-0 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-[11px] text-slate-600 dark:text-zinc-400 block mb-1">
-                  Border Color
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[9px] text-slate-600 dark:text-zinc-400">
+                    Border Color
+                  </label>
+                  {card.customBorderColor && (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateCard({ customBorderColor: undefined })}
+                      className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-medium"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <ColorSwatchPicker
                     value={card.customBorderColor || "#e2e8f0"}
-                    onChange={(e) => onUpdateCard({ customBorderColor: e.target.value })}
-                    className="w-7 h-7 rounded-lg border border-slate-200 dark:border-zinc-800 cursor-pointer p-0.5 bg-transparent"
+                    onChange={(hex) => onUpdateCard({ customBorderColor: hex })}
                   />
                   <input
                     type="text"
                     value={card.customBorderColor || ""}
                     onChange={(e) => onUpdateCard({ customBorderColor: e.target.value })}
                     placeholder="#e2e8f0"
-                    className="flex-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono"
+                    className="flex-1 min-w-0 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Icon Symbol & Shape */}
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-1">
-                  Icon Shape
-                </label>
-                <div className="grid grid-cols-3 gap-1">
-                  {(["circle", "rounded", "none"] as const).map((sh) => (
-                    <button
-                      key={sh}
-                      type="button"
-                      onClick={() => onUpdateCard({ iconShape: sh })}
-                      className={`py-1 rounded-lg border text-[10px] font-bold capitalize transition-all cursor-pointer ${
-                        (card.iconShape || "circle") === sh
-                          ? "bg-[#9D61FF] text-white border-[#9D61FF]"
-                          : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800"
-                      }`}
-                    >
-                      {sh}
-                    </button>
-                  ))}
+            {/* Dynamic Icon Colors & Shape */}
+            <div className="pt-1 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-1">
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300">
+                      Icon Shape Color
+                    </label>
+                    {card.customIconBg && (
+                      <button
+                        type="button"
+                        onClick={() => onUpdateCard({ customIconBg: undefined })}
+                        className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-medium"
+                        title="Reset to default tint"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ColorSwatchPicker
+                      value={card.customIconBg || "#f3e8ff"}
+                      onChange={(hex) => onUpdateCard({ customIconBg: hex })}
+                    />
+                    <input
+                      type="text"
+                      value={card.customIconBg || ""}
+                      onChange={(e) => onUpdateCard({ customIconBg: e.target.value })}
+                      placeholder="Auto (Tint)"
+                      className="flex-1 min-w-0 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300">
+                      Icon Glyph Color
+                    </label>
+                    {card.customIconColor && (
+                      <button
+                        type="button"
+                        onClick={() => onUpdateCard({ customIconColor: undefined })}
+                        className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-medium"
+                        title="Reset to default tint"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ColorSwatchPicker
+                      value={card.customIconColor || "#9D61FF"}
+                      onChange={(hex) => onUpdateCard({ customIconColor: hex })}
+                    />
+                    <input
+                      type="text"
+                      value={card.customIconColor || ""}
+                      onChange={(e) => onUpdateCard({ customIconColor: e.target.value })}
+                      placeholder="Auto (Tint)"
+                      className="flex-1 min-w-0 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
+                    />
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="font-semibold text-slate-700 dark:text-zinc-300">
-                    Icon Size
+
+              {/* Icon Shape & Size */}
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[9px]">
+                    Icon Shape
                   </label>
-                  <span className="font-mono text-xs font-bold text-[#9D61FF]">
-                    {card.iconSize || 14}px
-                  </span>
+                  <div className="grid grid-cols-3 gap-0.5">
+                    {(["circle", "rounded", "none"] as const).map((sh) => (
+                      <button
+                        key={sh}
+                        type="button"
+                        onClick={() => onUpdateCard({ iconShape: sh })}
+                        className={`py-0.5 rounded-md border text-[8.5px] font-bold capitalize transition-all cursor-pointer ${
+                          (card.iconShape || "circle") === sh
+                            ? "bg-[#9D61FF] text-white border-[#9D61FF]"
+                            : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                        }`}
+                      >
+                        {sh}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min={10}
-                  max={28}
-                  value={card.iconSize || 14}
-                  onChange={(e) => onUpdateCard({ iconSize: Number(e.target.value) })}
-                  className="w-full accent-[#9D61FF] cursor-pointer"
-                />
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9px]">
+                      Icon Size
+                    </label>
+                    <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
+                      {card.iconSize || 14}px
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={10}
+                    max={28}
+                    value={card.iconSize || 14}
+                    onChange={(e) => onUpdateCard({ iconSize: Number(e.target.value) })}
+                    className="w-full accent-[#9D61FF] cursor-pointer h-1 bg-slate-200 dark:bg-zinc-700 rounded-lg mt-0.5"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Icon Picker Grid */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="font-semibold text-slate-700 dark:text-zinc-300">
+              <div className="flex items-center justify-between mb-0.5">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9px]">
                   Icon Symbol
                 </label>
-                <input
-                  type="text"
-                  value={iconSearch}
-                  onChange={(e) => setIconSearch(e.target.value)}
-                  placeholder="Filter icons..."
-                  className="w-28 px-2 py-0.5 text-[10px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900"
-                />
+                <div className="relative w-28">
+                  <Search className="w-2.5 h-2.5 text-slate-400 absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={iconSearch}
+                    onChange={(e) => setIconSearch(e.target.value)}
+                    placeholder="Search icons..."
+                    className="w-full pl-5 pr-1.5 py-0.2 text-[9px] rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 focus:outline-none focus:border-[#9D61FF]"
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-8 gap-1 p-1 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 max-h-24 overflow-y-auto">
+              <div className="grid grid-cols-10 gap-0.5 p-1 bg-slate-50 dark:bg-zinc-900 rounded-lg border border-slate-200 dark:border-zinc-800 max-h-16 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(157,97,255,0.3)_transparent]">
                 {filteredIcons.map((opt) => {
                   const IconComp = opt.icon;
                   const isSelected = (card.icon || "Shield") === opt.id;
@@ -678,14 +954,14 @@ function MetricCardInspectorPopover({
                       key={opt.id}
                       type="button"
                       onClick={() => onUpdateCard({ icon: opt.id })}
-                      className={`h-7 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                      className={`h-5 rounded-md flex items-center justify-center transition-all cursor-pointer ${
                         isSelected
                           ? "bg-[#9D61FF] text-white shadow-xs"
-                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
+                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 hover:text-[#9D61FF]"
                       }`}
                       title={opt.label}
                     >
-                      <IconComp className="w-3.5 h-3.5" />
+                      <IconComp className="w-3 h-3" />
                     </button>
                   );
                 })}
@@ -696,11 +972,11 @@ function MetricCardInspectorPopover({
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-end px-4 py-2.5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
+      <div className="shrink-0 flex items-center justify-end px-3 py-1.5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/50">
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-1.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+          className="px-3.5 py-1 rounded-lg bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-[10.5px] font-bold transition-all cursor-pointer shadow-xs"
         >
           Done
         </button>
@@ -2437,7 +2713,8 @@ function BadgeStripInspectorPopover({
 
   if (!isOpen || !activeBadge || typeof document === "undefined") return null;
 
-  const pos = calculateFloatingPosition(anchorRect, 385, 520, "right");
+  const { pos, isCustomPos, isDragging, resetPosition, handleHeaderMouseDown } =
+    useDraggableFloatingPopover({ anchorRect, isOpen, popoverWidth: 485, popoverHeight: 390 });
 
   const filteredIcons = iconSearch
     ? DYNAMIC_METRIC_ICONS.filter(
@@ -2456,36 +2733,73 @@ function BadgeStripInspectorPopover({
         position: "fixed",
         top: `${pos.top}px`,
         left: `${pos.left}px`,
-        width: "385px",
-        maxHeight: "calc(100vh - 88px)",
+        width: "485px",
+        maxWidth: "calc(100vw - 20px)",
+        maxHeight: "calc(100vh - 84px)",
         zIndex: 99999,
       }}
-      className="portal-badge-strip-inspector flex flex-col bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-100"
+      className={`portal-badge-strip-inspector flex flex-col bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${
+        isDragging ? "ring-2 ring-[#9D61FF] shadow-purple-500/25" : ""
+      }`}
     >
-      {/* Header (Pinned) */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-[#9D61FF]/15 text-[#9D61FF] flex items-center justify-center font-bold text-xs">
-            <SlidersHorizontal className="w-3.5 h-3.5" />
+      {/* Header (Pinned & Draggable) */}
+      <div
+        onMouseDown={handleHeaderMouseDown}
+        onDoubleClick={isCustomPos ? resetPosition : undefined}
+        className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70 cursor-grab active:cursor-grabbing select-none"
+        title="Drag header to reposition • Double-click to snap back"
+      >
+        <div className="flex items-center gap-1.5 min-w-0">
+          <div className="flex items-center justify-center p-0.5 rounded text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300 transition-colors">
+            <GripHorizontal className="w-3.5 h-3.5" />
           </div>
-          <div>
-            <h3 className="text-xs font-bold leading-tight">Metric Strip Inspector</h3>
-            <p className="text-[9.5px] text-slate-500 dark:text-zinc-400">
+          <div className="w-5 h-5 rounded-md bg-[#9D61FF]/15 text-[#9D61FF] flex items-center justify-center font-bold text-xs shrink-0">
+            <SlidersHorizontal className="w-3 h-3" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-[11px] font-bold leading-tight truncate text-slate-900 dark:text-white">Metric Strip Inspector</h3>
+              {isCustomPos && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-full bg-purple-100 dark:bg-purple-900/50 text-[8px] font-bold text-[#9D61FF] shrink-0 border border-purple-200 dark:border-purple-800/50">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#9D61FF] animate-pulse" />
+                  <span>Floating</span>
+                </span>
+              )}
+            </div>
+            <p className="text-[8.5px] text-slate-500 dark:text-zinc-400 truncate leading-none mt-0.5">
               Live editing • Direct canvas effect
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 cursor-pointer"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
+
+        <div className="flex items-center gap-1 shrink-0">
+          {isCustomPos && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                resetPosition();
+              }}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/40 text-[9px] text-[#9D61FF] font-bold border border-purple-200 dark:border-purple-800 hover:bg-[#9D61FF] hover:text-white cursor-pointer transition-all shadow-xs"
+              title="Snap back to anchored position beside card"
+            >
+              <RotateCcw className="w-2.5 h-2.5" />
+              <span>Snap</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-200/50 dark:hover:bg-zinc-800/50 transition-colors cursor-pointer"
+            title="Close inspector"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Inside Badge Switcher Bar (Pinned) */}
-      <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-slate-50/50 dark:bg-zinc-900/50 border-b border-slate-200 dark:border-zinc-800 overflow-x-auto no-scrollbar">
+      <div className="shrink-0 flex items-center gap-1 px-3 py-1 bg-slate-50/70 dark:bg-zinc-900/70 border-b border-slate-200/80 dark:border-zinc-800/80 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {strip.badges.map((b, idx) => {
           const isCurrent = (selectedBadgeId || strip.badges[0]?.id) === b.id;
           return (
@@ -2496,14 +2810,14 @@ function BadgeStripInspectorPopover({
                 onSelectBadgeId(b.id);
                 if (activeTab !== "badge") onTabChange("badge");
               }}
-              className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 isCurrent
                   ? "bg-[#9D61FF] text-white shadow-xs font-bold"
                   : "bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:text-[#9D61FF] border border-slate-200 dark:border-zinc-700"
               }`}
             >
-              <span className="opacity-70">#{idx + 1}</span>
-              <span className="truncate max-w-[80px]">{b.label || b.value}</span>
+              <span className="opacity-70 text-[8.5px]">#{idx + 1}</span>
+              <span className="truncate max-w-[85px]">{b.label || b.value}</span>
             </button>
           );
         })}
@@ -2511,7 +2825,7 @@ function BadgeStripInspectorPopover({
           <button
             type="button"
             onClick={() => onAddBadge?.()}
-            className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 whitespace-nowrap cursor-pointer transition-colors"
+            className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[8.5px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 whitespace-nowrap cursor-pointer transition-colors"
             title="Add metric card"
           >
             <Plus className="w-2.5 h-2.5" />
@@ -2521,43 +2835,43 @@ function BadgeStripInspectorPopover({
       </div>
 
       {/* Sub Tabs (Pinned) */}
-      <div className="shrink-0 px-3.5 pt-2 pb-1.5">
-        <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-zinc-800 rounded-xl">
+      <div className="shrink-0 px-3 pt-1 pb-0.5">
+        <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-zinc-800/80 rounded-lg border border-slate-200/60 dark:border-zinc-700/60">
           <button
             type="button"
             onClick={() => onTabChange("badge")}
-            className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1 ${
               activeTab === "badge"
                 ? "bg-white dark:bg-zinc-900 text-[#9D61FF] shadow-xs"
                 : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
             }`}
           >
-            <Pencil className="w-3 h-3" />
+            <Pencil className="w-2.5 h-2.5" />
             <span>Card Properties</span>
           </button>
           <button
             type="button"
             onClick={() => onTabChange("layout")}
-            className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1 ${
               activeTab === "layout"
                 ? "bg-white dark:bg-zinc-900 text-[#9D61FF] shadow-xs"
                 : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
             }`}
           >
-            <SlidersHorizontal className="w-3 h-3" />
+            <SlidersHorizontal className="w-2.5 h-2.5" />
             <span>Strip Layout</span>
           </button>
         </div>
       </div>
 
       {/* Scrollable Body */}
-      <div className="flex-1 overflow-y-auto px-3.5 py-2 space-y-2.5 text-xs">
+      <div className="flex-1 overflow-y-auto px-3 py-1.5 space-y-1.5 text-xs [scrollbar-width:thin] [scrollbar-color:rgba(157,97,255,0.3)_transparent]">
         {activeTab === "badge" ? (
           <>
             {/* Value & Label */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[11px]">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[9.5px]">
                   Card Value
                 </label>
                 <input
@@ -2565,11 +2879,11 @@ function BadgeStripInspectorPopover({
                   value={activeBadge.value}
                   onChange={(e) => onUpdateSingleBadge(activeBadge.id, { value: e.target.value })}
                   placeholder="e.g. 98.7%"
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 font-mono font-bold text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 font-mono font-bold text-[11px] text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#9D61FF] focus:border-[#9D61FF]"
                 />
               </div>
               <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[11px]">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[9.5px]">
                   Card Label
                 </label>
                 <input
@@ -2577,17 +2891,22 @@ function BadgeStripInspectorPopover({
                   value={activeBadge.label}
                   onChange={(e) => onUpdateSingleBadge(activeBadge.id, { label: e.target.value })}
                   placeholder="e.g. Attendance"
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[11px] text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#9D61FF] focus:border-[#9D61FF]"
                 />
               </div>
             </div>
 
-            {/* Color Palette Ramps */}
+            {/* Color Palette Ramps (1 Row of 10) */}
             <div>
-              <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-1 text-[11px]">
-                Badge Color Palette
-              </label>
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="flex items-center justify-between mb-0.5">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 block text-[9.5px]">
+                  Badge Color Palette
+                </label>
+                <span className="text-[8.5px] text-slate-400 capitalize font-medium">
+                  {activeBadge.color}
+                </span>
+              </div>
+              <div className="grid grid-cols-10 gap-0.5">
                 {BADGE_COLOR_PALETTES.map((pal) => (
                   <button
                     key={pal.id}
@@ -2599,73 +2918,93 @@ function BadgeStripInspectorPopover({
                         customBorderColor: undefined,
                         customTextColor: undefined,
                         customIconColor: undefined,
+                        customIconBg: undefined,
                       })
                     }
-                    className={`h-7.5 rounded-lg flex items-center justify-center border transition-all cursor-pointer ${pal.bg} ${pal.border} ${
+                    className={`h-5 rounded-md flex items-center justify-center border transition-all cursor-pointer ${pal.bg} ${pal.border} ${
                       activeBadge.color === pal.id && !activeBadge.customBgColor
-                        ? "ring-2 ring-[#9D61FF] scale-105"
-                        : "opacity-80 hover:opacity-100"
+                        ? "ring-1.5 ring-[#9D61FF] scale-105 shadow-xs"
+                        : "opacity-80 hover:opacity-100 hover:scale-102"
                     }`}
+                    title={pal.label}
                   >
-                    <span className={`w-3 h-3 rounded-full ${pal.dot}`} />
+                    <span className={`w-2.5 h-2.5 rounded-full ${pal.dot} shadow-xs`} />
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Custom Colors */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Custom Card Colors */}
+            <div className="grid grid-cols-2 gap-1.5">
               <div>
-                <label className="text-[10.5px] text-slate-600 dark:text-zinc-400 block mb-0.5">
-                  Custom Background
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="color"
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[9px] text-slate-600 dark:text-zinc-400">
+                    Custom Background
+                  </label>
+                  {activeBadge.customBgColor && (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateSingleBadge(activeBadge.id, { customBgColor: undefined })}
+                      className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-medium"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <ColorSwatchPicker
                     value={activeBadge.customBgColor || "#ffffff"}
-                    onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customBgColor: e.target.value })}
-                    className="w-6 h-6 rounded-md border border-slate-200 dark:border-zinc-800 cursor-pointer p-0.5 bg-transparent"
+                    onChange={(hex) => onUpdateSingleBadge(activeBadge.id, { customBgColor: hex })}
                   />
                   <input
                     type="text"
                     value={activeBadge.customBgColor || ""}
                     onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customBgColor: e.target.value })}
                     placeholder="#ffffff"
-                    className="flex-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono"
+                    className="flex-1 min-w-0 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                   />
                 </div>
               </div>
               <div>
-                <label className="text-[10.5px] text-slate-600 dark:text-zinc-400 block mb-0.5">
-                  Custom Border
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="color"
+                <div className="flex items-center justify-between mb-0.5">
+                  <label className="text-[9px] text-slate-600 dark:text-zinc-400">
+                    Custom Border
+                  </label>
+                  {activeBadge.customBorderColor && (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateSingleBadge(activeBadge.id, { customBorderColor: undefined })}
+                      className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-medium"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <ColorSwatchPicker
                     value={activeBadge.customBorderColor || "#e2e8f0"}
-                    onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customBorderColor: e.target.value })}
-                    className="w-6 h-6 rounded-md border border-slate-200 dark:border-zinc-800 cursor-pointer p-0.5 bg-transparent"
+                    onChange={(hex) => onUpdateSingleBadge(activeBadge.id, { customBorderColor: hex })}
                   />
                   <input
                     type="text"
                     value={activeBadge.customBorderColor || ""}
                     onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customBorderColor: e.target.value })}
                     placeholder="#e2e8f0"
-                    className="flex-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono"
+                    className="flex-1 min-w-0 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Single Card Sizing (Height & Width) - MOVED UP FOR IMMEDIATE VISIBILITY */}
-            <div className="pt-2 border-t border-slate-200/80 dark:border-zinc-800/80">
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-slate-700 dark:text-zinc-300 text-xs">
-                    Card Sizing (Card #{strip.badges.findIndex((b) => b.id === activeBadge.id) + 1})
+            {/* Single Card Sizing (Height & Width) */}
+            <div className="pt-1 border-t border-slate-200/80 dark:border-zinc-800/80">
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="flex items-center gap-1">
+                  <span className="font-semibold text-slate-700 dark:text-zinc-300 text-[9.5px]">
+                    Card Sizing (Card #{activeBadgeIdx + 1})
                   </span>
                   {(activeBadge.customHeight || activeBadge.customWidth) && (
-                    <span className="px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-900/40 text-[9.5px] font-bold text-[#9D61FF]">
+                    <span className="px-1 py-0.1 rounded bg-purple-100 dark:bg-purple-900/40 text-[8px] font-bold text-[#9D61FF]">
                       Custom
                     </span>
                   )}
@@ -2674,31 +3013,31 @@ function BadgeStripInspectorPopover({
                   <button
                     type="button"
                     onClick={() => onUpdateSingleBadge(activeBadge.id, { customHeight: undefined, customWidth: undefined })}
-                    className="text-[10px] text-[#9D61FF] hover:underline cursor-pointer font-semibold flex items-center gap-1"
+                    className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-semibold flex items-center gap-0.5"
                     title="Reset this card to auto stretch"
                   >
-                    <RotateCcw className="w-2.5 h-2.5" />
+                    <RotateCcw className="w-2 h-2" />
                     <span>Reset Auto</span>
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-2 gap-1.5">
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[11px] text-slate-600 dark:text-zinc-400">Card Height</span>
-                    <span className="font-mono text-[11px] font-bold text-[#9D61FF]">
+                    <span className="text-[9px] text-slate-600 dark:text-zinc-400">Card Height</span>
+                    <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
                       {activeBadge.customHeight ? `${activeBadge.customHeight}px` : "Auto"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <input
                       type="range"
                       min={50}
                       max={280}
                       value={activeBadge.customHeight || 90}
                       onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customHeight: Number(e.target.value) })}
-                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1.5"
+                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1 bg-slate-200 dark:bg-zinc-700 rounded-lg"
                     />
                     <input
                       type="number"
@@ -2710,26 +3049,26 @@ function BadgeStripInspectorPopover({
                         const val = e.target.value ? Number(e.target.value) : undefined;
                         onUpdateSingleBadge(activeBadge.id, { customHeight: val });
                       }}
-                      className="w-13 px-1.5 py-0.5 text-[11px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono bg-white dark:bg-zinc-900"
+                      className="w-11 px-1 py-0.2 text-[9.5px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                     />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-[11px] text-slate-600 dark:text-zinc-400">Card Width</span>
-                    <span className="font-mono text-[11px] font-bold text-[#9D61FF]">
+                    <span className="text-[9px] text-slate-600 dark:text-zinc-400">Card Width</span>
+                    <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
                       {activeBadge.customWidth ? `${activeBadge.customWidth}px` : "Auto"}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <input
                       type="range"
                       min={60}
                       max={280}
                       value={activeBadge.customWidth || 110}
                       onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customWidth: Number(e.target.value) })}
-                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1.5"
+                      className="flex-1 accent-[#9D61FF] cursor-pointer h-1 bg-slate-200 dark:bg-zinc-700 rounded-lg"
                     />
                     <input
                       type="number"
@@ -2741,71 +3080,145 @@ function BadgeStripInspectorPopover({
                         const val = e.target.value ? Number(e.target.value) : undefined;
                         onUpdateSingleBadge(activeBadge.id, { customWidth: val });
                       }}
-                      className="w-13 px-1.5 py-0.5 text-[11px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono bg-white dark:bg-zinc-900"
+                      className="w-11 px-1 py-0.2 text-[9.5px] rounded border border-slate-200 dark:border-zinc-800 text-center font-mono font-bold bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Icon Shape & Size */}
-            <div className="grid grid-cols-2 gap-2.5 pt-1 border-t border-slate-200/80 dark:border-zinc-800/80">
-              <div>
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[11px]">
-                  Icon Shape
-                </label>
-                <div className="grid grid-cols-4 gap-1">
-                  {(["circle", "rounded", "square", "none"] as const).map((sh) => (
-                    <button
-                      key={sh}
-                      type="button"
-                      onClick={() => onUpdateSingleBadge(activeBadge.id, { iconShape: sh })}
-                      className={`py-1 rounded-md border text-[9.5px] font-bold capitalize transition-all cursor-pointer ${
-                        (activeBadge.iconShape || "rounded") === sh
-                          ? "bg-[#9D61FF] text-white border-[#9D61FF]"
-                          : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800"
-                      }`}
-                    >
-                      {sh === "rounded" ? "Rnd" : sh}
-                    </button>
-                  ))}
+            {/* Icon Settings & Dynamic Colors */}
+            <div className="pt-1 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-1">
+              {/* Row 1: Shape & Size */}
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label className="font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5 text-[9px]">
+                    Icon Shape
+                  </label>
+                  <div className="grid grid-cols-4 gap-0.5">
+                    {(["circle", "rounded", "square", "none"] as const).map((sh) => {
+                      const label = sh === "rounded" ? "Round" : sh === "circle" ? "Circle" : sh === "square" ? "Square" : "None";
+                      return (
+                        <button
+                          key={sh}
+                          type="button"
+                          onClick={() => onUpdateSingleBadge(activeBadge.id, { iconShape: sh })}
+                          className={`py-0.5 rounded-md border text-[8.5px] font-bold capitalize transition-all cursor-pointer ${
+                            (activeBadge.iconShape || "rounded") === sh
+                              ? "bg-[#9D61FF] text-white border-[#9D61FF] shadow-xs"
+                              : "border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9px]">
+                      Icon Size
+                    </label>
+                    <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
+                      {activeBadge.iconSize || 18}px
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={12}
+                    max={32}
+                    value={activeBadge.iconSize || 18}
+                    onChange={(e) => onUpdateSingleBadge(activeBadge.id, { iconSize: Number(e.target.value) })}
+                    className="w-full accent-[#9D61FF] cursor-pointer h-1 bg-slate-200 dark:bg-zinc-700 rounded-lg mt-0.5"
+                  />
                 </div>
               </div>
-              <div>
-                <div className="flex items-center justify-between mb-0.5">
-                  <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[11px]">
-                    Icon Size
-                  </label>
-                  <span className="font-mono text-xs font-bold text-[#9D61FF]">
-                    {activeBadge.iconSize || 18}px
-                  </span>
+
+              {/* Row 2: Dynamic Icon Shape Color & Glyph Color */}
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300">
+                      Icon Shape Color
+                    </label>
+                    {activeBadge.customIconBg && (
+                      <button
+                        type="button"
+                        onClick={() => onUpdateSingleBadge(activeBadge.id, { customIconBg: undefined })}
+                        className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-medium"
+                        title="Reset to default palette tint"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ColorSwatchPicker
+                      value={activeBadge.customIconBg || "#f3e8ff"}
+                      onChange={(hex) => onUpdateSingleBadge(activeBadge.id, { customIconBg: hex })}
+                    />
+                    <input
+                      type="text"
+                      value={activeBadge.customIconBg || ""}
+                      onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customIconBg: e.target.value })}
+                      placeholder="Auto (Palette)"
+                      className="flex-1 min-w-0 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
+                    />
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min={12}
-                  max={32}
-                  value={activeBadge.iconSize || 18}
-                  onChange={(e) => onUpdateSingleBadge(activeBadge.id, { iconSize: Number(e.target.value) })}
-                  className="w-full accent-[#9D61FF] cursor-pointer h-1.5"
-                />
+
+                <div>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300">
+                      Icon Glyph Color
+                    </label>
+                    {activeBadge.customIconColor && (
+                      <button
+                        type="button"
+                        onClick={() => onUpdateSingleBadge(activeBadge.id, { customIconColor: undefined })}
+                        className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-medium"
+                        title="Reset to default palette tint"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ColorSwatchPicker
+                      value={activeBadge.customIconColor || "#9D61FF"}
+                      onChange={(hex) => onUpdateSingleBadge(activeBadge.id, { customIconColor: hex })}
+                    />
+                    <input
+                      type="text"
+                      value={activeBadge.customIconColor || ""}
+                      onChange={(e) => onUpdateSingleBadge(activeBadge.id, { customIconColor: e.target.value })}
+                      placeholder="Auto (Palette)"
+                      className="flex-1 min-w-0 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Icon Symbol Grid */}
+            {/* Icon Symbol Grid with 10 Columns */}
             <div>
               <div className="flex items-center justify-between mb-0.5">
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[11px]">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9px]">
                   Icon Symbol
                 </label>
-                <input
-                  type="text"
-                  value={iconSearch}
-                  onChange={(e) => setIconSearch(e.target.value)}
-                  placeholder="Filter icons..."
-                  className="w-28 px-2 py-0.5 text-[10px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900"
-                />
+                <div className="relative w-28">
+                  <Search className="w-2.5 h-2.5 text-slate-400 absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={iconSearch}
+                    onChange={(e) => setIconSearch(e.target.value)}
+                    placeholder="Search icons..."
+                    className="w-full pl-5 pr-1.5 py-0.2 text-[9px] rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 focus:outline-none focus:border-[#9D61FF]"
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-8 gap-1 p-1.5 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 max-h-24 overflow-y-auto">
+              <div className="grid grid-cols-10 gap-0.5 p-1 bg-slate-50 dark:bg-zinc-900 rounded-lg border border-slate-200 dark:border-zinc-800 max-h-16 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(157,97,255,0.3)_transparent]">
                 {filteredIcons.map((opt) => {
                   const IconComp = opt.icon;
                   const isSel = (activeBadge.icon || "Shield") === opt.id;
@@ -2814,10 +3227,10 @@ function BadgeStripInspectorPopover({
                       key={opt.id}
                       type="button"
                       onClick={() => onUpdateSingleBadge(activeBadge.id, { icon: opt.id })}
-                      className={`h-6.5 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                      className={`h-5 rounded-md flex items-center justify-center transition-all cursor-pointer ${
                         isSel
                           ? "bg-[#9D61FF] text-white shadow-xs"
-                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
+                          : "text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800 hover:text-[#9D61FF]"
                       }`}
                       title={opt.label}
                     >
@@ -2830,14 +3243,14 @@ function BadgeStripInspectorPopover({
 
             {/* Delete current card if more than 1 */}
             {strip.badges.length > 1 && (
-              <div className="pt-1">
+              <div className="pt-0.5">
                 <button
                   type="button"
                   onClick={() => onDeleteBadge?.(activeBadge.id)}
-                  className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors font-semibold text-[11px] cursor-pointer"
+                  className="w-full flex items-center justify-center gap-1 py-1 rounded-lg border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors font-semibold text-[10px] cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Remove Card #{strip.badges.findIndex((b) => b.id === activeBadge.id) + 1}</span>
+                  <Trash2 className="w-3 h-3" />
+                  <span>Remove Card #{activeBadgeIdx + 1}</span>
                 </button>
               </div>
             )}
@@ -2846,30 +3259,30 @@ function BadgeStripInspectorPopover({
           <>
             {/* Grid Columns */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="font-semibold text-slate-700 dark:text-zinc-300 block text-[11px]">
+              <div className="flex items-center justify-between mb-0.5">
+                <label className="font-semibold text-slate-700 dark:text-zinc-300 block text-[9.5px]">
                   Grid Columns
                 </label>
                 <div className="flex items-center gap-1">
-                  <span className="text-[10px] text-slate-500">Custom:</span>
+                  <span className="text-[9px] text-slate-500">Custom:</span>
                   <input
                     type="number"
                     min={1}
                     max={12}
                     value={strip.columns || 2}
                     onChange={(e) => onUpdateBadgeStrip({ ...strip, columns: Math.max(1, Math.min(12, Number(e.target.value) || 1)) })}
-                    className="w-10 px-1 py-0.5 text-[11px] text-center font-bold font-mono rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                    className="w-8 px-1 py-0.2 text-[9.5px] text-center font-bold font-mono rounded border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
                   />
-                  <span className="text-[10px] text-slate-400">cols</span>
+                  <span className="text-[9px] text-slate-400">cols</span>
                 </div>
               </div>
-              <div className="grid grid-cols-6 gap-1">
+              <div className="grid grid-cols-6 gap-0.5">
                 {[1, 2, 3, 4, 5, 6].map((c) => (
                   <button
                     key={c}
                     type="button"
                     onClick={() => onUpdateBadgeStrip({ ...strip, columns: c })}
-                    className={`py-1 rounded-lg border text-[11px] font-bold transition-all cursor-pointer ${
+                    className={`py-0.5 rounded-md border text-[9.5px] font-bold transition-all cursor-pointer ${
                       (strip.columns || 2) === c
                         ? "bg-[#9D61FF] text-white border-[#9D61FF] shadow-xs"
                         : "border-slate-200 dark:border-zinc-800 hover:border-slate-300 text-slate-700 dark:text-zinc-300"
@@ -2882,13 +3295,13 @@ function BadgeStripInspectorPopover({
             </div>
 
             {/* Gap & Padding Sliders */}
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1.5">
               <div>
                 <div className="flex items-center justify-between mb-0.5">
-                  <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[11px]">
+                  <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9.5px]">
                     Card Gap
                   </label>
-                  <span className="font-mono text-xs font-bold text-[#9D61FF]">
+                  <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
                     {strip.gap !== undefined ? strip.gap : 12}px
                   </span>
                 </div>
@@ -2904,10 +3317,10 @@ function BadgeStripInspectorPopover({
 
               <div>
                 <div className="flex items-center justify-between mb-0.5">
-                  <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[11px]">
+                  <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9.5px]">
                     Padding
                   </label>
-                  <span className="font-mono text-xs font-bold text-[#9D61FF]">
+                  <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
                     {strip.padding !== undefined ? strip.padding : 14}px
                   </span>
                 </div>
@@ -2923,25 +3336,25 @@ function BadgeStripInspectorPopover({
             </div>
 
             {/* Transparent Container Toggle */}
-            <div className="p-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 flex items-center justify-between">
+            <div className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900/60 flex items-center justify-between">
               <div>
-                <div className="font-semibold text-slate-800 dark:text-zinc-200 text-xs">
+                <div className="font-semibold text-slate-800 dark:text-zinc-200 text-[10px]">
                   Transparent Container
                 </div>
-                <div className="text-[9.5px] text-slate-500 dark:text-zinc-400">
+                <div className="text-[8.5px] text-slate-500 dark:text-zinc-400">
                   Removes outer card background & border
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => onUpdateBadgeStrip({ ...strip, isTransparent: !strip.isTransparent })}
-                className={`w-9 h-5 rounded-full transition-colors p-0.5 cursor-pointer relative ${
+                className={`w-7 h-4 rounded-full transition-colors p-0.5 cursor-pointer relative ${
                   strip.isTransparent ? "bg-[#9D61FF]" : "bg-slate-300 dark:bg-zinc-700"
                 }`}
               >
                 <div
-                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                    strip.isTransparent ? "translate-x-4" : "translate-x-0"
+                  className={`w-3 h-3 rounded-full bg-white transition-transform ${
+                    strip.isTransparent ? "translate-x-3" : "translate-x-0"
                   }`}
                 />
               </button>
@@ -2949,14 +3362,14 @@ function BadgeStripInspectorPopover({
 
             {/* Border Radius & Border Width */}
             {!strip.isTransparent && (
-              <div className="space-y-2.5 pt-0.5">
-                <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1.5 pt-0.5">
+                <div className="grid grid-cols-2 gap-1.5">
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
-                      <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[11px]">
+                      <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9.5px]">
                         Radius
                       </label>
-                      <span className="font-mono text-xs font-bold text-[#9D61FF]">
+                      <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
                         {strip.borderRadius !== undefined ? strip.borderRadius : 16}px
                       </span>
                     </div>
@@ -2972,10 +3385,10 @@ function BadgeStripInspectorPopover({
 
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
-                      <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[11px]">
+                      <label className="font-semibold text-slate-700 dark:text-zinc-300 text-[9.5px]">
                         Border
                       </label>
-                      <span className="font-mono text-xs font-bold text-[#9D61FF]">
+                      <span className="font-mono text-[9px] font-bold text-[#9D61FF]">
                         {strip.borderWidth !== undefined ? strip.borderWidth : 1}px
                       </span>
                     </div>
@@ -2991,17 +3404,17 @@ function BadgeStripInspectorPopover({
                 </div>
 
                 {/* Container Bg (Presets + Custom) */}
-                <div className="space-y-1.5 pt-1">
+                <div className="space-y-1 pt-0.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-semibold text-slate-700 dark:text-zinc-300">
+                    <label className="text-[9.5px] font-semibold text-slate-700 dark:text-zinc-300">
                       Container Bg
                     </label>
-                    <span className="text-[10px] font-mono text-slate-500">
+                    <span className="text-[8.5px] font-mono text-slate-500">
                       {strip.backgroundColor || "#ffffff"}
                     </span>
                   </div>
                   {/* Preset Swatches */}
-                  <div className="grid grid-cols-5 gap-1.5">
+                  <div className="grid grid-cols-5 gap-1">
                     {CONTAINER_BG_PRESETS.map((p) => {
                       const isSel = (strip.backgroundColor || "#ffffff").toLowerCase() === p.value.toLowerCase();
                       return (
@@ -3009,8 +3422,8 @@ function BadgeStripInspectorPopover({
                           key={p.id}
                           type="button"
                           onClick={() => onUpdateBadgeStrip({ ...strip, backgroundColor: p.value })}
-                          className={`h-6.5 rounded-lg border text-[10px] font-medium flex items-center justify-center gap-1 cursor-pointer transition-all ${p.bg} ${p.border} ${
-                            isSel ? "ring-2 ring-[#9D61FF] scale-105 font-bold" : "hover:scale-102"
+                          className={`h-5 rounded-md border text-[8.5px] font-medium flex items-center justify-center gap-0.5 cursor-pointer transition-all ${p.bg} ${p.border} ${
+                            isSel ? "ring-1.5 ring-[#9D61FF] scale-105 font-bold" : "hover:scale-102"
                           }`}
                           title={p.label}
                         >
@@ -3021,24 +3434,22 @@ function BadgeStripInspectorPopover({
                   </div>
                   {/* Custom Color Input */}
                   <div className="flex items-center gap-1.5 pt-0.5">
-                    <input
-                      type="color"
+                    <ColorSwatchPicker
                       value={strip.backgroundColor && strip.backgroundColor !== "transparent" ? strip.backgroundColor : "#ffffff"}
-                      onChange={(e) => onUpdateBadgeStrip({ ...strip, backgroundColor: e.target.value })}
-                      className="w-6 h-6 rounded-md border border-slate-200 dark:border-zinc-800 cursor-pointer p-0.5 bg-transparent"
+                      onChange={(hex) => onUpdateBadgeStrip({ ...strip, backgroundColor: hex })}
                     />
                     <input
                       type="text"
                       value={strip.backgroundColor || ""}
                       onChange={(e) => onUpdateBadgeStrip({ ...strip, backgroundColor: e.target.value })}
                       placeholder="#ffffff or transparent"
-                      className="flex-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono"
+                      className="flex-1 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono"
                     />
                     {strip.backgroundColor && strip.backgroundColor !== "#ffffff" && (
                       <button
                         type="button"
                         onClick={() => onUpdateBadgeStrip({ ...strip, backgroundColor: "#ffffff" })}
-                        className="px-2 py-1 text-[10px] text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 border border-slate-200 dark:border-zinc-800 rounded-lg cursor-pointer font-medium"
+                        className="px-1.5 py-0.5 text-[8.5px] text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 border border-slate-200 dark:border-zinc-800 rounded-md cursor-pointer font-medium"
                         title="Reset to white"
                       >
                         Reset
@@ -3048,17 +3459,17 @@ function BadgeStripInspectorPopover({
                 </div>
 
                 {/* Container Border (Presets + Custom) */}
-                <div className="space-y-1.5 pt-1">
+                <div className="space-y-1 pt-0.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-semibold text-slate-700 dark:text-zinc-300">
+                    <label className="text-[9.5px] font-semibold text-slate-700 dark:text-zinc-300">
                       Container Border
                     </label>
-                    <span className="text-[10px] font-mono text-slate-500">
+                    <span className="text-[8.5px] font-mono text-slate-500">
                       {strip.borderColor || "#e2e8f0"}
                     </span>
                   </div>
                   {/* Preset Swatches */}
-                  <div className="grid grid-cols-5 gap-1.5">
+                  <div className="grid grid-cols-5 gap-1">
                     {CONTAINER_BORDER_PRESETS.map((p) => {
                       const isSel = (strip.borderColor || "#e2e8f0").toLowerCase() === p.value.toLowerCase();
                       return (
@@ -3066,8 +3477,8 @@ function BadgeStripInspectorPopover({
                           key={p.id}
                           type="button"
                           onClick={() => onUpdateBadgeStrip({ ...strip, borderColor: p.value })}
-                          className={`h-6.5 rounded-lg border text-[10px] font-medium flex items-center justify-center gap-1 cursor-pointer transition-all ${p.bg} ${p.border} ${
-                            isSel ? "ring-2 ring-[#9D61FF] scale-105 font-bold" : "hover:scale-102"
+                          className={`h-5 rounded-md border text-[8.5px] font-medium flex items-center justify-center gap-0.5 cursor-pointer transition-all ${p.bg} ${p.border} ${
+                            isSel ? "ring-1.5 ring-[#9D61FF] scale-105 font-bold" : "hover:scale-102"
                           }`}
                           title={p.label}
                         >
@@ -3078,24 +3489,22 @@ function BadgeStripInspectorPopover({
                   </div>
                   {/* Custom Color Input */}
                   <div className="flex items-center gap-1.5 pt-0.5">
-                    <input
-                      type="color"
+                    <ColorSwatchPicker
                       value={strip.borderColor && strip.borderColor !== "transparent" ? strip.borderColor : "#e2e8f0"}
-                      onChange={(e) => onUpdateBadgeStrip({ ...strip, borderColor: e.target.value })}
-                      className="w-6 h-6 rounded-md border border-slate-200 dark:border-zinc-800 cursor-pointer p-0.5 bg-transparent"
+                      onChange={(hex) => onUpdateBadgeStrip({ ...strip, borderColor: hex })}
                     />
                     <input
                       type="text"
                       value={strip.borderColor || ""}
                       onChange={(e) => onUpdateBadgeStrip({ ...strip, borderColor: e.target.value })}
                       placeholder="#e2e8f0 or transparent"
-                      className="flex-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono"
+                      className="flex-1 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono"
                     />
                     {strip.borderColor && strip.borderColor !== "#e2e8f0" && (
                       <button
                         type="button"
                         onClick={() => onUpdateBadgeStrip({ ...strip, borderColor: "#e2e8f0" })}
-                        className="px-2 py-1 text-[10px] text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 border border-slate-200 dark:border-zinc-800 rounded-lg cursor-pointer font-medium"
+                        className="px-1.5 py-0.5 text-[8.5px] text-slate-500 hover:text-slate-800 dark:hover:text-zinc-200 border border-slate-200 dark:border-zinc-800 rounded-md cursor-pointer font-medium"
                         title="Reset to default border"
                       >
                         Reset
@@ -3105,9 +3514,9 @@ function BadgeStripInspectorPopover({
                 </div>
 
                 {/* All Cards Sizing Helper (Reset All to Auto) */}
-                <div className="pt-2 border-t border-slate-200/80 dark:border-zinc-800/80">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-semibold text-slate-700 dark:text-zinc-300 text-xs">All Cards Sizing</span>
+                <div className="pt-1.5 border-t border-slate-200/80 dark:border-zinc-800/80">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="font-semibold text-slate-700 dark:text-zinc-300 text-[9.5px]">All Cards Sizing</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -3117,13 +3526,13 @@ function BadgeStripInspectorPopover({
                         };
                         onUpdateBadgeStrip(updated);
                       }}
-                      className="text-[10px] text-[#9D61FF] hover:underline cursor-pointer font-semibold flex items-center gap-1"
+                      className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer font-semibold flex items-center gap-0.5"
                     >
-                      <RotateCcw className="w-2.5 h-2.5" />
+                      <RotateCcw className="w-2 h-2" />
                       <span>Reset All to Auto</span>
                     </button>
                   </div>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-[8.5px] text-slate-500">
                     Reset all cards in this strip to auto stretch so they fill the row height and column width evenly.
                   </p>
                 </div>
@@ -3134,14 +3543,14 @@ function BadgeStripInspectorPopover({
       </div>
 
       {/* Footer (Pinned) */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-2 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70">
-        <span className="text-[10.5px] font-medium text-slate-500 dark:text-zinc-400">
+      <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70">
+        <span className="text-[9px] font-medium text-slate-500 dark:text-zinc-400">
           Card #{activeBadgeIdx + 1} of {strip.badges.length}
         </span>
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-1.5 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold transition-all cursor-pointer shadow-xs"
+          className="px-3.5 py-1 rounded-lg bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-[10.5px] font-bold transition-all cursor-pointer shadow-xs"
         >
           Done
         </button>
