@@ -55,7 +55,8 @@ export const BADGE_NUM_COLORS: Record<string, string> = {
 function getBulletGlyph(
   item: KeyInsightBulletItem,
   idx: number,
-  style: BulletMarkerStyle
+  style: BulletMarkerStyle,
+  insight?: LibraryKeyInsightItem
 ): { type: "text" | "icon"; value: string } {
   switch (style) {
     case "alpha":
@@ -71,7 +72,7 @@ function getBulletGlyph(
     case "dot":
       return { type: "text", value: "•" };
     case "icon":
-      return { type: "icon", value: item.icon || "CheckCircle2" };
+      return { type: "icon", value: item.icon || insight?.icon || "CheckCircle2" };
     case "number":
     default:
       return { type: "text", value: String(item.num ?? idx + 1) };
@@ -98,10 +99,32 @@ function renderBulletBadge({
   const shape = insight.bulletShape || (bulletStyle === "pill" ? "rounded" : "circle");
   const sizePx = insight.bulletSize ?? defaultSize;
 
-  const glyph = getBulletGlyph(item, idx, bulletStyle);
+  const glyph = getBulletGlyph(item, idx, bulletStyle, insight);
 
   const customBg = item.customBg || insight.badgeBg;
   const customColor = item.customColor || insight.badgeColor;
+
+  if (shape === "none") {
+    const noneStyle: React.CSSProperties = {
+      fontSize: `${Math.max(9, Math.round(sizePx * 0.52))}px`,
+      color: customColor || undefined,
+    };
+    if (glyph.type === "icon") {
+      return (
+        <span
+          style={{ width: `${sizePx}px`, height: `${sizePx}px`, color: customColor || undefined }}
+          className="flex items-center justify-center shrink-0"
+        >
+          <BadgeIcon name={glyph.value} className="w-[85%] h-[85%]" />
+        </span>
+      );
+    }
+    return (
+      <span style={noneStyle} className="font-bold shrink-0 flex items-center justify-center px-1">
+        {glyph.value}
+      </span>
+    );
+  }
 
   const shapeClass =
     shape === "circle"
@@ -244,6 +267,29 @@ export function InsightBlock({
   const handleItemTitleUpdate = (itemId: string, newTitle: string) => {
     handleUpdateSingleItem(itemId, { title: newTitle });
     finishEdit();
+  };
+
+  const handleUpdateSubItem = (itemId: string, subIdx: number, newText: string) => {
+    const item = (insight.items || []).find((it) => it.id === itemId);
+    if (!item) return;
+    const currentSubs = [...(item.subItems || [])];
+    currentSubs[subIdx] = newText;
+    handleUpdateSingleItem(itemId, { subItems: currentSubs });
+    finishEdit();
+  };
+
+  const handleAddSubItem = (itemId: string, initialText = "New action point") => {
+    const item = (insight.items || []).find((it) => it.id === itemId);
+    if (!item) return;
+    const currentSubs = [...(item.subItems || []), initialText];
+    handleUpdateSingleItem(itemId, { subItems: currentSubs });
+  };
+
+  const handleDeleteSubItem = (itemId: string, subIdx: number) => {
+    const item = (insight.items || []).find((it) => it.id === itemId);
+    if (!item) return;
+    const currentSubs = (item.subItems || []).filter((_, i) => i !== subIdx);
+    handleUpdateSingleItem(itemId, { subItems: currentSubs });
   };
 
   const handleAddItem = (defaultItem?: Partial<KeyInsightBulletItem>) => {
@@ -444,10 +490,29 @@ export function InsightBlock({
                 <Lightbulb className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-blue-400 tracking-tight leading-none">
-                  {insight.title || "Key Insights"}
-                </h3>
-                <div className="w-10 h-0.5 bg-blue-600 rounded-full mt-1" />
+                {!isPreview && editingTarget === "title" ? (
+                  <DynamicTextEditor
+                    initialValue={insight.title || "Key Insights"}
+                    defaultFontSize={14}
+                    className="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-blue-400"
+                    onSave={(plain) => {
+                      handleUpdate({ title: plain });
+                      finishEdit();
+                    }}
+                    onCancel={finishEdit}
+                  />
+                ) : (
+                  <div
+                    onDoubleClick={() => startEdit("title")}
+                    title={!isPreview ? "Double-click to edit heading" : undefined}
+                    className="cursor-text"
+                  >
+                    <h3 className={`text-sm sm:text-base font-black text-[#1e3a8a] dark:text-blue-400 tracking-tight leading-none ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}>
+                      {insight.title || "Key Insights"}
+                    </h3>
+                    <div className="w-10 h-0.5 bg-blue-600 rounded-full mt-1" />
+                  </div>
+                )}
               </div>
             </div>
             {!isPreview && (
@@ -573,9 +638,26 @@ export function InsightBlock({
                 <FileText className="w-2.5 h-2.5" />
               </div>
               <div>
-                <h3 className="text-[11px] sm:text-xs font-black text-[#0f172a] dark:text-blue-400 tracking-tight leading-none">
-                  {insight.title || "Key Takeaways"}
-                </h3>
+                {!isPreview && editingTarget === "title" ? (
+                  <DynamicTextEditor
+                    initialValue={insight.title || "Key Takeaways"}
+                    defaultFontSize={11}
+                    className="text-[11px] sm:text-xs font-black text-[#0f172a] dark:text-blue-400"
+                    onSave={(plain) => {
+                      handleUpdate({ title: plain });
+                      finishEdit();
+                    }}
+                    onCancel={finishEdit}
+                  />
+                ) : (
+                  <h3
+                    onDoubleClick={() => startEdit("title")}
+                    title={!isPreview ? "Double-click to edit heading" : undefined}
+                    className={`text-[11px] sm:text-xs font-black text-[#0f172a] dark:text-blue-400 tracking-tight leading-none cursor-text select-text ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}
+                  >
+                    {insight.title || "Key Takeaways"}
+                  </h3>
+                )}
               </div>
             </div>
             {!isPreview && (
@@ -673,10 +755,29 @@ export function InsightBlock({
               <FileText className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-blue-400 tracking-tight leading-none">
-                {insight.title || "Key Insights"}
-              </h3>
-              <div className="w-10 h-0.5 bg-blue-600 rounded-full mt-1" />
+              {!isPreview && editingTarget === "title" ? (
+                <DynamicTextEditor
+                  initialValue={insight.title || "Key Insights"}
+                  defaultFontSize={14}
+                  className="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-blue-400"
+                  onSave={(plain) => {
+                    handleUpdate({ title: plain });
+                    finishEdit();
+                  }}
+                  onCancel={finishEdit}
+                />
+              ) : (
+                <div
+                  onDoubleClick={() => startEdit("title")}
+                  title={!isPreview ? "Double-click to edit heading" : undefined}
+                  className="cursor-text"
+                >
+                  <h3 className={`text-sm sm:text-base font-black text-[#1e3a8a] dark:text-blue-400 tracking-tight leading-none ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}>
+                    {insight.title || "Key Insights"}
+                  </h3>
+                  <div className="w-10 h-0.5 bg-blue-600 rounded-full mt-1" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -717,9 +818,26 @@ export function InsightBlock({
               <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
                 <MessageSquare className="w-3.5 h-3.5" />
               </div>
-              <h3 className="text-sm font-black text-[#1e3a8a] dark:text-blue-400">
-                {insight.title || "3. Operational Remarks"}
-              </h3>
+              {!isPreview && editingTarget === "title" ? (
+                <DynamicTextEditor
+                  initialValue={insight.title || "3. Operational Remarks"}
+                  defaultFontSize={13}
+                  className="text-sm font-black text-[#1e3a8a] dark:text-blue-400"
+                  onSave={(plain) => {
+                    handleUpdate({ title: plain });
+                    finishEdit();
+                  }}
+                  onCancel={finishEdit}
+                />
+              ) : (
+                <h3
+                  onDoubleClick={() => startEdit("title")}
+                  title={!isPreview ? "Double-click to edit heading" : undefined}
+                  className={`text-sm font-black text-[#1e3a8a] dark:text-blue-400 cursor-text select-text ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}
+                >
+                  {insight.title || "3. Operational Remarks"}
+                </h3>
+              )}
             </div>
 
             {!isPreview && editingTarget === "text" ? (
@@ -821,12 +939,53 @@ export function InsightBlock({
             </div>
             <div className="w-px h-10 bg-blue-600/40 hidden sm:block shrink-0" />
             <div>
-              <h3 className="text-base sm:text-lg font-black text-[#1e3a8a] dark:text-blue-300 leading-tight">
-                {insight.banner?.headline || insight.title || "Turning Insights into a Safer Tomorrow"}
-              </h3>
-              <p className="text-xs text-sky-700 dark:text-sky-400 font-semibold mt-0.5">
-                {insight.banner?.subtitle || insight.text || "Continuous monitoring. Clearer actions. Safer workplaces."}
-              </p>
+              {!isPreview && editingTarget === "banner-headline" ? (
+                <DynamicTextEditor
+                  initialValue={insight.banner?.headline || insight.title || "Turning Insights into a Safer Tomorrow"}
+                  defaultFontSize={16}
+                  className="text-base sm:text-lg font-black text-[#1e3a8a] dark:text-blue-300 leading-tight"
+                  onSave={(plain) => {
+                    handleUpdate({
+                      banner: { ...(insight.banner || { subtitle: "", tagline: "" }), headline: plain },
+                      title: plain,
+                    });
+                    finishEdit();
+                  }}
+                  onCancel={finishEdit}
+                />
+              ) : (
+                <h3
+                  onDoubleClick={() => startEdit("banner-headline")}
+                  title={!isPreview ? "Double-click to edit headline" : undefined}
+                  className={`text-base sm:text-lg font-black text-[#1e3a8a] dark:text-blue-300 leading-tight cursor-text select-text ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}
+                >
+                  {insight.banner?.headline || insight.title || "Turning Insights into a Safer Tomorrow"}
+                </h3>
+              )}
+
+              {!isPreview && editingTarget === "banner-subtitle" ? (
+                <DynamicTextEditor
+                  initialValue={insight.banner?.subtitle || insight.text || "Continuous monitoring. Clearer actions. Safer workplaces."}
+                  defaultFontSize={12}
+                  className="text-xs text-sky-700 dark:text-sky-400 font-semibold mt-0.5"
+                  onSave={(plain) => {
+                    handleUpdate({
+                      banner: { ...(insight.banner || { headline: "", tagline: "" }), subtitle: plain },
+                      text: plain,
+                    });
+                    finishEdit();
+                  }}
+                  onCancel={finishEdit}
+                />
+              ) : (
+                <p
+                  onDoubleClick={() => startEdit("banner-subtitle")}
+                  title={!isPreview ? "Double-click to edit subtitle" : undefined}
+                  className={`text-xs text-sky-700 dark:text-sky-400 font-semibold mt-0.5 cursor-text select-text ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}
+                >
+                  {insight.banner?.subtitle || insight.text || "Continuous monitoring. Clearer actions. Safer workplaces."}
+                </p>
+              )}
             </div>
           </div>
 
@@ -846,9 +1005,28 @@ export function InsightBlock({
           </div>
 
           <div className="text-right shrink-0">
-            <div className="font-serif italic font-black text-sm text-blue-950 dark:text-blue-200">
-              {insight.banner?.tagline || "Every Worker Returns Home Safe"}
-            </div>
+            {!isPreview && editingTarget === "banner-tagline" ? (
+              <DynamicTextEditor
+                initialValue={insight.banner?.tagline || "Every Worker Returns Home Safe"}
+                defaultFontSize={13}
+                className="font-serif italic font-black text-sm text-blue-950 dark:text-blue-200"
+                onSave={(plain) => {
+                  handleUpdate({
+                    banner: { ...(insight.banner || { headline: "", subtitle: "" }), tagline: plain },
+                  });
+                  finishEdit();
+                }}
+                onCancel={finishEdit}
+              />
+            ) : (
+              <div
+                onDoubleClick={() => startEdit("banner-tagline")}
+                title={!isPreview ? "Double-click to edit tagline" : undefined}
+                className={`font-serif italic font-black text-sm text-blue-950 dark:text-blue-200 cursor-text select-text ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}
+              >
+                {insight.banner?.tagline || "Every Worker Returns Home Safe"}
+              </div>
+            )}
             <div className="w-12 h-0.5 bg-blue-600 rounded-full ml-auto mt-1" />
           </div>
         </div>
@@ -862,9 +1040,26 @@ export function InsightBlock({
           <div className="flex items-center justify-between pb-1 border-b border-rose-100 dark:border-rose-900/40">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-rose-600" />
-              <h4 className="text-xs font-bold text-rose-800 dark:text-rose-300">
-                {insight.title || "Key Factors"}
-              </h4>
+              {!isPreview && editingTarget === "title" ? (
+                <DynamicTextEditor
+                  initialValue={insight.title || "Key Factors"}
+                  defaultFontSize={12}
+                  className="text-xs font-bold text-rose-800 dark:text-rose-300"
+                  onSave={(plain) => {
+                    handleUpdate({ title: plain });
+                    finishEdit();
+                  }}
+                  onCancel={finishEdit}
+                />
+              ) : (
+                <h4
+                  onDoubleClick={() => startEdit("title")}
+                  title={!isPreview ? "Double-click to edit heading" : undefined}
+                  className={`text-xs font-bold text-rose-800 dark:text-rose-300 cursor-text select-text ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}
+                >
+                  {insight.title || "Key Factors"}
+                </h4>
+              )}
             </div>
             {!isPreview && (
               <button
@@ -932,9 +1127,26 @@ export function InsightBlock({
           <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-zinc-800">
             <div className="flex items-center gap-2">
               <BarChart2 className="w-4 h-4 text-blue-600" />
-              <h4 className="text-xs font-bold text-blue-900 dark:text-blue-300">
-                {insight.title || "Key Observations"}
-              </h4>
+              {!isPreview && editingTarget === "title" ? (
+                <DynamicTextEditor
+                  initialValue={insight.title || "Key Observations"}
+                  defaultFontSize={12}
+                  className="text-xs font-bold text-blue-900 dark:text-blue-300"
+                  onSave={(plain) => {
+                    handleUpdate({ title: plain });
+                    finishEdit();
+                  }}
+                  onCancel={finishEdit}
+                />
+              ) : (
+                <h4
+                  onDoubleClick={() => startEdit("title")}
+                  title={!isPreview ? "Double-click to edit heading" : undefined}
+                  className={`text-xs font-bold text-blue-900 dark:text-blue-300 cursor-text select-text ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}
+                >
+                  {insight.title || "Key Observations"}
+                </h4>
+              )}
             </div>
             {!isPreview && (
               <button
@@ -997,57 +1209,224 @@ export function InsightBlock({
 
     // 10. Priority Actions Steps
     if (variant === "priority-actions") {
+      const colCount = insight.columns || Math.min(Math.max(items.length, 1), 6);
+      const gapPx = insight.gap !== undefined ? `${insight.gap}px` : "12px";
+
       return (
         <div className="w-full h-full flex flex-col justify-between space-y-3.5">
           <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-zinc-800">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
                 <CheckSquare className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-[#1e3a8a] dark:text-blue-400 tracking-tight leading-none">
-                  {insight.title || "2. Priority Actions for Next Month"}
-                </h3>
-                <p className="text-[10px] text-slate-400 mt-0.5">
-                  {insight.text || "Key actions to address identified improvement areas."}
-                </p>
+                {!isPreview && editingTarget === "title" ? (
+                  <DynamicTextEditor
+                    initialValue={insight.title || "2. Priority Actions for Next Month"}
+                    defaultFontSize={14}
+                    className="text-sm font-black text-[#1e3a8a] dark:text-blue-400"
+                    onSave={(plain) => {
+                      handleUpdate({ title: plain });
+                      finishEdit();
+                    }}
+                    onCancel={finishEdit}
+                  />
+                ) : (
+                  <h3
+                    onDoubleClick={() => startEdit("title")}
+                    title={!isPreview ? "Double-click to edit block heading" : undefined}
+                    className={`text-sm font-black text-[#1e3a8a] dark:text-blue-400 tracking-tight leading-none cursor-text select-text ${
+                      !isPreview ? "hover:underline hover:decoration-dotted" : ""
+                    }`}
+                  >
+                    {insight.title || "2. Priority Actions for Next Month"}
+                  </h3>
+                )}
+
+                {!isPreview && editingTarget === "subtitle" ? (
+                  <DynamicTextEditor
+                    initialValue={insight.text || "Key actions to address identified improvement areas."}
+                    defaultFontSize={10}
+                    className="text-[10px] text-slate-400"
+                    onSave={(plain) => {
+                      handleUpdate({ text: plain });
+                      finishEdit();
+                    }}
+                    onCancel={finishEdit}
+                  />
+                ) : (
+                  <p
+                    onDoubleClick={() => startEdit("subtitle")}
+                    title={!isPreview ? "Double-click to edit subtitle" : undefined}
+                    className={`text-[10px] text-slate-400 mt-0.5 cursor-text select-text ${
+                      !isPreview ? "hover:underline hover:decoration-dotted" : ""
+                    }`}
+                  >
+                    {insight.text || "Key actions to address identified improvement areas."}
+                  </p>
+                )}
               </div>
             </div>
+
+            {!isPreview && items.length < 6 && (
+              <button
+                type="button"
+                onClick={() =>
+                  handleAddItem({
+                    title: `Action Item ${items.length + 1}`,
+                    subItems: ["Action point 1", "Action point 2"],
+                  })
+                }
+                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-900/50 flex items-center gap-1 cursor-pointer transition-colors"
+                title="Add action column"
+              >
+                <Plus className="w-3 h-3" /> Add Action
+              </button>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${colCount}, minmax(0, 1fr))`,
+              gap: gapPx,
+            }}
+            className="w-full flex-1 min-h-0"
+          >
             {(insight.items || []).map((item, idx) => {
               const defaultColor =
                 BADGE_NUM_COLORS[item.color || ""] ||
-                (idx === 0 ? "bg-blue-600 text-white" : idx === 1 ? "bg-emerald-600 text-white" : idx === 2 ? "bg-amber-600 text-white" : idx === 3 ? "bg-purple-600 text-white" : "bg-rose-600 text-white");
+                (idx === 0
+                  ? "bg-blue-600 text-white"
+                  : idx === 1
+                  ? "bg-emerald-600 text-white"
+                  : idx === 2
+                  ? "bg-amber-600 text-white"
+                  : idx === 3
+                  ? "bg-purple-600 text-white"
+                  : idx === 4
+                  ? "bg-rose-600 text-white"
+                  : "bg-indigo-600 text-white");
+
+              const isEditingTitle = editingTarget === `title-${item.id}`;
 
               return (
                 <div
                   key={item.id}
                   onClick={() => setSelectedItemId(item.id)}
-                  className="rounded-xl border border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/40 p-3 space-y-2 cursor-pointer"
+                  className="rounded-xl border border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/40 p-3 flex flex-col justify-between space-y-2 cursor-pointer group/col relative"
                 >
-                  <div className="flex items-center justify-between">
-                    {renderBulletBadge({
-                      item,
-                      idx,
-                      insight,
-                      defaultSize: 22,
-                      defaultBgClass: defaultColor,
-                    })}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      {renderBulletBadge({
+                        item,
+                        idx,
+                        insight,
+                        defaultSize: 22,
+                        defaultBgClass: defaultColor,
+                      })}
+
+                      {!isPreview && (insight.items?.length || 0) > 1 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteItem(item.id);
+                          }}
+                          className="opacity-0 group-hover/col:opacity-100 text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer transition-opacity"
+                          title="Delete action column"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    {isEditingTitle && !isPreview ? (
+                      <DynamicTextEditor
+                        initialValue={item.title || ""}
+                        defaultFontSize={12}
+                        className="text-xs font-bold text-slate-900 dark:text-white"
+                        onSave={(plain) => handleItemTitleUpdate(item.id, plain)}
+                        onCancel={finishEdit}
+                      />
+                    ) : (
+                      <h5
+                        onDoubleClick={(e) => {
+                          if (isPreview) return;
+                          e.stopPropagation();
+                          startEdit(`title-${item.id}`);
+                        }}
+                        title={!isPreview ? "Double-click to edit title" : undefined}
+                        className={`text-xs font-bold text-slate-900 dark:text-white leading-tight cursor-text select-text ${
+                          !isPreview ? "hover:bg-blue-500/10 rounded px-1" : ""
+                        }`}
+                      >
+                        {item.title}
+                      </h5>
+                    )}
+
+                    {item.subItems && item.subItems.length > 0 && (
+                      <ul className="space-y-1 text-[11px] text-slate-600 dark:text-zinc-400 leading-snug">
+                        {item.subItems.map((sub, sIdx) => {
+                          const isEditingSub = editingTarget === `sub-${item.id}-${sIdx}`;
+                          return (
+                            <li key={sIdx} className="flex items-start gap-1.5 group/sub relative">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+                              {isEditingSub && !isPreview ? (
+                                <DynamicTextEditor
+                                  initialValue={sub}
+                                  defaultFontSize={11}
+                                  className="text-[11px] flex-1"
+                                  onSave={(plain) => handleUpdateSubItem(item.id, sIdx, plain)}
+                                  onCancel={finishEdit}
+                                />
+                              ) : (
+                                <div
+                                  onDoubleClick={(e) => {
+                                    if (isPreview) return;
+                                    e.stopPropagation();
+                                    startEdit(`sub-${item.id}-${sIdx}`);
+                                  }}
+                                  title={!isPreview ? "Double-click to edit action point" : undefined}
+                                  className={`flex-1 select-text ${
+                                    !isPreview ? "hover:bg-blue-500/10 rounded px-0.5 cursor-text" : ""
+                                  }`}
+                                >
+                                  <span>{sub}</span>
+                                </div>
+                              )}
+                              {!isPreview && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteSubItem(item.id, sIdx);
+                                  }}
+                                  className="opacity-0 group-hover/sub:opacity-100 text-slate-400 hover:text-rose-500 p-0.5 cursor-pointer shrink-0 transition-opacity"
+                                  title="Delete action point"
+                                >
+                                  <Trash2 className="w-2.5 h-2.5" />
+                                </button>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </div>
-                  <h5 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
-                    {item.title}
-                  </h5>
-                  {item.subItems && item.subItems.length > 0 && (
-                    <ul className="space-y-1 text-[11px] text-slate-600 dark:text-zinc-400 leading-snug">
-                      {item.subItems.map((sub, sIdx) => (
-                        <li key={sIdx} className="flex items-start gap-1.5">
-                          <span className="w-1 h-1 rounded-full bg-blue-500 shrink-0 mt-1.5" />
-                          <span>{sub}</span>
-                        </li>
-                      ))}
-                    </ul>
+
+                  {!isPreview && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddSubItem(item.id);
+                      }}
+                      className="text-[10px] text-blue-500 hover:text-blue-600 dark:text-blue-400 flex items-center gap-1 mt-1 opacity-60 hover:opacity-100 transition-opacity self-start cursor-pointer"
+                    >
+                      <Plus className="w-2.5 h-2.5" />
+                      <span>Add point</span>
+                    </button>
                   )}
                 </div>
               );
@@ -1058,13 +1437,58 @@ export function InsightBlock({
     }
 
     // 11. Default / Single Callout Bullet
+    const singleItem: KeyInsightBulletItem = (insight.items && insight.items[0]) || {
+      id: "single-1",
+      num: 1,
+      text: insight.text,
+      title: insight.title,
+    };
+    const singleBadgeColor =
+      BADGE_NUM_COLORS[singleItem.color || ""] ||
+      "bg-gradient-to-br from-[#9D61FF] to-blue-600 text-white";
+
     return (
       <div className="w-full h-full flex items-start gap-3.5">
-        <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-[#9D61FF] to-blue-600 text-white font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Lightbulb className="w-3.5 h-3.5" />
-        </div>
+        {renderBulletBadge({
+          item: singleItem,
+          idx: 0,
+          insight,
+          defaultSize: 28,
+          defaultBgClass: singleBadgeColor,
+        })}
 
         <div className="flex-1 min-w-0">
+          {insight.title && (
+            <div className="mb-1">
+              {!isPreview && editingTarget === "single-title" ? (
+                <DynamicTextEditor
+                  initialValue={insight.title}
+                  defaultFontSize={13}
+                  className="font-bold text-sm text-slate-900 dark:text-zinc-100"
+                  onSave={(plain) => {
+                    handleUpdate({ title: plain });
+                    finishEdit();
+                  }}
+                  onCancel={finishEdit}
+                />
+              ) : (
+                <h4
+                  onDoubleClick={(e) => {
+                    if (isPreview) return;
+                    e.stopPropagation();
+                    startEdit("single-title");
+                  }}
+                  title={!isPreview ? "Double-click to edit title" : undefined}
+                  className={`text-sm font-bold text-slate-800 dark:text-zinc-100 select-text ${
+                    !isPreview ? "hover:bg-purple-500/10 rounded px-1 cursor-text" : ""
+                  }`}
+                >
+                  {insight.title}
+                </h4>
+              )}
+            </div>
+          )}
+
           {!isPreview && (editingTarget === "single" || isForceEditing) ? (
             <DynamicTextEditor
               initialValue={insight.text}
@@ -1076,6 +1500,9 @@ export function InsightBlock({
               placeholder="Key operational observation..."
               onSave={(_plain, html) => {
                 handleUpdate({ text: html });
+                if (insight.items && insight.items.length > 0) {
+                  handleUpdateSingleItem(insight.items[0].id, { text: html });
+                }
                 finishEdit();
               }}
               onCancel={finishEdit}
@@ -1088,7 +1515,9 @@ export function InsightBlock({
                 startEdit("single");
               }}
               title={!isPreview ? "Double-click to format observation (Word style)" : undefined}
-              className={`text-xs text-slate-700 dark:text-zinc-300 leading-relaxed select-text ${!isPreview ? "hover:bg-purple-500/5 rounded p-0.5 cursor-text transition-colors" : ""}`}
+              className={`text-xs text-slate-700 dark:text-zinc-300 leading-relaxed select-text ${
+                !isPreview ? "hover:bg-purple-500/5 rounded p-0.5 cursor-text transition-colors" : ""
+              }`}
               dangerouslySetInnerHTML={{ __html: insight.text }}
             />
           )}

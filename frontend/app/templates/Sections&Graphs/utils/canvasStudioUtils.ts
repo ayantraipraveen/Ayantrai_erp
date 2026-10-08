@@ -12,6 +12,8 @@ import {
   LibraryKeyInsightItem,
   LibraryChartCard,
   CanvasCoordinateStamp,
+  CanvasDividerBlock,
+  CanvasElementBlock,
 } from "@/lib/redux/slices/reportModuleSlice";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 import { SidebarAddBlockEvent } from "../components/CanvasSidebar";
@@ -51,6 +53,8 @@ export interface SortableCellProps {
   onUpdateSingleBadge?: (rowId: string, cellId: string, badgeId: string, patch: Partial<CanvasBadgeItem>) => void;
   onAddBadge?: (rowId: string, cellId: string) => void;
   onDeleteBadge?: (rowId: string, cellId: string, badgeId: string) => void;
+  onUpdateDivider?: (rowId: string, cellId: string, divider: CanvasDividerBlock) => void;
+  onUpdateElement?: (rowId: string, cellId: string, element: CanvasElementBlock) => void;
   cellIndex?: number;
   totalCellsInRow?: number;
   selectedCellId?: string | null;
@@ -90,6 +94,8 @@ export interface SortableRowProps {
   onUpdateSingleBadge?: (rowId: string, cellId: string, badgeId: string, patch: Partial<CanvasBadgeItem>) => void;
   onAddBadge?: (rowId: string, cellId: string) => void;
   onDeleteBadge?: (rowId: string, cellId: string, badgeId: string) => void;
+  onUpdateDivider?: (rowId: string, cellId: string, divider: CanvasDividerBlock) => void;
+  onUpdateElement?: (rowId: string, cellId: string, element: CanvasElementBlock) => void;
   onRemoveRow: (rowId: string) => void;
   onTogglePageBreak?: (rowId: string) => void;
   onDropBlock?: (e: SidebarAddBlockEvent) => void;

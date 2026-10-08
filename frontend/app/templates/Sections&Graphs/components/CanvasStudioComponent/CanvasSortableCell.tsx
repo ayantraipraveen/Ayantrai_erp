@@ -48,6 +48,8 @@ export function SortableCell({
   onUpdateSingleBadge,
   onAddBadge,
   onDeleteBadge,
+  onUpdateDivider,
+  onUpdateElement,
   cellIndex,
   totalCellsInRow,
   selectedCellId,
@@ -842,6 +844,12 @@ export function SortableCell({
             onDeleteBadge={(badgeId) => {
               if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, cell.id, badgeId);
             }}
+            onUpdateDivider={(div) => {
+              if (typeof onUpdateDivider === "function") onUpdateDivider(rowId, cell.id, div);
+            }}
+            onUpdateElement={(el) => {
+              if (typeof onUpdateElement === "function") onUpdateElement(rowId, cell.id, el);
+            }}
           />
 
         </div>
@@ -1039,6 +1047,12 @@ export function SortableCell({
                       }}
                       onDeleteBadge={(badgeId) => {
                         if (typeof onDeleteBadge === "function") onDeleteBadge(rowId, sc.id, badgeId);
+                      }}
+                      onUpdateDivider={(div) => {
+                        if (typeof onUpdateDivider === "function") onUpdateDivider(rowId, sc.id, div);
+                      }}
+                      onUpdateElement={(el) => {
+                        if (typeof onUpdateElement === "function") onUpdateElement(rowId, sc.id, el);
                       }}
                     />
                   </div>

@@ -562,6 +562,8 @@ export function SortableRow({
   onUpdateSingleBadge,
   onAddBadge,
   onDeleteBadge,
+  onUpdateDivider,
+  onUpdateElement,
   onRemoveRow,
   onTogglePageBreak,
   onUpdateRowStyle,
@@ -803,6 +805,8 @@ export function SortableRow({
                 onUpdateSingleBadge={onUpdateSingleBadge}
                 onAddBadge={onAddBadge}
                 onDeleteBadge={onDeleteBadge}
+                onUpdateDivider={onUpdateDivider}
+                onUpdateElement={onUpdateElement}
                 onMoveToStackBelow={(sourceId, targetId) => {
                   if (typeof onMoveCellToStackBelow === "function") {
                     onMoveCellToStackBelow(sourceId, targetId, row.id);

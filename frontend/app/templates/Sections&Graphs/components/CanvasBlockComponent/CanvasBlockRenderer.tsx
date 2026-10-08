@@ -99,6 +99,8 @@ export function CanvasBlockRenderer({
   onUpdateSingleBadge,
   onAddBadge,
   onDeleteBadge,
+  onUpdateDivider,
+  onUpdateElement,
 }: BlockRendererProps) {
   const { fontClass, fontSizeClass, alignClass, bgClass, textColorClass, styleProps } =
     getCellStyleClasses(cell.style);
@@ -162,9 +164,23 @@ export function CanvasBlockRenderer({
           />
         );
       case "divider":
-        return <DividerBlock />;
+        return (
+          <DividerBlock
+            cell={cell}
+            isSelected={isSelected}
+            isPreview={isPreview}
+            onUpdateDivider={onUpdateDivider}
+          />
+        );
       case "element":
-        return <ElementBlock cell={cell} />;
+        return (
+          <ElementBlock
+            cell={cell}
+            isSelected={isSelected}
+            isPreview={isPreview}
+            onUpdateElement={onUpdateElement}
+          />
+        );
       default:
         return null;
     }

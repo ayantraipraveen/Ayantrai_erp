@@ -8,3 +8,5 @@ export * from "./BadgeStripInspectorPopover";
 export * from "./KeyInsightInspectorPopover";
 export * from "./ChartInspectorPopover";
 export * from "./TextBlockInspectorPopover";
+export * from "./DividerInspectorPopover";
+export * from "./ElementInspectorPopover";

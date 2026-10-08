@@ -416,6 +416,7 @@ export interface KeyInsightBulletItem {
   subItems?: string[];
   // Dynamic bullet marker & visual styling overrides:
   bulletStyle?: BulletMarkerStyle;
+  bulletShape?: "circle" | "rounded" | "square" | "none";
   icon?: string; // Lucide icon name, e.g. "CheckCircle2", "Lightbulb", "AlertTriangle"
   customColor?: string; // Hex color for text/glyph e.g. "#ffffff" or "#2563eb"
   customBg?: string; // Hex color for badge background e.g. "#3b82f6"
@@ -427,6 +428,7 @@ export interface LibraryKeyInsightItem {
   text: string;
   variant?: KeyInsightVariant;
   title?: string;
+  icon?: string;
   badgeNumber?: number;
   items?: KeyInsightBulletItem[];
   quote?: {
@@ -558,6 +560,22 @@ export interface CanvasElementBlock {
   watermarkPlacement?: "center" | "top-right" | "bottom-right" | "bottom-left" | "top-left" | "tiled" | "footer";
   /** z-index layer: 'back' = behind content (default for watermarks), 'front' = above content */
   layer?: "back" | "front";
+  /** Optional custom tint/fill color override for SVG */
+  color?: string;
+}
+
+/** Dynamic Divider configuration */
+export interface CanvasDividerBlock {
+  id?: string;
+  style?: "solid" | "dashed" | "dotted" | "double";
+  thickness?: number; // 1 to 8 px
+  color?: string; // hex color or palette
+  width?: number; // percentage: 20 to 100%
+  align?: "center" | "left" | "right";
+  paddingY?: number; // vertical padding: 4 to 48 px
+  opacity?: number; // 10 to 100%
+  customHeight?: number;
+  customWidth?: number;
 }
 
 export interface CanvasCellStyle {
@@ -602,6 +620,7 @@ export interface CanvasCell {
   textBlock?: CanvasTextBlock;
   badgeStrip?: CanvasBadgeStrip;
   elementBlock?: CanvasElementBlock; // SVG element / watermark asset
+  divider?: CanvasDividerBlock;
   stackedCells?: CanvasCell[]; 
 }
 

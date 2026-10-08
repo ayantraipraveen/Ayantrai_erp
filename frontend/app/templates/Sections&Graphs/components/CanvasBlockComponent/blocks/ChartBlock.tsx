@@ -5,8 +5,11 @@ import {
   Pencil,
   BarChart2,
   ExternalLink,
+  Layers,
+  Plus,
 } from "lucide-react";
 import { CanvasCell, LibraryChartCard } from "@/lib/redux/slices/reportModuleSlice";
+import { DynamicTextEditor } from "../../DynamicTitleEditor";
 import ChartRenderer from "../../ChartComponent/ChartRenderer";
 import { calculateTopBarPosition } from "../common/blockUtils";
 import { ChartInspectorPopover } from "../inspectors/ChartInspectorPopover";
@@ -32,14 +35,11 @@ export function ChartBlock({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [isInspectorOpen, setIsInspectorOpen] = useState(false);
-  const [inspectorTab, setInspectorTab] = useState<"chart" | "layout">("chart");
+  const [inspectorTab, setInspectorTab] = useState<"chart" | "data" | "layout">("chart");
   const [portalCoords, setPortalCoords] = useState<{ top: number; left: number } | null>(null);
   const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
 
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [localTitle, setLocalTitle] = useState(chart?.title || "");
-  const [isEditingDesc, setIsEditingDesc] = useState(false);
-  const [localDesc, setLocalDesc] = useState(chart?.description || "");
+  const [editingTarget, setEditingTarget] = useState<"title" | "description" | null>(null);
 
   useEffect(() => {
     if (!isSelected) {
@@ -67,14 +67,6 @@ export function ChartBlock({
       };
     }
   }, [isSelected, isPreview, updatePortalPos]);
-
-  useEffect(() => {
-    setLocalTitle(chart?.title || "");
-  }, [chart?.title]);
-
-  useEffect(() => {
-    setLocalDesc(chart?.description || "");
-  }, [chart?.description]);
 
   if (!chart) return null;
 
@@ -114,7 +106,6 @@ export function ChartBlock({
               ? "text-sm line-clamp-2"
               : "text-[11px] sm:text-xs leading-relaxed line-clamp-2";
 
-  const hasTitle = Boolean(chart.title && chart.title.trim());
   const pClass = isUltraCompact
     ? "p-2 gap-1"
     : isCompact
@@ -123,7 +114,7 @@ export function ChartBlock({
 
   // Compute accurate overhead budget so child NEVER overflows the card
   const padOverhead = isUltraCompact ? 16 : isCompact ? 22 : 32;
-  const titleOverhead = hasTitle ? (isUltraCompact ? 18 : isCompact ? 22 : 28) : 0;
+  const titleOverhead = chart.title ? (isUltraCompact ? 18 : isCompact ? 22 : 28) : 0;
   const descOverhead = chart.description ? (isUltraCompact ? 16 : isCompact ? 20 : 30) : 0;
   const totalOverhead = padOverhead + titleOverhead + descOverhead;
 
@@ -131,30 +122,15 @@ export function ChartBlock({
     ? Math.max(50, customHeight - totalOverhead)
     : undefined;
 
-  const handleSetEditingTitle = (editing: boolean) => {
-    setIsEditingTitle(editing);
-    onEditingChange?.(editing || isEditingDesc);
+  const startEdit = (target: "title" | "description") => {
+    if (isPreview) return;
+    setEditingTarget(target);
+    onEditingChange?.(true);
   };
 
-  const handleSetEditingDesc = (editing: boolean) => {
-    setIsEditingDesc(editing);
-    onEditingChange?.(isEditingTitle || editing);
-  };
-
-  const handleTitleCommit = () => {
-    handleSetEditingTitle(false);
-    const trimmed = localTitle.trim();
-    if (trimmed !== (chart.title || "").trim() && onUpdateChart) {
-      onUpdateChart({ ...chart, title: trimmed });
-    }
-  };
-
-  const handleDescCommit = () => {
-    handleSetEditingDesc(false);
-    const trimmed = localDesc.trim();
-    if (trimmed !== (chart.description || "").trim() && onUpdateChart) {
-      onUpdateChart({ ...chart, description: trimmed });
-    }
+  const finishEdit = () => {
+    setEditingTarget(null);
+    onEditingChange?.(false);
   };
 
   const isTransparent = Boolean(chart.isTransparent);
@@ -197,41 +173,49 @@ export function ChartBlock({
         )}
 
         {/* Chart Title */}
-        {(hasTitle || (isEditingTitle && !isPreview)) && (
-          <div className="flex items-start justify-between gap-3 flex-shrink-0 pr-16">
-            <div className="min-w-0 flex-1">
-              {isEditingTitle && !isPreview ? (
-                <input
-                  type="text"
-                  autoFocus
-                  value={localTitle}
-                  onChange={(e) => setLocalTitle(e.target.value)}
-                  onBlur={handleTitleCommit}
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => {
-                    e.stopPropagation();
-                    if (e.key === "Enter") handleTitleCommit();
-                    if (e.key === "Escape") {
-                      setLocalTitle(chart.title || "");
-                      handleSetEditingTitle(false);
-                    }
-                  }}
-                  className={`${titleSizeClass} text-slate-900 dark:text-white bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
-                />
-              ) : (
-                <h3
-                  onDoubleClick={() => !isPreview && handleSetEditingTitle(true)}
-                  title={!isPreview ? "Double click to rename or clear chart title" : undefined}
-                  className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate ${
-                    !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
-                  }`}
-                >
-                  {chart.title}
-                </h3>
-              )}
-            </div>
+        <div className="flex items-start justify-between gap-3 flex-shrink-0 pr-16 min-h-[20px]">
+          <div className="min-w-0 flex-1">
+            {!isPreview && editingTarget === "title" ? (
+              <DynamicTextEditor
+                initialValue={chart.title || ""}
+                defaultFontSize={isUltraCompact ? 12 : isCompact ? 13 : 14}
+                className={titleSizeClass}
+                placeholder="Chart Title..."
+                onSave={(plain) => {
+                  onUpdateChart?.({ ...chart, title: plain });
+                  finishEdit();
+                }}
+                onCancel={finishEdit}
+              />
+            ) : chart.title ? (
+              <h3
+                onDoubleClick={(e) => {
+                  if (isPreview) return;
+                  e.stopPropagation();
+                  startEdit("title");
+                }}
+                title={!isPreview ? "Double-click to edit chart title" : undefined}
+                className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate select-text ${
+                  !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors hover:underline hover:decoration-dotted" : ""
+                }`}
+              >
+                {chart.title}
+              </h3>
+            ) : !isPreview ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startEdit("title");
+                }}
+                className="text-[11px] text-slate-400 hover:text-[#9D61FF] italic flex items-center gap-1 cursor-pointer opacity-30 group-hover/chart:opacity-100 transition-opacity"
+              >
+                <Plus className="w-2.5 h-2.5" />
+                <span>Add chart title</span>
+              </button>
+            ) : null}
           </div>
-        )}
+        </div>
 
         {/* Chart Render Area */}
         <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-0.5">
@@ -248,38 +232,47 @@ export function ChartBlock({
         </div>
 
         {/* Chart Description / Caption */}
-        {chart.description && (
-          isEditingDesc && !isPreview ? (
-            <input
-              type="text"
-              autoFocus
-              value={localDesc}
-              onChange={(e) => setLocalDesc(e.target.value)}
-              onBlur={handleDescCommit}
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => {
-                e.stopPropagation();
-                if (e.key === "Enter") handleDescCommit();
-                if (e.key === "Escape") {
-                  setLocalDesc(chart.description || "");
-                  handleSetEditingDesc(false);
-                }
+        {!isPreview && editingTarget === "description" ? (
+          <div className="pt-1 border-t border-slate-100 dark:border-zinc-800/80 flex-shrink-0">
+            <DynamicTextEditor
+              initialValue={chart.description || ""}
+              defaultFontSize={isCompact ? 10 : 11}
+              className={descSizeClass}
+              placeholder="Chart description / explanatory note..."
+              onSave={(plain) => {
+                onUpdateChart?.({ ...chart, description: plain });
+                finishEdit();
               }}
-              className={`${descSizeClass} font-medium text-slate-700 dark:text-zinc-300 bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
+              onCancel={finishEdit}
             />
-          ) : (
-            <p
-              onDoubleClick={() => !isPreview && handleSetEditingDesc(true)}
-              title={!isPreview ? "Double click to edit description / caption" : undefined}
-              className={`${descSizeClass} text-slate-500 dark:text-zinc-400 ${
-                isCompact ? "pt-1" : "pt-1.5"
-              } border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 ${
-                !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
-              }`}
-            >
-              {chart.description}
-            </p>
-          )
+          </div>
+        ) : chart.description ? (
+          <p
+            onDoubleClick={(e) => {
+              if (isPreview) return;
+              e.stopPropagation();
+              startEdit("description");
+            }}
+            title={!isPreview ? "Double-click to edit description" : undefined}
+            className={`${descSizeClass} text-slate-500 dark:text-zinc-400 ${
+              isCompact ? "pt-1" : "pt-1.5"
+            } border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 select-text ${
+              !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors hover:underline hover:decoration-dotted" : ""
+            }`}
+          >
+            {chart.description}
+          </p>
+        ) : !isPreview && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              startEdit("description");
+            }}
+            className="text-[9.5px] text-slate-400 hover:text-[#9D61FF] italic cursor-pointer self-start opacity-0 group-hover/chart:opacity-60 hover:opacity-100 transition-opacity pt-0.5 border-t border-transparent hover:border-slate-100"
+          >
+            + Add caption
+          </button>
         )}
       </div>
 
@@ -325,6 +318,28 @@ export function ChartBlock({
               <span>Type & Colors</span>
             </button>
 
+            {/* Data & Points Inspector Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isInspectorOpen && inspectorTab === "data") {
+                  setIsInspectorOpen(false);
+                } else {
+                  setInspectorTab("data");
+                  setIsInspectorOpen(true);
+                }
+              }}
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold transition-all cursor-pointer ${
+                isInspectorOpen && inspectorTab === "data"
+                  ? "bg-[#9D61FF] text-white shadow-xs"
+                  : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+              }`}
+            >
+              <Layers className="w-2.5 h-2.5" />
+              <span>Data & Points</span>
+            </button>
+
             {/* Layout & Frame Inspector Button */}
             <button
               type="button"
@@ -359,7 +374,7 @@ export function ChartBlock({
                 title="Open comprehensive dataset, series and axis editor"
               >
                 <ExternalLink className="w-2.5 h-2.5" />
-                <span>Edit Data</span>
+                <span>Full Modal</span>
               </button>
             )}
           </div>,

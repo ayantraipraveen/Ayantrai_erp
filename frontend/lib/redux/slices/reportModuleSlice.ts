@@ -175,6 +175,8 @@ export const {
   updateMetricCardInCell,
   updateChartInCell,
   updateInsightInCell,
+  updateDividerInCell,
+  updateElementInCell,
   showGlobalToast,
   clearGlobalToast,
   updateReportRemarks,

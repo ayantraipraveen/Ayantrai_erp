@@ -12,6 +12,8 @@ import {
   CanvasBadgeStrip,
   CanvasBadgeItem,
   CanvasTextBlock,
+  CanvasDividerBlock,
+  CanvasElementBlock,
 } from "@/lib/redux/slices/reportModuleSlice";
 
 export { BADGE_COLOR_PALETTES, BADGE_COLOR_MAP, DYNAMIC_METRIC_ICONS };
@@ -88,4 +90,6 @@ export interface BlockRendererProps {
   onUpdateSingleBadge?: (badgeId: string, patch: Partial<CanvasBadgeItem>) => void;
   onAddBadge?: () => void;
   onDeleteBadge?: (badgeId: string) => void;
+  onUpdateDivider?: (divider: CanvasDividerBlock) => void;
+  onUpdateElement?: (element: CanvasElementBlock) => void;
 }

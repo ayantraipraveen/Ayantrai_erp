@@ -24,6 +24,7 @@ import {
   BackCoverData,
   DEFAULT_BACK_COVER_DATA,
   PageConfigOverride,
+  CanvasDividerBlock,
 } from "../../types/reportModuleTypes";
 
 /**
@@ -1224,6 +1225,58 @@ export const sectionsStudioReducers = {
       const found = findCellInRow(row, cellId);
       if (found) {
         found.cell.insight = insight;
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update divider inside a canvas cell */
+    updateDividerInCell: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        divider: CanvasDividerBlock;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, divider } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
+        found.cell.divider = divider;
+        found.cell.style = {
+          ...(found.cell.style || {}),
+          borderStyle: divider.style,
+          borderWidth: divider.thickness,
+          borderColor: divider.color,
+          textAlign: divider.align,
+          paddingTop: divider.paddingY,
+          paddingBottom: divider.paddingY,
+        };
+        if (sec) sec.updatedAt = "Just now";
+      }
+    },
+
+    /** Update element inside a canvas cell */
+    updateElementInCell: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        rowId: string;
+        cellId: string;
+        element: CanvasElementBlock;
+      }>
+    ) => {
+      const { sectionId, rowId, cellId, element } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      const row = sec?.canvasRows?.find((r: CanvasRow) => r.id === rowId);
+      if (!row) return;
+      const found = findCellInRow(row, cellId);
+      if (found) {
+        found.cell.elementBlock = element;
+        found.cell.element = element;
         if (sec) sec.updatedAt = "Just now";
       }
     },

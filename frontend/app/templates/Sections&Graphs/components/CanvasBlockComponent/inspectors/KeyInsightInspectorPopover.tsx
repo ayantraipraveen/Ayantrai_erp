@@ -93,21 +93,34 @@ export function KeyInsightInspectorPopover({
   onDeleteItem,
 }: KeyInsightInspectorPopoverProps) {
   const items = insight.items || [];
-  const activeItem = items.find((it) => it.id === selectedItemId) || items[0];
+  const fallbackItem: KeyInsightBulletItem = {
+    id: "item-1",
+    num: 1,
+    text: insight.text || "",
+    title: insight.title || "",
+    color: "blue",
+  };
+  const activeItem = items.find((it) => it.id === selectedItemId) || items[0] || fallbackItem;
   const activeItemIdx = items.findIndex((it) => it.id === (activeItem?.id || selectedItemId));
 
   const [colorMode, setColorMode] = useState<"item" | "global">("item");
 
-  const currentVariant = insight.variant || "columns-numbered";
+  const currentVariant = insight.variant || "single";
   const currentBulletStyle: BulletMarkerStyle =
-    activeItem?.bulletStyle || insight.bulletStyle || (currentVariant === "bullet-observations" ? "dot" : "number");
-  const currentBulletShape = insight.bulletShape || "circle";
+    (colorMode === "item" ? activeItem?.bulletStyle : insight.bulletStyle) ||
+    insight.bulletStyle ||
+    activeItem?.bulletStyle ||
+    (currentVariant === "bullet-observations" ? "dot" : "number");
+  const currentBulletShape =
+    (colorMode === "item" ? activeItem?.bulletShape : insight.bulletShape) ||
+    insight.bulletShape ||
+    "circle";
   const currentBulletSize = insight.bulletSize ?? (currentVariant === "vertical-takeaways" ? 16 : 24);
 
   const pinnedSubHeader = (
     <>
       {/* Horizontal Bullet Switcher Bar (Pinned) */}
-      {items.length > 0 && (
+      {!["single", "quote-card", "vision-banner"].includes(currentVariant) && items.length > 1 && (
         <div className="shrink-0 flex items-center gap-1 px-3 py-1 bg-slate-50/70 dark:bg-zinc-900/70 border-b border-slate-200/80 dark:border-zinc-800/80 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {items.map((it, idx) => {
             const isCurrent = (selectedItemId || items[0]?.id) === it.id;
@@ -213,28 +226,49 @@ export function KeyInsightInspectorPopover({
       {activeTab === "bullets" ? (
         <div className="space-y-3">
           {/* Section Heading & Title */}
-          <div>
-            <div className="flex items-center justify-between mb-0.5">
-              <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300">
-                Block Heading
-              </label>
-              {insight.title && (
-                <button
-                  type="button"
-                  onClick={() => onUpdateInsight({ title: undefined })}
-                  className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer"
-                >
-                  Reset Default
-                </button>
-              )}
+          <div className="space-y-1.5">
+            <div>
+              <div className="flex items-center justify-between mb-0.5">
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300">
+                  Block Heading
+                </label>
+                {insight.title && (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateInsight({ title: undefined })}
+                    className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer"
+                  >
+                    Reset Default
+                  </button>
+                )}
+              </div>
+              <input
+                type="text"
+                value={insight.title || ""}
+                onChange={(e) => onUpdateInsight({ title: e.target.value })}
+                placeholder="e.g. Key Insights / Observations"
+                className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+              />
             </div>
-            <input
-              type="text"
-              value={insight.title || ""}
-              onChange={(e) => onUpdateInsight({ title: e.target.value })}
-              placeholder="e.g. Key Insights / Observations"
-              className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
-            />
+
+            {/* Block Subtitle / Description */}
+            {(currentVariant === "priority-actions" ||
+              currentVariant === "split-quote" ||
+              currentVariant === "vision-banner" ||
+              Boolean(insight.text && currentVariant !== "single" && currentVariant !== "quote-card")) && (
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Block Subtitle / Description
+                </label>
+                <input
+                  type="text"
+                  value={insight.text || ""}
+                  onChange={(e) => onUpdateInsight({ text: e.target.value })}
+                  placeholder="e.g. Key actions to address identified improvement areas."
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                />
+              </div>
+            )}
           </div>
 
           {/* Marker Style Selector (Number, Alpha, Roman, Icon, Dot, Check, Pill) */}
@@ -250,10 +284,12 @@ export function KeyInsightInspectorPopover({
                     key={opt.id}
                     type="button"
                     onClick={() => {
-                      if (activeItem && onUpdateSingleItem) {
+                      if (colorMode === "item" && activeItem && onUpdateSingleItem) {
                         onUpdateSingleItem(activeItem.id, { bulletStyle: opt.id });
+                      } else {
+                        const updated = items.map((it) => ({ ...it, bulletStyle: opt.id }));
+                        onUpdateInsight({ bulletStyle: opt.id, items: updated.length > 0 ? updated : undefined });
                       }
-                      onUpdateInsight({ bulletStyle: opt.id });
                     }}
                     className={`px-1.5 py-1 rounded-md text-[9.5px] font-medium border flex flex-col items-center justify-center transition-all cursor-pointer ${
                       isSelected
@@ -273,10 +309,18 @@ export function KeyInsightInspectorPopover({
           {currentBulletStyle === "icon" && (
             <div className="pt-0.5">
               <MetricIconPicker
-                selectedIconId={activeItem?.icon || "CheckCircle2"}
+                selectedIconId={
+                  (colorMode === "item" ? activeItem?.icon : insight.icon) ||
+                  activeItem?.icon ||
+                  insight.icon ||
+                  "CheckCircle2"
+                }
                 onSelectIcon={(iconId) => {
-                  if (activeItem && onUpdateSingleItem) {
+                  if (colorMode === "item" && activeItem && onUpdateSingleItem) {
                     onUpdateSingleItem(activeItem.id, { icon: iconId });
+                  } else {
+                    const updated = items.map((it) => ({ ...it, icon: iconId }));
+                    onUpdateInsight({ icon: iconId, items: updated.length > 0 ? updated : undefined });
                   }
                 }}
                 label="Bullet Glyph Icon"
@@ -297,7 +341,14 @@ export function KeyInsightInspectorPopover({
                     <button
                       key={shape.id}
                       type="button"
-                      onClick={() => onUpdateInsight({ bulletShape: shape.id })}
+                      onClick={() => {
+                        if (colorMode === "item" && activeItem && onUpdateSingleItem) {
+                          onUpdateSingleItem(activeItem.id, { bulletShape: shape.id });
+                        } else {
+                          const updated = items.map((it) => ({ ...it, bulletShape: shape.id }));
+                          onUpdateInsight({ bulletShape: shape.id, items: updated.length > 0 ? updated : undefined });
+                        }
+                      }}
                       className={`px-1 py-0.5 rounded text-[9px] font-medium border text-center transition-all cursor-pointer ${
                         isSelected
                           ? "bg-[#9D61FF]/10 text-[#9D61FF] border-[#9D61FF] font-bold"
@@ -410,9 +461,168 @@ export function KeyInsightInspectorPopover({
             />
           </div>
 
-          {/* Active Bullet Item Editor (Title & Text) */}
-          {activeItem && (
+          {/* ── Type-Specific Bullet & Content Editor ── */}
+          {currentVariant === "single" || items.length === 0 ? (
+            /* Single Observation Callout Content */
             <div className="pt-1 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-1.5">
+              <span className="text-[9.5px] font-bold text-slate-800 dark:text-zinc-200">
+                Single Observation Commentary
+              </span>
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Observation Title (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={insight.title || ""}
+                  onChange={(e) => onUpdateInsight({ title: e.target.value })}
+                  placeholder="e.g. Critical Safety Finding"
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] font-medium text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Observation Text
+                </label>
+                <textarea
+                  rows={3}
+                  value={insight.text || ""}
+                  onChange={(e) => onUpdateInsight({ text: e.target.value })}
+                  placeholder="Type observation commentary..."
+                  className="w-full px-2 py-1 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] resize-none"
+                />
+              </div>
+            </div>
+          ) : currentVariant === "quote-card" ? (
+            /* Executive Quote Card Content */
+            <div className="pt-1 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-1.5">
+              <span className="text-[9.5px] font-bold text-slate-800 dark:text-zinc-200">
+                Quote Content
+              </span>
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Quote Statement
+                </label>
+                <textarea
+                  rows={2}
+                  value={insight.text || ""}
+                  onChange={(e) => onUpdateInsight({ text: e.target.value })}
+                  placeholder="Type quote statement..."
+                  className="w-full px-2 py-1 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] font-serif italic text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Attribution / Author
+                </label>
+                <input
+                  type="text"
+                  value={insight.quote?.author || ""}
+                  onChange={(e) =>
+                    onUpdateInsight({
+                      quote: { ...(insight.quote || { text: "" }), author: e.target.value },
+                    })
+                  }
+                  placeholder="e.g. HSE Department"
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                />
+              </div>
+            </div>
+          ) : currentVariant === "split-quote" ? (
+            /* Remarks & Split Quote Content */
+            <div className="pt-1 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-1.5">
+              <span className="text-[9.5px] font-bold text-slate-800 dark:text-zinc-200">
+                Operational Remarks & Quote
+              </span>
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Operational Remarks
+                </label>
+                <textarea
+                  rows={2}
+                  value={insight.text || ""}
+                  onChange={(e) => onUpdateInsight({ text: e.target.value })}
+                  placeholder="Type operational commentary..."
+                  className="w-full px-2 py-1 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] resize-none"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Quote Text
+                </label>
+                <textarea
+                  rows={2}
+                  value={insight.quote?.text || ""}
+                  onChange={(e) =>
+                    onUpdateInsight({
+                      quote: { ...(insight.quote || {}), text: e.target.value },
+                    })
+                  }
+                  placeholder="Type executive quote..."
+                  className="w-full px-2 py-1 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] font-serif italic text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] resize-none"
+                />
+              </div>
+            </div>
+          ) : currentVariant === "vision-banner" ? (
+            /* Vision Banner Content */
+            <div className="pt-1 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-1.5">
+              <span className="text-[9.5px] font-bold text-slate-800 dark:text-zinc-200">
+                Campaign Vision Banner
+              </span>
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Headline
+                </label>
+                <input
+                  type="text"
+                  value={insight.banner?.headline || insight.title || ""}
+                  onChange={(e) =>
+                    onUpdateInsight({
+                      banner: { ...(insight.banner || { subtitle: "", tagline: "" }), headline: e.target.value },
+                      title: e.target.value,
+                    })
+                  }
+                  placeholder="Campaign headline..."
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Subtitle
+                </label>
+                <input
+                  type="text"
+                  value={insight.banner?.subtitle || insight.text || ""}
+                  onChange={(e) =>
+                    onUpdateInsight({
+                      banner: { ...(insight.banner || { headline: "", tagline: "" }), subtitle: e.target.value },
+                      text: e.target.value,
+                    })
+                  }
+                  placeholder="Subtitle or statement..."
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                />
+              </div>
+              <div>
+                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-0.5">
+                  Tagline / Motto
+                </label>
+                <input
+                  type="text"
+                  value={insight.banner?.tagline || ""}
+                  onChange={(e) =>
+                    onUpdateInsight({
+                      banner: { ...(insight.banner || { headline: "", subtitle: "" }), tagline: e.target.value },
+                    })
+                  }
+                  placeholder="e.g. Every Worker Returns Home Safe"
+                  className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] italic text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                />
+              </div>
+            </div>
+          ) : activeItem ? (
+            /* Multi-Bullet / Column Item Content & Sub-Items */
+            <div className="pt-1 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[9.5px] font-bold text-slate-800 dark:text-zinc-200">
                   Bullet #{activeItemIdx + 1} Content
@@ -441,7 +651,7 @@ export function KeyInsightInspectorPopover({
                       onUpdateSingleItem(activeItem.id, { title: e.target.value });
                     }
                   }}
-                  placeholder="e.g. Critical Safety Finding"
+                  placeholder="e.g. Reduce Repeated Violations"
                   className="w-full px-2 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] font-medium text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
                 />
               </div>
@@ -458,12 +668,74 @@ export function KeyInsightInspectorPopover({
                       onUpdateSingleItem(activeItem.id, { text: e.target.value });
                     }
                   }}
-                  placeholder="Describe the observation in detail..."
+                  placeholder="Describe the observation or action in detail..."
                   className="w-full px-2 py-1 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10.5px] text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] resize-none"
                 />
               </div>
+
+              {/* Sub-Bullet Points / Nested Action Points */}
+              <div className="pt-1 border-t border-slate-100 dark:border-zinc-800/60 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] font-bold text-slate-700 dark:text-zinc-300">
+                    Sub-Points / Action Bullets ({activeItem.subItems?.length || 0})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onUpdateSingleItem) {
+                        const currentSubs = [...(activeItem.subItems || []), "New action point"];
+                        onUpdateSingleItem(activeItem.id, { subItems: currentSubs });
+                      }
+                    }}
+                    className="text-[8.5px] font-bold text-[#9D61FF] hover:underline flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <Plus className="w-2.5 h-2.5" />
+                    <span>Add Sub-Point</span>
+                  </button>
+                </div>
+
+                {activeItem.subItems && activeItem.subItems.length > 0 ? (
+                  <div className="space-y-1 max-h-36 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(157,97,255,0.3)_transparent] pr-0.5">
+                    {activeItem.subItems.map((sub, sIdx) => (
+                      <div key={sIdx} className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#9D61FF] shrink-0" />
+                        <input
+                          type="text"
+                          value={sub}
+                          onChange={(e) => {
+                            if (onUpdateSingleItem) {
+                              const currentSubs = [...(activeItem.subItems || [])];
+                              currentSubs[sIdx] = e.target.value;
+                              onUpdateSingleItem(activeItem.id, { subItems: currentSubs });
+                            }
+                          }}
+                          placeholder={`Sub-point #${sIdx + 1}`}
+                          className="flex-1 px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onUpdateSingleItem) {
+                              const currentSubs = (activeItem.subItems || []).filter((_, i) => i !== sIdx);
+                              onUpdateSingleItem(activeItem.id, { subItems: currentSubs });
+                            }
+                          }}
+                          className="p-1 text-slate-400 hover:text-rose-500 cursor-pointer transition-colors"
+                          title="Delete sub-point"
+                        >
+                          <Trash2 className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[8.5px] text-slate-400 italic">
+                    No sub-bullets. Click "+ Add Sub-Point" to add nested action points.
+                  </p>
+                )}
+              </div>
             </div>
-          )}
+          ) : null}
         </div>
       ) : (
         /* Tab 2: Layout & Frame */
