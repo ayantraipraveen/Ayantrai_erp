@@ -405,12 +405,16 @@ export function MetricCardBlock({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setIsEditModalOpen(true);
+                setIsEditModalOpen((prev) => !prev);
               }}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#9D61FF] hover:bg-[#8B4CF0] text-white font-bold text-[11px] shadow-xs transition-colors cursor-pointer"
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold transition-all cursor-pointer ${
+                isEditModalOpen
+                  ? "bg-[#9D61FF] text-white shadow-xs"
+                  : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+              }`}
               title="Edit Metric Card Properties (React Portal)"
             >
-              <Pencil className="w-3 h-3" />
+              <Pencil className="w-2.5 h-2.5" />
               <span>Edit Card</span>
             </button>
 

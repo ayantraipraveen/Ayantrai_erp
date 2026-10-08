@@ -217,17 +217,21 @@ export function BadgeStripBlock({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setInspectorTab("badge");
-                setIsInspectorOpen((prev) => !prev);
+                if (isInspectorOpen && inspectorTab === "badge") {
+                  setIsInspectorOpen(false);
+                } else {
+                  setInspectorTab("badge");
+                  setIsInspectorOpen(true);
+                }
               }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[11px] shadow-xs transition-colors cursor-pointer ${
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold transition-all cursor-pointer ${
                 isInspectorOpen && inspectorTab === "badge"
-                  ? "bg-[#8B4CF0] text-white ring-2 ring-[#9D61FF]/40"
-                  : "bg-[#9D61FF] hover:bg-[#8B4CF0] text-white"
+                  ? "bg-[#9D61FF] text-white shadow-xs"
+                  : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
               }`}
               title="Toggle Live Card Inspector (React Portal)"
             >
-              <Pencil className="w-3 h-3" />
+              <Pencil className="w-2.5 h-2.5" />
               <span>Edit Card</span>
             </button>
 
@@ -236,17 +240,21 @@ export function BadgeStripBlock({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setInspectorTab("layout");
-                setIsInspectorOpen(true);
+                if (isInspectorOpen && inspectorTab === "layout") {
+                  setIsInspectorOpen(false);
+                } else {
+                  setInspectorTab("layout");
+                  setIsInspectorOpen(true);
+                }
               }}
-              className={`flex items-center gap-1 px-2 py-1 rounded-full font-semibold text-[11px] transition-colors cursor-pointer ${
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold transition-all cursor-pointer ${
                 isInspectorOpen && inspectorTab === "layout"
-                  ? "bg-[#9D61FF]/15 text-[#9D61FF] ring-1 ring-[#9D61FF]"
-                  : "text-slate-700 dark:text-zinc-200 hover:text-[#9D61FF] hover:bg-[#9D61FF]/10"
+                  ? "bg-[#9D61FF] text-white shadow-xs"
+                  : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
               }`}
               title="Configure Grid Columns, Gap, Padding, & Container"
             >
-              <SlidersHorizontal className="w-3 h-3 text-[#9D61FF]" />
+              <SlidersHorizontal className="w-2.5 h-2.5" />
               <span>Layout</span>
             </button>
 

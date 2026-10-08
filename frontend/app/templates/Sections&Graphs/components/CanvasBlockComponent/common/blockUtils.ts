@@ -13,16 +13,19 @@ export function calculateTopBarPosition(rect: DOMRect | null): { top: number; le
     return null;
   }
 
-  // Normal position: 44px above the top edge of the card
-  let top = rect.top - 44;
-  // If placing it 44px above would clip under or collide with top navbar (<= 72px):
+  // Normal position: 74px above top edge of card (giving clean 8px-10px air clearance above the rotation stem & knob)
+  let top = rect.top - 74;
+  // If placing it 74px above would clip under or collide with top navbar (<= 72px):
   if (top < topNavbarHeight) {
-    // If card has room, place it neatly docked just below navbar or near card top
-    top = Math.max(topNavbarHeight + 4, Math.min(rect.top + 8, viewportH - 60));
+    // Dock safely below the card and bottom stamp toolbar (which sits at rect.bottom + 36px)
+    top = Math.max(topNavbarHeight + 6, rect.bottom + 42);
+    if (top > viewportH - 50) {
+      top = rect.top + 8;
+    }
   }
 
   // Center horizontally over card, bounded within viewport margins
-  const halfBarWidth = 150;
+  const halfBarWidth = 160;
   const left = Math.max(halfBarWidth + 16, Math.min(viewportW - halfBarWidth - 16, rect.left + rect.width / 2));
 
   return { top: Math.round(top), left: Math.round(left) };

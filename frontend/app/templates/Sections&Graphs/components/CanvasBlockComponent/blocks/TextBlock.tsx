@@ -10,6 +10,7 @@ import {
   Quote,
   Sparkles,
   FileText,
+  Maximize2,
 } from "lucide-react";
 import { CanvasCell, CanvasTextBlock, TextCalloutType } from "@/lib/redux/slices/reportModuleSlice";
 import { CARD_BG_PRESETS } from "../../../utils";
@@ -204,7 +205,7 @@ export function TextBlock({
           stripeClass: "border-l-4 border-l-purple-500 italic font-serif",
           bgClass: !dynamicBg ? "bg-purple-50/50 dark:bg-purple-950/20" : "",
           borderClass: !dynamicBorderColor ? "border-purple-200 dark:border-purple-900/60" : "",
-          badgeBg: "bg-purple-100 text-[#8B3DFF] dark:bg-purple-950/80 dark:text-purple-300",
+          badgeBg: "bg-purple-100 text-[#9D61FF] dark:bg-purple-950/80 dark:text-purple-300",
           badgeLabel: "Quote",
           icon: Quote,
         };
@@ -320,63 +321,76 @@ export function TextBlock({
             position: "fixed",
             top: `${portalCoords.top}px`,
             left: `${portalCoords.left}px`,
+            transform: "translateX(-50%)",
             zIndex: 99999,
           }}
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
-          className="portal-text-topbar bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-md border border-slate-200 dark:border-zinc-800 rounded-full shadow-2xl px-2 py-1 flex items-center gap-1.5 transition-all animate-in fade-in zoom-in-95 duration-100 select-none pointer-events-auto"
+          className="portal-text-topbar flex items-center gap-1.5 bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-full px-2.5 py-1 shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap animate-in fade-in zoom-in-95 duration-100"
         >
           {/* Block Indicator Pill */}
-          <div className="flex items-center gap-1 pl-1 pr-1.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200/60 dark:border-purple-800/60 text-[#8B3DFF] text-[10px] font-bold">
-            <Type className="w-3 h-3 text-[#8B3DFF]" />
+          <span className="text-[10px] font-mono font-bold text-[#9D61FF] px-2 py-0.5 rounded-full bg-[#9D61FF]/10 flex items-center gap-1">
+            <Type className="w-2.5 h-2.5" />
             <span>Text & Notes</span>
-          </div>
-
-          <div className="h-3 w-px bg-slate-200 dark:bg-zinc-800 mx-0.5" />
+          </span>
 
           {/* Quick Edit Text Button */}
           <button
             type="button"
-            onClick={handleStartEditing}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleStartEditing();
+            }}
+            className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 text-[10.5px] font-semibold transition-all cursor-pointer"
             title="Edit text content (Word style)"
           >
-            <Pencil className="w-3 h-3 text-purple-600" />
+            <Pencil className="w-2.5 h-2.5 text-[#9D61FF]" />
             <span>Edit Text</span>
           </button>
 
           {/* Typography & Style Inspector Toggle */}
           <button
             type="button"
-            onClick={() => {
-              setInspectorTab("typography");
-              setIsInspectorOpen((prev) => !prev);
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isInspectorOpen && inspectorTab === "typography") {
+                setIsInspectorOpen(false);
+              } else {
+                setInspectorTab("typography");
+                setIsInspectorOpen(true);
+              }
             }}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors cursor-pointer ${
+            className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold transition-all cursor-pointer ${
               isInspectorOpen && inspectorTab === "typography"
-                ? "bg-[#8B3DFF] text-white shadow-xs"
+                ? "bg-[#9D61FF] text-white shadow-xs"
                 : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
             }`}
             title="Configure Typography, Alignment & Callout Type"
           >
-            <SlidersHorizontal className="w-3 h-3" />
+            <SlidersHorizontal className="w-2.5 h-2.5" />
             <span>Typography</span>
           </button>
 
           {/* Sizing & Frame Inspector Toggle */}
           <button
             type="button"
-            onClick={() => {
-              setInspectorTab("layout");
-              setIsInspectorOpen((prev) => !prev);
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isInspectorOpen && inspectorTab === "layout") {
+                setIsInspectorOpen(false);
+              } else {
+                setInspectorTab("layout");
+                setIsInspectorOpen(true);
+              }
             }}
-            className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors cursor-pointer ${
+            className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold transition-all cursor-pointer ${
               isInspectorOpen && inspectorTab === "layout"
-                ? "bg-[#8B3DFF] text-white shadow-xs"
+                ? "bg-[#9D61FF] text-white shadow-xs"
                 : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
             }`}
             title="Adjust Dimensions, Padding & Frame"
           >
+            <Maximize2 className="w-2.5 h-2.5" />
             <span>Frame</span>
           </button>
         </div>,

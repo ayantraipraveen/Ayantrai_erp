@@ -45,6 +45,16 @@ export function DraggablePopoverShell({
       const target = e.target as HTMLElement | null;
       if (!target) return;
       if (popoverRef.current?.contains(target)) return;
+      // Universal safety ignore: clicks on other studio portals, popovers, canvas stamps, or dialogs should not close inspector
+      if (
+        target.closest(".draggable-popover-shell") ||
+        target.closest("[class*='portal-']") ||
+        target.closest(".canvas-coordinate-stamp") ||
+        target.closest(".stamp-toolbar-portal") ||
+        target.closest("[role='dialog']")
+      ) {
+        return;
+      }
       for (const selector of ignoreClickSelectors) {
         if (target.closest(selector)) return;
       }
@@ -79,7 +89,7 @@ export function DraggablePopoverShell({
         maxHeight: "calc(100vh - 84px)",
         zIndex: 99999,
       }}
-      className={`flex flex-col bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${
+      className={`draggable-popover-shell flex flex-col bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto overflow-hidden animate-in fade-in zoom-in-95 duration-100 ${
         isDragging ? "ring-2 ring-[#9D61FF] shadow-purple-500/25" : ""
       } ${popoverClassName}`}
     >

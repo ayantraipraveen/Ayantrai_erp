@@ -71,44 +71,70 @@ export function TextBlockInspectorPopover({
   const currentCallout = textBlock.calloutType || "none";
   const isTransparent = Boolean(textBlock.isTransparent);
 
-  return (
-    <DraggablePopoverShell
-      title="Text Block & Notes Inspector"
-      headerIcon={<Type className="w-4 h-4 text-[#8B3DFF]" />}
-      isOpen={isOpen}
-      anchorRect={anchorRect}
-      onClose={onClose}
-      width={410}
-      height={460}
-    >
-      {/* ── Top Tabs ── */}
-      <div className="flex items-center gap-1 p-1 bg-slate-100/80 dark:bg-zinc-800/80 rounded-xl mb-3 border border-slate-200/60 dark:border-zinc-700/60">
+  const tabsSubHeader = (
+    <div className="shrink-0 px-3 pt-2 pb-1 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017]">
+      <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-zinc-800/80 rounded-lg">
         <button
           type="button"
           onClick={() => onTabChange("typography")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+          className={`flex-1 py-1 text-[10.5px] font-bold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === "typography"
-              ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
-              : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+              ? "bg-white dark:bg-zinc-900 text-[#9D61FF] shadow-xs"
+              : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
           }`}
         >
-          <Type className="w-3.5 h-3.5" />
+          <Type className="w-3 h-3" />
           <span>Typography & Style</span>
         </button>
         <button
           type="button"
           onClick={() => onTabChange("layout")}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+          className={`flex-1 py-1 text-[10.5px] font-bold rounded-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
             activeTab === "layout"
-              ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
-              : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
+              ? "bg-white dark:bg-zinc-900 text-[#9D61FF] shadow-xs"
+              : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
           }`}
         >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <SlidersHorizontal className="w-3 h-3" />
           <span>Dimensions & Frame</span>
         </button>
       </div>
+    </div>
+  );
 
+  const footer = (
+    <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-900/70">
+      <span className="text-[9px] font-medium text-slate-500 dark:text-zinc-400">
+        {activeTab === "typography" ? `Size: ${currentFontSize}px • ${currentCallout}` : `Padding: ${textBlock.padding ?? 16}px`}
+      </span>
+      <button
+        type="button"
+        onClick={onClose}
+        className="px-3.5 py-1 rounded-lg bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-[10.5px] font-bold transition-all cursor-pointer shadow-xs"
+      >
+        Done
+      </button>
+    </div>
+  );
+
+  return (
+    <DraggablePopoverShell
+      title="Text Block & Notes Inspector"
+      headerIcon={<Type className="w-3.5 h-3.5 text-[#9D61FF]" />}
+      isOpen={isOpen}
+      anchorRect={anchorRect}
+      onClose={onClose}
+      width={420}
+      height={460}
+      popoverClassName="portal-text-inspector"
+      ignoreClickSelectors={[
+        ".portal-text-topbar",
+        ".group\\/text-block",
+        ".stamp-interactive-card",
+      ]}
+      pinnedSubHeader={tabsSubHeader}
+      footer={footer}
+    >
       {/* ── TAB 1: Typography & Style ── */}
       {activeTab === "typography" && (
         <div className="space-y-4">
@@ -130,7 +156,7 @@ export function TextBlockInspectorPopover({
                     }}
                     className={`p-2 rounded-xl border text-left flex items-start gap-2 transition-all cursor-pointer ${
                       isSelected
-                        ? "border-[#8B3DFF] bg-purple-500/10 shadow-xs ring-1 ring-[#8B3DFF]/50"
+                        ? "border-[#9D61FF] bg-purple-500/10 shadow-xs ring-1 ring-[#9D61FF]/50"
                         : "border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900/60"
                     }`}
                   >
@@ -173,7 +199,7 @@ export function TextBlockInspectorPopover({
               step="1"
               value={currentFontSize}
               onChange={(e) => onUpdateTextBlock({ customFontSize: Number(e.target.value) })}
-              className="w-full accent-[#8B3DFF] h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg cursor-pointer"
+              className="w-full accent-[#9D61FF] h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg cursor-pointer"
             />
             {/* Quick Presets */}
             <div className="flex items-center justify-between gap-1 mt-2">
@@ -184,7 +210,7 @@ export function TextBlockInspectorPopover({
                   onClick={() => onUpdateTextBlock({ customFontSize: preset.size })}
                   className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-all cursor-pointer ${
                     currentFontSize === preset.size
-                      ? "bg-[#8B3DFF] text-white border-[#8B3DFF]"
+                      ? "bg-[#9D61FF] text-white border-[#9D61FF]"
                       : "bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:border-purple-300"
                   }`}
                 >
@@ -217,7 +243,7 @@ export function TextBlockInspectorPopover({
                       onClick={() => onUpdateTextBlock({ textAlign: item.id as any })}
                       className={`flex-1 py-1 flex items-center justify-center rounded-lg transition-all cursor-pointer ${
                         isActive
-                          ? "bg-[#8B3DFF] text-white shadow-xs"
+                          ? "bg-[#9D61FF] text-white shadow-xs"
                           : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
                       }`}
                       title={item.title}
@@ -248,7 +274,7 @@ export function TextBlockInspectorPopover({
                       onClick={() => onUpdateTextBlock({ lineHeight: lh.id as any })}
                       className={`flex-1 py-1 text-[10px] font-semibold flex items-center justify-center rounded-lg transition-all cursor-pointer ${
                         isActive
-                          ? "bg-[#8B3DFF] text-white shadow-xs"
+                          ? "bg-[#9D61FF] text-white shadow-xs"
                           : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800"
                       }`}
                     >
@@ -331,7 +357,7 @@ export function TextBlockInspectorPopover({
               step="2"
               value={textBlock.padding ?? 16}
               onChange={(e) => onUpdateTextBlock({ padding: Number(e.target.value) })}
-              className="w-full accent-[#8B3DFF] h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg cursor-pointer"
+              className="w-full accent-[#9D61FF] h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg cursor-pointer"
             />
           </div>
 
@@ -345,7 +371,7 @@ export function TextBlockInspectorPopover({
               type="checkbox"
               checked={isTransparent}
               onChange={(e) => onUpdateTextBlock({ isTransparent: e.target.checked })}
-              className="w-4 h-4 accent-[#8B3DFF] cursor-pointer"
+              className="w-4 h-4 accent-[#9D61FF] cursor-pointer"
             />
           </div>
 
@@ -444,7 +470,7 @@ export function TextBlockInspectorPopover({
                     <label className="text-[11px] font-bold text-slate-700 dark:text-zinc-300">
                       Border Width
                     </label>
-                    <span className="text-[10px] font-mono font-bold text-[#8B3DFF]">
+                    <span className="text-[10px] font-mono font-bold text-[#9D61FF]">
                       {textBlock.borderWidth ?? 1}px
                     </span>
                   </div>
@@ -455,7 +481,7 @@ export function TextBlockInspectorPopover({
                     step="1"
                     value={textBlock.borderWidth ?? 1}
                     onChange={(e) => onUpdateTextBlock({ borderWidth: Number(e.target.value) })}
-                    className="w-full accent-[#8B3DFF] h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg cursor-pointer"
+                    className="w-full accent-[#9D61FF] h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg cursor-pointer"
                   />
                 </div>
 
@@ -464,7 +490,7 @@ export function TextBlockInspectorPopover({
                     <label className="text-[11px] font-bold text-slate-700 dark:text-zinc-300">
                       Corner Radius
                     </label>
-                    <span className="text-[10px] font-mono font-bold text-[#8B3DFF]">
+                    <span className="text-[10px] font-mono font-bold text-[#9D61FF]">
                       {textBlock.borderRadius ?? 16}px
                     </span>
                   </div>
@@ -475,7 +501,7 @@ export function TextBlockInspectorPopover({
                     step="2"
                     value={textBlock.borderRadius ?? 16}
                     onChange={(e) => onUpdateTextBlock({ borderRadius: Number(e.target.value) })}
-                    className="w-full accent-[#8B3DFF] h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg cursor-pointer"
+                    className="w-full accent-[#9D61FF] h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg cursor-pointer"
                   />
                 </div>
               </div>

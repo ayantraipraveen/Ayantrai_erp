@@ -1145,10 +1145,18 @@ export function InsightBlock({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setInspectorTab("bullets");
-                setIsInspectorOpen(true);
+                if (isInspectorOpen && inspectorTab === "bullets") {
+                  setIsInspectorOpen(false);
+                } else {
+                  setInspectorTab("bullets");
+                  setIsInspectorOpen(true);
+                }
               }}
-              className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-[#9D61FF] text-slate-700 hover:text-white dark:bg-zinc-800 dark:text-zinc-300 text-[10.5px] font-semibold transition-all cursor-pointer shadow-2xs"
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold transition-all cursor-pointer ${
+                isInspectorOpen && inspectorTab === "bullets"
+                  ? "bg-[#9D61FF] text-white shadow-xs"
+                  : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+              }`}
             >
               <Pencil className="w-2.5 h-2.5" />
               <span>Bullets & Markers</span>
@@ -1159,10 +1167,18 @@ export function InsightBlock({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setInspectorTab("layout");
-                setIsInspectorOpen(true);
+                if (isInspectorOpen && inspectorTab === "layout") {
+                  setIsInspectorOpen(false);
+                } else {
+                  setInspectorTab("layout");
+                  setIsInspectorOpen(true);
+                }
               }}
-              className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-[#9D61FF] text-slate-700 hover:text-white dark:bg-zinc-800 dark:text-zinc-300 text-[10.5px] font-semibold transition-all cursor-pointer shadow-2xs"
+              className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold transition-all cursor-pointer ${
+                isInspectorOpen && inspectorTab === "layout"
+                  ? "bg-[#9D61FF] text-white shadow-xs"
+                  : "text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+              }`}
             >
               <SlidersHorizontal className="w-2.5 h-2.5" />
               <span>Layout & Frame</span>
