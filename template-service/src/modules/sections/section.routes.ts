@@ -25,7 +25,7 @@ const router = Router();
  * @desc    Query template section library with filters, search, and aggregate stats
  * @access  Public / Authenticated
  */
-router.get('/', validate(listSectionsSchema), listSections);
+router.get('/', optionalAuth,validate(listSectionsSchema), listSections);
 
 
 /**
@@ -45,7 +45,7 @@ router.put(
  * @desc    Retrieve single section by ID with all canvas rows, telemetry, and styles
  * @access  Public / Authenticated
  */
-router.get('/:id', getSectionById);
+router.get('/:id', optionalAuth,getSectionById);
 
 /**
  * @route   POST /api/v1/sections

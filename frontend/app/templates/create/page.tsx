@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   addTemplate,
   updateTemplate,
+  addOrReplaceTemplate,
   createLibrarySection,
   setSelectedLibrarySectionId,
   showGlobalToast,
@@ -17,6 +18,7 @@ import {
   CanvasRow,
   TemplateBlock,
 } from "@/lib/redux/slices/reportModuleSlice";
+import { templateApi } from "@/lib/api";
 import SectionCanvasEditor from "../Sections&Graphs/components/SectionCanvasEditor";
 
 /**
@@ -68,6 +70,23 @@ function CreateTemplatePageContent() {
   const selectedSite = useMemo(() => {
     return sites.find((s) => s.id === selectedSiteId) || sites[0];
   }, [sites, selectedSiteId]);
+
+  useEffect(() => {
+    if (templateIdParam && !existingTemplate) {
+      templateApi
+        .getTemplateById(templateIdParam)
+        .then((res) => {
+          if (res && res.data) {
+            dispatch(addOrReplaceTemplate(res.data));
+            setTemplateName(res.data.name);
+            if (res.data.site_id) setSelectedSiteId(res.data.site_id);
+          }
+        })
+        .catch((err) => {
+          console.warn("Could not cold-load template by ID:", err);
+        });
+    }
+  }, [templateIdParam, existingTemplate, dispatch]);
 
   // Compile composite Canvas Rows from initial library sections
   const compileInitialRows = useCallback((): CanvasRow[] => {
@@ -140,7 +159,7 @@ function CreateTemplatePageContent() {
   }, []);
 
   // Save as Draft
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     if (!templateName.trim()) {
       dispatch(showGlobalToast({ message: "Please provide a template title.", type: "warning" }));
       return;
@@ -168,49 +187,43 @@ function CreateTemplatePageContent() {
       },
     ];
 
-    if (isEditing && existingTemplate) {
-      dispatch(
-        updateTemplate({
-          id: existingTemplate.id,
-          name: templateName.trim(),
-          description: "Executive safety and telemetry audit report",
-          site_id: selectedSiteId,
-          site_name: selectedSite?.name || "Global Sites",
-          blocks,
-          status: "draft",
-          coverPageData: activeCanvasSec?.coverPageData || buildCoverData(),
-          tableOfContentsData: activeCanvasSec?.tableOfContentsData || DEFAULT_TOC_DATA,
-          backCoverData: activeCanvasSec?.backCoverData || DEFAULT_BACK_COVER_DATA,
-          category: "monthly",
-          frequency: "monthly",
-          canvasSectionId: compositeSectionId,
-        })
-      );
+    const payload = {
+      name: templateName.trim(),
+      description: "Executive safety and telemetry audit report",
+      site_id: selectedSiteId,
+      site_name: selectedSite?.name || "Global Sites",
+      blocks,
+      status: "draft" as const,
+      category: "monthly",
+      frequency: "monthly",
+      coverPageData: activeCanvasSec?.coverPageData || buildCoverData(),
+      tableOfContentsData: activeCanvasSec?.tableOfContentsData || DEFAULT_TOC_DATA,
+      backCoverData: activeCanvasSec?.backCoverData || DEFAULT_BACK_COVER_DATA,
+      canvasSectionId: compositeSectionId,
+    };
+
+    try {
+      if (isEditing && existingTemplate) {
+        const res = await templateApi.updateTemplate(existingTemplate.id, payload);
+        dispatch(addOrReplaceTemplate(res.data));
+        dispatch(showGlobalToast({ message: `Template "${templateName.trim()}" saved as draft!`, type: "success" }));
+      } else {
+        const res = await templateApi.createTemplate(payload);
+        dispatch(addOrReplaceTemplate(res.data));
+        dispatch(showGlobalToast({ message: `New Template "${templateName.trim()}" created as draft!`, type: "success" }));
+      }
+    } catch (err: any) {
+      if (isEditing && existingTemplate) {
+        dispatch(updateTemplate({ id: existingTemplate.id, ...payload }));
+      } else {
+        dispatch(addTemplate({ created_by: `Superadmin (${activeRole})`, ...payload }));
+      }
       dispatch(showGlobalToast({ message: `Template "${templateName.trim()}" saved as draft!`, type: "success" }));
-    } else {
-      dispatch(
-        addTemplate({
-          name: templateName.trim(),
-          description: "Executive safety and telemetry audit report",
-          site_id: selectedSiteId,
-          site_name: selectedSite?.name || "Global Sites",
-          blocks,
-          status: "draft",
-          created_by: `Superadmin (${activeRole})`,
-          category: "monthly",
-          frequency: "monthly",
-          coverPageData: activeCanvasSec?.coverPageData || buildCoverData(),
-          tableOfContentsData: activeCanvasSec?.tableOfContentsData || DEFAULT_TOC_DATA,
-          backCoverData: activeCanvasSec?.backCoverData || DEFAULT_BACK_COVER_DATA,
-          canvasSectionId: compositeSectionId,
-        })
-      );
-      dispatch(showGlobalToast({ message: `New Template "${templateName.trim()}" created as draft!`, type: "success" }));
     }
   };
 
   // Save & Publish
-  const handleSaveAndPublish = () => {
+  const handleSaveAndPublish = async () => {
     if (!templateName.trim()) {
       dispatch(showGlobalToast({ message: "Please provide a template title.", type: "warning" }));
       return;
@@ -230,46 +243,40 @@ function CreateTemplatePageContent() {
       },
     ];
 
-    if (isEditing && existingTemplate) {
-      dispatch(
-        updateTemplate({
-          id: existingTemplate.id,
-          name: templateName.trim(),
-          description: "Executive safety and telemetry audit report",
-          site_id: selectedSiteId,
-          site_name: selectedSite?.name || "Global Sites",
-          blocks,
-          status: "active",
-          coverPageData: activeCanvasSec?.coverPageData || buildCoverData(),
-          tableOfContentsData: activeCanvasSec?.tableOfContentsData || DEFAULT_TOC_DATA,
-          backCoverData: activeCanvasSec?.backCoverData || DEFAULT_BACK_COVER_DATA,
-          category: "monthly",
-          frequency: "monthly",
-          canvasSectionId: compositeSectionId,
-        })
-      );
-    } else {
-      dispatch(
-        addTemplate({
-          name: templateName.trim(),
-          description: "Executive safety and telemetry audit report",
-          site_id: selectedSiteId,
-          site_name: selectedSite?.name || "Global Sites",
-          blocks,
-          status: "active",
-          created_by: `Superadmin (${activeRole})`,
-          category: "monthly",
-          frequency: "monthly",
-          coverPageData: activeCanvasSec?.coverPageData || buildCoverData(),
-          tableOfContentsData: activeCanvasSec?.tableOfContentsData || DEFAULT_TOC_DATA,
-          backCoverData: activeCanvasSec?.backCoverData || DEFAULT_BACK_COVER_DATA,
-          canvasSectionId: compositeSectionId,
-        })
-      );
-    }
+    const payload = {
+      name: templateName.trim(),
+      description: "Executive safety and telemetry audit report",
+      site_id: selectedSiteId,
+      site_name: selectedSite?.name || "Global Sites",
+      blocks,
+      status: "active" as const,
+      category: "monthly",
+      frequency: "monthly",
+      coverPageData: activeCanvasSec?.coverPageData || buildCoverData(),
+      tableOfContentsData: activeCanvasSec?.tableOfContentsData || DEFAULT_TOC_DATA,
+      backCoverData: activeCanvasSec?.backCoverData || DEFAULT_BACK_COVER_DATA,
+      canvasSectionId: compositeSectionId,
+    };
 
-    dispatch(showGlobalToast({ message: `Template "${templateName.trim()}" published successfully!`, type: "success" }));
-    router.push("/templates");
+    try {
+      if (isEditing && existingTemplate) {
+        const res = await templateApi.updateTemplate(existingTemplate.id, payload);
+        dispatch(addOrReplaceTemplate(res.data));
+      } else {
+        const res = await templateApi.createTemplate(payload);
+        dispatch(addOrReplaceTemplate(res.data));
+      }
+      dispatch(showGlobalToast({ message: `Template "${templateName.trim()}" published successfully!`, type: "success" }));
+      router.push("/templates");
+    } catch (err: any) {
+      if (isEditing && existingTemplate) {
+        dispatch(updateTemplate({ id: existingTemplate.id, ...payload }));
+      } else {
+        dispatch(addTemplate({ created_by: `Superadmin (${activeRole})`, ...payload }));
+      }
+      dispatch(showGlobalToast({ message: `Template "${templateName.trim()}" published successfully!`, type: "success" }));
+      router.push("/templates");
+    }
   };
 
   return (

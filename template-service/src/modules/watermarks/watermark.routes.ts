@@ -20,14 +20,14 @@ const router = Router();
  * @desc    Query watermark stamp catalog with optional search and filters
  * @access  Public / Authenticated
  */
-router.get('/', listWatermarks);
+router.get('/', optionalAuth,listWatermarks);
 
 /**
  * @route   GET /api/v1/watermarks/:id
  * @desc    Retrieve single watermark by ID
  * @access  Public / Authenticated
  */
-router.get('/:id', getWatermarkById);
+router.get('/:id', optionalAuth,getWatermarkById);
 
 /**
  * @route   POST /api/v1/watermarks

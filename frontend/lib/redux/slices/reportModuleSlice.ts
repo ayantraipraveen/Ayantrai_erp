@@ -91,6 +91,8 @@ export const reportModuleSlice = createSlice({
 export const {
   setActiveRole,
   setSelectedReportId,
+  setTemplates,
+  addOrReplaceTemplate,
   addTemplate,
   updateTemplate,
   duplicateTemplate,

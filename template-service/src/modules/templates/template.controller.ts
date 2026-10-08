@@ -10,6 +10,8 @@ import {
   deleteTemplateService,
   approveTemplateService,
   rejectTemplateService,
+  cloneTemplateService,
+  resubmitTemplateService,
 } from './template.service';
 
 /**
@@ -36,9 +38,11 @@ export const getTemplateById = asyncHandler(async (req: AuthenticatedRequest, re
  * POST /api/v1/templates - Create a new template blueprint
  */
 export const createTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'usr-dev-superadmin';
+  const userName = req.user?.name || (req.user?.email ? req.user.email.split('@')[0] : 'Site Admin');
   const newTemplate = await createTemplateService(req.body, {
-    id: req.user!.id,
-    name: req.user?.email ? req.user.email.split('@')[0] : 'Site Admin',
+    id: userId,
+    name: userName,
   });
   res
     .status(201)
@@ -49,8 +53,9 @@ export const createTemplate = asyncHandler(async (req: AuthenticatedRequest, res
  * PUT /api/v1/templates/:id - Update an existing template
  */
 export const updateTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'usr-dev-superadmin';
   const updated = await updateTemplateService(req.params.id as string, req.body, {
-    id: req.user!.id,
+    id: userId,
   });
   res
     .status(200)
@@ -71,8 +76,9 @@ export const deleteTemplate = asyncHandler(async (req: AuthenticatedRequest, res
  * POST /api/v1/templates/:id/approve - Superadmin approves template
  */
 export const approveTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'usr-dev-superadmin';
   const approved = await approveTemplateService(req.params.id as string, req.body, {
-    id: req.user!.id,
+    id: userId,
     name: 'Superadmin Governance',
   });
   res
@@ -84,11 +90,43 @@ export const approveTemplate = asyncHandler(async (req: AuthenticatedRequest, re
  * POST /api/v1/templates/:id/reject - Superadmin rejects template
  */
 export const rejectTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'usr-dev-superadmin';
   const rejected = await rejectTemplateService(req.params.id as string, req.body, {
-    id: req.user!.id,
+    id: userId,
     name: 'Superadmin Governance',
   });
   res
     .status(200)
     .json(new ApiResponse(200, rejected, 'Template rejected successfully'));
 });
+
+/**
+ * POST /api/v1/templates/:id/clone - Duplicate template
+ */
+export const cloneTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'usr-dev-superadmin';
+  const userName = req.user?.name || (req.user?.email ? req.user.email.split('@')[0] : 'Site Admin');
+  const cloned = await cloneTemplateService(req.params.id as string, req.body, {
+    id: userId,
+    name: userName,
+  });
+  res
+    .status(201)
+    .json(new ApiResponse(201, cloned, 'Template duplicated successfully'));
+});
+
+/**
+ * POST /api/v1/templates/:id/resubmit - Resubmit template for approval
+ */
+export const resubmitTemplate = asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id || 'usr-dev-superadmin';
+  const userName = req.user?.name || (req.user?.email ? req.user.email.split('@')[0] : 'Site Admin');
+  const resubmitted = await resubmitTemplateService(req.params.id as string, req.body, {
+    id: userId,
+    name: userName,
+  });
+  res
+    .status(200)
+    .json(new ApiResponse(200, resubmitted, 'Template resubmitted successfully for review'));
+});
+

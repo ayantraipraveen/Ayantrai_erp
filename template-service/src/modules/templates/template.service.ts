@@ -5,6 +5,8 @@ import {
   UpdateTemplateInput,
   ApproveTemplateInput,
   RejectTemplateInput,
+  CloneTemplateInput,
+  ResubmitTemplateInput,
 } from './template.schema';
 
 export interface ListTemplatesQuery {
@@ -244,4 +246,88 @@ export async function rejectTemplateService(
   });
 
   return rejected;
+}
+
+/**
+ * Duplicate / Clone an existing template blueprint
+ */
+export async function cloneTemplateService(
+  id: string,
+  input: CloneTemplateInput | undefined,
+  user: { id: string; name?: string }
+) {
+  const existing = await (prisma as any).reportTemplate.findUnique({
+    where: { id },
+  });
+
+  if (!existing) {
+    throw ApiError.notFound(`Template with ID '${id}' not found`);
+  }
+
+  // Generate next sequential identifier
+  const existingTemplates = await (prisma as any).reportTemplate.findMany({
+    select: { id: true },
+  });
+
+  const maxIdNum = existingTemplates.reduce((max: number, t: { id: string }) => {
+    const match = t.id.match(/TPL-(\d+)/i);
+    const num = match ? parseInt(match[1], 10) : 0;
+    return num > max ? num : max;
+  }, 0);
+
+  const nextId = `TPL-${String(maxIdNum + 1).padStart(3, '0')}`;
+  const copyName = input?.name || `${existing.name} (Copy)`;
+
+  const clonedTemplate = await (prisma as any).reportTemplate.create({
+    data: {
+      id: nextId,
+      name: copyName,
+      description: existing.description,
+      siteId: existing.siteId,
+      siteName: existing.siteName,
+      status: 'draft',
+      version: 'v1.0',
+      category: existing.category,
+      frequency: existing.frequency,
+      complianceStandards: existing.complianceStandards,
+      hasAuditHash: existing.hasAuditHash,
+      blocks: existing.blocks,
+      coverPageData: existing.coverPageData,
+      tableOfContentsData: existing.tableOfContentsData,
+      backCoverData: existing.backCoverData,
+      canvasSectionId: existing.canvasSectionId,
+      createdBy: user.id,
+      authorName: user.name || 'Site Administrator',
+    },
+  });
+
+  return clonedTemplate;
+}
+
+/**
+ * Resubmit a rejected template for review
+ */
+export async function resubmitTemplateService(
+  id: string,
+  input: ResubmitTemplateInput | undefined,
+  user: { id: string; name?: string }
+) {
+  const existing = await (prisma as any).reportTemplate.findUnique({
+    where: { id },
+  });
+
+  if (!existing) {
+    throw ApiError.notFound(`Template with ID '${id}' not found`);
+  }
+
+  const resubmitted = await (prisma as any).reportTemplate.update({
+    where: { id },
+    data: {
+      status: 'pending',
+      rejectionReason: null,
+      remarks: input?.remarks || existing.remarks,
+    },
+  });
+
+  return resubmitted;
 }

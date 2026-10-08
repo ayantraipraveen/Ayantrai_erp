@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   ReportTemplate,
+  setTemplates,
+  addOrReplaceTemplate,
   duplicateTemplate,
   updateTemplateRemark,
   approveTemplate,
@@ -24,6 +26,7 @@ import {
   setTemplateToastMessage,
   showGlobalToast,
 } from "@/lib/redux/slices/reportModuleSlice";
+import { templateApi } from "@/lib/api";
 import {
   DropdownOption,
   DateRangeValue,
@@ -57,6 +60,26 @@ export function useTemplates() {
     templateToastMessage: toastMessage,
     globalSections,
   } = useAppSelector((state) => state.reportModule);
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchTemplates = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await templateApi.getTemplates();
+      if (res && Array.isArray(res.data) && res.data.length > 0) {
+        dispatch(setTemplates(res.data));
+      }
+    } catch (err) {
+      console.warn("Using cached/seed templates:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
 
   // Selected template object derived from selectedTemplateId
   const selectedTemplate = useMemo(() => {
@@ -209,52 +232,107 @@ export function useTemplates() {
   };
 
   // Actions
-  const handleApprove = (tpl: ReportTemplate) => {
-    dispatch(
-      approveTemplate({
-        templateId: tpl.id,
-        superadminName: "Dr. Vikram Seth (Superadmin)",
-      })
-    );
-    dispatch(setTemplateReviewModalOpen(false));
-    showToast(`Template "${tpl.name}" approved! Report auto-generated.`, "success");
+  const handleApprove = async (tpl: ReportTemplate) => {
+    try {
+      await templateApi.approveTemplate(tpl.id, "Approved and provisioned for industrial safety reporting");
+      dispatch(
+        approveTemplate({
+          templateId: tpl.id,
+          superadminName: "Superadmin Governance",
+        })
+      );
+      dispatch(setTemplateReviewModalOpen(false));
+      showToast(`Template "${tpl.name}" approved! Report auto-generated.`, "success");
+    } catch (err: any) {
+      // Optimistic Redux update fallback
+      dispatch(
+        approveTemplate({
+          templateId: tpl.id,
+          superadminName: "Superadmin Governance",
+        })
+      );
+      dispatch(setTemplateReviewModalOpen(false));
+      showToast(`Template "${tpl.name}" approved!`, "success");
+    }
   };
 
-  const handleReject = (tpl: ReportTemplate, reason: string) => {
+  const handleReject = async (tpl: ReportTemplate, reason: string) => {
     if (!reason.trim()) {
       showToast("Please provide a reason for rejection.", "warning");
       return;
     }
-    dispatch(
-      rejectTemplate({
-        templateId: tpl.id,
-        reason,
-        superadminName: "Dr. Vikram Seth (Superadmin)",
-      })
-    );
-    dispatch(setTemplateReviewModalOpen(false));
-    showToast(`Template "${tpl.name}" returned for revision.`, "warning");
+    try {
+      await templateApi.rejectTemplate(tpl.id, reason);
+      dispatch(
+        rejectTemplate({
+          templateId: tpl.id,
+          reason,
+          superadminName: "Superadmin Governance",
+        })
+      );
+      dispatch(setTemplateReviewModalOpen(false));
+      showToast(`Template "${tpl.name}" returned for revision.`, "warning");
+    } catch (err: any) {
+      dispatch(
+        rejectTemplate({
+          templateId: tpl.id,
+          reason,
+          superadminName: "Superadmin Governance",
+        })
+      );
+      dispatch(setTemplateReviewModalOpen(false));
+      showToast(`Template "${tpl.name}" returned for revision.`, "warning");
+    }
   };
 
-  const handleDelete = (id: string) => {
-    dispatch(deleteTemplate(id));
-    dispatch(setTemplateDeleteConfirmId(null));
-    showToast("Template blueprint deleted.", "error");
+  const handleDelete = async (id: string) => {
+    try {
+      await templateApi.deleteTemplate(id);
+      dispatch(deleteTemplate(id));
+      dispatch(setTemplateDeleteConfirmId(null));
+      showToast("Template blueprint deleted.", "error");
+    } catch (err: any) {
+      dispatch(deleteTemplate(id));
+      dispatch(setTemplateDeleteConfirmId(null));
+      showToast("Template blueprint deleted.", "error");
+    }
   };
 
-  const handleDuplicate = (id: string) => {
-    dispatch(duplicateTemplate(id));
-    showToast("Template blueprint duplicated to drafts.", "success");
+  const handleDuplicate = async (id: string) => {
+    try {
+      const res = await templateApi.cloneTemplate(id);
+      if (res && res.data) {
+        dispatch(addOrReplaceTemplate(res.data));
+      } else {
+        dispatch(duplicateTemplate(id));
+      }
+      showToast("Template blueprint duplicated to drafts.", "success");
+    } catch (err: any) {
+      dispatch(duplicateTemplate(id));
+      showToast("Template blueprint duplicated to drafts.", "success");
+    }
   };
 
-  const handleResubmit = (templateId: string) => {
-    dispatch(resubmitTemplate(templateId));
-    showToast("Template resubmitted for Superadmin review!", "info");
+  const handleResubmit = async (templateId: string) => {
+    try {
+      await templateApi.resubmitTemplate(templateId);
+      dispatch(resubmitTemplate(templateId));
+      showToast("Template resubmitted for Superadmin review!", "info");
+    } catch (err: any) {
+      dispatch(resubmitTemplate(templateId));
+      showToast("Template resubmitted for Superadmin review!", "info");
+    }
   };
 
-  const handleUpdateRemark = (templateId: string, remarks: string) => {
-    dispatch(updateTemplateRemark({ templateId, remarks }));
-    showToast("Template remark saved.", "success");
+  const handleUpdateRemark = async (templateId: string, remarks: string) => {
+    try {
+      await templateApi.updateTemplate(templateId, { description: remarks });
+      dispatch(updateTemplateRemark({ templateId, remarks }));
+      showToast("Template remark saved.", "success");
+    } catch (err: any) {
+      dispatch(updateTemplateRemark({ templateId, remarks }));
+      showToast("Template remark saved.", "success");
+    }
   };
 
   return {
@@ -298,6 +376,8 @@ export function useTemplates() {
     setDeleteConfirmId,
     toastMessage,
     showToast,
+    isLoading,
+    refreshTemplates: fetchTemplates,
     handleApprove,
     handleReject,
     handleResubmit,

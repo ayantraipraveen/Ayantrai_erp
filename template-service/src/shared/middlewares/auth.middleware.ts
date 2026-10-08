@@ -39,8 +39,7 @@ export function requireAuth(
 
 /**
  * Middleware: Optional authentication.
- * If token is present and valid, attaches user.
- * In development, if no token is passed, falls back to a development superadmin so testing via curl/postman works seamlessly.
+ * If token is present and valid, attaches user from Auth Service.
  */
 export function optionalAuth(
   req: AuthenticatedRequest,
@@ -64,6 +63,7 @@ export function optionalAuth(
       return next();
     }
   }
+
   next();
 }
 

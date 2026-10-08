@@ -56,7 +56,26 @@ export const rejectTemplateSchema = z.object({
   }),
 });
 
+export const cloneTemplateSchema = z.object({
+  body: z
+    .object({
+      name: z.string().min(2).max(120).trim().optional(),
+    })
+    .optional(),
+});
+
+export const resubmitTemplateSchema = z.object({
+  body: z
+    .object({
+      remarks: z.string().optional(),
+    })
+    .optional(),
+});
+
 export type CreateTemplateInput = z.infer<typeof createTemplateSchema>['body'];
 export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>['body'];
 export type ApproveTemplateInput = z.infer<typeof approveTemplateSchema>['body'];
 export type RejectTemplateInput = z.infer<typeof rejectTemplateSchema>['body'];
+export type CloneTemplateInput = z.infer<typeof cloneTemplateSchema>['body'];
+export type ResubmitTemplateInput = z.infer<typeof resubmitTemplateSchema>['body'];
+

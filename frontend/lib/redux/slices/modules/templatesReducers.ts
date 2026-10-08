@@ -368,6 +368,19 @@ export const templatesReducers = {
       }
     },
 
+    setTemplates: (state: ReportModuleState, action: PayloadAction<ReportTemplate[]>) => {
+      state.templates = action.payload;
+    },
+
+    addOrReplaceTemplate: (state: ReportModuleState, action: PayloadAction<ReportTemplate>) => {
+      const idx = state.templates.findIndex((t) => t.id === action.payload.id);
+      if (idx !== -1) {
+        state.templates[idx] = action.payload;
+      } else {
+        state.templates.unshift(action.payload);
+      }
+    },
+
     // ========================================================================
     // Standalone "Sections & Graphs" Management Library Actions
     // ========================================================================
