@@ -1841,7 +1841,6 @@ export function CanvasSidebar({
                   </a>
                 </div>
               </div>
-
               {filteredWatermarks.length === 0 ? (
                 <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 text-center text-xs text-slate-400">
                   No SVG stamps found

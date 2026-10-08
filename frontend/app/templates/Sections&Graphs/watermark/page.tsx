@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   Stamp,
@@ -28,6 +28,12 @@ import {
 import { Tooltip } from "@/app/Component";
 import { UploadedSvgWatermark, formatBytes } from "./utils";
 import { watermarkApi, WatermarkItem } from "@/lib/api";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import {
+  PendingWatermarkUpload,
+  updateWatermarkStudio,
+  WatermarkStudioState,
+} from "@/lib/redux/slices/watermarkStudioSlice";
 
 const mapApiItemToSvg = (item: WatermarkItem): UploadedSvgWatermark => ({
   id: item.id,
@@ -39,40 +45,29 @@ const mapApiItemToSvg = (item: WatermarkItem): UploadedSvgWatermark => ({
   scale: item.scale ?? 100,
 });
 
-interface PendingUploadItem {
-  file?: File;
-  name: string;
-  fileName: string;
-  svgContent: string;
-  sizeBytes: number;
-  scale: number;
-}
-
 export default function WatermarkPage() {
-  const [watermarks, setWatermarks] = useState<UploadedSvgWatermark[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const dispatch = useAppDispatch();
+  const {
+    watermarks,
+    selectedId,
+    isLoaded,
+    isDragging,
+    uploadError,
+    uploadSuccess,
+    pendingUploads,
+    previewModalIndex,
+    isUploadingPending,
+    isPasteModalOpen,
+    pasteSvgContent,
+    pasteSvgName,
+    pasteError,
+    previewTheme,
+    sizeScale,
+  } = useAppSelector((state) => state.watermarkStudio);
+  const updateStudio = (changes: Partial<WatermarkStudioState>) =>
+    dispatch(updateWatermarkStudio(changes));
 
-  // Upload & Drag-and-drop state
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Pre-upload SVG Preview & Confirmation Modal State
-  const [pendingUploads, setPendingUploads] = useState<PendingUploadItem[]>([]);
-  const [previewModalIndex, setPreviewModalIndex] = useState<number>(0);
-  const [isUploadingPending, setIsUploadingPending] = useState<boolean>(false);
-
-  // Paste Raw SVG Modal State
-  const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
-  const [pasteSvgContent, setPasteSvgContent] = useState("");
-  const [pasteSvgName, setPasteSvgName] = useState("");
-  const [pasteError, setPasteError] = useState<string | null>(null);
-
-  // Preview & Scale controls (Scale can be negative e.g. -200% to +200%)
-  const [previewTheme, setPreviewTheme] = useState<"light" | "dark" | "grid">("light");
-  const [sizeScale, setSizeScale] = useState<number>(100);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Strictly fetch from database on mount via Watermark API & purge legacy localStorage
@@ -92,28 +87,27 @@ export default function WatermarkPage() {
         if (isMounted) {
           if (response?.data && Array.isArray(response.data)) {
             const mapped = response.data.map(mapApiItemToSvg);
-            setWatermarks(mapped);
+            updateStudio({ watermarks: mapped });
             if (mapped.length > 0) {
-              setSelectedId(mapped[0].id);
-              setSizeScale(mapped[0].scale ?? 100);
+              updateStudio({ selectedId: mapped[0].id, sizeScale: mapped[0].scale ?? 100 });
             } else {
-              setSelectedId(null);
+              updateStudio({ selectedId: null });
             }
           } else {
-            setWatermarks([]);
-            setSelectedId(null);
+            updateStudio({ watermarks: [], selectedId: null });
           }
-          setIsLoaded(true);
+          updateStudio({ isLoaded: true });
         }
       } catch (err: any) {
         if (isMounted) {
-          setWatermarks([]);
-          setSelectedId(null);
-          setIsLoaded(true);
-          setUploadError(
+          updateStudio({
+            watermarks: [],
+            selectedId: null,
+            isLoaded: true,
+            uploadError:
             err.response?.data?.message ||
-            "Unable to connect to Watermark database API. Please ensure template-service is running on port 5001."
-          );
+            "Unable to connect to Watermark database API. Please ensure template-service is running on port 5001.",
+          });
         }
       }
     }
@@ -127,29 +121,25 @@ export default function WatermarkPage() {
 
   // Sync sizeScale when selected watermark changes
   const handleSelectWatermark = (wm: UploadedSvgWatermark) => {
-    setSelectedId(wm.id);
-    setSizeScale(wm.scale ?? 100);
-    setUploadError(null);
+    updateStudio({ selectedId: wm.id, sizeScale: wm.scale ?? 100, uploadError: null });
   };
 
   // Update scale for currently selected watermark directly in database
   const handleUpdateScale = (newScale: number) => {
     const clamped = Math.max(-200, Math.min(200, newScale));
-    setSizeScale(clamped);
+    updateStudio({ sizeScale: clamped });
 
     if (selectedId) {
-      setWatermarks((prev) =>
-        prev.map((w) => (w.id === selectedId ? { ...w, scale: clamped } : w))
-      );
+      updateStudio({
+        watermarks: watermarks.map((w) => (w.id === selectedId ? { ...w, scale: clamped } : w)),
+      });
 
       if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current);
       updateTimeoutRef.current = setTimeout(async () => {
         try {
           await watermarkApi.updateWatermark(selectedId, { scale: clamped });
         } catch (err: any) {
-          setUploadError(
-            err.response?.data?.message || "Failed to update scale in database."
-          );
+          updateStudio({ uploadError: err.response?.data?.message || "Failed to update scale in database." });
         }
       }, 500);
     }
@@ -160,13 +150,12 @@ export default function WatermarkPage() {
 
   // Process uploaded SVG files: validate markup and open Preview Modal before uploading
   const handleProcessFiles = async (files: FileList | File[]) => {
-    setUploadError(null);
-    setUploadSuccess(null);
+    updateStudio({ uploadError: null, uploadSuccess: null });
 
     const fileList = Array.from(files);
     if (fileList.length === 0) return;
 
-    const parsedItems: PendingUploadItem[] = [];
+    const parsedItems: PendingWatermarkUpload[] = [];
     const errors: string[] = [];
 
     for (const file of fileList) {
@@ -185,7 +174,6 @@ export default function WatermarkPage() {
         const fileName = file.name.endsWith(".svg") ? file.name : `${file.name}.svg`;
 
         parsedItems.push({
-          file,
           name: formattedName || file.name,
           fileName,
           svgContent: text,
@@ -198,21 +186,19 @@ export default function WatermarkPage() {
     }
 
     if (errors.length > 0) {
-      setUploadError(errors.join(" | "));
+      updateStudio({ uploadError: errors.join(" | ") });
     }
 
     if (parsedItems.length > 0) {
       // Stage items and open Preview Modal (zero direct blind uploads)
-      setPendingUploads(parsedItems);
-      setPreviewModalIndex(0);
+      updateStudio({ pendingUploads: parsedItems, previewModalIndex: 0 });
     }
   };
 
   // Confirm and upload previewed SVG(s) directly to PostgreSQL database
   const handleConfirmUpload = async () => {
     if (pendingUploads.length === 0) return;
-    setIsUploadingPending(true);
-    setUploadError(null);
+    updateStudio({ isUploadingPending: true, uploadError: null });
 
     const newlySaved: UploadedSvgWatermark[] = [];
     const errors: string[] = [];
@@ -237,33 +223,35 @@ export default function WatermarkPage() {
       }
     }
 
-    setIsUploadingPending(false);
+    updateStudio({ isUploadingPending: false });
 
     if (errors.length > 0) {
-      setUploadError(errors.join(" | "));
+      updateStudio({ uploadError: errors.join(" | ") });
     }
 
     if (newlySaved.length > 0) {
-      setWatermarks((prev) => [...newlySaved, ...prev]);
-      setSelectedId(newlySaved[0].id);
-      setSizeScale(newlySaved[0].scale ?? 100);
-      setPendingUploads([]);
-      setPreviewModalIndex(0);
-      setUploadSuccess(`Saved ${newlySaved.length} vector SVG${newlySaved.length > 1 ? "s" : ""} to database!`);
+      updateStudio({
+        watermarks: [...newlySaved, ...watermarks],
+        selectedId: newlySaved[0].id,
+        sizeScale: newlySaved[0].scale ?? 100,
+        pendingUploads: [],
+        previewModalIndex: 0,
+        uploadSuccess: `Saved ${newlySaved.length} vector SVG${newlySaved.length > 1 ? "s" : ""} to database!`,
+      });
     }
   };
 
 
   // Add SVG by direct code paste (strictly saves to database)
   const handleAddPastedSvg = async () => {
-    setPasteError(null);
+    updateStudio({ pasteError: null });
     if (!pasteSvgContent.trim()) {
-      setPasteError("Please paste your SVG markup code.");
+      updateStudio({ pasteError: "Please paste your SVG markup code." });
       return;
     }
 
     if (!/<svg[\s>]/i.test(pasteSvgContent)) {
-      setPasteError("Pasted text does not contain valid <svg> tags.");
+      updateStudio({ pasteError: "Pasted text does not contain valid <svg> tags." });
       return;
     }
 
@@ -281,18 +269,20 @@ export default function WatermarkPage() {
 
       if (response?.data) {
         const newEntry = mapApiItemToSvg(response.data);
-        setWatermarks((prev) => [newEntry, ...prev]);
-        setSelectedId(newEntry.id);
-        setSizeScale(100);
-        setIsPasteModalOpen(false);
-        setPasteSvgContent("");
-        setPasteSvgName("");
-        setUploadSuccess(`Saved "${name}" to database!`);
+        updateStudio({
+          watermarks: [newEntry, ...watermarks],
+          selectedId: newEntry.id,
+          sizeScale: 100,
+          isPasteModalOpen: false,
+          pasteSvgContent: "",
+          pasteSvgName: "",
+          uploadSuccess: `Saved "${name}" to database!`,
+        });
       } else {
-        setPasteError("Database did not return saved watermark.");
+        updateStudio({ pasteError: "Database did not return saved watermark." });
       }
     } catch (apiErr: any) {
-      setPasteError(apiErr.response?.data?.message || "Failed to save watermark to database.");
+      updateStudio({ pasteError: apiErr.response?.data?.message || "Failed to save watermark to database." });
     }
   };
 
@@ -305,16 +295,16 @@ export default function WatermarkPage() {
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(true);
+    updateStudio({ isDragging: true });
   };
 
   const handleDragLeave = () => {
-    setIsDragging(false);
+    updateStudio({ isDragging: false });
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(false);
+    updateStudio({ isDragging: false });
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleProcessFiles(e.dataTransfer.files);
     }
@@ -324,18 +314,15 @@ export default function WatermarkPage() {
   const handleDelete = async (id: string, name: string) => {
     try {
       await watermarkApi.deleteWatermark(id);
-      setWatermarks((prev) => {
-        const updated = prev.filter((w) => w.id !== id);
-        if (selectedId === id) {
-          const next = updated[0] || null;
-          setSelectedId(next ? next.id : null);
-          setSizeScale(next?.scale ?? 100);
-        }
-        return updated;
+      const updated = watermarks.filter((w) => w.id !== id);
+      const next = updated[0] || null;
+      updateStudio({
+        watermarks: updated,
+        ...(selectedId === id ? { selectedId: next?.id ?? null, sizeScale: next?.scale ?? 100 } : {}),
+        uploadSuccess: `Deleted "${name}" from database.`,
       });
-      setUploadSuccess(`Deleted "${name}" from database.`);
     } catch (err: any) {
-      setUploadError(err.response?.data?.message || `Failed to delete "${name}" from database.`);
+      updateStudio({ uploadError: err.response?.data?.message || `Failed to delete "${name}" from database.` });
     }
   };
 
@@ -347,12 +334,14 @@ export default function WatermarkPage() {
     }
     try {
       await Promise.all(watermarks.map((w) => watermarkApi.deleteWatermark(w.id)));
-      setWatermarks([]);
-      setSelectedId(null);
-      setSizeScale(100);
-      setUploadSuccess("All watermarks deleted from database.");
+      updateStudio({
+        watermarks: [],
+        selectedId: null,
+        sizeScale: 100,
+        uploadSuccess: "All watermarks deleted from database.",
+      });
     } catch (err: any) {
-      setUploadError(err.response?.data?.message || "Failed to clear watermarks from database.");
+      updateStudio({ uploadError: err.response?.data?.message || "Failed to clear watermarks from database." });
     }
   };
 
@@ -384,7 +373,7 @@ export default function WatermarkPage() {
           {/* Paste SVG Markup button */}
           <button
             type="button"
-            onClick={() => setIsPasteModalOpen(true)}
+            onClick={() => updateStudio({ isPasteModalOpen: true })}
             className="h-8.5 px-3 rounded-xl border border-slate-200/80 dark:border-zinc-800/80 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-slate-700 dark:text-zinc-300 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer hover:border-[#9D61FF]/40"
           >
             <Code2 className="w-3.5 h-3.5 text-[#9D61FF]" />
@@ -462,7 +451,7 @@ export default function WatermarkPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setUploadError(null)}
+                  onClick={() => updateStudio({ uploadError: null })}
                   className="text-rose-500 hover:text-rose-700 text-xs font-mono ml-2 p-0.5 cursor-pointer"
                 >
                   ✕
@@ -479,7 +468,7 @@ export default function WatermarkPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setUploadSuccess(null)}
+                  onClick={() => updateStudio({ uploadSuccess: null })}
                   className="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 text-xs font-mono ml-2 p-0.5 cursor-pointer"
                 >
                   ✕
@@ -502,7 +491,6 @@ export default function WatermarkPage() {
               </button>
             )}
           </div>
-
           {/* Scrollable List of Uploaded SVGs (Scrollbar Hidden) */}
           <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden p-3 space-y-2">
             {!isLoaded ? (
@@ -724,7 +712,7 @@ export default function WatermarkPage() {
               <div className="flex items-center gap-1 p-0.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs">
                 <button
                   type="button"
-                  onClick={() => setPreviewTheme("light")}
+                  onClick={() => updateStudio({ previewTheme: "light" })}
                   className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                     previewTheme === "light"
                       ? "bg-[#9D61FF] text-white"
@@ -736,7 +724,7 @@ export default function WatermarkPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPreviewTheme("dark")}
+                  onClick={() => updateStudio({ previewTheme: "dark" })}
                   className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                     previewTheme === "dark"
                       ? "bg-[#9D61FF] text-white"
@@ -748,7 +736,7 @@ export default function WatermarkPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPreviewTheme("grid")}
+                  onClick={() => updateStudio({ previewTheme: "grid" })}
                   className={`p-1.5 rounded-lg cursor-pointer transition-all ${
                     previewTheme === "grid"
                       ? "bg-[#9D61FF] text-white"
@@ -898,7 +886,7 @@ export default function WatermarkPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setIsPasteModalOpen(false)}
+                onClick={() => updateStudio({ isPasteModalOpen: false })}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-xs font-mono p-1 cursor-pointer"
               >
                 ✕
@@ -912,7 +900,7 @@ export default function WatermarkPage() {
               <input
                 type="text"
                 value={pasteSvgName}
-                onChange={(e) => setPasteSvgName(e.target.value)}
+                onChange={(e) => updateStudio({ pasteSvgName: e.target.value })}
                 placeholder="e.g. AyantrAI Logo Stamp"
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/40 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
               />
@@ -926,8 +914,7 @@ export default function WatermarkPage() {
                 rows={5}
                 value={pasteSvgContent}
                 onChange={(e) => {
-                  setPasteSvgContent(e.target.value);
-                  setPasteError(null);
+                  updateStudio({ pasteSvgContent: e.target.value, pasteError: null });
                 }}
                 placeholder={`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">\n  <circle cx="50" cy="50" r="40" stroke="#9D61FF" stroke-width="3" fill="none" />\n</svg>`}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/40 text-xs font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF] custom-scrollbar"
@@ -959,7 +946,7 @@ export default function WatermarkPage() {
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/60 dark:border-zinc-800/60">
               <button
                 type="button"
-                onClick={() => setIsPasteModalOpen(false)}
+                onClick={() => updateStudio({ isPasteModalOpen: false })}
                 className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 cursor-pointer"
               >
                 Cancel
@@ -1008,8 +995,7 @@ export default function WatermarkPage() {
                   type="button"
                   disabled={isUploadingPending}
                   onClick={() => {
-                    setPendingUploads([]);
-                    setPreviewModalIndex(0);
+                    updateStudio({ pendingUploads: [], previewModalIndex: 0 });
                   }}
                   className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-xs font-mono p-1 cursor-pointer disabled:opacity-40"
                 >
@@ -1068,11 +1054,11 @@ export default function WatermarkPage() {
                         value={current.name}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setPendingUploads((prev) =>
-                            prev.map((item, idx) =>
+                          updateStudio({
+                            pendingUploads: pendingUploads.map((item, idx) =>
                               idx === previewModalIndex ? { ...item, name: val } : item
-                            )
-                          );
+                            ),
+                          });
                         }}
                         className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950/40 text-xs text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                       />
@@ -1091,22 +1077,22 @@ export default function WatermarkPage() {
                           value={current.scale}
                           onChange={(e) => {
                             const val = Number(e.target.value);
-                            setPendingUploads((prev) =>
-                              prev.map((item, idx) =>
+                            updateStudio({
+                              pendingUploads: pendingUploads.map((item, idx) =>
                                 idx === previewModalIndex ? { ...item, scale: val } : item
-                              )
-                            );
+                              ),
+                            });
                           }}
                           className="flex-1 accent-[#9D61FF] cursor-pointer"
                         />
                         <button
                           type="button"
                           onClick={() => {
-                            setPendingUploads((prev) =>
-                              prev.map((item, idx) =>
+                            updateStudio({
+                              pendingUploads: pendingUploads.map((item, idx) =>
                                 idx === previewModalIndex ? { ...item, scale: 100 } : item
-                              )
-                            );
+                              ),
+                            });
                           }}
                           className="text-[10px] font-mono font-bold text-[#9D61FF] hover:underline"
                         >
@@ -1128,7 +1114,7 @@ export default function WatermarkPage() {
                       <button
                         type="button"
                         disabled={previewModalIndex === 0}
-                        onClick={() => setPreviewModalIndex((prev) => Math.max(0, prev - 1))}
+                        onClick={() => updateStudio({ previewModalIndex: Math.max(0, previewModalIndex - 1) })}
                         className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
                       >
                         ← Previous SVG
@@ -1136,7 +1122,7 @@ export default function WatermarkPage() {
                       <button
                         type="button"
                         disabled={previewModalIndex === pendingUploads.length - 1}
-                        onClick={() => setPreviewModalIndex((prev) => Math.min(pendingUploads.length - 1, prev + 1))}
+                        onClick={() => updateStudio({ previewModalIndex: Math.min(pendingUploads.length - 1, previewModalIndex + 1) })}
                         className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
                       >
                         Next SVG →
@@ -1150,8 +1136,7 @@ export default function WatermarkPage() {
                       type="button"
                       disabled={isUploadingPending}
                       onClick={() => {
-                        setPendingUploads([]);
-                        setPreviewModalIndex(0);
+                        updateStudio({ pendingUploads: [], previewModalIndex: 0 });
                       }}
                       className="px-4 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-40 cursor-pointer"
                     >

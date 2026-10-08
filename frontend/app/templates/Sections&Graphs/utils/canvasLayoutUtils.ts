@@ -68,6 +68,8 @@ export function getDefaultBlockHeight(blockType?: string, cellOrVariant?: Canvas
       return 85;
     case "divider":
       return 28;
+    case "element":
+      return 120;
     default:
       return 120;
   }
@@ -607,6 +609,12 @@ export function convertRowsToFloatingStamps(
       } else if (cell.blockType === "badge-strip" && cell.badgeStrip) {
         name = "Badge Strip";
         elementType = "badge-strip";
+      } else if (cell.blockType === "divider" && cell.divider) {
+        name = "Divider";
+        elementType = "divider";
+      } else if (cell.blockType === "element" && (cell.elementBlock || cell.element)) {
+        name = (cell.elementBlock || cell.element)?.name || "Element";
+        elementType = "element";
       }
 
       stamps.push({
@@ -627,6 +635,8 @@ export function convertRowsToFloatingStamps(
         insight: cell.insight,
         textBlock: cell.textBlock,
         badgeStrip: cell.badgeStrip,
+        divider: cell.divider,
+        element: cell.elementBlock || cell.element,
       });
     });
 
@@ -644,7 +654,7 @@ export function convertRowsToFloatingStamps(
 export function resolveSectionFloatingStamps(sec: LibrarySection): CanvasCoordinateStamp[] {
   const existingStamps = sec.stamps || [];
   const contentStamps = existingStamps.filter(
-    (s) => s.elementType && s.elementType !== "stamp" && (s.metricCard || s.chart || s.insight || s.textBlock || s.badgeStrip)
+    (s) => s.elementType && s.elementType !== "stamp" && (s.metricCard || s.chart || s.insight || s.textBlock || s.badgeStrip || s.divider || s.element)
   );
 
   if (contentStamps.length > 0) {

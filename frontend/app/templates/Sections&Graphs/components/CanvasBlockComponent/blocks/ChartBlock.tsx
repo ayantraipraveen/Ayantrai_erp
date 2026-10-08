@@ -9,6 +9,8 @@ import {
   Plus,
 } from "lucide-react";
 import { CanvasCell, LibraryChartCard } from "@/lib/redux/slices/reportModuleSlice";
+import { CHART_TYPE_OPTIONS } from "../../constants/chartTypes";
+import { getChartEditorMode } from "../../constants/chartDataPresets";
 import { DynamicTextEditor } from "../../DynamicTitleEditor";
 import ChartRenderer from "../../ChartComponent/ChartRenderer";
 import { calculateTopBarPosition } from "../common/blockUtils";
@@ -72,6 +74,26 @@ export function ChartBlock({
 
   const customHeight = chart.customHeight || cell.customHeight;
   const style = cell.style || {};
+
+  const currentChartTypeMeta = CHART_TYPE_OPTIONS.find((c) => c.id === chart.chartType);
+  const chartTypeLabel = currentChartTypeMeta?.label || `${chart.chartType || "Chart"}`;
+  const ChartIcon = currentChartTypeMeta?.icon || BarChart2;
+  const editorMode = getChartEditorMode(chart.chartType || "bar");
+
+  const dataTabLabel =
+    editorMode === "donut"
+      ? "Data & Slices"
+      : editorMode === "gauge"
+      ? "Value & Target"
+      : editorMode === "table"
+      ? "Table Grid"
+      : editorMode === "heatmap"
+      ? "Heatmap Matrix"
+      : editorMode === "radar"
+      ? "Audit Dimensions"
+      : editorMode === "funnel"
+      ? "Funnel Stages"
+      : "Data & Points";
 
   // Dynamic responsive scaling based on customHeight and customWidth
   const isUltraCompact = customHeight !== undefined && customHeight < 200;
@@ -292,8 +314,8 @@ export function ChartBlock({
             className="portal-chart-topbar flex items-center gap-1.5 bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-full px-2.5 py-1 shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap animate-in fade-in zoom-in-95 duration-100"
           >
             <span className="text-[10px] font-mono font-bold text-[#9D61FF] px-2 py-0.5 rounded-full bg-[#9D61FF]/10 flex items-center gap-1">
-              <BarChart2 className="w-2.5 h-2.5" />
-              <span className="capitalize">{chart.chartType} Chart</span>
+              <ChartIcon className="w-2.5 h-2.5" />
+              <span>{chartTypeLabel}</span>
             </span>
 
             {/* Chart Type & Colors Inspector Button */}
@@ -337,7 +359,7 @@ export function ChartBlock({
               }`}
             >
               <Layers className="w-2.5 h-2.5" />
-              <span>Data & Points</span>
+              <span>{dataTabLabel}</span>
             </button>
 
             {/* Layout & Frame Inspector Button */}

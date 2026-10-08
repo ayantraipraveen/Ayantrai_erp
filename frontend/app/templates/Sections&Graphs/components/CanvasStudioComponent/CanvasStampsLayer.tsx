@@ -480,10 +480,12 @@ export function CanvasStampsLayer({
         const isInsight = stamp.elementType === "insight" || Boolean(stamp.insight);
         const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
         const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
-        const isCard = isChart || isText || isInsight || isMetric || isBadgeStrip;
+        const isDivider = stamp.elementType === "divider" || Boolean(stamp.divider);
+        const isElement = stamp.elementType === "element" || Boolean(stamp.element);
+        const isCard = isChart || isText || isInsight || isMetric || isBadgeStrip || isDivider || isElement;
 
-        const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : 120;
-        const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 92 : 120;
+        const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : isBadgeStrip ? 547 : isDivider ? 547 : 120;
+        const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 92 : isBadgeStrip ? 70 : isDivider ? 28 : 120;
 
         const width = stamp.width || defaultW;
         const height = stamp.height || defaultH;
@@ -526,12 +528,14 @@ export function CanvasStampsLayer({
                     colSpan: 1,
                     customWidth: undefined,
                     customHeight: height,
-                    blockType: (stamp.elementType || (stamp.chart ? "chart" : stamp.metricCard ? "metric-card" : stamp.insight ? "insight" : stamp.textBlock ? "text" : stamp.badgeStrip ? "badge-strip" : "text")) as CanvasBlockType,
+                    blockType: (stamp.elementType || (stamp.chart ? "chart" : stamp.metricCard ? "metric-card" : stamp.insight ? "insight" : stamp.textBlock ? "text" : stamp.badgeStrip ? "badge-strip" : stamp.divider ? "divider" : stamp.element ? "element" : "text")) as CanvasBlockType,
                     metricCard: stamp.metricCard,
                     chart: stamp.chart,
                     insight: stamp.insight,
                     textBlock: stamp.textBlock,
                     badgeStrip: stamp.badgeStrip,
+                    divider: stamp.divider,
+                    element: stamp.element,
                   }}
                   isSelected={isSelected}
                   isPreview={activeIsPreview}
@@ -592,6 +596,25 @@ export function CanvasStampsLayer({
                         badgeStrip: strip,
                         width: strip.customWidth ?? stamp.width,
                         height: strip.customHeight ?? stamp.height,
+                      });
+                    }
+                  }}
+                  onUpdateDivider={(divider) => {
+                    if (onUpdateStamp) {
+                      onUpdateStamp(stamp.id, {
+                        divider,
+                        width: stamp.width,
+                        height: stamp.height,
+                      });
+                    }
+                  }}
+                  onUpdateElement={(element) => {
+                    if (onUpdateStamp) {
+                      onUpdateStamp(stamp.id, {
+                        name: element.name || stamp.name,
+                        element,
+                        width: stamp.width,
+                        height: stamp.height,
                       });
                     }
                   }}

@@ -25,6 +25,7 @@ import {
   DEFAULT_BACK_COVER_DATA,
   PageConfigOverride,
   CanvasDividerBlock,
+  CanvasElementBlock,
 } from "../../types/reportModuleTypes";
 
 /**
@@ -1248,7 +1249,7 @@ export const sectionsStudioReducers = {
         found.cell.divider = divider;
         found.cell.style = {
           ...(found.cell.style || {}),
-          borderStyle: divider.style,
+          borderStyle: divider.style === "double" ? "solid" : divider.style,
           borderWidth: divider.thickness,
           borderColor: divider.color,
           textAlign: divider.align,

@@ -1150,6 +1150,37 @@ export default function SectionCanvasEditor({
           break;
         }
 
+        case "divider": {
+          label = "Divider Line";
+          const posX = e.dropX !== undefined ? e.dropX : 24;
+          const posY = e.dropY !== undefined ? e.dropY : Math.max(140, lowestBottom + 12);
+
+          newStamp = {
+            id: `coord-div-${ts}`,
+            sourceId: `div-${ts}`,
+            name: "Divider Line",
+            pageIndex: targetPage,
+            x: posX,
+            y: posY,
+            width: 547,
+            height: 28,
+            rotation: 0,
+            opacity: 100,
+            layer: "front",
+            elementType: "divider",
+            divider: {
+              style: "solid",
+              thickness: 1,
+              color: "#cbd5e1",
+              width: 100,
+              align: "center",
+              paddingY: 12,
+              opacity: 100,
+            },
+          };
+          break;
+        }
+
         case "element": {
           if (e.elementBlock) {
             label = e.elementBlock.name || "Custom Element";
@@ -1168,7 +1199,8 @@ export default function SectionCanvasEditor({
               rotation: 0,
               opacity: 100,
               layer: "front",
-              elementType: "stamp",
+              elementType: "element",
+              element: e.elementBlock,
             };
           }
           break;

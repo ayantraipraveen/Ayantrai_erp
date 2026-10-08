@@ -351,6 +351,10 @@ export interface ChartCustomizationOptions {
   legendPosition?: "top" | "bottom" | "right";
   smoothCurve?: boolean;
   showGridLines?: boolean;
+  showHeader?: boolean;
+  striped?: boolean;
+  compact?: boolean;
+  showTarget?: boolean;
 }
 
 export interface LibraryChartCard {
@@ -661,12 +665,14 @@ export interface CanvasCoordinateStamp {
   layer: "front" | "back";
   zIndex?: number;
   locked?: boolean;
-  elementType?: "stamp" | "chart" | "metric-card" | "text" | "insight" | "badge-strip";
+  elementType?: "stamp" | "chart" | "metric-card" | "text" | "insight" | "badge-strip" | "divider" | "element";
   chart?: LibraryChartCard;
   metricCard?: LibraryMetricCard;
   textBlock?: CanvasTextBlock;
   insight?: LibraryKeyInsightItem;
   badgeStrip?: CanvasBadgeStrip;
+  divider?: CanvasDividerBlock;
+  element?: CanvasElementBlock;
 }
 
 export type CanvasCoordinateElement = CanvasCoordinateStamp;
