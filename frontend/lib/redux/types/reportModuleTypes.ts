@@ -860,6 +860,7 @@ export interface LibrarySection {
   // New canvas layout (row-based Canva-like editor)
   canvasRows?: CanvasRow[];
   watermarkId?: string;
+  watermarkConfig?: WatermarkStampConfig;
   stamps?: CanvasCoordinateStamp[];
   // Section site & period meta (matching Dummy_report.pdf)
   projectSite?: string;
@@ -917,6 +918,30 @@ export interface WatermarkConfig {
   rotation: number;
   scale: number;
   placement: "center" | "corner" | "footer" | "tiled";
+}
+
+export type WatermarkPlacement =
+  | "center"
+  | "top-left"
+  | "top-center"
+  | "top-right"
+  | "center-left"
+  | "center-right"
+  | "bottom-left"
+  | "bottom-center"
+  | "bottom-right"
+  | "tiled"
+  | "custom";
+
+export interface WatermarkStampConfig {
+  watermarkId: string | null;
+  opacity: number; // 5 to 80 (percent)
+  scale: number; // 20 to 300 (percent)
+  rotation: number; // -90 to 90 (degrees)
+  placement: WatermarkPlacement;
+  layer?: "back" | "front";
+  xOffset?: number; // -50 to 50 (% horizontal offset)
+  yOffset?: number; // -50 to 50 (% vertical offset)
 }
 
 // 5. Main Root Redux Slice State

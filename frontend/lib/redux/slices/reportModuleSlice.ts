@@ -130,6 +130,7 @@ export const {
   updateLibrarySection,
   setSectionPageOverride,
   setSectionWatermark,
+  setSectionWatermarkConfig,
   duplicateLibrarySection,
   deleteLibrarySection,
   addCardToSection,

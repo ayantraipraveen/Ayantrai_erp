@@ -164,6 +164,7 @@ export const sectionsStudioReducers = {
         description?: string;
         icon?: string;
         watermarkId?: string;
+        watermarkConfig?: LibrarySection["watermarkConfig"];
         headerSpacing?: "compact" | "normal" | "spacious";
         titleHtml?: string;
         titleStyle?: Partial<LibrarySection["titleStyle"]>;
@@ -187,6 +188,7 @@ export const sectionsStudioReducers = {
           if (c.descriptionHtml !== undefined) sec.descriptionHtml = c.descriptionHtml;
           if (c.icon !== undefined) sec.icon = c.icon;
           if (c.watermarkId !== undefined) sec.watermarkId = c.watermarkId;
+          if (c.watermarkConfig !== undefined) sec.watermarkConfig = c.watermarkConfig;
           if (c.headerSpacing !== undefined) sec.headerSpacing = c.headerSpacing;
           if (c.pageOverrides !== undefined) sec.pageOverrides = c.pageOverrides;
           if (c.stamps !== undefined) sec.stamps = c.stamps;
@@ -200,6 +202,7 @@ export const sectionsStudioReducers = {
         if (action.payload.descriptionHtml !== undefined) sec.descriptionHtml = action.payload.descriptionHtml;
         if (action.payload.icon !== undefined) sec.icon = action.payload.icon;
         if (action.payload.watermarkId !== undefined) sec.watermarkId = action.payload.watermarkId;
+        if (action.payload.watermarkConfig !== undefined) sec.watermarkConfig = action.payload.watermarkConfig;
         if (action.payload.headerSpacing !== undefined) sec.headerSpacing = action.payload.headerSpacing;
         if (action.payload.stamps !== undefined) sec.stamps = action.payload.stamps;
         if (action.payload.pageOverrides !== undefined) sec.pageOverrides = action.payload.pageOverrides;

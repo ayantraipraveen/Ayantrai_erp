@@ -6,6 +6,7 @@ import {
   WatermarkConfig,
   WatermarkItem,
   LibrarySection,
+  WatermarkStampConfig,
 } from "../../types/reportModuleTypes";
 
 export const watermarksReducers = {
@@ -175,13 +176,20 @@ export const watermarksReducers = {
     },
     setSectionWatermark: (
       state: ReportModuleState,
-      action: PayloadAction<{ sectionId: string; watermarkId?: string | null }>
+      action: PayloadAction<{
+        sectionId: string;
+        watermarkId?: string | null;
+        watermarkConfig?: WatermarkStampConfig;
+      }>
     ) => {
-      const { sectionId, watermarkId } = action.payload;
+      const { sectionId, watermarkId, watermarkConfig } = action.payload;
       const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
       if (sec) {
         const oldWmId = sec.watermarkId;
         sec.watermarkId = watermarkId || undefined;
+        if (watermarkConfig !== undefined) {
+          sec.watermarkConfig = watermarkConfig;
+        }
         sec.updatedAt = "Just now";
         if (oldWmId && oldWmId !== watermarkId) {
           const oldWm = state.watermarks.find((w: WatermarkItem) => w.id === oldWmId);
@@ -195,6 +203,35 @@ export const watermarksReducers = {
             newWm.assignedSectionIds.push(sectionId);
           }
         }
+      }
+    },
+    setSectionWatermarkConfig: (
+      state: ReportModuleState,
+      action: PayloadAction<{
+        sectionId: string;
+        config: Partial<WatermarkStampConfig>;
+      }>
+    ) => {
+      const { sectionId, config } = action.payload;
+      const sec = state.librarySections.find((s: LibrarySection) => s.id === sectionId);
+      if (sec) {
+        sec.watermarkConfig = {
+          ...(sec.watermarkConfig || {
+            watermarkId: sec.watermarkId || null,
+            opacity: 18,
+            scale: 100,
+            rotation: -18,
+            placement: "center",
+            layer: "back",
+            xOffset: 0,
+            yOffset: 0,
+          }),
+          ...config,
+        };
+        if (config.watermarkId !== undefined) {
+          sec.watermarkId = config.watermarkId || undefined;
+        }
+        sec.updatedAt = "Just now";
       }
     },
 };

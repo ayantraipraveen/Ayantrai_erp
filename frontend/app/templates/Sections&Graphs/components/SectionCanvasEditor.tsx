@@ -32,6 +32,7 @@ import {
   removeCanvasRow,
   toggleRowPageBreak,
   setSectionWatermark,
+  setSectionWatermarkConfig,
   CanvasCellStyle,
   CanvasRowStyle,
   CanvasSectionStyle,
@@ -56,6 +57,7 @@ import {
   CanvasCoordinateStamp,
   addOrReplaceLibrarySection,
 } from "@/lib/redux/slices/reportModuleSlice";
+import { updateWatermarkStudio } from "@/lib/redux/slices/watermarkStudioSlice";
 import { sectionApi, watermarkApi } from "@/lib/api";
 import { CanvasSidebar, SidebarAddBlockEvent, ReportOutlineItem } from "./CanvasSidebar";
 import {
@@ -65,6 +67,7 @@ import {
   UploadedSvgWatermark,
   WatermarkStampConfig,
   DEFAULT_WATERMARK_CONFIG,
+  INITIAL_SEEDS,
   mapApiItemToSvg,
 } from "../watermark/utils";
 import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
@@ -133,29 +136,45 @@ export default function SectionCanvasEditor({
       ? showReportFrame
       : (sectionId.startsWith("tpl-canvas-") || sectionId.startsWith("tpl-"));
 
-  // ── Document Watermark Studio State ─────────────────────────────────────────
-  const [uploadedWatermarks, setUploadedWatermarks] = useState<UploadedSvgWatermark[]>([]);
-  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkStampConfig>(DEFAULT_WATERMARK_CONFIG);
+  // ── Redux Document Watermark Studio & Section Watermark State ──────────────
+  const reduxWatermarks = useAppSelector((state) => state.watermarkStudio.watermarks);
+  const isWatermarksLoaded = useAppSelector((state) => state.watermarkStudio.isLoaded);
+  const uploadedWatermarks = useMemo(() => {
+    return reduxWatermarks.length > 0 ? reduxWatermarks : INITIAL_SEEDS;
+  }, [reduxWatermarks]);
+
+  const watermarkConfig: WatermarkStampConfig = useMemo(() => {
+    if (section?.watermarkConfig) {
+      return section.watermarkConfig;
+    }
+    return getSectionWatermarkConfig(sectionId, section?.watermarkId);
+  }, [section?.watermarkConfig, sectionId, section?.watermarkId]);
 
   const fetchWatermarks = useCallback(async () => {
     try {
       const response = await watermarkApi.getWatermarks();
       if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
-        setUploadedWatermarks(response.data.map(mapApiItemToSvg));
+        const mapped = response.data.map(mapApiItemToSvg);
+        dispatch(updateWatermarkStudio({ watermarks: mapped, isLoaded: true }));
         return;
       }
     } catch (err) {
       console.warn("Could not fetch watermarks from template API, using seeds fallback", err);
     }
-    setUploadedWatermarks(getUploadedWatermarks());
-  }, []);
+    if (!isWatermarksLoaded || reduxWatermarks.length === 0) {
+      const fallback = getUploadedWatermarks();
+      dispatch(
+        updateWatermarkStudio({
+          watermarks: fallback.length > 0 ? fallback : INITIAL_SEEDS,
+          isLoaded: true,
+        })
+      );
+    }
+  }, [dispatch, isWatermarksLoaded, reduxWatermarks.length]);
 
   useEffect(() => {
     fetchWatermarks();
-    if (section) {
-      setWatermarkConfig(getSectionWatermarkConfig(section.id, section.watermarkId));
-    }
-  }, [section?.id, section?.watermarkId, fetchWatermarks]);
+  }, [fetchWatermarks]);
 
 
   // Auto-migrate legacy sections to canvas rows
@@ -1719,10 +1738,18 @@ export default function SectionCanvasEditor({
 
   const handleSelectWatermark = useCallback(
     (watermarkId: string | null) => {
-      const updated = { ...watermarkConfig, watermarkId };
-      setWatermarkConfig(updated);
+      const updated: WatermarkStampConfig = { ...watermarkConfig, watermarkId };
       saveSectionWatermarkConfig(sectionId, updated);
-      dispatch(setSectionWatermark({ sectionId, watermarkId }));
+      dispatch(
+        updateLibrarySection({
+          id: sectionId,
+          changes: {
+            watermarkId: watermarkId || undefined,
+            watermarkConfig: updated,
+          },
+        })
+      );
+      dispatch(setSectionWatermark({ sectionId, watermarkId, watermarkConfig: updated }));
       dispatch(
         showGlobalToast({
           message: watermarkId ? "Corporate watermark stamp applied to section" : "Watermark removed",
@@ -1735,11 +1762,19 @@ export default function SectionCanvasEditor({
 
   const handleUpdateWatermarkConfig = useCallback(
     (patch: Partial<WatermarkStampConfig>) => {
-      const updated = { ...watermarkConfig, ...patch };
-      setWatermarkConfig(updated);
+      const updated: WatermarkStampConfig = { ...watermarkConfig, ...patch };
       saveSectionWatermarkConfig(sectionId, updated);
+      dispatch(setSectionWatermarkConfig({ sectionId, config: updated }));
+      dispatch(
+        updateLibrarySection({
+          id: sectionId,
+          changes: {
+            watermarkConfig: updated,
+          },
+        })
+      );
     },
-    [sectionId, watermarkConfig]
+    [dispatch, sectionId, watermarkConfig]
   );
 
   const handleUpdateColSpan = useCallback(
