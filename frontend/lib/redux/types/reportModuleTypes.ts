@@ -542,7 +542,8 @@ export type CanvasBlockType =
   | "text"
   | "badge-strip"
   | "divider"
-  | "element"; // SVG element / decorative asset (can also be used as watermark layer)
+  | "element" // SVG element / decorative asset (can also be used as watermark layer)
+  | "stamp"; // Free-floating vector watermark stamp
 
 /** A reusable SVG decorative element — can sit as a canvas block OR as a watermark overlay */
 export interface CanvasElementBlock {
@@ -559,7 +560,7 @@ export interface CanvasElementBlock {
   /** Scale percentage (e.g. 100 = default) */
   scale: number;
   /** Use as overlay watermark on the whole section page instead of inline canvas block */
-  isWatermark: boolean;
+  isWatermark?: boolean;
   /** Placement when used as watermark */
   watermarkPlacement?: "center" | "top-right" | "bottom-right" | "bottom-left" | "top-left" | "tiled" | "footer";
   /** z-index layer: 'back' = behind content (default for watermarks), 'front' = above content */

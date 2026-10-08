@@ -56,7 +56,7 @@ import {
   CanvasCoordinateStamp,
   addOrReplaceLibrarySection,
 } from "@/lib/redux/slices/reportModuleSlice";
-import { sectionApi } from "@/lib/api/sectionApi";
+import { sectionApi, watermarkApi } from "@/lib/api";
 import { CanvasSidebar, SidebarAddBlockEvent, ReportOutlineItem } from "./CanvasSidebar";
 import {
   getUploadedWatermarks,
@@ -65,6 +65,7 @@ import {
   UploadedSvgWatermark,
   WatermarkStampConfig,
   DEFAULT_WATERMARK_CONFIG,
+  mapApiItemToSvg,
 } from "../watermark/utils";
 import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
 import { CanvasStudio } from "./CanvasStudio";
@@ -136,12 +137,25 @@ export default function SectionCanvasEditor({
   const [uploadedWatermarks, setUploadedWatermarks] = useState<UploadedSvgWatermark[]>([]);
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkStampConfig>(DEFAULT_WATERMARK_CONFIG);
 
-  useEffect(() => {
+  const fetchWatermarks = useCallback(async () => {
+    try {
+      const response = await watermarkApi.getWatermarks();
+      if (response?.data && Array.isArray(response.data) && response.data.length > 0) {
+        setUploadedWatermarks(response.data.map(mapApiItemToSvg));
+        return;
+      }
+    } catch (err) {
+      console.warn("Could not fetch watermarks from template API, using seeds fallback", err);
+    }
     setUploadedWatermarks(getUploadedWatermarks());
+  }, []);
+
+  useEffect(() => {
+    fetchWatermarks();
     if (section) {
       setWatermarkConfig(getSectionWatermarkConfig(section.id, section.watermarkId));
     }
-  }, [section?.id, section?.watermarkId]);
+  }, [section?.id, section?.watermarkId, fetchWatermarks]);
 
 
   // Auto-migrate legacy sections to canvas rows
@@ -1181,26 +1195,74 @@ export default function SectionCanvasEditor({
           break;
         }
 
+        case "stamp":
         case "element": {
-          if (e.elementBlock) {
-            label = e.elementBlock.name || "Custom Element";
-            const posX = e.dropX !== undefined ? e.dropX : 24;
-            const posY = e.dropY !== undefined ? e.dropY : Math.max(140, lowestBottom + 12);
+          const svgContent = e.elementBlock?.svgContent;
+          const name = e.elementBlock?.name || "Vector Stamp";
+          const sourceId = e.elementBlock?.sourceId || `stamp-${ts}`;
+
+          if (svgContent) {
+            label = name;
+
+            // Determine proportional default dimensions from SVG viewBox or scale
+            let initialW = 200;
+            let initialH = 80;
+
+            const vbMatch = svgContent.match(/viewBox=["']\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s*["']/i);
+            if (vbMatch) {
+              const vbW = parseFloat(vbMatch[3]);
+              const vbH = parseFloat(vbMatch[4]);
+              if (vbW > 0 && vbH > 0) {
+                const ratio = vbW / vbH;
+                if (Math.abs(ratio - 1) < 0.25) {
+                  // Nearly square or circle stamp (e.g., ISO certification badge)
+                  initialW = 120;
+                  initialH = 120;
+                } else if (ratio > 1) {
+                  // Wide banner stamp (e.g., AyantrAI Compliance, Confidential seal)
+                  initialW = 200;
+                  initialH = Math.max(50, Math.round(200 / ratio));
+                } else {
+                  // Tall badge
+                  initialH = 140;
+                  initialW = Math.max(50, Math.round(140 * ratio));
+                }
+              }
+            }
+
+            const posX =
+              e.dropX !== undefined
+                ? Math.max(16, Math.min(595 - initialW - 16, Math.round(e.dropX - initialW / 2)))
+                : Math.round((595 - initialW) / 2);
+
+            const posY =
+              e.dropY !== undefined
+                ? Math.max(16, Math.min(842 - initialH - 16, Math.round(e.dropY - initialH / 2)))
+                : Math.max(140, lowestBottom + 12);
+
             newStamp = {
-              id: `coord-el-${ts}`,
-              sourceId: `el-${ts}`,
+              id: `coord-st-${ts}`,
+              sourceId,
               name: label,
-              svgContent: e.elementBlock.svgContent,
+              svgContent,
               pageIndex: targetPage,
               x: posX,
               y: posY,
-              width: 380,
-              height: 120,
+              width: initialW,
+              height: initialH,
               rotation: 0,
               opacity: 100,
               layer: "front",
-              elementType: "element",
-              element: e.elementBlock,
+              elementType: "stamp",
+              element: e.elementBlock || {
+                sourceId,
+                name: label,
+                svgContent,
+                opacity: 100,
+                scale: 100,
+                rotation: 0,
+                isWatermark: false,
+              },
             };
           }
           break;
@@ -1226,19 +1288,60 @@ export default function SectionCanvasEditor({
       if (!watermark) return;
 
       const targetPage = canvasActivePageIndex >= 0 ? canvasActivePageIndex : 0;
+      const currentStamps = section?.stamps || [];
+      const pageStamps = currentStamps.filter((s) => (s.pageIndex ?? 0) === targetPage);
+      const lowestBottom = pageStamps.reduce((max, s) => {
+        const bottom = (s.y || 0) + (s.height || 0);
+        return Math.max(max, bottom);
+      }, 130);
+
+      // Proportional default dimensions from SVG viewBox or scale
+      let initialW = 200;
+      let initialH = 80;
+      if (watermark.svgContent) {
+        const vbMatch = watermark.svgContent.match(/viewBox=["']\s*([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s+([\d.-]+)\s*["']/i);
+        if (vbMatch) {
+          const vbW = parseFloat(vbMatch[3]);
+          const vbH = parseFloat(vbMatch[4]);
+          if (vbW > 0 && vbH > 0) {
+            const ratio = vbW / vbH;
+            if (Math.abs(ratio - 1) < 0.25) {
+              initialW = 120;
+              initialH = 120;
+            } else if (ratio > 1) {
+              initialW = 200;
+              initialH = Math.max(50, Math.round(200 / ratio));
+            } else {
+              initialH = 140;
+              initialW = Math.max(50, Math.round(140 * ratio));
+            }
+          }
+        }
+      }
+
       const newStamp: CanvasCoordinateStamp = {
         id: `stamp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
         sourceId: watermark.id,
         name: watermark.name,
         svgContent: watermark.svgContent,
         pageIndex: targetPage,
-        x: 215, // center on 595px page
-        y: 340, // center on 842px page
-        width: 160,
-        height: 160,
+        x: Math.round((595 - initialW) / 2),
+        y: Math.min(600, Math.max(140, lowestBottom + 12)),
+        width: initialW,
+        height: initialH,
         rotation: 0,
         opacity: 100,
         layer: "front",
+        elementType: "stamp",
+        element: {
+          sourceId: watermark.id,
+          name: watermark.name,
+          svgContent: watermark.svgContent,
+          opacity: 100,
+          scale: watermark.scale ?? 100,
+          rotation: 0,
+          isWatermark: false,
+        },
       };
 
       dispatch(addStampToSection({ sectionId, stamp: newStamp }));
@@ -1249,7 +1352,7 @@ export default function SectionCanvasEditor({
         })
       );
     },
-    [dispatch, sectionId, uploadedWatermarks, canvasActivePageIndex]
+    [dispatch, section, sectionId, uploadedWatermarks, canvasActivePageIndex]
   );
 
   const handleAddFloatingChart = useCallback(
@@ -2231,6 +2334,7 @@ export default function SectionCanvasEditor({
             onAddFloatingChart={handleAddFloatingChart}
             onAddFloatingElement={handleAddFloatingElement}
             watermarkConfig={watermarkConfig}
+            onRefreshWatermarks={fetchWatermarks}
             reportSections={isReportFrame ? computedReportSections : undefined}
             activeReportSectionKey={activeReportSectionKey}
             onSelectReportSection={handleSelectReportSection}

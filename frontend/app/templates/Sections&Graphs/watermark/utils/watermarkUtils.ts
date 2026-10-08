@@ -107,6 +107,27 @@ export function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
+/** Converts an API WatermarkItem into standard UploadedSvgWatermark */
+export function mapApiItemToSvg(item: {
+  id: string;
+  name: string;
+  fileName?: string;
+  svgContent: string;
+  createdAt?: string;
+  sizeBytes?: number;
+  scale?: number;
+}): UploadedSvgWatermark {
+  return {
+    id: item.id,
+    name: item.name,
+    fileName: item.fileName || `${item.name.toLowerCase().replace(/\s+/g, "-")}.svg`,
+    svgContent: item.svgContent,
+    uploadedAt: (item.createdAt || new Date().toISOString()).replace("T", " ").substring(0, 16),
+    sizeBytes: item.sizeBytes || item.svgContent?.length || 0,
+    scale: item.scale ?? 100,
+  };
+}
+
 /** Retrieve all uploaded SVGs from localStorage, falling back to INITIAL_SEEDS */
 export function getUploadedWatermarks(): UploadedSvgWatermark[] {
   if (typeof window === "undefined") return INITIAL_SEEDS;

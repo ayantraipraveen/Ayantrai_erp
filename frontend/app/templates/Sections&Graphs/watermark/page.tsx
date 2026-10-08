@@ -26,7 +26,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Tooltip } from "@/app/Component";
-import { UploadedSvgWatermark, formatBytes } from "./utils";
+import { UploadedSvgWatermark, formatBytes, mapApiItemToSvg } from "./utils";
 import { watermarkApi, WatermarkItem } from "@/lib/api";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
@@ -34,16 +34,6 @@ import {
   updateWatermarkStudio,
   WatermarkStudioState,
 } from "@/lib/redux/slices/watermarkStudioSlice";
-
-const mapApiItemToSvg = (item: WatermarkItem): UploadedSvgWatermark => ({
-  id: item.id,
-  name: item.name,
-  fileName: item.fileName,
-  svgContent: item.svgContent,
-  uploadedAt: (item.createdAt || new Date().toISOString()).replace("T", " ").substring(0, 16),
-  sizeBytes: item.sizeBytes,
-  scale: item.scale ?? 100,
-});
 
 export default function WatermarkPage() {
   const dispatch = useAppDispatch();

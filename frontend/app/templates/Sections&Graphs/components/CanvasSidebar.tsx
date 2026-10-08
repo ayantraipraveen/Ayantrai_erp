@@ -37,6 +37,7 @@ import {
   ChevronsDown,
   Building2,
   Calendar,
+  RefreshCw,
 } from "lucide-react";
 import {
   CanvasBlockType,
@@ -58,7 +59,7 @@ import ChartRenderer from "./ChartComponent/ChartRenderer";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../watermark/utils";
 
 export interface SidebarAddBlockEvent {
-  blockType: CanvasBlockType | "section";
+  blockType: CanvasBlockType | "stamp" | "section";
   elementBlock?: CanvasElementBlock;
   chartType?: GraphType;
   customChart?: LibraryChartCard;
@@ -115,6 +116,7 @@ export interface CanvasSidebarProps {
   onAddFloatingElement?: (type: "text" | "insight" | "metric-card", defaultData?: any) => void;
   watermarkConfig?: WatermarkStampConfig;
   onUpdateWatermarkConfig?: (cfg: Partial<WatermarkStampConfig>) => void;
+  onRefreshWatermarks?: () => void;
   isCollapsed?: boolean;
   // Dynamic report sections & outline navigation
   reportSections?: ReportOutlineItem[];
@@ -995,6 +997,7 @@ export function CanvasSidebar({
   onAddFloatingElement,
   watermarkConfig,
   onUpdateWatermarkConfig,
+  onRefreshWatermarks,
   isCollapsed,
   reportSections,
   activeReportSectionKey,
@@ -1122,7 +1125,7 @@ export function CanvasSidebar({
                 : selectedCategory === "metrics"
                 ? "2 Metrics"
                 : selectedCategory === "watermarks"
-                ? "6 Stamps"
+                ? `${filteredWatermarks.length} Stamps & Watermarks`
                 : "All Elements"}
             </span>
           </div>
@@ -1148,7 +1151,7 @@ export function CanvasSidebar({
                   : cat === "charts"
                   ? "Charts"
                   : cat === "watermarks"
-                  ? "Stamps"
+                  ? "Stamps & Watermarks"
                   : cat === "text"
                   ? "Bullets"
                   : cat;
@@ -1161,6 +1164,8 @@ export function CanvasSidebar({
                       ? "Report Sections & Library Blueprints"
                       : cat === "text"
                       ? "Key Bullets, Insights & Takeaways"
+                      : cat === "watermarks"
+                      ? "Vector Stamps & Background Watermarks"
                       : undefined
                   }
                   onClick={() => setSelectedCategory(cat)}
@@ -1789,12 +1794,12 @@ export function CanvasSidebar({
             <div className="space-y-2 pt-1">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-[10px] font-mono uppercase font-bold text-[#8B3DFF] flex items-center gap-1.5 truncate">
+                  <span className="text-[10px] font-mono uppercase font-bold text-[#9D61FF] flex items-center gap-1.5 truncate">
                     <Stamp className="w-3.5 h-3.5 flex-shrink-0" />
-                    Floating Stamps ({filteredWatermarks.length})
+                    Vector Stamps &amp; Watermarks ({filteredWatermarks.length})
                   </span>
-                  <span className="text-[8px] font-mono uppercase px-1 py-0.2 rounded font-bold bg-[#8B3DFF]/10 text-[#8B3DFF] flex-shrink-0">
-                    Float Form
+                  <span className="text-[8px] font-mono uppercase px-1 py-0.2 rounded font-bold bg-[#9D61FF]/10 text-[#9D61FF] flex-shrink-0">
+                    Drag &amp; Drop
                   </span>
                 </div>
 
@@ -1806,44 +1811,62 @@ export function CanvasSidebar({
                       onClick={() => setStampViewMode("float")}
                       className={`h-5 px-1.5 rounded flex items-center gap-1 text-[9px] font-semibold transition-all cursor-pointer ${
                         stampViewMode === "float"
-                          ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                          ? "bg-white dark:bg-zinc-900 text-[#9D61FF] shadow-xs"
                           : "text-slate-400 hover:text-slate-700 dark:hover:text-zinc-300"
                       }`}
-                      title="Float Form: 2-column sticker grid"
+                      title="Grid View: 2-column sticker grid (Draggable onto canvas)"
                     >
                       <LayoutGrid className="w-2.5 h-2.5" />
-                      <span>Float</span>
+                      <span>Grid</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setStampViewMode("list")}
                       className={`h-5 px-1.5 rounded flex items-center gap-1 text-[9px] font-semibold transition-all cursor-pointer ${
                         stampViewMode === "list"
-                          ? "bg-white dark:bg-zinc-900 text-[#8B3DFF] shadow-xs"
+                          ? "bg-white dark:bg-zinc-900 text-[#9D61FF] shadow-xs"
                           : "text-slate-400 hover:text-slate-700 dark:hover:text-zinc-300"
                       }`}
-                      title="List Form: Detailed single-column cards"
+                      title="List View: Detailed single-column cards (Draggable onto canvas)"
                     >
                       <List className="w-2.5 h-2.5" />
                       <span>List</span>
                     </button>
                   </div>
 
+                  {onRefreshWatermarks && (
+                    <button
+                      type="button"
+                      onClick={onRefreshWatermarks}
+                      className="p-1 rounded text-slate-400 hover:text-[#9D61FF] hover:bg-purple-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                      title="Refresh stamps & watermarks from API"
+                    >
+                      <RefreshCw className="w-2.5 h-2.5" />
+                    </button>
+                  )}
+
                   <a
                     href="/templates/Sections&Graphs/watermark"
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[9px] text-[#8B3DFF] hover:underline flex items-center gap-0.5 font-semibold"
-                    title="Upload more SVG assets"
+                    className="text-[9px] text-[#9D61FF] hover:underline flex items-center gap-0.5 font-semibold"
+                    title="Upload or manage vector stamps in Watermark Studio"
                   >
                     <span>Upload</span>
                     <ExternalLink className="w-2.5 h-2.5" />
                   </a>
                 </div>
               </div>
+
+              {/* Drag Hint */}
+              <div className="text-[9.5px] text-slate-400 dark:text-zinc-500 flex items-center gap-1.5 px-1 pb-0.5">
+                <Move className="w-2.5 h-2.5 text-[#9D61FF] flex-shrink-0" />
+                <span>Drag any stamp directly onto canvas or click +Float</span>
+              </div>
+
               {filteredWatermarks.length === 0 ? (
                 <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-zinc-800 text-center text-xs text-slate-400">
-                  No SVG stamps found
+                  No vector stamps or watermarks found
                 </div>
               ) : stampViewMode === "float" ? (
                 /* ── FLOAT FORM: 2-COLUMN COMPACT FLOATING STICKER TILES ── */
@@ -1853,20 +1876,36 @@ export function CanvasSidebar({
                     return (
                       <div
                         key={wm.id}
-                        className={`group relative rounded-xl border transition-all duration-200 overflow-hidden p-2 flex flex-col justify-between ${
+                        draggable={true}
+                        onDragStart={(e) => {
+                          handleBlockDragStart(e, {
+                            blockType: "stamp",
+                            elementBlock: {
+                              sourceId: wm.id,
+                              name: wm.name,
+                              svgContent: wm.svgContent,
+                              scale: wm.scale ?? 100,
+                              opacity: 100,
+                              rotation: 0,
+                              isWatermark: false,
+                            },
+                          });
+                        }}
+                        className={`group relative rounded-xl border transition-all duration-200 overflow-hidden p-2 flex flex-col justify-between cursor-grab active:cursor-grabbing hover:shadow-md ${
                           isApplied
-                            ? "border-[#8B3DFF] bg-[#8B3DFF]/5 ring-1 ring-[#8B3DFF]"
-                            : "border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#8B3DFF]/70"
+                            ? "border-[#9D61FF] bg-[#9D61FF]/5 ring-1 ring-[#9D61FF]"
+                            : "border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/70"
                         }`}
                       >
                         {/* Top tag & watermark status */}
                         <div className="flex items-center justify-between gap-1 mb-1">
-                          <span className="text-[7.5px] font-mono uppercase px-1 py-0.5 rounded font-bold bg-purple-500/10 text-[#8B3DFF] flex items-center gap-0.5">
+                          <span className="text-[7.5px] font-mono uppercase px-1 py-0.5 rounded font-bold bg-purple-500/10 text-[#9D61FF] flex items-center gap-0.5">
+                            <GripVertical className="w-2 h-2 text-slate-400 group-hover:text-[#9D61FF] transition-colors" />
                             <Move className="w-2 h-2" />
                             <span>Float</span>
                           </span>
                           {isApplied && (
-                            <span className="text-[7.5px] font-mono uppercase px-1 py-0.5 rounded font-bold bg-[#8B3DFF] text-white">
+                            <span className="text-[7.5px] font-mono uppercase px-1 py-0.5 rounded font-bold bg-[#9D61FF] text-white">
                               Watermark
                             </span>
                           )}
@@ -1875,14 +1914,14 @@ export function CanvasSidebar({
                         {/* Visual SVG Stamp Preview (Click to float directly on canvas) */}
                         <div
                           onClick={() => onAddWatermarkElement?.(wm.id)}
-                          className="h-20 w-full rounded-lg border border-slate-100 dark:border-zinc-800/60 bg-slate-50/80 dark:bg-zinc-900/60 p-2 flex items-center justify-center cursor-pointer overflow-hidden transition-all group-hover:scale-105 group-hover:bg-purple-50/30"
-                          title={`Click to place "${wm.name}" as free-floating stamp on canvas`}
+                          className="h-20 w-full rounded-lg border border-slate-100 dark:border-zinc-800/60 bg-slate-50/80 dark:bg-zinc-900/60 p-2 flex items-center justify-center cursor-grab active:cursor-grabbing overflow-hidden transition-all group-hover:scale-105 group-hover:bg-purple-50/30 select-none [&>svg]:max-w-full [&>svg]:max-h-full"
+                          title={`Drag onto canvas or click to place "${wm.name}" as free-floating stamp`}
                           dangerouslySetInnerHTML={{ __html: wm.svgContent }}
                         />
 
                         {/* Title */}
                         <span
-                          className="text-[10px] font-bold text-slate-800 dark:text-zinc-200 truncate mt-1.5 block group-hover:text-[#8B3DFF] transition-colors"
+                          className="text-[10px] font-bold text-slate-800 dark:text-zinc-200 truncate mt-1.5 block group-hover:text-[#9D61FF] transition-colors"
                           title={wm.name}
                         >
                           {wm.name}
@@ -1892,22 +1931,28 @@ export function CanvasSidebar({
                         <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-slate-100 dark:border-zinc-800/60">
                           <button
                             type="button"
-                            onClick={() => onAddWatermarkElement?.(wm.id)}
-                            className="flex-1 h-6 flex items-center justify-center gap-1 rounded bg-[#8B3DFF]/10 hover:bg-[#8B3DFF] text-[#8B3DFF] hover:text-white text-[9.5px] font-bold transition-colors cursor-pointer"
-                            title="Place as free-floating stamp on canvas"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onAddWatermarkElement?.(wm.id);
+                            }}
+                            className="flex-1 h-6 flex items-center justify-center gap-1 rounded bg-[#9D61FF]/10 hover:bg-[#9D61FF] text-[#9D61FF] hover:text-white text-[9.5px] font-bold transition-colors cursor-pointer"
+                            title="Place as free-floating stamp on canvas (or drag anywhere)"
                           >
                             <Move className="w-2.5 h-2.5" />
                             <span>+ Float</span>
                           </button>
                           <button
                             type="button"
-                            onClick={() => onSelectWatermark?.(isApplied ? null : wm.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectWatermark?.(isApplied ? null : wm.id);
+                            }}
                             className={`h-6 px-1.5 rounded text-[9.5px] font-bold transition-colors cursor-pointer flex items-center justify-center ${
                               isApplied
                                 ? "bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white"
                                 : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
                             }`}
-                            title={isApplied ? "Remove Watermark" : "Set as Page Watermark"}
+                            title={isApplied ? "Remove Page Watermark" : "Set as Page Watermark"}
                           >
                             {isApplied ? <X className="w-2.5 h-2.5" /> : <Stamp className="w-2.5 h-2.5" />}
                           </button>
@@ -1924,17 +1969,33 @@ export function CanvasSidebar({
                     return (
                       <div
                         key={wm.id}
-                        className={`group relative rounded-2xl border p-3 transition-all duration-200 overflow-hidden space-y-2 ${
+                        draggable={true}
+                        onDragStart={(e) => {
+                          handleBlockDragStart(e, {
+                            blockType: "stamp",
+                            elementBlock: {
+                              sourceId: wm.id,
+                              name: wm.name,
+                              svgContent: wm.svgContent,
+                              scale: wm.scale ?? 100,
+                              opacity: 100,
+                              rotation: 0,
+                              isWatermark: false,
+                            },
+                          });
+                        }}
+                        className={`group relative rounded-2xl border p-3 transition-all duration-200 overflow-hidden space-y-2 cursor-grab active:cursor-grabbing hover:shadow-md ${
                           isApplied
-                            ? "border-[#8B3DFF] bg-[#8B3DFF]/10 ring-1 ring-[#8B3DFF]"
-                            : "border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#8B3DFF]/60"
+                            ? "border-[#9D61FF] bg-[#9D61FF]/10 ring-1 ring-[#9D61FF]"
+                            : "border-slate-200 dark:border-zinc-800/80 bg-white dark:bg-[#0c1017] hover:border-[#9D61FF]/60"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
+                            <GripVertical className="w-3.5 h-3.5 text-slate-300 dark:text-zinc-600 group-hover:text-[#9D61FF] transition-colors flex-shrink-0" />
                             <div
                               className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                                isApplied ? "bg-[#8B3DFF] text-white" : "bg-purple-500/10 text-[#8B3DFF]"
+                                isApplied ? "bg-[#9D61FF] text-white" : "bg-purple-500/10 text-[#9D61FF]"
                               }`}
                             >
                               <Stamp className="w-3.5 h-3.5" />
@@ -1946,7 +2007,7 @@ export function CanvasSidebar({
                           <span
                             className={`text-[9px] font-mono uppercase px-1.5 py-0.5 rounded font-bold flex-shrink-0 ${
                               isApplied
-                                ? "bg-[#8B3DFF] text-white"
+                                ? "bg-[#9D61FF] text-white"
                                 : "bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400"
                             }`}
                           >
@@ -1957,8 +2018,8 @@ export function CanvasSidebar({
                         {/* SVG Visual Stamp Preview */}
                         <div
                           onClick={() => onAddWatermarkElement?.(wm.id)}
-                          className="h-16 w-full rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 p-2 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-[1.01] cursor-pointer"
-                          title="Click to place as free-floating stamp"
+                          className="h-16 w-full rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 p-2 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-[1.01] cursor-grab active:cursor-grabbing select-none [&>svg]:max-w-full [&>svg]:max-h-full"
+                          title="Drag onto canvas or click to place as free-floating stamp"
                           dangerouslySetInnerHTML={{ __html: wm.svgContent }}
                         />
 
@@ -1969,16 +2030,22 @@ export function CanvasSidebar({
                           <div className="flex flex-shrink-0 items-center gap-1">
                             <button
                               type="button"
-                              onClick={() => onAddWatermarkElement?.(wm.id)}
-                              className="flex items-center gap-1 rounded-md border border-[#8B3DFF]/40 bg-[#8B3DFF]/10 px-2.5 py-1 text-[10px] font-bold text-[#8B3DFF] transition-colors hover:bg-[#8B3DFF] hover:text-white cursor-pointer"
-                              title="Place as free-floating graphic on canvas"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onAddWatermarkElement?.(wm.id);
+                              }}
+                              className="flex items-center gap-1 rounded-md border border-[#9D61FF]/40 bg-[#9D61FF]/10 px-2.5 py-1 text-[10px] font-bold text-[#9D61FF] transition-colors hover:bg-[#9D61FF] hover:text-white cursor-pointer"
+                              title="Place as free-floating graphic on canvas (or drag anywhere)"
                             >
                               <Move className="h-3 w-3" />
                               <span>+ Float</span>
                             </button>
                             <button
                               type="button"
-                              onClick={() => onSelectWatermark?.(isApplied ? null : wm.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onSelectWatermark?.(isApplied ? null : wm.id);
+                              }}
                               className={`flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold transition-colors cursor-pointer ${
                                 isApplied
                                   ? "border border-rose-300 bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white"
@@ -2008,7 +2075,7 @@ export function CanvasSidebar({
                               >
                                 -
                               </button>
-                              <span className="font-mono font-bold text-[#8B3DFF]">
+                              <span className="font-mono font-bold text-[#9D61FF]">
                                 {watermarkConfig.scale ?? 100}%
                               </span>
                               <button
@@ -2040,7 +2107,7 @@ export function CanvasSidebar({
                                 onClick={() => onUpdateWatermarkConfig({ layer: "front" })}
                                 className={`flex items-center gap-0.5 rounded-lg border px-1.5 py-0.5 text-[9px] font-bold cursor-pointer transition-colors ${
                                   watermarkConfig.layer === "front"
-                                    ? "bg-purple-100 dark:bg-purple-950/50 text-[#8B3DFF] border-purple-300 dark:border-purple-800"
+                                    ? "bg-purple-100 dark:bg-purple-950/50 text-[#9D61FF] border-purple-300 dark:border-purple-800"
                                     : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 hover:bg-slate-50"
                                 }`}
                                 title="Bring watermark in front of page content (z-20)"
