@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import { logoutUser, restoreSession, fetchCurrentUser } from "@/lib/redux/slices/authSlice";
+import { logout, logoutUser, restoreSession, fetchCurrentUser } from "@/lib/redux/slices/authSlice";
 import { setActiveRole, RoleType } from "@/lib/redux/slices/reportModuleSlice";
 import { ShieldAlert, ArrowLeft, Lock, KeyRound } from "lucide-react";
 import DashboardNavbar from "./DashboardNavbar";
@@ -83,16 +83,21 @@ export default function WorkspaceLayout({
 
   // 1. Verify token & restore session on client mount (runs once on mount)
   useEffect(() => {
-    let token = stateToken;
+    let token: string | null = null;
     let storedUserStr: string | null = null;
 
     if (typeof window !== "undefined") {
-      token = token || localStorage.getItem("sitesafe_token");
+      token = localStorage.getItem("sitesafe_token");
       storedUserStr = localStorage.getItem("sitesafe_user");
     }
 
-    // Unauthenticated: No token or user found -> redirect to sign in
-    if (!token && !storedUserStr && !user) {
+    // Unauthenticated: If token or user is missing from localStorage -> purge session and redirect
+    if (!token || !storedUserStr) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("sitesafe_token");
+        localStorage.removeItem("sitesafe_user");
+      }
+      dispatch(logout());
       router.replace(`/signin?redirect=${encodeURIComponent(pathnameRef.current)}`);
       return;
     }
@@ -103,7 +108,7 @@ export default function WorkspaceLayout({
     }
 
     // Query live backend /me ONLY if profile is missing in Redux and hasn't been fetched yet
-    if (!hasFetchedMeRef.current && (token || storedUserStr)) {
+    if (!hasFetchedMeRef.current) {
       hasFetchedMeRef.current = true;
       if (!user) {
         dispatch(fetchCurrentUser());
@@ -111,7 +116,22 @@ export default function WorkspaceLayout({
     }
 
     setCheckingAuth(false);
-  }, [dispatch, router, stateToken]);
+  }, [dispatch, router]);
+
+  // Real-time listener: Auto-logout immediately if sitesafe_token is deleted from localStorage
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "sitesafe_token" && !e.newValue) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("sitesafe_user");
+        }
+        dispatch(logout());
+        router.replace(`/signin?redirect=${encodeURIComponent(pathnameRef.current)}`);
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [dispatch, router]);
 
   // 2. Synchronize active role whenever user role changes
   useEffect(() => {

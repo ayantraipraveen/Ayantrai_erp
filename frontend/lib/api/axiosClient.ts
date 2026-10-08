@@ -102,11 +102,16 @@ templateAxiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error) => {
-    // If unauthorized on protected routes (not on login itself), clear stored token
+    // If unauthorized on protected routes (not on login itself), clear stored session and redirect
     if (error.response?.status === 401 && typeof window !== "undefined") {
       const requestUrl = error.config?.url || "";
       if (!requestUrl.includes(API_ENDPOINTS.AUTH.LOGIN)) {
         localStorage.removeItem("sitesafe_token");
+        localStorage.removeItem("sitesafe_user");
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes("/signin") && !currentPath.includes("/signup")) {
+          window.location.href = `/signin?redirect=${encodeURIComponent(currentPath)}`;
+        }
       }
     }
 
@@ -119,6 +124,11 @@ templateAxiosClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
       localStorage.removeItem("sitesafe_token");
+      localStorage.removeItem("sitesafe_user");
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes("/signin") && !currentPath.includes("/signup")) {
+        window.location.href = `/signin?redirect=${encodeURIComponent(currentPath)}`;
+      }
     }
     return Promise.reject(error);
   }

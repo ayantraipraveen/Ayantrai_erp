@@ -170,12 +170,22 @@ export const authSlice = createSlice({
         try {
           const storedUser = localStorage.getItem("sitesafe_user");
           const storedToken = localStorage.getItem("sitesafe_token");
-          if (storedUser) {
+          if (storedUser && storedToken) {
             state.user = JSON.parse(storedUser);
-            state.token = storedToken || "session-token";
+            state.token = storedToken;
             state.isAuthenticated = true;
+          } else {
+            state.user = null;
+            state.token = null;
+            state.isAuthenticated = false;
+            localStorage.removeItem("sitesafe_user");
+            localStorage.removeItem("sitesafe_token");
           }
-        } catch (e) { }
+        } catch (e) {
+          state.user = null;
+          state.token = null;
+          state.isAuthenticated = false;
+        }
       }
     },
     logout: (state) => {
