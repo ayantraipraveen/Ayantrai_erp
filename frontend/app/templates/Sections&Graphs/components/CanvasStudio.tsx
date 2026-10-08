@@ -1492,6 +1492,7 @@ export function CanvasStudio({
                           dispatch(updateStampInSection({ sectionId: section.id, stampId, patch }));
                         }}
                         onDeleteStamp={(stampId) => {
+                          setSelectedStampId(null);
                           dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
                           dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
                         }}
@@ -1724,6 +1725,7 @@ export function CanvasStudio({
                             dispatch(updateStampInSection({ sectionId: section.id, stampId, patch }));
                           }}
                           onDeleteStamp={(stampId) => {
+                            setSelectedStampId(null);
                             dispatch(deleteStampFromSection({ sectionId: section.id, stampId }));
                             dispatch(showGlobalToast({ message: "Element removed!", type: "info" }));
                           }}

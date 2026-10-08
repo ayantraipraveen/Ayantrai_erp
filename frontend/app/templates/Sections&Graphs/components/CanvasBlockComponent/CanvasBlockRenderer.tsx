@@ -181,6 +181,15 @@ export function CanvasBlockRenderer({
             onUpdateElement={onUpdateElement}
           />
         );
+      case "stamp":
+        return (
+          <div
+            className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full select-none pointer-events-none"
+            dangerouslySetInnerHTML={{
+              __html: cell.element?.svgContent || cell.elementBlock?.svgContent || "",
+            }}
+          />
+        );
       default:
         return null;
     }

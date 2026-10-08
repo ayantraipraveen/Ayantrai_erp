@@ -76,7 +76,7 @@ export function ElementBlock({
         className="w-full h-full flex items-center justify-center p-2 overflow-hidden select-none group/element relative cursor-pointer"
       >
         <div
-          className="w-full h-full flex items-center justify-center transition-transform pointer-events-none"
+          className="w-full h-full flex items-center justify-center transition-transform pointer-events-none [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
           style={{
             opacity,
             transform: `rotate(${rotation}deg) scale(${scale})`,

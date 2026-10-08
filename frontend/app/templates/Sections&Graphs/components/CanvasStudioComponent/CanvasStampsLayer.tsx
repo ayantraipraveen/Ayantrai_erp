@@ -434,6 +434,15 @@ export function CanvasStampsLayer({
         return;
       }
 
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        if (onDeleteStamp) {
+          setSelected(null);
+          onDeleteStamp(currentStamp.id);
+        }
+        return;
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.key === "]") {
         e.preventDefault();
         if (e.shiftKey) {
@@ -481,7 +490,7 @@ export function CanvasStampsLayer({
         const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
         const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
         const isDivider = stamp.elementType === "divider" || Boolean(stamp.divider);
-        const isElement = stamp.elementType === "element" || Boolean(stamp.element);
+        const isElement = stamp.elementType === "element";
         const isCard = isChart || isText || isInsight || isMetric || isBadgeStrip || isDivider || isElement;
 
         const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : isBadgeStrip ? 547 : isDivider ? 547 : 120;
@@ -626,8 +635,8 @@ export function CanvasStampsLayer({
             {!isCard && (
               <div
                 style={{ opacity }}
-                className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full select-none"
-                dangerouslySetInnerHTML={{ __html: stamp.svgContent || "" }}
+                className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full select-none pointer-events-none"
+                dangerouslySetInnerHTML={{ __html: stamp.svgContent || stamp.element?.svgContent || "" }}
               />
             )}
 
@@ -768,8 +777,16 @@ export function CanvasStampsLayer({
                   {onDeleteStamp && (
                     <button
                       type="button"
-                      onClick={() => onDeleteStamp(stamp.id)}
-                      className="p-1 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setSelected(null);
+                        onDeleteStamp(stamp.id);
+                      }}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      className="p-1 rounded text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer transition-colors"
                       title={isCard ? "Delete Floating Element" : "Delete Stamp"}
                     >
                       <Trash2 className="w-3 h-3" />

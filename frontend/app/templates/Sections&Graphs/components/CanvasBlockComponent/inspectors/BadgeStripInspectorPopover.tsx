@@ -63,7 +63,7 @@ export function BadgeStripInspectorPopover({
                   : "bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:text-[#9D61FF] border border-slate-200 dark:border-zinc-700"
               }`}
             >
-              <span className="opacity-70 text-[8.5px]">#{idx + 1}</span>
+              <span className="opacity-70 text-[8.5px]">{idx + 1}</span>
               <span className="truncate max-w-[85px]">{b.label || b.value}</span>
             </button>
           );
