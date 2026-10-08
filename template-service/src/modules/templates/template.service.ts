@@ -13,6 +13,9 @@ export interface ListTemplatesQuery {
   search?: string;
   status?: string;
   site_id?: string;
+  startDate?: string;
+  endDate?: string;
+  datePreset?: string;
   sortBy?: 'updatedAt' | 'createdAt' | 'name' | 'id';
   sortOrder?: 'asc' | 'desc';
   page?: string | number;
@@ -20,11 +23,28 @@ export interface ListTemplatesQuery {
 }
 
 /**
- * List all templates with optional search, status filtering, and pagination
+ * Format database record into unified response supporting both camelCase and snake_case
+ */
+export function formatTemplate(t: any) {
+  if (!t) return t;
+  return {
+    ...t,
+    site_id: t.siteId || t.site_id || null,
+    site_name: t.siteName || t.site_name || null,
+    created_by: t.createdBy || t.authorName || t.created_by || 'System',
+    created_at: t.createdAt ? new Date(t.createdAt).toISOString() : t.created_at,
+    updated_at: t.updatedAt ? new Date(t.updatedAt).toISOString() : t.updated_at,
+    compliance_standards: t.complianceStandards || t.compliance_standards || [],
+    has_audit_hash: Boolean(t.hasAuditHash),
+  };
+}
+
+/**
+ * List all templates with optional search, status filtering, date range filtering, and pagination
  */
 export async function listTemplatesService(query: ListTemplatesQuery) {
   const page = Math.max(1, Number(query.page) || 1);
-  const limit = Math.max(1, Math.min(100, Number(query.limit) || 20));
+  const limit = Math.max(1, Math.min(100, Number(query.limit) || 50));
   const skip = (page - 1) * limit;
 
   const where: any = {};
@@ -43,7 +63,65 @@ export async function listTemplatesService(query: ListTemplatesQuery) {
       { name: { contains: s, mode: 'insensitive' } },
       { description: { contains: s, mode: 'insensitive' } },
       { id: { contains: s, mode: 'insensitive' } },
+      { siteName: { contains: s, mode: 'insensitive' } },
+      { category: { contains: s, mode: 'insensitive' } },
     ];
+  }
+
+  // Date Range Filtering (explicit startDate/endDate or quick preset)
+  const createdAtFilter: any = {};
+  if (query.startDate) {
+    const start = new Date(query.startDate);
+    if (!isNaN(start.getTime())) {
+      start.setHours(0, 0, 0, 0);
+      createdAtFilter.gte = start;
+    }
+  }
+  if (query.endDate) {
+    const end = new Date(query.endDate);
+    if (!isNaN(end.getTime())) {
+      end.setHours(23, 59, 59, 999);
+      createdAtFilter.lte = end;
+    }
+  }
+
+  // Fallback to datePreset if no explicit startDate/endDate supplied
+  if (
+    Object.keys(createdAtFilter).length === 0 &&
+    query.datePreset &&
+    query.datePreset !== 'all_time' &&
+    query.datePreset !== 'all'
+  ) {
+    const now = new Date();
+    if (query.datePreset === 'today') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+      createdAtFilter.gte = start;
+      createdAtFilter.lte = end;
+    } else if (query.datePreset === 'yesterday') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0, 0);
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
+      createdAtFilter.gte = start;
+      createdAtFilter.lte = end;
+    } else if (query.datePreset === 'last_7_days' || query.datePreset === '7days') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
+      createdAtFilter.gte = start;
+    } else if (query.datePreset === 'last_30_days' || query.datePreset === '30days') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
+      createdAtFilter.gte = start;
+    } else if (query.datePreset === 'this_month') {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      createdAtFilter.gte = start;
+    } else if (query.datePreset === 'last_month') {
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+      const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+      createdAtFilter.gte = start;
+      createdAtFilter.lte = end;
+    }
+  }
+
+  if (Object.keys(createdAtFilter).length > 0) {
+    where.createdAt = createdAtFilter;
   }
 
   // Strict whitelist for sort field to prevent SQL/object injection
@@ -57,7 +135,7 @@ export async function listTemplatesService(query: ListTemplatesQuery) {
     orderBy.push({ id: 'asc' });
   }
 
-  const [total, templates] = await Promise.all([
+  const [total, templates, statusCounts] = await Promise.all([
     (prisma as any).reportTemplate.count({ where }),
     (prisma as any).reportTemplate.findMany({
       where,
@@ -65,16 +143,38 @@ export async function listTemplatesService(query: ListTemplatesQuery) {
       take: limit,
       orderBy,
     }),
+    (prisma as any).reportTemplate.groupBy({
+      by: ['status'],
+      _count: { _all: true },
+    }).catch(() => []),
   ]);
 
+  const stats = {
+    total,
+    pendingCount: 0,
+    activeCount: 0,
+    draftCount: 0,
+    rejectedCount: 0,
+  };
+
+  if (Array.isArray(statusCounts)) {
+    for (const item of statusCounts) {
+      if (item.status === 'pending') stats.pendingCount = item._count?._all || 0;
+      if (item.status === 'active') stats.activeCount = item._count?._all || 0;
+      if (item.status === 'draft') stats.draftCount = item._count?._all || 0;
+      if (item.status === 'rejected') stats.rejectedCount = item._count?._all || 0;
+    }
+  }
+
   return {
-    items: templates,
+    items: templates.map(formatTemplate),
     pagination: {
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit) || 1,
     },
+    stats,
   };
 }
 
@@ -90,7 +190,7 @@ export async function getTemplateByIdService(id: string) {
     throw ApiError.notFound(`Template with ID '${id}' not found`);
   }
 
-  return template;
+  return formatTemplate(template);
 }
 
 /**

@@ -21,7 +21,12 @@ export const listTemplates = asyncHandler(async (req: AuthenticatedRequest, res:
   const result = await listTemplatesService(req.query);
   res
     .status(200)
-    .json(new ApiResponse(200, result.items, 'Templates retrieved successfully', result.pagination));
+    .json(
+      new ApiResponse(200, result.items, 'Templates retrieved successfully', {
+        ...result.pagination,
+        stats: result.stats,
+      })
+    );
 });
 
 /**

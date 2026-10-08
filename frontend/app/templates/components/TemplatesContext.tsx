@@ -66,8 +66,32 @@ export function useTemplates() {
   const fetchTemplates = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await templateApi.getTemplates();
-      if (res && Array.isArray(res.data) && res.data.length > 0) {
+      const params: any = {
+        limit: 100,
+      };
+      if (searchQuery && searchQuery.trim()) {
+        params.search = searchQuery.trim();
+      }
+      if (statusFilter && statusFilter !== "all") {
+        params.status = statusFilter;
+      }
+      if (siteFilter && siteFilter !== "all") {
+        params.site_id = siteFilter;
+      }
+      if (dateRange) {
+        if (dateRange.startDate) {
+          params.startDate = dateRange.startDate;
+        }
+        if (dateRange.endDate) {
+          params.endDate = dateRange.endDate;
+        }
+        if (dateRange.preset && dateRange.preset !== "all_time") {
+          params.datePreset = dateRange.preset;
+        }
+      }
+
+      const res = await templateApi.getTemplates(params);
+      if (res && Array.isArray(res.data)) {
         dispatch(setTemplates(res.data));
       }
     } catch (err) {
@@ -75,7 +99,7 @@ export function useTemplates() {
     } finally {
       setIsLoading(false);
     }
-  }, [dispatch]);
+  }, [dispatch, searchQuery, statusFilter, siteFilter, dateRange]);
 
   useEffect(() => {
     fetchTemplates();

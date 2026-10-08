@@ -22,8 +22,9 @@ export default function TemplatesLayout({
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const templates = useAppSelector((state) => state.reportModule.templates || []);
-  const sections = useAppSelector(
-    (state) => state.reportModule.sectionMeta || []
+  const sectionMeta = useAppSelector((state) => state.reportModule.sectionMeta);
+  const librarySections = useAppSelector(
+    (state) => state.reportModule.librarySections || []
   );
   const selectedLibrarySectionId = useAppSelector(
     (state) => state.reportModule.selectedLibrarySectionId
@@ -88,7 +89,7 @@ export default function TemplatesLayout({
                     : "bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"
                 }`}
               >
-                {sections.totalSections}
+                {sectionMeta?.totalSections || librarySections.length || 0}
               </span>
             </Link>
           </div>

@@ -6,6 +6,11 @@ export interface TemplateListParams {
   search?: string;
   status?: string;
   site_id?: string;
+  startDate?: string;
+  endDate?: string;
+  datePreset?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
 }

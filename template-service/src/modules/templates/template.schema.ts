@@ -6,10 +6,13 @@ export const listTemplatesSchema = z.object({
       search: z.string().trim().max(100).optional(),
       status: z.enum(['all', 'draft', 'pending', 'active', 'rejected']).optional().default('all'),
       site_id: z.string().trim().max(100).optional(),
+      startDate: z.string().trim().optional(),
+      endDate: z.string().trim().optional(),
+      datePreset: z.string().trim().optional(),
       sortBy: z.enum(['updatedAt', 'createdAt', 'name', 'id']).optional().default('updatedAt'),
       sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
       page: z.coerce.number().int().min(1).optional().default(1),
-      limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+      limit: z.coerce.number().int().min(1).max(100).optional().default(50),
     })
     .optional(),
 });
