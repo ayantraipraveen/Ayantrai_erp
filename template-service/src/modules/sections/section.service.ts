@@ -45,7 +45,7 @@ export async function listSectionsService(query: ListSectionsQuery) {
 
   // 2. Filter by Search keyword across name, eyebrow, and description
   if (query.search && query.search.trim()) {
-    const s = query.search.trim();
+    const s = query.search.trim().slice(0, 100);
     where.OR = [
       { name: { contains: s, mode: 'insensitive' } },
       { eyebrow: { contains: s, mode: 'insensitive' } },
@@ -60,7 +60,7 @@ export async function listSectionsService(query: ListSectionsQuery) {
 
   // 4. Filter by Project / Site name
   if (query.projectSite && query.projectSite.trim()) {
-    where.projectSite = { contains: query.projectSite.trim(), mode: 'insensitive' };
+    where.projectSite = { contains: query.projectSite.trim().slice(0, 100), mode: 'insensitive' };
   }
 
   // 5. Pagination calculations
@@ -68,9 +68,14 @@ export async function listSectionsService(query: ListSectionsQuery) {
   const page = query.page ? Math.max(1, Number(query.page)) : 1;
   const skip = (page - 1) * limit;
 
-  // 6. Dynamic Sorting
-  const sortBy = query.sortBy || 'orderIndex';
-  const sortOrder = query.sortOrder || (sortBy === 'orderIndex' ? 'asc' : 'desc');
+  // 6. Dynamic Sorting with strict whitelist defense against injection
+  const ALLOWED_SORT_FIELDS = new Set(['orderIndex', 'name', 'createdAt', 'updatedAt', 'id']);
+  const sortBy = ALLOWED_SORT_FIELDS.has(query.sortBy as string)
+    ? (query.sortBy as string)
+    : 'orderIndex';
+  const sortOrder = query.sortOrder === 'asc' || query.sortOrder === 'desc'
+    ? query.sortOrder
+    : (sortBy === 'orderIndex' ? 'asc' : 'desc');
   const orderBy: any = [{ [sortBy]: sortOrder }];
   if (sortBy !== 'id') {
     orderBy.push({ id: 'asc' });

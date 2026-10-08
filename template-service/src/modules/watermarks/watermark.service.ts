@@ -1,5 +1,6 @@
 import { prisma } from '../../config/prisma';
 import { ApiError } from '../../shared/utils/apiError';
+import { sanitizeSvg } from '../../shared/utils/sanitizeSvg';
 import { CreateWatermarkInput, UpdateWatermarkInput } from './watermark.schema';
 
 export interface ListWatermarksQuery {
@@ -34,7 +35,7 @@ export async function listWatermarksService(query: ListWatermarksQuery) {
   }
 
   if (query.search && query.search.trim()) {
-    const s = query.search.trim();
+    const s = query.search.trim().slice(0, 100);
     where.OR = [
       { name: { contains: s, mode: 'insensitive' } },
       { fileName: { contains: s, mode: 'insensitive' } },
@@ -66,7 +67,7 @@ export async function listWatermarksService(query: ListWatermarksQuery) {
 }
 
 /**
- * Retrieve a single watermark by ID
+ * Retrieve single watermark by ID
  */
 export async function getWatermarkByIdService(id: string) {
   const watermarkModel = getWatermarkModel();
@@ -88,8 +89,9 @@ export async function createWatermarkService(
   input: CreateWatermarkInput,
   user?: { id: string; name?: string }
 ) {
+  const cleanSvg = sanitizeSvg(input.svgContent);
   const sizeBytes =
-    input.sizeBytes ?? Buffer.byteLength(input.svgContent, 'utf8');
+    input.sizeBytes ?? Buffer.byteLength(cleanSvg, 'utf8');
 
   const generatedFileName =
     input.fileName ||
@@ -100,7 +102,7 @@ export async function createWatermarkService(
     data: {
       name: input.name,
       fileName: generatedFileName,
-      svgContent: input.svgContent,
+      svgContent: cleanSvg,
       sizeBytes,
       scale: input.scale ?? 100,
       opacity: input.opacity ?? 18,
@@ -134,8 +136,11 @@ export async function updateWatermarkService(
 
   const data: any = { ...input };
 
-  if (input.svgContent && input.sizeBytes === undefined) {
-    data.sizeBytes = Buffer.byteLength(input.svgContent, 'utf8');
+  if (input.svgContent) {
+    data.svgContent = sanitizeSvg(input.svgContent);
+    if (input.sizeBytes === undefined) {
+      data.sizeBytes = Buffer.byteLength(data.svgContent, 'utf8');
+    }
   }
 
   const updated = await watermarkModel.update({

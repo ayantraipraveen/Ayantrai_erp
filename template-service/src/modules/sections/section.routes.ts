@@ -20,6 +20,7 @@ import {
   requireAuth,
   requirePermission,
 } from '../../shared/middlewares/auth.middleware';
+import { mutationLimiter } from '../../shared/middlewares/rateLimiter';
 
 const router = Router();
 
@@ -45,6 +46,7 @@ router.get(
  */
 router.put(
   '/reorder',
+  mutationLimiter,
   requirePermission('templates:update'),
   validate(reorderSectionsSchema),
   reorderSections
@@ -64,6 +66,7 @@ router.get('/:id', requirePermission('templates:read'), getSectionById);
  */
 router.post(
   '/',
+  mutationLimiter,
   requirePermission('templates:create'),
   validate(createSectionSchema),
   createSection
@@ -76,6 +79,7 @@ router.post(
  */
 router.put(
   '/:id',
+  mutationLimiter,
   requirePermission('templates:update'),
   validate(updateSectionSchema),
   updateSection
@@ -88,6 +92,7 @@ router.put(
  */
 router.post(
   '/:id/clone',
+  mutationLimiter,
   requirePermission('templates:create'),
   validate(cloneSectionSchema),
   cloneSection
@@ -98,6 +103,11 @@ router.post(
  * @desc    Delete a custom section (prevents deleting core standard templates)
  * @access  Private (templates:delete)
  */
-router.delete('/:id', requirePermission('templates:delete'), deleteSection);
+router.delete(
+  '/:id',
+  mutationLimiter,
+  requirePermission('templates:delete'),
+  deleteSection
+);
 
 export default router;

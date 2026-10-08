@@ -1,5 +1,16 @@
 import { z } from 'zod';
 
+export const listWatermarksSchema = z.object({
+  query: z
+    .object({
+      search: z.string().trim().max(100).optional(),
+      tag: z.string().trim().max(50).optional(),
+      page: z.coerce.number().int().min(1).optional().default(1),
+      limit: z.coerce.number().int().min(1).max(100).optional().default(50),
+    })
+    .optional(),
+});
+
 export const createWatermarkSchema = z.object({
   body: z.object({
     name: z

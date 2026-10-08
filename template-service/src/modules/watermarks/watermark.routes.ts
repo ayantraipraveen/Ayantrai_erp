@@ -8,6 +8,7 @@ import {
 } from './watermark.controller';
 import { validate } from '../../shared/middlewares/validate';
 import {
+  listWatermarksSchema,
   createWatermarkSchema,
   updateWatermarkSchema,
 } from './watermark.schema';
@@ -15,6 +16,7 @@ import {
   requireAuth,
   requirePermission,
 } from '../../shared/middlewares/auth.middleware';
+import { mutationLimiter } from '../../shared/middlewares/rateLimiter';
 
 const router = Router();
 
@@ -26,7 +28,12 @@ router.use(requireAuth);
  * @desc    Query watermark stamp catalog with optional search and filters
  * @access  Private (templates:read)
  */
-router.get('/', requirePermission('templates:read'), listWatermarks);
+router.get(
+  '/',
+  requirePermission('templates:read'),
+  validate(listWatermarksSchema),
+  listWatermarks
+);
 
 /**
  * @route   GET /api/v1/watermarks/:id
@@ -42,6 +49,7 @@ router.get('/:id', requirePermission('templates:read'), getWatermarkById);
  */
 router.post(
   '/',
+  mutationLimiter,
   requirePermission('templates:create'),
   validate(createWatermarkSchema),
   createWatermark
@@ -54,6 +62,7 @@ router.post(
  */
 router.put(
   '/:id',
+  mutationLimiter,
   requirePermission('templates:update'),
   validate(updateWatermarkSchema),
   updateWatermark
@@ -64,6 +73,11 @@ router.put(
  * @desc    Delete a watermark stamp
  * @access  Private (templates:delete)
  */
-router.delete('/:id', requirePermission('templates:delete'), deleteWatermark);
+router.delete(
+  '/:id',
+  mutationLimiter,
+  requirePermission('templates:delete'),
+  deleteWatermark
+);
 
 export default router;

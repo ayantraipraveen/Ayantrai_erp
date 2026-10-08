@@ -12,6 +12,7 @@ import {
 } from './template.controller';
 import { validate } from '../../shared/middlewares/validate';
 import {
+  listTemplatesSchema,
   createTemplateSchema,
   updateTemplateSchema,
   approveTemplateSchema,
@@ -24,6 +25,7 @@ import {
   requirePermission,
   requireRole,
 } from '../../shared/middlewares/auth.middleware';
+import { mutationLimiter } from '../../shared/middlewares/rateLimiter';
 
 const router = Router();
 
@@ -35,7 +37,12 @@ router.use(requireAuth);
  * @desc    Query template catalog with filters and pagination
  * @access  Private (templates:read)
  */
-router.get('/', requirePermission('templates:read'), listTemplates);
+router.get(
+  '/',
+  requirePermission('templates:read'),
+  validate(listTemplatesSchema),
+  listTemplates
+);
 
 /**
  * @route   POST /api/v1/templates
@@ -44,6 +51,7 @@ router.get('/', requirePermission('templates:read'), listTemplates);
  */
 router.post(
   '/',
+  mutationLimiter,
   requirePermission('templates:create'),
   validate(createTemplateSchema),
   createTemplate
@@ -63,6 +71,7 @@ router.get('/:id', requirePermission('templates:read'), getTemplateById);
  */
 router.put(
   '/:id',
+  mutationLimiter,
   requirePermission('templates:update'),
   validate(updateTemplateSchema),
   updateTemplate
@@ -73,7 +82,12 @@ router.put(
  * @desc    Delete template from catalog
  * @access  Private (templates:delete)
  */
-router.delete('/:id', requirePermission('templates:delete'), deleteTemplate);
+router.delete(
+  '/:id',
+  mutationLimiter,
+  requirePermission('templates:delete'),
+  deleteTemplate
+);
 
 /**
  * @route   POST /api/v1/templates/:id/clone
@@ -82,6 +96,7 @@ router.delete('/:id', requirePermission('templates:delete'), deleteTemplate);
  */
 router.post(
   '/:id/clone',
+  mutationLimiter,
   requirePermission('templates:create'),
   validate(cloneTemplateSchema),
   cloneTemplate
@@ -94,6 +109,7 @@ router.post(
  */
 router.post(
   '/:id/approve',
+  mutationLimiter,
   requireRole('superadmin'),
   validate(approveTemplateSchema),
   approveTemplate
@@ -106,6 +122,7 @@ router.post(
  */
 router.post(
   '/:id/reject',
+  mutationLimiter,
   requireRole('superadmin'),
   validate(rejectTemplateSchema),
   rejectTemplate
@@ -118,6 +135,7 @@ router.post(
  */
 router.post(
   '/:id/resubmit',
+  mutationLimiter,
   requirePermission('templates:update'),
   validate(resubmitTemplateSchema),
   resubmitTemplate

@@ -13,6 +13,8 @@ export interface ListTemplatesQuery {
   search?: string;
   status?: string;
   site_id?: string;
+  sortBy?: 'updatedAt' | 'createdAt' | 'name' | 'id';
+  sortOrder?: 'asc' | 'desc';
   page?: string | number;
   limit?: string | number;
 }
@@ -36,12 +38,23 @@ export async function listTemplatesService(query: ListTemplatesQuery) {
   }
 
   if (query.search && query.search.trim()) {
-    const s = query.search.trim();
+    const s = query.search.trim().slice(0, 100);
     where.OR = [
       { name: { contains: s, mode: 'insensitive' } },
       { description: { contains: s, mode: 'insensitive' } },
       { id: { contains: s, mode: 'insensitive' } },
     ];
+  }
+
+  // Strict whitelist for sort field to prevent SQL/object injection
+  const ALLOWED_SORT_FIELDS = new Set(['updatedAt', 'createdAt', 'name', 'id']);
+  const sortBy = ALLOWED_SORT_FIELDS.has(query.sortBy as string)
+    ? (query.sortBy as string)
+    : 'updatedAt';
+  const sortOrder = query.sortOrder === 'asc' || query.sortOrder === 'desc' ? query.sortOrder : 'desc';
+  const orderBy: any = [{ [sortBy]: sortOrder }];
+  if (sortBy !== 'id') {
+    orderBy.push({ id: 'asc' });
   }
 
   const [total, templates] = await Promise.all([
@@ -50,7 +63,7 @@ export async function listTemplatesService(query: ListTemplatesQuery) {
       where,
       skip,
       take: limit,
-      orderBy: { updatedAt: 'desc' },
+      orderBy,
     }),
   ]);
 

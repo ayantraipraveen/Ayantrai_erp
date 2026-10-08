@@ -43,6 +43,10 @@ export class ApiError extends Error {
     return new ApiError(409, msg);
   }
 
+  static tooManyRequests(msg: string = 'Too Many Requests'): ApiError {
+    return new ApiError(429, msg);
+  }
+
   static internal(msg: string = 'Internal server error'): ApiError {
     return new ApiError(500, msg);
   }
