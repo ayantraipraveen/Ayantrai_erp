@@ -5,3 +5,5 @@ export * from "./DynamicIconColorsControl";
 export * from "./CardDimensionControls";
 export * from "./MetricCardInspectorPopover";
 export * from "./BadgeStripInspectorPopover";
+export * from "./KeyInsightInspectorPopover";
+export * from "./ChartInspectorPopover";

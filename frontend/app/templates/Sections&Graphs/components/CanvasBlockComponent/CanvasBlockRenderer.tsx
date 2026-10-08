@@ -38,6 +38,8 @@ import {
   CardDimensionControls,
   MetricCardInspectorPopover,
   BadgeStripInspectorPopover,
+  KeyInsightInspectorPopover,
+  ChartInspectorPopover,
 } from "./inspectors";
 import {
   // Blocks
@@ -74,6 +76,8 @@ export {
   CardDimensionControls,
   MetricCardInspectorPopover,
   BadgeStripInspectorPopover,
+  KeyInsightInspectorPopover,
+  ChartInspectorPopover,
   MetricCardBlock,
   SingleBadgeItemView,
   BadgeStripBlock,
@@ -122,6 +126,7 @@ export function CanvasBlockRenderer({
         return (
           <ChartBlock
             cell={cell}
+            isSelected={isSelected}
             isPreview={isPreview}
             onOpenChartEditor={onOpenChartEditor}
             onUpdateChart={onUpdateChart}
@@ -132,6 +137,7 @@ export function CanvasBlockRenderer({
         return (
           <InsightBlock
             cell={cell}
+            isSelected={isSelected}
             isPreview={isPreview}
             isForceEditing={isForceEditing}
             onEditingChange={onEditingChange}

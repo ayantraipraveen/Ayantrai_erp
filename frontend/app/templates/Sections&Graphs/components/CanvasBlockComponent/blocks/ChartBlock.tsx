@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { SlidersHorizontal } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
+import {
+  SlidersHorizontal,
+  Pencil,
+  BarChart2,
+  ExternalLink,
+} from "lucide-react";
 import { CanvasCell, LibraryChartCard } from "@/lib/redux/slices/reportModuleSlice";
 import ChartRenderer from "../../ChartComponent/ChartRenderer";
+import { calculateTopBarPosition } from "../common/blockUtils";
+import { ChartInspectorPopover } from "../inspectors/ChartInspectorPopover";
 
 export interface ChartBlockProps {
   cell: CanvasCell;
+  isSelected?: boolean;
   isPreview?: boolean;
   onOpenChartEditor?: () => void;
   onUpdateChart?: (chart: LibraryChartCard) => void;
@@ -13,14 +22,63 @@ export interface ChartBlockProps {
 
 export function ChartBlock({
   cell,
+  isSelected,
   isPreview,
   onOpenChartEditor,
   onUpdateChart,
   onEditingChange,
 }: ChartBlockProps) {
   const chart = cell.chart;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
+  const [inspectorTab, setInspectorTab] = useState<"chart" | "layout">("chart");
+  const [portalCoords, setPortalCoords] = useState<{ top: number; left: number } | null>(null);
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [localTitle, setLocalTitle] = useState(chart?.title || "");
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [localDesc, setLocalDesc] = useState(chart?.description || "");
+
+  useEffect(() => {
+    if (!isSelected) {
+      setIsInspectorOpen(false);
+    }
+  }, [isSelected]);
+
+  const updatePortalPos = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setAnchorRect(rect);
+    setPortalCoords(calculateTopBarPosition(rect));
+  }, []);
+
+  useEffect(() => {
+    if (isSelected && !isPreview) {
+      updatePortalPos();
+      const interval = setInterval(updatePortalPos, 400);
+      window.addEventListener("scroll", updatePortalPos, true);
+      window.addEventListener("resize", updatePortalPos);
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener("scroll", updatePortalPos, true);
+        window.removeEventListener("resize", updatePortalPos);
+      };
+    }
+  }, [isSelected, isPreview, updatePortalPos]);
+
+  useEffect(() => {
+    setLocalTitle(chart?.title || "");
+  }, [chart?.title]);
+
+  useEffect(() => {
+    setLocalDesc(chart?.description || "");
+  }, [chart?.description]);
+
   if (!chart) return null;
-  const customHeight = cell.customHeight;
+
+  const customHeight = chart.customHeight || cell.customHeight;
   const style = cell.style || {};
 
   // Dynamic responsive scaling based on customHeight and customWidth
@@ -73,11 +131,6 @@ export function ChartBlock({
     ? Math.max(50, customHeight - totalOverhead)
     : undefined;
 
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [localTitle, setLocalTitle] = useState(chart.title || "");
-  const [isEditingDesc, setIsEditingDesc] = useState(false);
-  const [localDesc, setLocalDesc] = useState(chart.description || "");
-
   const handleSetEditingTitle = (editing: boolean) => {
     setIsEditingTitle(editing);
     onEditingChange?.(editing || isEditingDesc);
@@ -87,14 +140,6 @@ export function ChartBlock({
     setIsEditingDesc(editing);
     onEditingChange?.(isEditingTitle || editing);
   };
-
-  useEffect(() => {
-    setLocalTitle(chart.title || "");
-  }, [chart.title]);
-
-  useEffect(() => {
-    setLocalDesc(chart.description || "");
-  }, [chart.description]);
 
   const handleTitleCommit = () => {
     handleSetEditingTitle(false);
@@ -112,105 +157,216 @@ export function ChartBlock({
     }
   };
 
+  const isTransparent = Boolean(chart.isTransparent);
+
+  const containerStyle: React.CSSProperties = {
+    height: customHeight ? `${customHeight}px` : "100%",
+    maxHeight: "100%",
+    width: chart.customWidth ? `${chart.customWidth}px` : "100%",
+    backgroundColor: isTransparent ? "transparent" : (chart.backgroundColor || undefined),
+    borderColor: chart.borderColor || undefined,
+    borderWidth: chart.borderWidth !== undefined ? `${chart.borderWidth}px` : undefined,
+    borderRadius: chart.borderRadius !== undefined ? `${chart.borderRadius}px` : undefined,
+  };
+
   return (
-    <div
-      style={customHeight ? { height: `${customHeight}px`, maxHeight: "100%" } : { maxHeight: "100%" }}
-      className={`relative group/chart w-full max-h-full rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] ${pClass} flex flex-col justify-between overflow-hidden`}
-    >
-      {/* Configure & Edit Data Button - Clean overlay in top right on hover */}
-      {!isPreview && onOpenChartEditor && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenChartEditor();
-          }}
-          className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover/chart:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#9D61FF] text-white hover:bg-purple-600 cursor-pointer"
-          title="Configure Chart, Data Points & Axis"
-        >
-          <SlidersHorizontal className="w-3 h-3" />
-          <span>Edit Data</span>
-        </button>
-      )}
-
-      {/* Chart Title (if present or currently editing) */}
-      {(hasTitle || (isEditingTitle && !isPreview)) && (
-        <div className="flex items-start justify-between gap-3 flex-shrink-0 pr-16">
-          <div className="min-w-0 flex-1">
-            {isEditingTitle && !isPreview ? (
-              <input
-                type="text"
-                autoFocus
-                value={localTitle}
-                onChange={(e) => setLocalTitle(e.target.value)}
-                onBlur={handleTitleCommit}
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => {
-                  e.stopPropagation();
-                  if (e.key === "Enter") handleTitleCommit();
-                  if (e.key === "Escape") {
-                    setLocalTitle(chart.title || "");
-                    handleSetEditingTitle(false);
-                  }
-                }}
-                className={`${titleSizeClass} text-slate-900 dark:text-white bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
-              />
-            ) : (
-              <h3
-                onDoubleClick={() => !isPreview && handleSetEditingTitle(true)}
-                title={!isPreview ? "Double click to rename or clear chart title" : undefined}
-                className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate ${!isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
-                  }`}
-              >
-                {chart.title}
-              </h3>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-0.5">
-        <ChartRenderer
-          chart={chart}
-          color={chart.color || chart.colors?.[0]}
-          colors={chart.colors}
-          gridRows={chart.gridRows}
-          gridCols={chart.gridCols}
-          height={chartAreaHeight}
-          fontSize={fontSize}
-          customFontSize={style.customFontSize}
-        />
-      </div>
-      {chart.description && (
-        isEditingDesc && !isPreview ? (
-          <input
-            type="text"
-            autoFocus
-            value={localDesc}
-            onChange={(e) => setLocalDesc(e.target.value)}
-            onBlur={handleDescCommit}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => {
+    <>
+      <div
+        ref={containerRef}
+        style={containerStyle}
+        className={`relative group/chart w-full max-h-full transition-all overflow-hidden flex flex-col justify-between ${
+          isTransparent
+            ? "border-0 shadow-none bg-transparent p-1.5"
+            : `rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] ${pClass}`
+        }`}
+      >
+        {/* Configure & Edit Data Button - Clean overlay in top right on hover (if not selected) */}
+        {!isPreview && onOpenChartEditor && !isSelected && (
+          <button
+            type="button"
+            onClick={(e) => {
               e.stopPropagation();
-              if (e.key === "Enter") handleDescCommit();
-              if (e.key === "Escape") {
-                setLocalDesc(chart.description || "");
-                handleSetEditingDesc(false);
-              }
+              onOpenChartEditor();
             }}
-            className={`${descSizeClass} font-medium text-slate-700 dark:text-zinc-300 bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
-          />
-        ) : (
-          <p
-            onDoubleClick={() => !isPreview && handleSetEditingDesc(true)}
-            title={!isPreview ? "Double click to edit description / caption" : undefined}
-            className={`${descSizeClass} text-slate-500 dark:text-zinc-400 ${isCompact ? "pt-1" : "pt-1.5"} border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 ${!isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
-              }`}
+            className="absolute top-2.5 right-2.5 z-10 opacity-0 group-hover/chart:opacity-100 transition-opacity flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#9D61FF] text-white hover:bg-purple-600 cursor-pointer shadow-xs"
+            title="Configure Chart, Data Points & Axis"
           >
-            {chart.description}
-          </p>
-        )
+            <SlidersHorizontal className="w-3 h-3" />
+            <span>Edit Data</span>
+          </button>
+        )}
+
+        {/* Chart Title */}
+        {(hasTitle || (isEditingTitle && !isPreview)) && (
+          <div className="flex items-start justify-between gap-3 flex-shrink-0 pr-16">
+            <div className="min-w-0 flex-1">
+              {isEditingTitle && !isPreview ? (
+                <input
+                  type="text"
+                  autoFocus
+                  value={localTitle}
+                  onChange={(e) => setLocalTitle(e.target.value)}
+                  onBlur={handleTitleCommit}
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === "Enter") handleTitleCommit();
+                    if (e.key === "Escape") {
+                      setLocalTitle(chart.title || "");
+                      handleSetEditingTitle(false);
+                    }
+                  }}
+                  className={`${titleSizeClass} text-slate-900 dark:text-white bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
+                />
+              ) : (
+                <h3
+                  onDoubleClick={() => !isPreview && handleSetEditingTitle(true)}
+                  title={!isPreview ? "Double click to rename or clear chart title" : undefined}
+                  className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate ${
+                    !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
+                  }`}
+                >
+                  {chart.title}
+                </h3>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Chart Render Area */}
+        <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-0.5">
+          <ChartRenderer
+            chart={chart}
+            color={chart.color || chart.colors?.[0]}
+            colors={chart.colors}
+            gridRows={chart.gridRows}
+            gridCols={chart.gridCols}
+            height={chartAreaHeight}
+            fontSize={fontSize}
+            customFontSize={style.customFontSize}
+          />
+        </div>
+
+        {/* Chart Description / Caption */}
+        {chart.description && (
+          isEditingDesc && !isPreview ? (
+            <input
+              type="text"
+              autoFocus
+              value={localDesc}
+              onChange={(e) => setLocalDesc(e.target.value)}
+              onBlur={handleDescCommit}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === "Enter") handleDescCommit();
+                if (e.key === "Escape") {
+                  setLocalDesc(chart.description || "");
+                  handleSetEditingDesc(false);
+                }
+              }}
+              className={`${descSizeClass} font-medium text-slate-700 dark:text-zinc-300 bg-purple-500/10 border border-[#9D61FF] rounded px-1.5 py-0.5 outline-none w-full`}
+            />
+          ) : (
+            <p
+              onDoubleClick={() => !isPreview && handleSetEditingDesc(true)}
+              title={!isPreview ? "Double click to edit description / caption" : undefined}
+              className={`${descSizeClass} text-slate-500 dark:text-zinc-400 ${
+                isCompact ? "pt-1" : "pt-1.5"
+              } border-t border-slate-100 dark:border-zinc-800/80 leading-relaxed flex-shrink-0 ${
+                !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors" : ""
+              }`}
+            >
+              {chart.description}
+            </p>
+          )
+        )}
+      </div>
+
+      {/* ── React Portal: Floating Top Action Bar for Chart Block ── */}
+      {isSelected && !isPreview && portalCoords && typeof document !== "undefined" &&
+        createPortal(
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              position: "fixed",
+              top: `${portalCoords.top}px`,
+              left: `${portalCoords.left}px`,
+              transform: "translateX(-50%)",
+              zIndex: 99999,
+            }}
+            className="portal-chart-topbar flex items-center gap-1.5 bg-white/98 dark:bg-[#0c1017]/98 border border-slate-200 dark:border-zinc-800 rounded-full px-2.5 py-1 shadow-2xl backdrop-blur-md text-xs select-none pointer-events-auto whitespace-nowrap animate-in fade-in zoom-in-95 duration-100"
+          >
+            <span className="text-[10px] font-mono font-bold text-[#9D61FF] px-2 py-0.5 rounded-full bg-[#9D61FF]/10 flex items-center gap-1">
+              <BarChart2 className="w-2.5 h-2.5" />
+              <span className="capitalize">{chart.chartType} Chart</span>
+            </span>
+
+            {/* Chart Type & Colors Inspector Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setInspectorTab("chart");
+                setIsInspectorOpen(true);
+              }}
+              className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-[#9D61FF] text-slate-700 hover:text-white dark:bg-zinc-800 dark:text-zinc-300 text-[10.5px] font-semibold transition-all cursor-pointer shadow-2xs"
+            >
+              <Pencil className="w-2.5 h-2.5" />
+              <span>Type & Colors</span>
+            </button>
+
+            {/* Layout & Frame Inspector Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setInspectorTab("layout");
+                setIsInspectorOpen(true);
+              }}
+              className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 hover:bg-[#9D61FF] text-slate-700 hover:text-white dark:bg-zinc-800 dark:text-zinc-300 text-[10.5px] font-semibold transition-all cursor-pointer shadow-2xs"
+            >
+              <SlidersHorizontal className="w-2.5 h-2.5" />
+              <span>Layout & Frame</span>
+            </button>
+
+            {/* Comprehensive Data Points & Axis Modal Editor */}
+            {onOpenChartEditor && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenChartEditor();
+                }}
+                className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-purple-500/10 hover:bg-purple-500/20 text-[#9D61FF] border border-[#9D61FF]/20 text-[10.5px] font-bold transition-all cursor-pointer shadow-2xs"
+                title="Open comprehensive dataset, series and axis editor"
+              >
+                <ExternalLink className="w-2.5 h-2.5" />
+                <span>Edit Data</span>
+              </button>
+            )}
+          </div>,
+          document.body
+        )}
+
+      {/* ── Floating Inspector Popover Portal ── */}
+      {isInspectorOpen && !isPreview && (
+        <ChartInspectorPopover
+          chart={chart}
+          activeTab={inspectorTab}
+          onTabChange={setInspectorTab}
+          isOpen={isInspectorOpen}
+          anchorRect={anchorRect}
+          onClose={() => setIsInspectorOpen(false)}
+          onUpdateChart={(patch) => {
+            if (onUpdateChart) {
+              onUpdateChart({ ...chart, ...patch });
+            }
+          }}
+          onOpenFullEditor={onOpenChartEditor}
+        />
       )}
-    </div>
+    </>
   );
 }

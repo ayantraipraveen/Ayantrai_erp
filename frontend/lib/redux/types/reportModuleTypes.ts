@@ -374,8 +374,25 @@ export interface LibraryChartCard {
   matrixRowLabels?: string[];
   matrixColLabels?: string[];
   tableColumns?: { id: string; label: string }[];
-  tableRows?: Record<string, string | number>[];
+  // Dynamic layout & container styling properties
+  customHeight?: number;
+  customWidth?: number;
+  minHeight?: number;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+  isTransparent?: boolean;
 }
+
+export type BulletMarkerStyle =
+  | "number"
+  | "alpha"
+  | "roman"
+  | "icon"
+  | "dot"
+  | "pill"
+  | "check";
 
 export type KeyInsightVariant =
   | "single"
@@ -397,6 +414,12 @@ export interface KeyInsightBulletItem {
   title?: string;
   text: string;
   subItems?: string[];
+  // Dynamic bullet marker & visual styling overrides:
+  bulletStyle?: BulletMarkerStyle;
+  icon?: string; // Lucide icon name, e.g. "CheckCircle2", "Lightbulb", "AlertTriangle"
+  customColor?: string; // Hex color for text/glyph e.g. "#ffffff" or "#2563eb"
+  customBg?: string; // Hex color for badge background e.g. "#3b82f6"
+  customBorder?: string; // Hex border color
 }
 
 export interface LibraryKeyInsightItem {
@@ -416,6 +439,25 @@ export interface LibraryKeyInsightItem {
     pills?: string[];
     tagline?: string;
   };
+  // Dynamic layout & container styling properties:
+  columns?: number; // 1 | 2 | 3 | 4
+  gap?: number; // px e.g. 8, 12, 16, 20
+  padding?: number; // px e.g. 8, 12, 16, 20
+  bulletStyle?: BulletMarkerStyle; // Global bullet style for all items
+  bulletSize?: number; // px e.g. 16, 20, 24, 28, 32
+  bulletShape?: "circle" | "rounded" | "square" | "none";
+  customHeight?: number; // px custom height e.g. 180, 240
+  customWidth?: number; // px custom width e.g. 350, 480
+  minHeight?: number;
+  backgroundColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+  isTransparent?: boolean;
+  titleColor?: string;
+  textColor?: string;
+  badgeColor?: string; // Global glyph color
+  badgeBg?: string; // Global shape background color
 }
 
 // ── Canvas Row / Cell Types (Canva-like Section Editor) ──────────────────────
