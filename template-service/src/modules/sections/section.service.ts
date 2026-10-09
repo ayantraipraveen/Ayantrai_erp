@@ -283,7 +283,6 @@ export async function createSectionService(
       metricCards,
       charts,
       keyInsights,
-      canvasRows: input.canvasRows ?? [],
       stamps: input.stamps ?? [],
       watermarkId: input.watermarkId,
       projectSite: input.projectSite,

@@ -80,14 +80,12 @@ model TemplateSection {
   descriptionHtml     String?  @map("description_html") @db.Text
   type                String   @default("custom") // "core" | "custom"
   icon                String?  @default("Layers")
-  isTemplate          Boolean  @default(false) @map("is_template")
   orderIndex          Int      @default(0) @map("order_index")
   headerSpacing       String?  @default("normal") @map("header_spacing")
   sectionStyle        Json?    @map("section_style")
   metricCards         Json?    @default("[]") @map("metric_cards")
   charts              Json?    @default("[]")
   keyInsights         Json?    @default("[]") @map("key_insights")
-  canvasRows          Json?    @default("[]") @map("canvas_rows")
   stamps              Json?    @default("[]")
   watermarkId         String?  @map("watermark_id")
   projectSite         String?  @map("project_site")

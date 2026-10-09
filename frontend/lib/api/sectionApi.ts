@@ -28,7 +28,6 @@ export interface CreateSectionPayload {
   metricCards?: any[];
   charts?: any[];
   keyInsights?: any[];
-  canvasRows?: any[];
   stamps?: any[];
   watermarkId?: string | null;
   projectSite?: string | null;

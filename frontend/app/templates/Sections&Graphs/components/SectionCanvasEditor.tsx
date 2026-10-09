@@ -362,7 +362,6 @@ export default function SectionCanvasEditor({
           metricCards: extractedCards,
           charts: extractedCharts,
           keyInsights: extractedInsights,
-          canvasRows: section.canvasRows,
           stamps: section.stamps,
           watermarkId: watermarkConfig.watermarkId,
           projectSite: section.projectSite,

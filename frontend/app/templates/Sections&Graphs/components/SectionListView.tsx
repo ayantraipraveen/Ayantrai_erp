@@ -161,7 +161,6 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
         metricCards: [],
         charts: [],
         keyInsights: [],
-        canvasRows: [],
       });
 
       dispatch(addOrReplaceLibrarySection(res.data));

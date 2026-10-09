@@ -34,7 +34,6 @@ function CreateSectionStudioContent() {
         metricCards: [],
         charts: [],
         keyInsights: [],
-        canvasRows: [],
       });
 
       dispatch(addOrReplaceLibrarySection(res.data));
