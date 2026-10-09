@@ -749,17 +749,17 @@ export function InsightBlock({
     // 4. Narrative Key Insights Multi-Paragraph
     if (variant === "narrative-summary") {
       return (
-        <div className="w-full h-full flex flex-col justify-between space-y-3.5">
-          <div className="flex items-center gap-2.5 pb-1.5 border-b border-slate-100 dark:border-zinc-800">
-            <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-              <FileText className="w-4 h-4" />
+        <div className="w-full h-full flex flex-col justify-start space-y-1.5 overflow-hidden">
+          <div className="flex items-center gap-2 pb-1 border-b border-slate-100 dark:border-zinc-800 shrink-0">
+            <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
+              <FileText className="w-3.5 h-3.5" />
             </div>
             <div>
               {!isPreview && editingTarget === "title" ? (
                 <DynamicTextEditor
                   initialValue={insight.title || "Key Insights"}
-                  defaultFontSize={14}
-                  className="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-blue-400"
+                  defaultFontSize={13}
+                  className="text-xs sm:text-sm font-black text-[#1e3a8a] dark:text-blue-400"
                   onSave={(plain) => {
                     handleUpdate({ title: plain });
                     finishEdit();
@@ -772,24 +772,23 @@ export function InsightBlock({
                   title={!isPreview ? "Double-click to edit heading" : undefined}
                   className="cursor-text"
                 >
-                  <h3 className={`text-sm sm:text-base font-black text-[#1e3a8a] dark:text-blue-400 tracking-tight leading-none ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}>
+                  <h3 className={`text-xs sm:text-sm font-black text-[#1e3a8a] dark:text-blue-400 tracking-tight leading-none ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}>
                     {insight.title || "Key Insights"}
                   </h3>
-                  <div className="w-10 h-0.5 bg-blue-600 rounded-full mt-1" />
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 overflow-hidden">
             {!isPreview && editingTarget === "narrative" ? (
               <DynamicTextEditor
                 initialValue={insight.text}
                 initialHtml={insight.text}
-                defaultFontSize={12}
+                defaultFontSize={9.5}
                 multiline={true}
                 toolbarPosition="top"
-                className="text-xs leading-relaxed space-y-2"
+                className="text-[9.5px] leading-relaxed space-y-1"
                 onSave={(_plain, html) => {
                   handleUpdate({ text: html });
                   finishEdit();
@@ -800,7 +799,7 @@ export function InsightBlock({
               <div
                 onDoubleClick={() => startEdit("narrative")}
                 title={!isPreview ? "Double-click to edit narrative commentary (Word style)" : undefined}
-                className={`text-xs text-slate-700 dark:text-zinc-300 leading-relaxed select-text space-y-2.5 ${!isPreview ? "hover:bg-blue-500/5 rounded p-1 cursor-text transition-colors" : ""}`}
+                className={`text-[9px] sm:text-[9.5px] text-slate-700 dark:text-zinc-300 leading-[1.35] select-text space-y-1 ${!isPreview ? "hover:bg-blue-500/5 rounded p-0.5 cursor-text transition-colors" : ""}`}
                 dangerouslySetInnerHTML={{ __html: insight.text }}
               />
             )}
@@ -1529,6 +1528,8 @@ export function InsightBlock({
   const defaultContainerClass =
     variant === "vertical-takeaways"
       ? "rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-[#f8fafc]/90 dark:bg-[#0c1017] p-3.5"
+      : variant === "narrative-summary"
+      ? "rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-[#f8fafc]/90 dark:bg-[#0c1017] p-3"
       : variant === "quote-card"
       ? "rounded-2xl border border-blue-200/60 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/60 via-white to-sky-50/40 dark:from-blue-950/30 dark:via-zinc-950 dark:to-zinc-900 p-6"
       : variant === "vision-banner"

@@ -218,167 +218,416 @@ export function MetricCardBlock({
             <Pencil className="w-3 h-3" />
           </button>
         )}
-        <div>
-          {/* Icon Badge */}
-          <div
-            style={{
-              width: `${iconContainerSize}px`,
-              height: `${iconContainerSize}px`,
-              backgroundColor: card.customIconBg || undefined,
-            }}
-            className={`${iconShapeClass} flex items-center justify-center shrink-0 mb-1 shadow-none ${!card.customIconBg && card.iconShape !== "none" ? (ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50") : ""
-              } ${!card.customIconColor ? (ramp.iconColor || "text-blue-600 dark:text-blue-300") : ""
-              }`}
-          >
-            {renderCardIcon(card.icon)}
-          </div>
-
-          {/* Label (inline editable on double click) */}
-          <div
-            style={{
-              color: card.customTextColor || undefined,
-              fontSize: card.fontSizeLabel ? `${card.fontSizeLabel}px` : undefined,
-            }}
-            className={`${labelFontSizeClass} font-bold text-slate-800 dark:text-zinc-200 ${editingField === "label" ? "" : "line-clamp-2"
-              } leading-tight mb-0.5`}
-          >
-            {!isPreview && editingField === "label" ? (
-              <DynamicTextEditor
-                initialValue={card.label}
-                initialHtml={(card as any).labelHtml}
-                defaultFontSize={card.fontSizeLabel || 11.5}
-                className="font-bold leading-tight"
-                onSave={(plain, html) => {
-                  commitCardChange({ label: plain, labelHtml: html } as any);
-                }}
-                onCancel={() => handleSetEditingField(null)}
-              />
-            ) : (
-              <span
-                onDoubleClick={(e) => {
-                  if (isPreview) return;
-                  e.stopPropagation();
-                  handleSetEditingField("label");
-                }}
-                title={!isPreview ? "Double-click to format label (Word style)" : undefined}
-                className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
-              >
-                {renderDynamicText((card as any).labelHtml, card.label)}
-              </span>
-            )}
-          </div>
-
-          {/* Primary Value (inline editable on double click) */}
-          <div
-            style={{
-              color: card.customValueColor || undefined,
-              fontSize: card.fontSizeValue ? `${card.fontSizeValue}px` : (customPx ? `${customPx}px` : undefined),
-            }}
-            className={`${valueFontSizeClass} font-black tracking-tight leading-none text-slate-900 dark:text-white my-0.5 flex items-baseline gap-1`}
-          >
-            {!isPreview && editingField === "value" ? (
-              <DynamicTextEditor
-                initialValue={card.value}
-                initialHtml={(card as any).valueHtml}
-                defaultFontSize={defaultValFontSize}
-                className="font-black"
-                onSave={(plain, html) => {
-                  commitCardChange({ value: plain, valueHtml: html } as any);
-                }}
-                onCancel={() => handleSetEditingField(null)}
-              />
-            ) : (
-              <span
-                onDoubleClick={(e) => {
-                  if (isPreview) return;
-                  e.stopPropagation();
-                  handleSetEditingField("value");
-                }}
-                title={!isPreview ? "Double-click to format value (Word style)" : undefined}
-                className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
-              >
-                {(() => {
-                  const hasCustomHtml = Boolean((card as any).valueHtml && (card as any).valueHtml.includes("<"));
-                  if (hasCustomHtml) {
-                    return renderDynamicText((card as any).valueHtml, card.value);
-                  }
-
-                  const { num, unit } = formatDynamicValue(card.value);
-                  if (unit) {
-                    return (
-                      <>
-                        <span>{num}</span>
-                        <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-zinc-300 ml-0.5">{unit}</span>
-                      </>
-                    );
-                  }
-                  return renderDynamicText((card as any).valueHtml, card.value);
-                })()}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Trend Row */}
-        <div className="pt-0.5 flex flex-col gap-0">
-          <div className="flex items-center gap-1 flex-wrap">
-            <button
-              type="button"
-              onClick={cycleTrend}
-              title={!isPreview ? "Click to cycle trend: Up → Down → Neutral" : undefined}
-              className={`inline-flex items-center gap-0.5 text-[10px] sm:text-[10.5px] font-bold font-sans transition-transform ${trendTextColor} ${!isPreview ? "hover:scale-105 cursor-pointer" : ""
-                }`}
+        {card.cardVariant === "outlier" ? (
+          /* ── Outlier Highlight Card (e.g. Most Absent Worker / Vendor with Most Absentees) ── */
+          <div className="flex items-center justify-between gap-3 w-full h-full">
+            {/* Left Icon Badge */}
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                backgroundColor: card.customIconBg || undefined,
+              }}
+              className="rounded-full flex items-center justify-center shrink-0 shadow-none"
             >
-              {card.trendDirection === "up" && <span>▲</span>}
-              {card.trendDirection === "down" && <span>▼</span>}
-              {card.trendDirection === "no-change" && <span>—</span>}
+              {renderCardIcon(card.icon)}
+            </div>
 
-              {!isPreview && editingField === "trend" ? (
-                <div onClick={(e) => e.stopPropagation()} className="min-w-[80px] max-w-full">
+            {/* Middle: Label, Worker/Vendor Name, Subtitle */}
+            <div className="flex flex-col justify-center min-w-0 flex-1">
+              <span className="text-[10px] font-medium text-slate-500 dark:text-zinc-400 leading-none mb-1 truncate">
+                {!isPreview && editingField === "label" ? (
+                  <DynamicTextEditor
+                    initialValue={card.label}
+                    defaultFontSize={10}
+                    className="font-medium"
+                    onSave={(plain) => commitCardChange({ label: plain })}
+                    onCancel={() => handleSetEditingField(null)}
+                  />
+                ) : (
+                  <span
+                    onDoubleClick={(e) => {
+                      if (isPreview) return;
+                      e.stopPropagation();
+                      handleSetEditingField("label");
+                    }}
+                    title={!isPreview ? "Double-click to edit label" : undefined}
+                    className={!isPreview ? "hover:underline cursor-text" : ""}
+                  >
+                    {card.label}
+                  </span>
+                )}
+              </span>
+              <h4 className="text-[13px] font-bold text-slate-900 dark:text-zinc-100 leading-tight truncate">
+                {!isPreview && editingField === "trend" ? (
                   <DynamicTextEditor
                     initialValue={card.trendValue}
-                    initialHtml={(card as any).trendValueHtml}
-                    defaultFontSize={11}
-                    className="text-[11px] font-bold"
+                    defaultFontSize={13}
+                    className="font-bold"
+                    onSave={(plain) => commitCardChange({ trendValue: plain })}
+                    onCancel={() => handleSetEditingField(null)}
+                  />
+                ) : (
+                  <span
+                    onDoubleClick={(e) => {
+                      if (isPreview) return;
+                      e.stopPropagation();
+                      handleSetEditingField("trend");
+                    }}
+                    title={!isPreview ? "Double-click to edit name" : undefined}
+                    className={!isPreview ? "hover:underline cursor-text" : ""}
+                  >
+                    {card.trendValue || card.value}
+                  </span>
+                )}
+              </h4>
+              {card.secondaryLabel && (
+                <span className="text-[9.5px] text-slate-400 dark:text-zinc-500 leading-none mt-1 truncate">
+                  {card.secondaryLabel}
+                </span>
+              )}
+            </div>
+
+            {/* Right: Large Metric Number & Unit */}
+            <div className="flex flex-col items-center justify-center shrink-0 min-w-[54px] text-center">
+              <div
+                style={{
+                  color: card.customValueColor || undefined,
+                  fontSize: card.fontSizeValue ? `${card.fontSizeValue}px` : undefined,
+                }}
+                className="text-[25px] font-black tracking-tight leading-none"
+              >
+                {!isPreview && editingField === "value" ? (
+                  <DynamicTextEditor
+                    initialValue={card.value}
+                    defaultFontSize={25}
+                    className="font-black text-center"
+                    onSave={(plain) => commitCardChange({ value: plain })}
+                    onCancel={() => handleSetEditingField(null)}
+                  />
+                ) : (
+                  <span
+                    onDoubleClick={(e) => {
+                      if (isPreview) return;
+                      e.stopPropagation();
+                      handleSetEditingField("value");
+                    }}
+                    title={!isPreview ? "Double-click to edit value" : undefined}
+                    className={!isPreview ? "hover:underline cursor-text" : ""}
+                  >
+                    {card.value}
+                  </span>
+                )}
+              </div>
+              <span className="text-[9px] font-medium text-slate-500 dark:text-zinc-400 leading-tight mt-0.5">
+                {card.unit || "days absent"}
+              </span>
+            </div>
+          </div>
+        ) : card.cardVariant === "horizontal" ? (
+          /* ── Horizontal Metric Card (Icon on Left, Content on Right) ── */
+          <div className="flex items-center gap-3.5 w-full h-full">
+            {/* Left Circular Icon Badge */}
+            <div
+              style={{
+                width: `${Math.max(42, iconContainerSize)}px`,
+                height: `${Math.max(42, iconContainerSize)}px`,
+                backgroundColor: card.customIconBg || undefined,
+              }}
+              className={`${iconShapeClass} flex items-center justify-center shrink-0 shadow-none ${
+                !card.customIconBg && card.iconShape !== "none" ? (ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50") : ""
+              } ${!card.customIconColor ? (ramp.iconColor || "text-blue-600 dark:text-blue-300") : ""}`}
+            >
+              {renderCardIcon(card.icon)}
+            </div>
+
+            {/* Right: Label, Value, Trend */}
+            <div className="flex flex-col justify-center min-w-0 flex-1">
+              {/* Label */}
+              <div
+                style={{
+                  color: card.customTextColor || undefined,
+                  fontSize: card.fontSizeLabel ? `${card.fontSizeLabel}px` : undefined,
+                }}
+                className="text-[11px] font-medium text-slate-500 dark:text-zinc-400 leading-tight truncate mb-0.5"
+              >
+                {!isPreview && editingField === "label" ? (
+                  <DynamicTextEditor
+                    initialValue={card.label}
+                    initialHtml={(card as any).labelHtml}
+                    defaultFontSize={card.fontSizeLabel || 11}
+                    className="font-medium leading-tight"
                     onSave={(plain, html) => {
-                      commitCardChange({ trendValue: plain, trendValueHtml: html } as any);
+                      commitCardChange({ label: plain, labelHtml: html } as any);
                     }}
                     onCancel={() => handleSetEditingField(null)}
                   />
+                ) : (
+                  <span
+                    onDoubleClick={(e) => {
+                      if (isPreview) return;
+                      e.stopPropagation();
+                      handleSetEditingField("label");
+                    }}
+                    title={!isPreview ? "Double-click to format label" : undefined}
+                    className={!isPreview ? "hover:underline cursor-text" : ""}
+                  >
+                    {renderDynamicText((card as any).labelHtml, card.label)}
+                  </span>
+                )}
+              </div>
+
+              {/* Primary Value */}
+              <div
+                style={{
+                  color: card.customValueColor || undefined,
+                  fontSize: card.fontSizeValue ? `${card.fontSizeValue}px` : undefined,
+                }}
+                className="text-[25px] font-black tracking-tight leading-none text-slate-900 dark:text-white my-0.5 flex items-baseline gap-1"
+              >
+                {!isPreview && editingField === "value" ? (
+                  <DynamicTextEditor
+                    initialValue={card.value}
+                    initialHtml={(card as any).valueHtml}
+                    defaultFontSize={card.fontSizeValue || 25}
+                    className="font-black"
+                    onSave={(plain, html) => {
+                      commitCardChange({ value: plain, valueHtml: html } as any);
+                    }}
+                    onCancel={() => handleSetEditingField(null)}
+                  />
+                ) : (
+                  <span
+                    onDoubleClick={(e) => {
+                      if (isPreview) return;
+                      e.stopPropagation();
+                      handleSetEditingField("value");
+                    }}
+                    title={!isPreview ? "Double-click to format value" : undefined}
+                    className={!isPreview ? "hover:underline cursor-text" : ""}
+                  >
+                    {renderDynamicText((card as any).valueHtml, card.value)}
+                  </span>
+                )}
+              </div>
+
+              {/* Trend Row */}
+              {card.trendValue ? (
+                <div className="flex items-center gap-1 text-[10px] sm:text-[10.5px] font-bold mt-0.5">
+                  <button
+                    type="button"
+                    onClick={cycleTrend}
+                    title={!isPreview ? "Click to cycle trend: Up → Down → Neutral" : undefined}
+                    className={`inline-flex items-center gap-0.5 transition-transform ${trendTextColor} ${
+                      !isPreview ? "hover:scale-105 cursor-pointer" : ""
+                    }`}
+                  >
+                    {card.trendDirection === "up" && <span>▲</span>}
+                    {card.trendDirection === "down" && <span>▼</span>}
+                    {card.trendDirection === "no-change" && <span>—</span>}
+
+                    {!isPreview && editingField === "trend" ? (
+                      <div onClick={(e) => e.stopPropagation()} className="min-w-[60px] max-w-full">
+                        <DynamicTextEditor
+                          initialValue={card.trendValue}
+                          initialHtml={(card as any).trendValueHtml}
+                          defaultFontSize={10.5}
+                          className="text-[10.5px] font-bold"
+                          onSave={(plain, html) => {
+                            commitCardChange({ trendValue: plain, trendValueHtml: html } as any);
+                          }}
+                          onCancel={() => handleSetEditingField(null)}
+                        />
+                      </div>
+                    ) : (
+                      <span
+                        onDoubleClick={(e) => {
+                          if (isPreview) return;
+                          e.stopPropagation();
+                          handleSetEditingField("trend");
+                        }}
+                        title={!isPreview ? "Double-click to edit trend value" : undefined}
+                      >
+                        {renderDynamicText((card as any).trendValueHtml, card.trendValue)}
+                      </span>
+                    )}
+                  </button>
+
+                  {card.trendSubtitle && (
+                    <span className="text-[9.5px] text-slate-400 dark:text-zinc-500 font-normal">
+                      {card.trendSubtitle.replace(/\s*\(Lower is better\)/i, "").trim()}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <span
-                  onDoubleClick={(e) => {
-                    if (isPreview) return;
-                    e.stopPropagation();
-                    handleSetEditingField("trend");
-                  }}
-                  title={!isPreview ? "Double-click to format trend text (Word style)" : undefined}
-                >
-                  {renderDynamicText((card as any).trendValueHtml, card.trendValue)}
-                </span>
-              )}
-            </button>
-
-            {/* Subtitle e.g. "vs. last month" */}
-            {(() => {
-              const cleanSub = (card.trendSubtitle || "vs. last month")
-                .replace(/\s*\(Lower is better\)/i, "")
-                .trim() || "vs. last month";
-              return (
-                <span className="text-[9.5px] sm:text-[10px] text-slate-400 dark:text-zinc-500 font-normal">
-                  {cleanSub}
-                </span>
-              );
-            })()}
-          </div>
-
-          {(card.trendSubtitle?.includes("(Lower is better)") || (isNegativeMetric && card.trendDirection === "down")) && (
-            <div className="text-[9px] text-slate-400 dark:text-zinc-500 font-medium leading-none">
-              (Lower is better)
+              ) : null}
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          /* ── Standard Vertical Card Layout ── */
+          <>
+            <div>
+              {/* Icon Badge */}
+              <div
+                style={{
+                  width: `${iconContainerSize}px`,
+                  height: `${iconContainerSize}px`,
+                  backgroundColor: card.customIconBg || undefined,
+                }}
+                className={`${iconShapeClass} flex items-center justify-center shrink-0 mb-1 shadow-none ${!card.customIconBg && card.iconShape !== "none" ? (ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50") : ""
+                  } ${!card.customIconColor ? (ramp.iconColor || "text-blue-600 dark:text-blue-300") : ""
+                  }`}
+              >
+                {renderCardIcon(card.icon)}
+              </div>
+
+              {/* Label (inline editable on double click) */}
+              <div
+                style={{
+                  color: card.customTextColor || undefined,
+                  fontSize: card.fontSizeLabel ? `${card.fontSizeLabel}px` : undefined,
+                }}
+                className={`${labelFontSizeClass} font-bold text-slate-800 dark:text-zinc-200 ${editingField === "label" ? "" : "line-clamp-2"
+                  } leading-tight mb-0.5`}
+              >
+                {!isPreview && editingField === "label" ? (
+                  <DynamicTextEditor
+                    initialValue={card.label}
+                    initialHtml={(card as any).labelHtml}
+                    defaultFontSize={card.fontSizeLabel || 11.5}
+                    className="font-bold leading-tight"
+                    onSave={(plain, html) => {
+                      commitCardChange({ label: plain, labelHtml: html } as any);
+                    }}
+                    onCancel={() => handleSetEditingField(null)}
+                  />
+                ) : (
+                  <span
+                    onDoubleClick={(e) => {
+                      if (isPreview) return;
+                      e.stopPropagation();
+                      handleSetEditingField("label");
+                    }}
+                    title={!isPreview ? "Double-click to format label (Word style)" : undefined}
+                    className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
+                  >
+                    {renderDynamicText((card as any).labelHtml, card.label)}
+                  </span>
+                )}
+              </div>
+
+              {/* Primary Value (inline editable on double click) */}
+              <div
+                style={{
+                  color: card.customValueColor || undefined,
+                  fontSize: card.fontSizeValue ? `${card.fontSizeValue}px` : (customPx ? `${customPx}px` : undefined),
+                }}
+                className={`${valueFontSizeClass} font-black tracking-tight leading-none text-slate-900 dark:text-white my-0.5 flex items-baseline gap-1`}
+              >
+                {!isPreview && editingField === "value" ? (
+                  <DynamicTextEditor
+                    initialValue={card.value}
+                    initialHtml={(card as any).valueHtml}
+                    defaultFontSize={defaultValFontSize}
+                    className="font-black"
+                    onSave={(plain, html) => {
+                      commitCardChange({ value: plain, valueHtml: html } as any);
+                    }}
+                    onCancel={() => handleSetEditingField(null)}
+                  />
+                ) : (
+                  <span
+                    onDoubleClick={(e) => {
+                      if (isPreview) return;
+                      e.stopPropagation();
+                      handleSetEditingField("value");
+                    }}
+                    title={!isPreview ? "Double-click to format value (Word style)" : undefined}
+                    className={!isPreview ? "hover:underline hover:decoration-dotted cursor-text" : ""}
+                  >
+                    {(() => {
+                      const hasCustomHtml = Boolean((card as any).valueHtml && (card as any).valueHtml.includes("<"));
+                      if (hasCustomHtml) {
+                        return renderDynamicText((card as any).valueHtml, card.value);
+                      }
+
+                      const { num, unit } = formatDynamicValue(card.value);
+                      if (unit) {
+                        return (
+                          <>
+                            <span>{num}</span>
+                            <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-zinc-300 ml-0.5">{unit}</span>
+                          </>
+                        );
+                      }
+                      return renderDynamicText((card as any).valueHtml, card.value);
+                    })()}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Trend Row */}
+            <div className="pt-0.5 flex flex-col gap-0">
+              <div className="flex items-center gap-1 flex-wrap">
+                <button
+                  type="button"
+                  onClick={cycleTrend}
+                  title={!isPreview ? "Click to cycle trend: Up → Down → Neutral" : undefined}
+                  className={`inline-flex items-center gap-0.5 text-[10px] sm:text-[10.5px] font-bold font-sans transition-transform ${trendTextColor} ${!isPreview ? "hover:scale-105 cursor-pointer" : ""
+                    }`}
+                >
+                  {card.trendDirection === "up" && <span>▲</span>}
+                  {card.trendDirection === "down" && <span>▼</span>}
+                  {card.trendDirection === "no-change" && <span>—</span>}
+
+                  {!isPreview && editingField === "trend" ? (
+                    <div onClick={(e) => e.stopPropagation()} className="min-w-[80px] max-w-full">
+                      <DynamicTextEditor
+                        initialValue={card.trendValue}
+                        initialHtml={(card as any).trendValueHtml}
+                        defaultFontSize={11}
+                        className="text-[11px] font-bold"
+                        onSave={(plain, html) => {
+                          commitCardChange({ trendValue: plain, trendValueHtml: html } as any);
+                        }}
+                        onCancel={() => handleSetEditingField(null)}
+                      />
+                    </div>
+                  ) : (
+                    <span
+                      onDoubleClick={(e) => {
+                        if (isPreview) return;
+                        e.stopPropagation();
+                        handleSetEditingField("trend");
+                      }}
+                      title={!isPreview ? "Double-click to format trend text (Word style)" : undefined}
+                    >
+                      {renderDynamicText((card as any).trendValueHtml, card.trendValue)}
+                    </span>
+                  )}
+                </button>
+
+                {/* Subtitle e.g. "vs. last month" */}
+                {(() => {
+                  const cleanSub = (card.trendSubtitle || "vs. last month")
+                    .replace(/\s*\(Lower is better\)/i, "")
+                    .trim() || "vs. last month";
+                  return (
+                    <span className="text-[9.5px] sm:text-[10px] text-slate-400 dark:text-zinc-500 font-normal">
+                      {cleanSub}
+                    </span>
+                  );
+                })()}
+              </div>
+
+              {(card.trendSubtitle?.includes("(Lower is better)") || (isNegativeMetric && card.trendDirection === "down")) && (
+                <div className="text-[9px] text-slate-400 dark:text-zinc-500 font-medium leading-none">
+                  (Lower is better)
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── React Portal: Top Action Bar for Single KPI Metric Card ── */}

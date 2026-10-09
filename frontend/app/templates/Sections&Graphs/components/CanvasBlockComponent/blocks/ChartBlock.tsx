@@ -15,6 +15,7 @@ import { DynamicTextEditor } from "../../DynamicTitleEditor";
 import ChartRenderer from "../../ChartComponent/ChartRenderer";
 import { calculateTopBarPosition } from "../common/blockUtils";
 import { ChartInspectorPopover } from "../inspectors/ChartInspectorPopover";
+import { getMetricIconComponent } from "../../../utils";
 
 export interface ChartBlockProps {
   cell: CanvasCell;
@@ -203,49 +204,106 @@ export function ChartBlock({
           </button>
         )}
 
-        {/* Chart Title */}
-        <div className="flex items-start justify-between gap-3 flex-shrink-0 pr-16 min-h-[20px]">
-          <div className="min-w-0 flex-1">
-            {!isPreview && editingTarget === "title" ? (
-              <DynamicTextEditor
-                initialValue={chart.title || ""}
-                defaultFontSize={isUltraCompact ? 12 : isCompact ? 13 : 14}
-                className={titleSizeClass}
-                placeholder="Chart Title..."
-                onSave={(plain) => {
-                  onUpdateChart?.({ ...chart, title: plain });
-                  finishEdit();
-                }}
-                onCancel={finishEdit}
-              />
-            ) : chart.title ? (
-              <h3
-                onDoubleClick={(e) => {
-                  if (isPreview) return;
-                  e.stopPropagation();
-                  startEdit("title");
-                }}
-                title={!isPreview ? "Double-click to edit chart title" : undefined}
-                className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate select-text ${
-                  !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors hover:underline hover:decoration-dotted" : ""
-                }`}
-              >
-                {chart.title}
-              </h3>
-            ) : !isPreview ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  startEdit("title");
-                }}
-                className="text-[11px] text-slate-400 hover:text-[#9D61FF] italic flex items-center gap-1 cursor-pointer opacity-30 group-hover/chart:opacity-100 transition-opacity"
-              >
-                <Plus className="w-2.5 h-2.5" />
-                <span>Add chart title</span>
-              </button>
-            ) : null}
+        {/* Chart Header: Title, Subtitle, Icon on Left | KPI Pill or Legend on Right */}
+        <div className="flex items-center justify-between gap-3 flex-shrink-0 min-h-[22px] mb-1">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            {chart.icon && (
+              <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-800/60">
+                {(() => {
+                  const IconComp = getMetricIconComponent(chart.icon);
+                  return <IconComp className="w-4 h-4" />;
+                })()}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              {!isPreview && editingTarget === "title" ? (
+                <DynamicTextEditor
+                  initialValue={chart.title || ""}
+                  defaultFontSize={isUltraCompact ? 12 : isCompact ? 13 : 14}
+                  className={titleSizeClass}
+                  placeholder="Chart Title..."
+                  onSave={(plain) => {
+                    onUpdateChart?.({ ...chart, title: plain });
+                    finishEdit();
+                  }}
+                  onCancel={finishEdit}
+                />
+              ) : chart.title ? (
+                <h3
+                  onDoubleClick={(e) => {
+                    if (isPreview) return;
+                    e.stopPropagation();
+                    startEdit("title");
+                  }}
+                  title={!isPreview ? "Double-click to edit chart title" : undefined}
+                  className={`${titleSizeClass} text-slate-900 dark:text-white tracking-tight truncate select-text ${
+                    !isPreview ? "cursor-text hover:text-[#9D61FF] transition-colors hover:underline hover:decoration-dotted" : ""
+                  }`}
+                >
+                  {chart.title}
+                </h3>
+              ) : !isPreview ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    startEdit("title");
+                  }}
+                  className="text-[11px] text-slate-400 hover:text-[#9D61FF] italic flex items-center gap-1 cursor-pointer opacity-30 group-hover/chart:opacity-100 transition-opacity"
+                >
+                  <Plus className="w-2.5 h-2.5" />
+                  <span>Add chart title</span>
+                </button>
+              ) : null}
+
+              {/* Subtitle directly below Title */}
+              {chart.subtitle && (
+                <p className="text-[10px] text-slate-500 dark:text-zinc-400 truncate leading-tight mt-0.5 select-text">
+                  {chart.subtitle}
+                </p>
+              )}
+            </div>
           </div>
+
+          {/* Right Header: KPI Summary Pill (e.g. Workers Present) or Legend Pill (e.g. Late vs Early) */}
+          {chart.headerKpi ? (
+            <div className="hidden sm:flex items-center gap-2.5 px-2.5 py-1 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl text-xs shrink-0 select-none">
+              <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                <BarChart2 className="w-3.5 h-3.5" />
+                <div>
+                  <div className="text-[8px] text-slate-400 font-medium leading-none mb-0.5">Average Daily Present</div>
+                  <div className="font-bold text-emerald-600 dark:text-emerald-400 text-xs leading-none">{chart.headerKpi.average || "276 / 300"}</div>
+                </div>
+              </div>
+              {chart.headerKpi.highest && (
+                <>
+                  <div className="w-px h-5 bg-slate-200 dark:bg-zinc-700" />
+                  <div>
+                    <div className="text-[8px] text-slate-400 font-medium leading-none mb-0.5">Highest</div>
+                    <div className="font-bold text-slate-800 dark:text-zinc-200 text-[10px] leading-none">{chart.headerKpi.highest}</div>
+                  </div>
+                </>
+              )}
+              {chart.headerKpi.lowest && (
+                <>
+                  <div className="w-px h-5 bg-slate-200 dark:bg-zinc-700" />
+                  <div>
+                    <div className="text-[8px] text-slate-400 font-medium leading-none mb-0.5">Lowest</div>
+                    <div className="font-bold text-slate-800 dark:text-zinc-200 text-[10px] leading-none">{chart.headerKpi.lowest}</div>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : chart.options?.legendPosition === "header" && chart.series && chart.series.length > 1 ? (
+            <div className="hidden sm:flex items-center gap-3 px-3 py-1 bg-slate-50 dark:bg-zinc-800/80 border border-slate-200/80 dark:border-zinc-700/60 rounded-full text-[10px] shrink-0 select-none">
+              {chart.series.map((s, idx) => (
+                <div key={s.id || idx} className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-zinc-300">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  <span className="truncate">{s.name}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         {/* Chart Render Area */}
@@ -262,7 +320,7 @@ export function ChartBlock({
           />
         </div>
 
-        {/* Chart Description / Caption */}
+        {/* Chart Description / Caption (Only if distinct from subtitle) */}
         {!isPreview && editingTarget === "description" ? (
           <div className="pt-1 border-t border-slate-100 dark:border-zinc-800/80 flex-shrink-0">
             <DynamicTextEditor
@@ -277,7 +335,7 @@ export function ChartBlock({
               onCancel={finishEdit}
             />
           </div>
-        ) : chart.description ? (
+        ) : chart.description && chart.description !== chart.subtitle ? (
           <p
             onDoubleClick={(e) => {
               if (isPreview) return;
@@ -293,7 +351,7 @@ export function ChartBlock({
           >
             {chart.description}
           </p>
-        ) : !isPreview && (
+        ) : !isPreview && !chart.subtitle ? (
           <button
             type="button"
             onClick={(e) => {
@@ -304,7 +362,7 @@ export function ChartBlock({
           >
             + Add caption
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* ── React Portal: Floating Top Action Bar for Chart Block ── */}

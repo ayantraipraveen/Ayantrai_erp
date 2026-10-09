@@ -291,7 +291,8 @@ export interface LibraryMetricCard {
   trendColor?: "green" | "red" | "neutral";
   higherIsBetter?: boolean;
   unit?: string;
-  cardVariant?: "default" | "project-meta";
+  cardVariant?: "default" | "project-meta" | "horizontal" | "outlier";
+  secondaryLabel?: string;
   projectSite?: string;
   reportingPeriod?: string;
   // Dynamic visual styling & icon overrides:
@@ -354,7 +355,7 @@ export interface ChartSeriesConfig {
 export interface ChartCustomizationOptions {
   showValues?: boolean;
   showLegend?: boolean;
-  legendPosition?: "top" | "bottom" | "right";
+  legendPosition?: "top" | "bottom" | "right" | "header";
   smoothCurve?: boolean;
   showGridLines?: boolean;
   showHeader?: boolean;
@@ -369,10 +370,17 @@ export interface LibraryChartCard {
   chartType: GraphType;
   dataSourceField: string;
   description?: string;
+  subtitle?: string;
+  icon?: string;
   color?: string;
   colors?: string[];
   gridRows?: number;
   gridCols?: number;
+  headerKpi?: {
+    average?: string;
+    highest?: string;
+    lowest?: string;
+  };
   // Dynamic Chart Values & Axis Configuration
   dataPoints?: ChartDataPoint[];
   xAxis?: ChartAxisConfig;
@@ -868,7 +876,7 @@ export interface LibrarySection {
   keyInsights: LibraryKeyInsightItem[];
   // New canvas layout (row-based Canva-like editor)
   canvasRows?: CanvasRow[];
-  watermarkId?: string;
+  watermarkId?: string | null;
   watermarkConfig?: WatermarkStampConfig;
   stamps?: CanvasCoordinateStamp[];
   // Section site & period meta (matching Dummy_report.pdf)

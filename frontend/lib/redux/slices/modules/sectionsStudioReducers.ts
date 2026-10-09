@@ -167,7 +167,7 @@ export const sectionsStudioReducers = {
         eyebrow?: string;
         description?: string;
         icon?: string;
-        watermarkId?: string;
+        watermarkId?: string | null;
         watermarkConfig?: LibrarySection["watermarkConfig"];
         headerSpacing?: "compact" | "normal" | "spacious";
         titleHtml?: string;

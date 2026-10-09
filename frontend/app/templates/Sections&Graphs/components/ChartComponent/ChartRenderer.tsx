@@ -286,16 +286,27 @@ export default function ChartRenderer({
         };
       });
 
-      const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
+      let yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
         y: 114 - r * 88,
         label: formatYTick(d.yMin + r * yRange, d.unit),
       }));
+      if (chart.yAxis?.step && chart.yAxis.step > 0) {
+        const step = chart.yAxis.step;
+        const tickVals: number[] = [];
+        for (let v = d.yMin; v <= d.yMax; v += step) {
+          tickVals.push(v);
+        }
+        yTicks = tickVals.map((v) => ({
+          y: 114 - ((v - d.yMin) / yRange) * 88,
+          label: formatYTick(v, d.unit),
+        }));
+      }
 
       const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
         <div className={chartWrapperClass}>
-          {d.showLegend && activeSeries.length > 1 && (
+          {d.showLegend && activeSeries.length > 1 && chart.options?.legendPosition !== "header" && (
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap`}>
               {allSeriesData.map((sData, sIdx) => (
                 <div key={sData.s.id || sIdx} className="flex items-center gap-1.5">
@@ -316,8 +327,24 @@ export default function ChartRenderer({
             <line x1="48" y1="16" x2="48" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
             {/* X-axis */}
             <line x1="48" y1="114" x2="425" y2="114" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
-            {/* Y-axis Header / Unit */}
-            {yHeader && (
+            {/* Rotated Y-axis Title */}
+            {d.yAxisTitle && (
+              <text
+                transform="rotate(-90)"
+                x="-65"
+                y="14"
+                fontSize={svgTitleSize}
+                fontWeight="600"
+                textAnchor="middle"
+                fill="currentColor"
+                fillOpacity="0.6"
+                letterSpacing="0.02em"
+              >
+                {d.yAxisTitle}
+              </text>
+            )}
+            {/* Y-axis Header / Unit (fallback if no rotated title) */}
+            {!d.yAxisTitle && yHeader && (
               <text x="48" y="10" fontSize={svgTitleSize} fontWeight="bold" textAnchor="middle" fill="currentColor" fillOpacity="0.6">
                 {yHeader}
               </text>
@@ -337,7 +364,7 @@ export default function ChartRenderer({
               return (
                 <g key={i}>
                   <line x1={cx} y1="114" x2={cx} y2="118" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={cx} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
+                  <text x={cx} y={128} fontSize={n > 20 ? Math.max(4.5, svgTickSize * 0.85) : svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
                 </g>
               );
             })}
@@ -360,7 +387,7 @@ export default function ChartRenderer({
                   const ptDotColor = (d.pointColors && d.pointColors[pIdx]) || chart.dataPoints?.[pIdx]?.color || sData.sColor;
                   return (
                     <g key={pIdx}>
-                      <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={ptDotColor} strokeWidth="2" />
+                      <circle cx={pt.cx} cy={pt.cy} r={n > 20 ? "2.2" : "3"} fill={ptDotColor} stroke="#fff" strokeWidth="1" />
                       {d.showValues && (
                         <text x={pt.cx} y={pt.cy - 5} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={ptDotColor}>
                           {formatDataValue(pt.val, d.unit, n > 6)}
@@ -372,7 +399,7 @@ export default function ChartRenderer({
               </g>
             ))}
             {d.xAxisTitle && (
-              <text x="238" y="150" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
+              <text x="240" y="145" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6" letterSpacing="0.03em">{d.xAxisTitle}</text>
             )}
           </svg>
         </div>

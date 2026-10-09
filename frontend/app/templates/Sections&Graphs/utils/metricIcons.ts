@@ -37,6 +37,7 @@ import {
   Settings,
   Wrench,
   // People & Site
+  User,
   Users,
   UserCheck,
   UserPlus,
@@ -116,6 +117,7 @@ export const DYNAMIC_METRIC_ICONS: MetricIconOption[] = [
   { id: "Wrench", label: "Maintenance", category: "Operations", icon: Wrench },
 
   // People & Site
+  { id: "User", label: "Single Worker", category: "People", icon: User },
   { id: "Users", label: "Team / Users", category: "People", icon: Users },
   { id: "UserCheck", label: "User Check", category: "People", icon: UserCheck },
   { id: "UserPlus", label: "New User", category: "People", icon: UserPlus },
