@@ -398,6 +398,37 @@ export function getChartTypePresets(chartType: GraphType, primaryColor = "#9D61F
     case "line":
     case "area":
     case "horizontal-bar":
+      return [
+        {
+          name: "PPE Compliance by Zone",
+          unit: "%",
+          yMin: 0,
+          yMax: 100,
+          points: [
+            { id: "p1", label: "Zone A (Welding)", value: 96, color: primaryColor },
+            { id: "p2", label: "Zone B (Assembly)", value: 92, color: "#3B82F6" },
+            { id: "p3", label: "Zone C (Warehouse)", value: 85, color: "#10B981" },
+            { id: "p4", label: "Zone D (Loading)", value: 98, color: "#F59E0B" },
+            { id: "p5", label: "Zone E (Chemical)", value: 99, color: "#EC4899" },
+          ],
+        },
+        {
+          name: "Department Completion",
+          unit: "%",
+          yMin: 0,
+          yMax: 100,
+          points: [
+            { id: "p1", label: "Civil Works", value: 94, color: primaryColor },
+            { id: "p2", label: "Mechanical", value: 88, color: "#3B82F6" },
+            { id: "p3", label: "Electrical", value: 95, color: "#10B981" },
+            { id: "p4", label: "Safety Team", value: 100, color: "#10B981" },
+          ],
+        },
+      ];
+
+    case "bar":
+    case "line":
+    case "area":
     default:
       return [
         {
@@ -406,11 +437,11 @@ export function getChartTypePresets(chartType: GraphType, primaryColor = "#9D61F
           yMin: 0,
           yMax: 100,
           points: [
-            { id: "p1", label: "Zone A (Welding)", value: 96, secondaryValue: 90 },
-            { id: "p2", label: "Zone B (Assembly)", value: 92, secondaryValue: 88 },
-            { id: "p3", label: "Zone C (Warehouse)", value: 85, secondaryValue: 80 },
-            { id: "p4", label: "Zone D (Loading)", value: 98, secondaryValue: 95 },
-            { id: "p5", label: "Zone E (Chemical)", value: 99, secondaryValue: 92 },
+            { id: "p1", label: "Zone A (Welding)", value: 96 },
+            { id: "p2", label: "Zone B (Assembly)", value: 92 },
+            { id: "p3", label: "Zone C (Warehouse)", value: 85 },
+            { id: "p4", label: "Zone D (Loading)", value: 98 },
+            { id: "p5", label: "Zone E (Chemical)", value: 99 },
           ],
         },
         {
@@ -419,12 +450,12 @@ export function getChartTypePresets(chartType: GraphType, primaryColor = "#9D61F
           yMin: 0,
           yMax: 120,
           points: [
-            { id: "p1", label: "08:00", value: 45, secondaryValue: 50 },
-            { id: "p2", label: "10:00", value: 78, secondaryValue: 70 },
-            { id: "p3", label: "12:00", value: 95, secondaryValue: 85 },
-            { id: "p4", label: "14:00", value: 110, secondaryValue: 90 },
-            { id: "p5", label: "16:00", value: 88, secondaryValue: 80 },
-            { id: "p6", label: "18:00", value: 62, secondaryValue: 60 },
+            { id: "p1", label: "08:00", value: 45 },
+            { id: "p2", label: "10:00", value: 78 },
+            { id: "p3", label: "12:00", value: 95 },
+            { id: "p4", label: "14:00", value: 110 },
+            { id: "p5", label: "16:00", value: 88 },
+            { id: "p6", label: "18:00", value: 62 },
           ],
         },
         {
@@ -433,12 +464,12 @@ export function getChartTypePresets(chartType: GraphType, primaryColor = "#9D61F
           yMin: 0,
           yMax: 200,
           points: [
-            { id: "p1", label: "Mon", value: 142, secondaryValue: 130 },
-            { id: "p2", label: "Tue", value: 156, secondaryValue: 140 },
-            { id: "p3", label: "Wed", value: 168, secondaryValue: 150 },
-            { id: "p4", label: "Thu", value: 162, secondaryValue: 145 },
-            { id: "p5", label: "Fri", value: 150, secondaryValue: 135 },
-            { id: "p6", label: "Sat", value: 85, secondaryValue: 80 },
+            { id: "p1", label: "Mon", value: 142 },
+            { id: "p2", label: "Tue", value: 156 },
+            { id: "p3", label: "Wed", value: 168 },
+            { id: "p4", label: "Thu", value: 162 },
+            { id: "p5", label: "Fri", value: 150 },
+            { id: "p6", label: "Sat", value: 85 },
           ],
         },
       ];
@@ -451,8 +482,8 @@ export function getChartTypePresets(chartType: GraphType, primaryColor = "#9D61F
 export function getInitialDataForChartType(chartType: GraphType, primaryColor = "#9D61FF"): ChartDataPoint[] {
   const presets = getChartTypePresets(chartType, primaryColor);
   return presets[0]?.points || [
-    { id: "p1", label: "Zone A", value: 92, secondaryValue: 85 },
-    { id: "p2", label: "Zone B", value: 88, secondaryValue: 80 },
-    { id: "p3", label: "Zone C", value: 96, secondaryValue: 90 },
+    { id: "p1", label: "Zone A", value: 92 },
+    { id: "p2", label: "Zone B", value: 88 },
+    { id: "p3", label: "Zone C", value: 96 },
   ];
 }

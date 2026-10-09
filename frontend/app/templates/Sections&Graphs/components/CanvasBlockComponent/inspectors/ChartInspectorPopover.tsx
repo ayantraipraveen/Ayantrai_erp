@@ -59,6 +59,36 @@ export function ChartInspectorPopover({
   const currentChartTypeMeta = CHART_TYPE_OPTIONS.find((c) => c.id === chartType);
   const seriesConfigList = MULTI_SERIES_CHART_CONFIG[chartType];
 
+  // Precise semantic chart classification based on chart type:
+  const isMultiSeriesChart =
+    editorMode === "multi-series" ||
+    chartType === "grouped-bar" ||
+    chartType === "stacked-bar" ||
+    chartType === "multi-line" ||
+    chartType === "combo" ||
+    chartType === "stacked-horizontal";
+
+  const isCircularChart =
+    editorMode === "donut" || chartType === "pie";
+
+  const isScatterOrBubble =
+    editorMode === "scatter" || editorMode === "bubble";
+
+  // Point-level custom colors are ONLY relevant for discrete/categorical charts
+  const showPointColor =
+    chartType === "horizontal-bar" ||
+    chartType === "bar" ||
+    isCircularChart ||
+    chartType === "funnel" ||
+    chartType === "waterfall" ||
+    chartType === "treemap" ||
+    isScatterOrBubble ||
+    chartType === "sparkline";
+
+  // Secondary values are ONLY relevant when multi-series or radar target
+  const canHaveSecondaryValue =
+    isMultiSeriesChart || chartType === "radar";
+
   // Helper to update individual data points
   const handleUpdatePoint = (idx: number, patch: Partial<ChartDataPoint>) => {
     const updated = [...dataPoints];
@@ -66,20 +96,20 @@ export function ChartInspectorPopover({
     onUpdateChart({ dataPoints: updated });
   };
 
-  // Helper to add a new point tailored to chart type
+  // Helper to add a new point tailored strictly to active chart type
   const handleAddPoint = () => {
     const count = dataPoints.length + 1;
-    const hasSec = dataPoints.some((p) => p.secondaryValue !== undefined);
+    const hasSec = canHaveSecondaryValue && dataPoints.some((p) => p.secondaryValue !== undefined);
     let newPt: ChartDataPoint;
 
-    if (editorMode === "donut") {
+    if (isCircularChart) {
       newPt = {
         id: `dp-${Date.now()}`,
         label: `Slice ${count}`,
         value: 20,
         color: PALETTE_RAMPS[count % PALETTE_RAMPS.length].accent,
       };
-    } else if (editorMode === "scatter" || editorMode === "bubble") {
+    } else if (isScatterOrBubble) {
       newPt = {
         id: `dp-${Date.now()}`,
         label: `Point ${count}`,
@@ -87,6 +117,7 @@ export function ChartInspectorPopover({
         x: 40 + count * 10,
         y: 50,
         size: 16,
+        color: PALETTE_RAMPS[count % PALETTE_RAMPS.length].accent,
       };
     } else if (editorMode === "radar") {
       newPt = {
@@ -100,6 +131,7 @@ export function ChartInspectorPopover({
         id: `dp-${Date.now()}`,
         label: `Stage ${count}`,
         value: Math.max(100, 1000 - count * 180),
+        color: PALETTE_RAMPS[count % PALETTE_RAMPS.length].accent,
       };
     } else if (editorMode === "table") {
       newPt = {
@@ -115,12 +147,20 @@ export function ChartInspectorPopover({
         value: 85,
         rowValues: [85, 90, 88, 92, 95, 80, 82],
       };
+    } else if (chartType === "horizontal-bar") {
+      newPt = {
+        id: `dp-${Date.now()}`,
+        label: `Item ${count}`,
+        value: 75,
+        color: PALETTE_RAMPS[count % PALETTE_RAMPS.length].accent,
+      };
     } else {
       newPt = {
         id: `dp-${Date.now()}`,
         label: `Item ${count}`,
         value: 75,
         secondaryValue: hasSec ? 60 : undefined,
+        color: showPointColor ? PALETTE_RAMPS[count % PALETTE_RAMPS.length].accent : undefined,
       };
     }
 
@@ -441,58 +481,60 @@ export function ChartInspectorPopover({
               </div>
             </div>
 
-            {/* Multi-Series / Multi-Category Palette Swatches tailored to Chart Type */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300">
-                  {editorMode === "donut"
-                    ? "Slice Palette Colors"
-                    : editorMode === "heatmap"
-                    ? "Heatmap Intensity Ramp"
-                    : editorMode === "waterfall"
-                    ? "Waterfall Step Colors"
-                    : "Multi-Series Palette Colors"}
-                </label>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[0, 1, 2, 3].map((sIdx) => {
-                  const fallbackColors = [chart.color || "#3B82F6", "#10B981", "#F59E0B", "#F43F5E"];
-                  const curColor = chart.colors?.[sIdx] || fallbackColors[sIdx];
-                  const seriesLabel =
-                    seriesConfigList && seriesConfigList[sIdx]
-                      ? seriesConfigList[sIdx].label
-                      : editorMode === "donut"
-                      ? `Slice ${sIdx + 1}`
-                      : `Series ${sIdx + 1}`;
+            {/* Multi-Series / Multi-Category Palette Swatches tailored strictly to Multi-Series / Slices / Heatmap */}
+            {(isMultiSeriesChart || isCircularChart || editorMode === "heatmap" || editorMode === "waterfall") && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300">
+                    {isCircularChart
+                      ? "Slice Palette Colors"
+                      : editorMode === "heatmap"
+                      ? "Heatmap Intensity Ramp"
+                      : editorMode === "waterfall"
+                      ? "Waterfall Step Colors"
+                      : "Multi-Series Palette Colors"}
+                  </label>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[0, 1, 2, 3].map((sIdx) => {
+                    const fallbackColors = [chart.color || "#3B82F6", "#10B981", "#F59E0B", "#F43F5E"];
+                    const curColor = chart.colors?.[sIdx] || fallbackColors[sIdx];
+                    const seriesLabel =
+                      seriesConfigList && seriesConfigList[sIdx]
+                        ? seriesConfigList[sIdx].label
+                        : isCircularChart
+                        ? `Slice ${sIdx + 1}`
+                        : `Series ${sIdx + 1}`;
 
-                  return (
-                    <div
-                      key={sIdx}
-                      className="flex flex-col items-center gap-0.5 p-1 rounded-md bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800"
-                    >
-                      <span className="text-[7.5px] font-bold text-slate-500 dark:text-zinc-400 truncate w-full text-center">
-                        {seriesLabel}
-                      </span>
-                      <ColorSwatchPicker
-                        value={curColor}
-                        onChange={(hex) => {
-                          const newColors = [...(chart.colors || fallbackColors)];
-                          newColors[sIdx] = hex;
-                          const patch: Partial<LibraryChartCard> = { colors: newColors };
-                          if (sIdx === 0) {
-                            patch.color = hex;
-                          }
-                          if (chart.series && chart.series.length > sIdx) {
-                            patch.series = chart.series.map((s, idx) => (idx === sIdx ? { ...s, color: hex } : s));
-                          }
-                          onUpdateChart(patch);
-                        }}
-                      />
-                    </div>
-                  );
-                })}
+                    return (
+                      <div
+                        key={sIdx}
+                        className="flex flex-col items-center gap-0.5 p-1 rounded-md bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800"
+                      >
+                        <span className="text-[7.5px] font-bold text-slate-500 dark:text-zinc-400 truncate w-full text-center">
+                          {seriesLabel}
+                        </span>
+                        <ColorSwatchPicker
+                          value={curColor}
+                          onChange={(hex) => {
+                            const newColors = [...(chart.colors || fallbackColors)];
+                            newColors[sIdx] = hex;
+                            const patch: Partial<LibraryChartCard> = { colors: newColors };
+                            if (sIdx === 0) {
+                              patch.color = hex;
+                            }
+                            if (chart.series && chart.series.length > sIdx) {
+                              patch.series = chart.series.map((s, idx) => (idx === sIdx ? { ...s, color: hex } : s));
+                            }
+                            onUpdateChart(patch);
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       ) : activeTab === "data" ? (
@@ -531,8 +573,8 @@ export function ChartInspectorPopover({
                 </span>
               </label>
 
-              {/* Show Legend: relevant for charts with categories/series, not gauge */}
-              {editorMode !== "gauge" && (
+              {/* Show Legend: relevant ONLY for charts with multiple series or slices */}
+              {(isMultiSeriesChart || isCircularChart || (chart.series && chart.series.length > 1)) && (
                 <label className="flex items-center gap-1.5 cursor-pointer p-1.5 rounded-md bg-slate-50 dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800">
                   <input
                     type="checkbox"
@@ -550,13 +592,12 @@ export function ChartInspectorPopover({
                 </label>
               )}
 
-              {/* Show Grid Lines: ONLY for Cartesian charts */}
-              {(editorMode === "standard" ||
-                editorMode === "multi-series" ||
-                editorMode === "scatter" ||
-                editorMode === "bubble" ||
-                editorMode === "sparkline" ||
-                editorMode === "waterfall") && (
+              {/* Show Grid Lines: ONLY for Cartesian charts with visible grid ticks */}
+              {chartType !== "horizontal-bar" &&
+                (isMultiSeriesChart ||
+                  isScatterOrBubble ||
+                  chartType === "waterfall" ||
+                  (editorMode === "standard" && (chartType === "bar" || chartType === "line" || chartType === "area"))) && (
                 <label className="flex items-center gap-1.5 cursor-pointer p-1.5 rounded-md bg-slate-50 dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800">
                   <input
                     type="checkbox"
@@ -777,11 +818,11 @@ export function ChartInspectorPopover({
                   </div>
                 </div>
               </div>
-            ) : editorMode === "donut" ? (
-              /* Donut Slices Unit */
+            ) : isCircularChart || chartType === "funnel" || chartType === "treemap" ? (
+              /* Donut / Pie / Funnel / Treemap Metric Unit */
               <div>
                 <label className="text-[9px] font-semibold text-slate-700 dark:text-zinc-300 block mb-1">
-                  Circular Slice Metric
+                  {isCircularChart ? "Circular Slice Metric" : chartType === "funnel" ? "Funnel Stage Metric" : "Metric & Units"}
                 </label>
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
@@ -798,9 +839,11 @@ export function ChartInspectorPopover({
                       className="w-full px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-medium text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                     />
                   </div>
-                  <div className="px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 text-[9px] font-mono font-bold text-[#9D61FF]">
-                    Total: {totalSliceValue} {chart.yAxis?.unit || "%"}
-                  </div>
+                  {isCircularChart && (
+                    <div className="px-2.5 py-1 rounded-md bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 text-[9px] font-mono font-bold text-[#9D61FF]">
+                      Total: {totalSliceValue} {chart.yAxis?.unit || "%"}
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -891,29 +934,28 @@ export function ChartInspectorPopover({
                   <span>Preset Data</span>
                 </button>
 
-                {/* Series 2 toggle for Cartesian multi-series */}
-                {dataPoints.length > 0 &&
-                  (editorMode === "standard" || editorMode === "multi-series") && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const hasSec = dataPoints.some((p) => p.secondaryValue !== undefined);
-                        const updated = dataPoints.map((p) => ({
-                          ...p,
-                          secondaryValue: hasSec
-                            ? undefined
-                            : p.secondaryValue ?? Math.round((p.value ?? 50) * 0.75),
-                        }));
-                        onUpdateChart({ dataPoints: updated });
-                      }}
-                      className="text-[8.5px] font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
-                      title="Toggle multi-series secondary values"
-                    >
-                      {dataPoints.some((p) => p.secondaryValue !== undefined)
-                        ? "- Series 2"
-                        : "+ Series 2"}
-                    </button>
-                  )}
+                {/* Series 2 toggle strictly for multi-series or radar */}
+                {dataPoints.length > 0 && canHaveSecondaryValue && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const hasSec = dataPoints.some((p) => p.secondaryValue !== undefined);
+                      const updated = dataPoints.map((p) => ({
+                        ...p,
+                        secondaryValue: hasSec
+                          ? undefined
+                          : p.secondaryValue ?? Math.round((p.value ?? 50) * 0.75),
+                      }));
+                      onUpdateChart({ dataPoints: updated });
+                    }}
+                    className="text-[8.5px] font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                    title="Toggle multi-series secondary values"
+                  >
+                    {dataPoints.some((p) => p.secondaryValue !== undefined)
+                      ? "- Series 2"
+                      : "+ Series 2"}
+                  </button>
+                )}
 
                 {/* Add Point / Slice Button (not for single gauge) */}
                 {editorMode !== "gauge" && (
@@ -924,7 +966,15 @@ export function ChartInspectorPopover({
                   >
                     <Plus className="w-2.5 h-2.5" />
                     <span>
-                      {editorMode === "donut" ? "Add Slice" : "Add Point"}
+                      {isCircularChart
+                        ? "Add Slice"
+                        : chartType === "funnel"
+                        ? "Add Stage"
+                        : chartType === "radar"
+                        ? "Add Dimension"
+                        : chartType === "waterfall"
+                        ? "Add Step"
+                        : "Add Point"}
                     </span>
                   </button>
                 )}
@@ -1032,8 +1082,9 @@ export function ChartInspectorPopover({
               <div className="space-y-1.5 max-h-44 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(157,97,255,0.3)_transparent] pr-0.5">
                 {dataPoints.map((pt, idx) => {
                   const showSec =
-                    dataPoints.some((p) => p.secondaryValue !== undefined) ||
-                    Boolean(chart.series && chart.series.length > 1);
+                    canHaveSecondaryValue &&
+                    (dataPoints.some((p) => p.secondaryValue !== undefined) ||
+                      Boolean(chart.series && chart.series.length > 1));
 
                   // Computed slice percentage for donut / pie
                   const slicePct =
@@ -1056,36 +1107,76 @@ export function ChartInspectorPopover({
                         value={pt.label}
                         onChange={(e) => handleUpdatePoint(idx, { label: e.target.value })}
                         placeholder={
-                          editorMode === "donut"
+                          isCircularChart
                             ? "Slice Name"
-                            : editorMode === "radar"
+                            : chartType === "radar"
                             ? "Audit Dimension"
-                            : editorMode === "funnel"
+                            : chartType === "funnel"
                             ? "Stage Name"
+                            : chartType === "waterfall"
+                            ? "Step Name"
+                            : isScatterOrBubble
+                            ? "Point Name"
                             : "Category / Label"
                         }
                         className="flex-1 min-w-[70px] px-1.5 py-0.5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-[10px] text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                       />
 
-                      {/* Primary Numerical Value Input */}
-                      <input
-                        type="number"
-                        value={pt.value}
-                        onChange={(e) => handleUpdatePoint(idx, { value: Number(e.target.value) })}
-                        placeholder="Val"
-                        title={editorMode === "donut" ? "Slice Proportion" : "Primary Value"}
-                        className="w-12 px-1 py-0.5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-[10px] font-mono text-slate-800 dark:text-zinc-200 text-right focus:outline-none focus:border-[#9D61FF]"
-                      />
+                      {/* Numerical Inputs based on chart type */}
+                      {isScatterOrBubble ? (
+                        <>
+                          <input
+                            type="number"
+                            value={pt.x ?? pt.value ?? 0}
+                            onChange={(e) =>
+                              handleUpdatePoint(idx, {
+                                x: Number(e.target.value),
+                                value: Number(e.target.value),
+                              })
+                            }
+                            placeholder="X"
+                            title="X Coordinate"
+                            className="w-10 px-1 py-0.5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-[10px] font-mono text-slate-800 dark:text-zinc-200 text-right focus:outline-none focus:border-[#9D61FF]"
+                          />
+                          <input
+                            type="number"
+                            value={pt.y ?? 50}
+                            onChange={(e) => handleUpdatePoint(idx, { y: Number(e.target.value) })}
+                            placeholder="Y"
+                            title="Y Coordinate"
+                            className="w-10 px-1 py-0.5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-[10px] font-mono text-slate-800 dark:text-zinc-200 text-right focus:outline-none focus:border-[#9D61FF]"
+                          />
+                          {editorMode === "bubble" && (
+                            <input
+                              type="number"
+                              value={pt.size ?? 16}
+                              onChange={(e) => handleUpdatePoint(idx, { size: Number(e.target.value) })}
+                              placeholder="Sz"
+                              title="Bubble Radius"
+                              className="w-9 px-1 py-0.5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-[10px] font-mono text-slate-800 dark:text-zinc-200 text-right focus:outline-none focus:border-[#9D61FF]"
+                            />
+                          )}
+                        </>
+                      ) : (
+                        <input
+                          type="number"
+                          value={pt.value}
+                          onChange={(e) => handleUpdatePoint(idx, { value: Number(e.target.value) })}
+                          placeholder="Val"
+                          title={isCircularChart ? "Slice Proportion" : "Primary Value"}
+                          className="w-12 px-1 py-0.5 rounded border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-[10px] font-mono text-slate-800 dark:text-zinc-200 text-right focus:outline-none focus:border-[#9D61FF]"
+                        />
+                      )}
 
                       {/* Donut Slice % Badge */}
-                      {editorMode === "donut" && (
+                      {isCircularChart && (
                         <span className="text-[8px] font-mono font-bold text-purple-600 dark:text-purple-400 min-w-[28px] text-right">
                           {slicePct}%
                         </span>
                       )}
 
                       {/* Secondary Value Input for Multi-Series */}
-                      {showSec && editorMode !== "donut" && (
+                      {showSec && (
                         <input
                           type="number"
                           value={pt.secondaryValue ?? 0}
@@ -1098,17 +1189,20 @@ export function ChartInspectorPopover({
                         />
                       )}
 
-                      {/* Point / Slice Color Swatch */}
-                      <ColorSwatchPicker
-                        value={pt.color || chart.color || "#3B82F6"}
-                        onChange={(hex) => handleUpdatePoint(idx, { color: hex })}
-                      />
+                      {/* Point / Slice Color Swatch (Tailored strictly to chart types that support per-item color) */}
+                      {showPointColor && (
+                        <ColorSwatchPicker
+                          value={pt.color || chart.color || "#3B82F6"}
+                          onChange={(hex) => handleUpdatePoint(idx, { color: hex })}
+                        />
+                      )}
 
                       {/* Delete Point Button */}
                       <button
                         type="button"
                         onClick={() => handleDeletePoint(idx)}
-                        className="p-1 text-slate-400 hover:text-rose-500 cursor-pointer transition-colors"
+                        disabled={dataPoints.length <= 2}
+                        className="p-1 text-slate-400 hover:text-rose-500 disabled:opacity-30 disabled:pointer-events-none cursor-pointer transition-colors"
                         title="Delete data point"
                       >
                         <Trash2 className="w-2.5 h-2.5" />
