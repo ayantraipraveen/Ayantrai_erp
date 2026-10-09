@@ -5,3 +5,4 @@ export * from "./PreviewRibbon";
 export * from "./BlockContextRibbon";
 export * from "./RowContextRibbon";
 export * from "./GlobalCanvasRibbon";
+export * from "./CanvasContextRibbon";

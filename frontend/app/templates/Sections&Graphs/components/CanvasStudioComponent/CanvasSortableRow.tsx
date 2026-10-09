@@ -8,7 +8,7 @@ import { SortableCell } from "./CanvasSortableCell";
 import { SortableRowProps } from "../../utils";
 import { CanvasRowStyle } from "@/lib/redux/slices/reportModuleSlice";
 import { CanvasRow } from "@/lib/redux/types/reportModuleTypes";
-import { RibbonPortalPopover } from "../CanvasContextRibbon";
+import { RibbonPortalPopover } from "../CanvasRibbonComponent";
 
 function getRowBackground(style?: CanvasRowStyle): string | undefined {
   if (!style?.backgroundColor) return undefined;

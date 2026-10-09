@@ -72,7 +72,7 @@ import {
 } from "../watermark/utils";
 import { CHART_TYPE_OPTIONS } from "./constants/chartTypes";
 import { CanvasStudio } from "./CanvasStudio";
-import { CanvasContextRibbon } from "./CanvasContextRibbon";
+import { CanvasContextRibbon } from "./CanvasRibbonComponent";
 import { CanvasMarginConfig, DEFAULT_CANVAS_MARGIN } from "../utils";
 import {
   getReportSectionGroups,

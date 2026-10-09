@@ -103,16 +103,24 @@ export function BlockContextRibbon({
   const cellWatermarkBtnRef = useRef<HTMLButtonElement | null>(null);
   const ribbonRef = useRef<HTMLDivElement | null>(null);
 
+  const closeMenus = () => {
+    setFontMenuOpen(false);
+    setColorMenuOpen(false);
+    setBgMenuOpen(false);
+    setBorderMenuOpen(false);
+    setWatermarkMenuOpen(false);
+  };
+
+  const toggleMenu = (menu: "font" | "color" | "bg" | "border" | "watermark") => {
+    setFontMenuOpen((prev) => (menu === "font" ? !prev : false));
+    setColorMenuOpen((prev) => (menu === "color" ? !prev : false));
+    setBgMenuOpen((prev) => (menu === "bg" ? !prev : false));
+    setBorderMenuOpen((prev) => (menu === "border" ? !prev : false));
+    setWatermarkMenuOpen((prev) => (menu === "watermark" ? !prev : false));
+  };
+
   // Close menus when clicking outside
   useEffect(() => {
-    const closeMenus = () => {
-      setFontMenuOpen(false);
-      setColorMenuOpen(false);
-      setBgMenuOpen(false);
-      setBorderMenuOpen(false);
-      setWatermarkMenuOpen(false);
-    };
-
     const handlePointerDownOutside = (e: PointerEvent) => {
       const target = e.target as HTMLElement | null;
       if (target?.closest(".portal-ribbon-popover")) {
@@ -449,12 +457,7 @@ export function BlockContextRibbon({
           <button
             ref={cellWatermarkBtnRef}
             type="button"
-            onClick={() => {
-              setWatermarkMenuOpen(!watermarkMenuOpen);
-              setFontMenuOpen(false);
-              setColorMenuOpen(false);
-              setBgMenuOpen(false);
-            }}
+            onClick={() => toggleMenu("watermark")}
             className={`h-7 px-2.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
               currentWm
                 ? "bg-purple-500/15 border-purple-400/40 text-[#8B3DFF]"
@@ -516,12 +519,7 @@ export function BlockContextRibbon({
             <button
               ref={fontBtnRef}
               type="button"
-              onClick={() => {
-                setFontMenuOpen(!fontMenuOpen);
-                setColorMenuOpen(false);
-                setBgMenuOpen(false);
-                setWatermarkMenuOpen(false);
-              }}
+              onClick={() => toggleMenu("font")}
               className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-purple-400 bg-white dark:bg-zinc-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-slate-700 dark:text-zinc-200"
               title="Change Font Family"
             >
@@ -635,12 +633,7 @@ export function BlockContextRibbon({
             <button
               ref={colorBtnRef}
               type="button"
-              onClick={() => {
-                setColorMenuOpen(!colorMenuOpen);
-                setFontMenuOpen(false);
-                setBgMenuOpen(false);
-                setWatermarkMenuOpen(false);
-              }}
+              onClick={() => toggleMenu("color")}
               className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-purple-400 bg-white dark:bg-zinc-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-slate-700 dark:text-zinc-200"
               title="Text Color"
             >
@@ -678,12 +671,7 @@ export function BlockContextRibbon({
             <button
               ref={bgBtnRef}
               type="button"
-              onClick={() => {
-                setBgMenuOpen(!bgMenuOpen);
-                setFontMenuOpen(false);
-                setColorMenuOpen(false);
-                setWatermarkMenuOpen(false);
-              }}
+              onClick={() => toggleMenu("bg")}
               className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-purple-400 bg-white dark:bg-zinc-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-slate-700 dark:text-zinc-200"
               title="Card Background"
             >
@@ -715,13 +703,7 @@ export function BlockContextRibbon({
             <button
               ref={borderBtnRef}
               type="button"
-              onClick={() => {
-                setBorderMenuOpen(!borderMenuOpen);
-                setBgMenuOpen(false);
-                setFontMenuOpen(false);
-                setColorMenuOpen(false);
-                setWatermarkMenuOpen(false);
-              }}
+              onClick={() => toggleMenu("border")}
               className="h-7 px-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-purple-400 bg-white dark:bg-zinc-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer text-slate-700 dark:text-zinc-200"
               title="Card Border Color & Style"
             >

@@ -1,13 +1,11 @@
 "use client";
 
 import React from "react";
-import { CanvasContextRibbonProps } from "./CanvasRibbonComponent/types";
-import {
-  PreviewRibbon,
-  BlockContextRibbon,
-  RowContextRibbon,
-  GlobalCanvasRibbon,
-} from "./CanvasRibbonComponent";
+import { CanvasContextRibbonProps } from "./types";
+import { PreviewRibbon } from "./PreviewRibbon";
+import { BlockContextRibbon } from "./BlockContextRibbon";
+import { RowContextRibbon } from "./RowContextRibbon";
+import { GlobalCanvasRibbon } from "./GlobalCanvasRibbon";
 
 export function CanvasContextRibbon(props: CanvasContextRibbonProps) {
   const { isPreview, onTogglePreview, selectedCell, selectedRowId, activeRow } = props;
@@ -94,6 +92,3 @@ export function CanvasContextRibbon(props: CanvasContextRibbonProps) {
     />
   );
 }
-
-// Re-export subcomponents, popovers, constants and types for complete backward compatibility
-export * from "./CanvasRibbonComponent";
