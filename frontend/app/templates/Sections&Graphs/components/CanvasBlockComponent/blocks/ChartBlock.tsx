@@ -185,6 +185,8 @@ export function ChartBlock({
         className={`relative group/chart w-full max-h-full transition-all overflow-hidden flex flex-col justify-between ${
           isTransparent
             ? "border-0 shadow-none bg-transparent p-1.5"
+            : chart.chartType === "table"
+            ? "p-0 border-0 bg-transparent shadow-none"
             : `rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#0c1017] ${pClass}`
         }`}
       >
@@ -205,6 +207,7 @@ export function ChartBlock({
         )}
 
         {/* Chart Header: Title, Subtitle, Icon on Left | KPI Pill or Legend on Right */}
+        {Boolean(!isPreview || chart.title || chart.subtitle || chart.icon || chart.headerKpi || (chart.options?.legendPosition === "header" && chart.chartType !== "table")) && (
         <div className="flex items-center justify-between gap-3 flex-shrink-0 min-h-[22px] mb-1">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             {chart.icon && (
@@ -268,16 +271,22 @@ export function ChartBlock({
           {/* Right Header: KPI Summary Pill (e.g. Workers Present) or Legend Pill (e.g. Late vs Early) */}
           {chart.headerKpi ? (
             <div className="hidden sm:flex items-center gap-2.5 px-2.5 py-1 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 rounded-xl text-xs shrink-0 select-none">
-              <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                <BarChart2 className="w-3.5 h-3.5" />
-                <div>
-                  <div className="text-[8px] text-slate-400 font-medium leading-none mb-0.5">Average Daily Present</div>
-                  <div className="font-bold text-emerald-600 dark:text-emerald-400 text-xs leading-none">{chart.headerKpi.average || "276 / 300"}</div>
+              {chart.headerKpi.average && (
+                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                  <BarChart2 className="w-3.5 h-3.5" />
+                  <div>
+                    <div className="text-[8px] text-slate-400 font-medium leading-none mb-0.5">
+                      {chart.headerKpi.averageLabel || "Average"}
+                    </div>
+                    <div className="font-bold text-emerald-600 dark:text-emerald-400 text-xs leading-none">
+                      {chart.headerKpi.average}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
               {chart.headerKpi.highest && (
                 <>
-                  <div className="w-px h-5 bg-slate-200 dark:bg-zinc-700" />
+                  {chart.headerKpi.average && <div className="w-px h-5 bg-slate-200 dark:bg-zinc-700" />}
                   <div>
                     <div className="text-[8px] text-slate-400 font-medium leading-none mb-0.5">Highest</div>
                     <div className="font-bold text-slate-800 dark:text-zinc-200 text-[10px] leading-none">{chart.headerKpi.highest}</div>
@@ -286,7 +295,7 @@ export function ChartBlock({
               )}
               {chart.headerKpi.lowest && (
                 <>
-                  <div className="w-px h-5 bg-slate-200 dark:bg-zinc-700" />
+                  {(chart.headerKpi.average || chart.headerKpi.highest) && <div className="w-px h-5 bg-slate-200 dark:bg-zinc-700" />}
                   <div>
                     <div className="text-[8px] text-slate-400 font-medium leading-none mb-0.5">Lowest</div>
                     <div className="font-bold text-slate-800 dark:text-zinc-200 text-[10px] leading-none">{chart.headerKpi.lowest}</div>
@@ -305,6 +314,7 @@ export function ChartBlock({
             </div>
           ) : null}
         </div>
+        )}
 
         {/* Chart Render Area */}
         <div className="flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden py-0.5">

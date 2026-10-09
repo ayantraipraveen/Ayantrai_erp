@@ -293,14 +293,19 @@ export default function ChartRenderer({
       }));
       if (chart.yAxis?.step && chart.yAxis.step > 0) {
         const step = chart.yAxis.step;
-        const tickVals: number[] = [];
-        for (let v = d.yMin; v <= d.yMax; v += step) {
-          tickVals.push(v);
+        const count = Math.floor((d.yMax - d.yMin) / step);
+        if (count >= 0 && count <= 50) {
+          const generated = Array.from({ length: count + 1 }, (_, i) => {
+            const v = d.yMin + i * step;
+            return {
+              y: 114 - ((v - d.yMin) / yRange) * 88,
+              label: formatYTick(v, d.unit),
+            };
+          });
+          if (generated.length > 0) {
+            yTicks = generated;
+          }
         }
-        yTicks = tickVals.map((v) => ({
-          y: 114 - ((v - d.yMin) / yRange) * 88,
-          label: formatYTick(v, d.unit),
-        }));
       }
 
       const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
@@ -904,16 +909,32 @@ export default function ChartRenderer({
       const bw = Math.max(3, Math.min(22, (totalSlotWidth - (numSeries - 1) * barGap) / numSeries));
       const groupWidth = numSeries * bw + (numSeries - 1) * barGap;
 
-      const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 114 - r * 88,
-        label: formatYTick(d.yMin + r * yRange, d.unit),
-      }));
+      let yTicks: { y: number; label: string }[] = [];
+      const stepVal = chart.yAxis?.step;
+      if (stepVal && stepVal > 0) {
+        const count = Math.round((d.yMax - d.yMin) / stepVal);
+        if (count >= 0 && count <= 50) {
+          yTicks = Array.from({ length: count + 1 }, (_, i) => {
+            const v = d.yMin + i * stepVal;
+            return {
+              y: 114 - ((v - d.yMin) / yRange) * 88,
+              label: formatYTick(v, d.unit),
+            };
+          });
+        }
+      }
+      if (yTicks.length === 0) {
+        yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
+          y: 114 - r * 88,
+          label: formatYTick(d.yMin + r * yRange, d.unit),
+        }));
+      }
 
       const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
       return (
         <div className={chartWrapperClass}>
-          {d.showLegend && (
+          {d.showLegend && chart.options?.legendPosition !== "header" && (
             <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap max-w-full px-2`}>
               {seriesInfo.map((sData, sIdx) => (
                 <div key={sData.s.id || sIdx} className="flex items-center gap-1.5 min-w-0 max-w-[140px] sm:max-w-none flex-shrink-0">
@@ -964,19 +985,19 @@ export default function ChartRenderer({
                           <text
                             x={bx + bw / 2}
                             y={114 - h - 3}
-                            fontSize={numSeries > 3 ? +(svgValueSize * 0.9).toFixed(1) : svgValueSize}
+                            fontSize={numSeries > 3 ? +(svgValueSize * 0.82).toFixed(1) : +(svgValueSize * 0.88).toFixed(1)}
                             fontWeight="bold"
                             textAnchor="middle"
                             fill={barColor}
                           >
-                            {val}
+                            {formatDataValue(val, d.unit, n > 5)}
                           </text>
                         )}
                       </React.Fragment>
                     );
                   })}
                   <line x1={xCenter} y1="114" x2={xCenter} y2="118" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={xCenter} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
+                  <text x={xCenter} y={130} fontSize={n > 6 ? Math.max(4.6, svgTickSize * 0.88) : svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">{cat}</text>
                 </g>
               );
             })}
@@ -1668,22 +1689,59 @@ export default function ChartRenderer({
           ];
 
       return (
-        <div className="w-full h-full min-h-0 overflow-auto custom-scrollbar p-1">
-          <table className="w-full text-left border-collapse text-[10px] sm:text-xs">
+        <div className="w-full h-full min-h-0 overflow-hidden flex flex-col justify-start p-0 rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900/40">
+          <table className="w-full text-left border-collapse text-[9.5px] sm:text-[10px] leading-tight">
             <thead>
-              <tr className="border-b border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/70 dark:bg-zinc-900/60 sticky top-0">
+              <tr className="border-b border-slate-200/80 dark:border-zinc-800/80 bg-slate-50/80 dark:bg-zinc-900/80">
                 {headers.map((h, i) => {
                   const headerTitle = typeof h === "string" ? h : (h?.label || h?.id || `Col ${i + 1}`);
+                  const colAlign = typeof h === "object" ? h?.align || (i === 0 ? "left" : "center") : (i === 0 ? "left" : "center");
+                  const colIconName = typeof h === "object" ? h?.icon : undefined;
+                  const colIconBg = typeof h === "object" ? h?.iconBg : undefined;
+                  const colIconColor = typeof h === "object" ? h?.iconColor : undefined;
+                  const colWidth = typeof h === "object" ? h?.width : undefined;
+                  const ColIcon = colIconName ? getMetricIconComponent(colIconName) : null;
+
                   return (
-                    <th key={i} className="py-1.5 px-2 font-bold text-slate-500 dark:text-zinc-400 uppercase tracking-wider">
-                      {headerTitle}
+                    <th
+                      key={i}
+                      style={{ width: colWidth }}
+                      className={`py-2 px-2.5 font-bold text-slate-700 dark:text-zinc-300 text-[10px] tracking-tight ${
+                        colAlign === "center" ? "text-center" : colAlign === "right" ? "text-right" : "text-left"
+                      }`}
+                    >
+                      <div className={`flex items-center gap-1.5 ${
+                        colAlign === "center" ? "justify-center" : colAlign === "right" ? "justify-end" : "justify-start"
+                      }`}>
+                        {ColIcon && (() => {
+                          const isHexBg = colIconBg?.startsWith("#");
+                          const isHexColor = colIconColor?.startsWith("#");
+                          return (
+                            <span
+                              style={{
+                                backgroundColor: isHexBg ? colIconBg : undefined,
+                                color: isHexColor ? colIconColor : undefined,
+                              }}
+                              className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
+                                isHexBg ? "" : (colIconBg || "bg-blue-100")
+                              } ${
+                                isHexColor ? "" : (colIconColor || "text-blue-600")
+                              }`}
+                            >
+                              <ColIcon className="w-2.5 h-2.5" />
+                            </span>
+                          );
+                        })()}
+                        <span>{headerTitle}</span>
+                      </div>
                     </th>
                   );
                 })}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800/60 font-medium text-slate-700 dark:text-zinc-200">
+            <tbody className="divide-y divide-slate-100/90 dark:divide-zinc-800/60 font-medium text-slate-700 dark:text-zinc-200">
               {pts.map((pt, rIdx) => {
+                const isTotalRow = Boolean(pt.isTotal || pt.label === "Total" || pt.id === "total");
                 const rowCells = pt.rowValues && pt.rowValues.length > 0
                   ? pt.rowValues
                   : [
@@ -1695,28 +1753,47 @@ export default function ChartRenderer({
                     ];
 
                 return (
-                  <tr key={pt.id || rIdx} className="hover:bg-slate-50/60 dark:hover:bg-zinc-800/40 transition-colors">
-                    {rowCells.map((cell, cIdx) => (
-                      <td key={cIdx} className="py-1.5 px-2 whitespace-nowrap">
-                        {cIdx === rowCells.length - 1 && typeof cell === "string" && ["Optimal", "Normal", "Review", "Warning", "Critical"].includes(cell) ? (
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                              cell === "Optimal"
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                : cell === "Normal"
-                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                                : cell === "Review" || cell === "Warning"
-                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                            }`}
-                          >
-                            {cell}
-                          </span>
-                        ) : (
-                          String(cell ?? "")
-                        )}
-                      </td>
-                    ))}
+                  <tr
+                    key={pt.id || rIdx}
+                    className={`transition-colors ${
+                      isTotalRow
+                        ? "bg-blue-50/70 dark:bg-blue-950/40 font-bold border-t-2 border-slate-200/90 dark:border-zinc-700"
+                        : "hover:bg-slate-50/60 dark:hover:bg-zinc-800/40"
+                    }`}
+                  >
+                    {rowCells.map((cell, cIdx) => {
+                      const h = headers[cIdx];
+                      const colAlign = typeof h === "object" ? h?.align || (cIdx === 0 ? "left" : "center") : (cIdx === 0 ? "left" : "center");
+                      const customColor = pt.customCellColors?.[cIdx];
+
+                      return (
+                        <td
+                          key={cIdx}
+                          className={`py-1.5 px-2.5 whitespace-nowrap text-[10px] ${
+                            colAlign === "center" ? "text-center" : colAlign === "right" ? "text-right" : "text-left"
+                          } ${isTotalRow ? "text-slate-900 dark:text-white font-bold" : ""}`}
+                          style={{ color: customColor }}
+                        >
+                          {cIdx === rowCells.length - 1 && typeof cell === "string" && ["Optimal", "Normal", "Review", "Warning", "Critical"].includes(cell) ? (
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                cell === "Optimal"
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                  : cell === "Normal"
+                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                  : cell === "Review" || cell === "Warning"
+                                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                              }`}
+                            >
+                              {cell}
+                            </span>
+                          ) : (
+                            String(cell ?? "")
+                          )}
+                        </td>
+                      );
+                    })}
                   </tr>
                 );
               })}
@@ -1739,10 +1816,26 @@ export default function ChartRenderer({
       const yRange = (d.yMax - d.yMin) || 1;
       const bw = Math.min(36, Math.max(12, (360 / n) * 0.65));
 
-      const yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
-        y: 114 - r * 88,
-        label: formatYTick(d.yMin + r * yRange, d.unit),
-      }));
+      let yTicks: { y: number; label: string }[] = [];
+      const stepVal = chart.yAxis?.step;
+      if (stepVal && stepVal > 0) {
+        const count = Math.round((d.yMax - d.yMin) / stepVal);
+        if (count >= 0 && count <= 50) {
+          yTicks = Array.from({ length: count + 1 }, (_, i) => {
+            const v = d.yMin + i * stepVal;
+            return {
+              y: 114 - ((v - d.yMin) / yRange) * 88,
+              label: formatYTick(v, d.unit),
+            };
+          });
+        }
+      }
+      if (yTicks.length === 0) {
+        yTicks = [0, 0.25, 0.5, 0.75, 1.0].map((r) => ({
+          y: 114 - r * 88,
+          label: formatYTick(d.yMin + r * yRange, d.unit),
+        }));
+      }
 
       const yHeader = getYAxisHeader(d.yAxisTitle, d.unit);
 
@@ -1772,14 +1865,14 @@ export default function ChartRenderer({
 
               return (
                 <g key={i}>
-                  <rect x={x - bw / 2} y={114 - barH} width={bw} height={barH} rx="4" fill={barColor} />
+                  <rect x={x - bw / 2} y={114 - barH} width={bw} height={barH} rx="3" fill={barColor} />
                   {d.showValues && (
                     <text x={x} y={114 - barH - 4} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={barColor}>
                       {formatDataValue(v, d.unit, n > 6)}
                     </text>
                   )}
                   <line x1={x} y1="114" x2={x} y2="118" stroke="currentColor" strokeOpacity="0.3" />
-                  <text x={x} y={130} fontSize={svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">
+                  <text x={x} y={130} fontSize={n > 6 ? Math.max(4.6, svgTickSize * 0.88) : svgTickSize} textAnchor="middle" fill="currentColor" fillOpacity="0.55">
                     {d.categories[i]}
                   </text>
                 </g>

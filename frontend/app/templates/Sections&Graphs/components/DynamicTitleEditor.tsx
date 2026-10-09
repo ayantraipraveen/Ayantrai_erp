@@ -51,7 +51,7 @@ export const TITLE_THEME_COLORS = [
 ];
 
 export interface DynamicTextEditorProps {
-  initialValue: string;
+  initialValue?: string;
   initialHtml?: string;
   isDarkPaper?: boolean;
   defaultFontSize?: number;
@@ -704,7 +704,7 @@ useEffect(() => {
         }
       }
     }
-    onSave(isActuallyEmpty ? "" : (plainText || initialValue), isActuallyEmpty ? "" : html);
+    onSave(isActuallyEmpty ? "" : (plainText || initialValue || ""), isActuallyEmpty ? "" : html);
   };
 
   return (

@@ -1554,7 +1554,7 @@ export default function SectionCanvasEditor({
             setCardLabel(cell.metricCard.label);
             setCardValue(cell.metricCard.value);
             setCardTint(cell.metricCard.tintColor);
-            setCardTrendDir(cell.metricCard.trendDirection);
+            setCardTrendDir(cell.metricCard.trendDirection ?? "no-change");
             setCardTrendVal(cell.metricCard.trendValue);
             setCardModalOpen(true);
           }

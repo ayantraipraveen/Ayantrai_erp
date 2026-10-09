@@ -272,6 +272,7 @@ export type PaletteRamp =
   | "green"
   | "purple"
   | "red"
+  | "rose"
   | "amber"
   | "emerald"
   | "cyan"
@@ -284,7 +285,7 @@ export interface LibraryMetricCard {
   value: string;
   dataSourceField?: string;
   tintColor: PaletteRamp;
-  trendDirection: "up" | "down" | "no-change";
+  trendDirection?: "up" | "down" | "no-change";
   trendValue: string;
   icon?: string;
   trendSubtitle?: string;
@@ -380,6 +381,7 @@ export interface LibraryChartCard {
   gridCols?: number;
   headerKpi?: {
     average?: string;
+    averageLabel?: string;
     highest?: string;
     lowest?: string;
   };
@@ -445,6 +447,7 @@ export interface KeyInsightBulletItem {
   subItems?: string[];
   // Dynamic bullet marker & visual styling overrides:
   bulletStyle?: BulletMarkerStyle;
+  bulletMarkerStyle?: BulletMarkerStyle;
   bulletShape?: "circle" | "rounded" | "square" | "none";
   icon?: string; // Lucide icon name, e.g. "CheckCircle2", "Lightbulb", "AlertTriangle"
   customColor?: string; // Hex color for text/glyph e.g. "#ffffff" or "#2563eb"
@@ -475,6 +478,7 @@ export interface LibraryKeyInsightItem {
   gap?: number; // px e.g. 8, 12, 16, 20
   padding?: number; // px e.g. 8, 12, 16, 20
   bulletStyle?: BulletMarkerStyle; // Global bullet style for all items
+  bulletMarkerStyle?: BulletMarkerStyle;
   bulletSize?: number; // px e.g. 16, 20, 24, 28, 32
   bulletShape?: "circle" | "rounded" | "square" | "none";
   customHeight?: number; // px custom height e.g. 180, 240
@@ -489,6 +493,8 @@ export interface LibraryKeyInsightItem {
   textColor?: string;
   badgeColor?: string; // Global glyph color
   badgeBg?: string; // Global shape background color
+  bulletColor?: string; // Alias for badgeColor
+  bulletBg?: string; // Alias for badgeBg
 }
 
 // ── Canvas Row / Cell Types (Canva-like Section Editor) ──────────────────────

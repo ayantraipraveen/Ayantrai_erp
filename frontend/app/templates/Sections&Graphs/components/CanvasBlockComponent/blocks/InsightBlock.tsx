@@ -634,8 +634,8 @@ export function InsightBlock({
         <div className="w-full h-auto min-h-fit space-y-1">
           <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-200/80 dark:border-zinc-800">
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md bg-[#2563eb] text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
-                <FileText className="w-3 h-3" />
+              <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 flex items-center justify-center font-bold shrink-0">
+                <BadgeIcon name={insight.icon || "Lightbulb"} size={14} className="w-3.5 h-3.5" />
               </div>
               <div>
                 {!isPreview && editingTarget === "title" ? (
@@ -692,13 +692,13 @@ export function InsightBlock({
                 <div
                   key={item.id}
                   onClick={() => setSelectedItemId(item.id)}
-                  className={`relative group/row flex items-start gap-1.5 ${takeawayFontSizeClass} text-slate-700 dark:text-zinc-300 py-[1.5px] cursor-pointer`}
+                  className={`relative group/row flex items-start gap-2 ${takeawayFontSizeClass} text-slate-700 dark:text-zinc-300 py-[1.5px] cursor-pointer`}
                 >
                   {renderBulletBadge({
                     item,
                     idx,
                     insight,
-                    defaultSize: 16,
+                    defaultSize: insight.bulletSize || 18,
                     defaultBgClass: defaultColor,
                   })}
 
@@ -895,17 +895,18 @@ export function InsightBlock({
 
     // 6. Executive Quote Card
     if (variant === "quote-card") {
+      const isCompactCard = (insight.customHeight !== undefined && insight.customHeight <= 85) || (cell.customHeight !== undefined && cell.customHeight <= 85);
       return (
-        <div className="w-full h-full flex flex-col justify-between relative">
-          <span className="text-3xl font-serif font-black text-blue-400/80 leading-none">“</span>
-          <div className="py-2 px-4 text-center">
+        <div className={`w-full h-full flex flex-col justify-between relative ${isCompactCard ? "py-1 px-2.5" : "p-2"}`}>
+          <span className={`${isCompactCard ? "text-xl leading-none" : "text-3xl leading-none"} font-serif font-black text-blue-400/80 select-none`}>“</span>
+          <div className={`${isCompactCard ? "py-0 px-2" : "py-2 px-4"} text-center flex-1 flex flex-col justify-center`}>
             {!isPreview && editingTarget === "quote" ? (
               <DynamicTextEditor
                 initialValue={insight.text}
-                defaultFontSize={14}
+                defaultFontSize={isCompactCard ? 10.5 : 14}
                 multiline={true}
                 toolbarPosition="top"
-                className="font-serif italic text-sm sm:text-base font-semibold text-center text-blue-950 dark:text-blue-200"
+                className={`font-serif italic ${isCompactCard ? "text-[10px] leading-tight" : "text-sm sm:text-base"} font-semibold text-center text-blue-950 dark:text-blue-200`}
                 onSave={(plain) => {
                   handleUpdate({ text: plain });
                   finishEdit();
@@ -916,14 +917,14 @@ export function InsightBlock({
               <blockquote
                 onDoubleClick={() => startEdit("quote")}
                 title={!isPreview ? "Double-click to edit quote" : undefined}
-                className={`font-serif italic text-sm sm:text-base font-bold text-blue-950 dark:text-blue-200 leading-relaxed cursor-text ${!isPreview ? "hover:bg-blue-500/5 rounded p-2" : ""}`}
+                className={`font-serif italic ${isCompactCard ? "text-[10.5px] leading-snug" : "text-sm sm:text-base"} font-semibold text-blue-950 dark:text-blue-200 cursor-text select-text ${!isPreview ? "hover:bg-blue-500/5 rounded p-0.5" : ""}`}
               >
                 {insight.text || "Consistent attendance builds safer sites and stronger teams."}
               </blockquote>
             )}
-            <div className="w-10 h-0.5 bg-blue-600 rounded-full mx-auto mt-3" />
+            <div className={`${isCompactCard ? "w-8 h-0.5 mt-1" : "w-10 h-0.5 mt-3"} bg-blue-600/60 rounded-full mx-auto`} />
           </div>
-          <span className="text-3xl font-serif font-black text-blue-400/80 leading-none self-end rotate-180">“</span>
+          <span className={`${isCompactCard ? "text-xl leading-none" : "text-3xl leading-none"} font-serif font-black text-blue-400/80 self-end rotate-180 select-none`}>“</span>
         </div>
       );
     }
@@ -1525,13 +1526,17 @@ export function InsightBlock({
     );
   };
 
+  const isCompactQuote = (insight.customHeight !== undefined && insight.customHeight <= 85) || (cell.customHeight !== undefined && cell.customHeight <= 85);
+
   const defaultContainerClass =
     variant === "vertical-takeaways"
       ? "rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-[#f8fafc]/90 dark:bg-[#0c1017] p-3.5"
       : variant === "narrative-summary"
       ? "rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-[#f8fafc]/90 dark:bg-[#0c1017] p-3"
       : variant === "quote-card"
-      ? "rounded-2xl border border-blue-200/60 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/60 via-white to-sky-50/40 dark:from-blue-950/30 dark:via-zinc-950 dark:to-zinc-900 p-6"
+      ? `rounded-2xl border border-blue-200/60 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/60 via-white to-sky-50/40 dark:from-blue-950/30 dark:via-zinc-950 dark:to-zinc-900 ${
+          isCompactQuote ? "p-2 sm:p-2.5" : "p-6"
+        }`
       : variant === "vision-banner"
       ? "rounded-2xl border border-blue-200/80 dark:border-blue-900/50 bg-gradient-to-r from-blue-50 via-sky-50 to-indigo-50/50 dark:from-blue-950/40 dark:via-zinc-950 dark:to-zinc-900 p-4 sm:p-5"
       : variant === "risk-factors"
