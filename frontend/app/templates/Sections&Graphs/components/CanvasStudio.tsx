@@ -1259,12 +1259,7 @@ export function CanvasStudio({
                           A4 595×842
                         </span>
 
-                        {/* Mandatory indicator on Page 1 or quick restore buttons on Page 2+ */}
-                        {isFirstPage ? (
-                          <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 px-2 py-0.5 rounded font-semibold">
-                            Header & Title: Mandatory
-                          </span>
-                        ) : (
+                      
                           <div className="flex items-center gap-1.5">
                             {isReportHeaderHidden && (
                               <button
@@ -1295,7 +1290,6 @@ export function CanvasStudio({
                               </button>
                             )}
                           </div>
-                        )}
                       </div>
 
                       {pages.length > 1 && (

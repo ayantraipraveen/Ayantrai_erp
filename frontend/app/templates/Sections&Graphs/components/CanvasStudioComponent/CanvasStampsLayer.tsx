@@ -8,8 +8,11 @@ import {
   Check,
   ArrowUp,
   ArrowDown,
+  ArrowLeft,
+  ArrowRight,
   ChevronsUp,
   ChevronsDown,
+  ZoomIn,
 } from "lucide-react";
 import {
   CanvasCoordinateStamp,
@@ -135,6 +138,21 @@ export function CanvasStampsLayer({
         onUpdateStamp(stamp.id, { zIndex: Math.max(1, curZ - 1) });
       }
     }
+  };
+
+  // Zoom menu popup state for a stamp
+  const [activeZoomMenuId, setActiveZoomMenuId] = useState<string | null>(null);
+
+  const handleUpdateScale = (stamp: CanvasCoordinateStamp, nextScale: number) => {
+    const rounded = Math.round(nextScale * 100) / 100;
+    const patch: Partial<CanvasCoordinateStamp> = { scale: rounded };
+    if (stamp.chart) {
+      patch.chart = { ...stamp.chart, scale: rounded };
+    }
+    if (stamp.metricCard) {
+      patch.metricCard = { ...stamp.metricCard };
+    }
+    onUpdateStamp?.(stamp.id, patch);
   };
 
   // Dragging state
@@ -354,12 +372,56 @@ export function CanvasStampsLayer({
           }
         }
 
-        onUpdateStamp(resizingId, {
-          x: Math.round(newX),
-          y: Math.round(newY),
-          width: Math.round(newW),
-          height: Math.round(newH),
-        });
+        const finalW = Math.round(newW);
+        const finalH = Math.round(newH);
+        const finalX = Math.round(newX);
+        const finalY = Math.round(newY);
+
+        const currentStamp = pageStamps.find((s) => s.id === resizingId);
+        const patch: Partial<CanvasCoordinateStamp> = {
+          x: finalX,
+          y: finalY,
+          width: finalW,
+          height: finalH,
+        };
+
+        if (currentStamp?.chart) {
+          patch.chart = {
+            ...currentStamp.chart,
+            customWidth: finalW,
+            customHeight: finalH,
+          };
+        }
+        if (currentStamp?.metricCard) {
+          patch.metricCard = {
+            ...currentStamp.metricCard,
+            customWidth: finalW,
+            customHeight: finalH,
+          };
+        }
+        if (currentStamp?.insight) {
+          patch.insight = {
+            ...currentStamp.insight,
+            customWidth: finalW,
+            customHeight: finalH,
+          };
+        }
+        if (currentStamp?.textBlock) {
+          patch.textBlock = {
+            ...currentStamp.textBlock,
+            customWidth: finalW,
+            customHeight: finalH,
+          };
+        }
+        if (currentStamp?.badgeStrip) {
+          patch.badgeStrip = {
+            ...currentStamp.badgeStrip,
+            customWidth: finalW,
+            customHeight: finalH,
+          };
+        }
+
+        onUpdateStamp(resizingId, patch);
       }
 
       // 3. Rotate on Axis
@@ -443,6 +505,36 @@ export function CanvasStampsLayer({
         return;
       }
 
+      // Precision 1px nudge via Keyboard Arrow Keys (Shift for 10px fast movement)
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const newY = Math.max(0, currentStamp.y - step);
+        onUpdateStamp?.(currentStamp.id, { y: newY });
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const newY = Math.min(842, currentStamp.y + step);
+        onUpdateStamp?.(currentStamp.id, { y: newY });
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const newX = Math.max(0, currentStamp.x - step);
+        onUpdateStamp?.(currentStamp.id, { x: newX });
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        const step = e.shiftKey ? 10 : 1;
+        const newX = Math.min(595, currentStamp.x + step);
+        onUpdateStamp?.(currentStamp.id, { x: newX });
+        return;
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.key === "]") {
         e.preventDefault();
         if (e.shiftKey) {
@@ -457,11 +549,35 @@ export function CanvasStampsLayer({
         } else {
           handleSendBackward(currentStamp);
         }
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === "=" || e.key === "+")) {
+        e.preventDefault();
+        const curr = currentStamp.scale ?? currentStamp.chart?.scale ?? 1;
+        const next = Math.min(2.0, Math.round((curr + 0.1) * 10) / 10);
+        handleUpdateScale(currentStamp, next);
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === "-" || e.key === "_")) {
+        e.preventDefault();
+        const curr = currentStamp.scale ?? currentStamp.chart?.scale ?? 1;
+        const next = Math.max(0.5, Math.round((curr - 0.1) * 10) / 10);
+        handleUpdateScale(currentStamp, next);
+      } else if ((e.ctrlKey || e.metaKey) && e.key === "0") {
+        e.preventDefault();
+        handleUpdateScale(currentStamp, 1.0);
+      }
+    };
+
+    const handlePointerDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest(".stamp-toolbar-portal")) {
+        setActiveZoomMenuId(null);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("mousedown", handlePointerDown);
+    };
   }, [activeSelectedId, activeIsPreview, pageStamps]);
 
   if (pageStamps.length === 0) return null;
@@ -500,6 +616,7 @@ export function CanvasStampsLayer({
         const height = stamp.height || defaultH;
         const rotation = stamp.rotation || 0;
         const opacity = (stamp.opacity ?? 100) / 100;
+        const currentScale = stamp.scale ?? stamp.chart?.scale ?? 1;
 
         // Calculate layered stacking zIndex
         const baseZ = isBack ? (stamp.zIndex ?? 6) : (stamp.zIndex ?? 25);
@@ -530,19 +647,26 @@ export function CanvasStampsLayer({
           >
             {/* ── 1. Floating Block with Full Visual Fidelity & Word-Style Inline Editing ── */}
             {isCard && (
-              <div style={{ opacity }} className="w-full h-full select-none overflow-hidden flex flex-col pointer-events-auto">
+              <div
+                style={{
+                  opacity,
+                  transform: (!isChart && currentScale !== 1) ? `scale(${currentScale})` : undefined,
+                  transformOrigin: "center center",
+                }}
+                className="w-full h-full select-none overflow-hidden flex flex-col pointer-events-auto"
+              >
                 <CanvasBlockRenderer
                   cell={{
                     id: stamp.sourceId || stamp.id,
                     colSpan: 1,
-                    customWidth: undefined,
+                    customWidth: width,
                     customHeight: height,
                     blockType: (stamp.elementType || (stamp.chart ? "chart" : stamp.metricCard ? "metric-card" : stamp.insight ? "insight" : stamp.textBlock ? "text" : stamp.badgeStrip ? "badge-strip" : stamp.divider ? "divider" : stamp.element ? "element" : "text")) as CanvasBlockType,
-                    metricCard: stamp.metricCard,
-                    chart: stamp.chart,
-                    insight: stamp.insight,
-                    textBlock: stamp.textBlock,
-                    badgeStrip: stamp.badgeStrip,
+                    metricCard: stamp.metricCard ? { ...stamp.metricCard, customWidth: width, customHeight: height } : undefined,
+                    chart: stamp.chart ? { ...stamp.chart, customWidth: width, customHeight: height, scale: currentScale } : undefined,
+                    insight: stamp.insight ? { ...stamp.insight, customWidth: width, customHeight: height } : undefined,
+                    textBlock: stamp.textBlock ? { ...stamp.textBlock, customWidth: width, customHeight: height } : undefined,
+                    badgeStrip: stamp.badgeStrip ? { ...stamp.badgeStrip, customWidth: width, customHeight: height } : undefined,
                     divider: stamp.divider,
                     element: stamp.element,
                   }}
@@ -563,6 +687,7 @@ export function CanvasStampsLayer({
                       onUpdateStamp(stamp.id, {
                         name: chart.title || stamp.name,
                         chart,
+                        scale: chart.scale ?? stamp.scale,
                         width: chart.customWidth ?? stamp.width,
                         height: chart.customHeight ?? stamp.height,
                       });
@@ -634,7 +759,11 @@ export function CanvasStampsLayer({
             {/* ── 2. Transparent SVG Decorative Stamp ── */}
             {!isCard && (
               <div
-                style={{ opacity }}
+                style={{
+                  opacity,
+                  transform: currentScale !== 1 ? `scale(${currentScale})` : undefined,
+                  transformOrigin: "center center",
+                }}
                 className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full select-none pointer-events-none"
                 dangerouslySetInnerHTML={{ __html: stamp.svgContent || stamp.element?.svgContent || "" }}
               />
@@ -712,6 +841,106 @@ export function CanvasStampsLayer({
                     {Math.round(width)}×{Math.round(height)}
                   </span>
 
+                  {/* Zoom Stepper & Quick Presets Menu */}
+                  <div className="relative flex items-center border-r border-slate-200 dark:border-zinc-800 pr-1 mr-0.5 gap-0.5" title="Element Zoom & Scale (Ctrl +/-)">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const next = Math.max(0.5, Math.round((currentScale - 0.1) * 10) / 10);
+                        handleUpdateScale(stamp, next);
+                      }}
+                      className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors text-[11px] font-bold"
+                      title="Zoom Out (Ctrl+Minus, min 50%)"
+                    >
+                      -
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveZoomMenuId(activeZoomMenuId === stamp.id ? null : stamp.id);
+                      }}
+                      className={`px-1 py-0.5 rounded text-[9.5px] font-mono font-bold flex items-center gap-0.5 cursor-pointer transition-colors ${
+                        currentScale !== 1
+                          ? "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-extrabold"
+                          : "hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+                      }`}
+                      title="Click for Zoom Presets & Slider"
+                    >
+                      <ZoomIn className="w-2.5 h-2.5 text-purple-600" />
+                      <span>{Math.round(currentScale * 100)}%</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const next = Math.min(2.0, Math.round((currentScale + 0.1) * 10) / 10);
+                        handleUpdateScale(stamp, next);
+                      }}
+                      className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors text-[11px] font-bold"
+                      title="Zoom In (Ctrl+Plus, max 200%)"
+                    >
+                      +
+                    </button>
+
+                    {/* Quick Zoom Presets Popover */}
+                    {activeZoomMenuId === stamp.id && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 bg-white/95 dark:bg-[#0c1017]/95 backdrop-blur-md border border-slate-200 dark:border-zinc-800 rounded-xl p-2.5 shadow-2xl z-30 min-w-[190px] flex flex-col gap-2"
+                      >
+                        <div className="flex items-center justify-between text-[10px] font-semibold text-slate-700 dark:text-zinc-300">
+                          <span className="flex items-center gap-1">
+                            <ZoomIn className="w-3 h-3 text-[#9D61FF]" />
+                            <span>Element Zoom</span>
+                          </span>
+                          <span className="font-mono font-bold text-[#9D61FF] bg-purple-50 dark:bg-purple-950/50 px-1 rounded">
+                            {Math.round(currentScale * 100)}%
+                          </span>
+                        </div>
+
+                        {/* Interactive Slider */}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[8px] text-slate-400 font-mono">50%</span>
+                          <input
+                            type="range"
+                            min="0.5"
+                            max="2.0"
+                            step="0.05"
+                            value={currentScale}
+                            onChange={(e) => handleUpdateScale(stamp, parseFloat(e.target.value))}
+                            className="flex-1 h-1 bg-slate-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[#9D61FF]"
+                          />
+                          <span className="text-[8px] text-slate-400 font-mono">200%</span>
+                        </div>
+
+                        {/* Preset Chips */}
+                        <div className="grid grid-cols-3 gap-1">
+                          {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => {
+                                handleUpdateScale(stamp, preset);
+                              }}
+                              className={`py-0.5 px-1 rounded text-[9px] font-mono font-semibold transition-colors cursor-pointer text-center ${
+                                Math.abs(currentScale - preset) < 0.02
+                                  ? "bg-[#9D61FF] text-white shadow-2xs font-bold"
+                                  : "bg-slate-100 dark:bg-zinc-800 hover:bg-purple-100 dark:hover:bg-purple-950/40 text-slate-600 dark:text-zinc-300"
+                              }`}
+                            >
+                              {preset === 1.0 ? "100% Reset" : `${Math.round(preset * 100)}%`}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Stacking Controls */}
                   <div className="flex items-center gap-0.5">
                     <button
@@ -741,22 +970,55 @@ export function CanvasStampsLayer({
                       <span>Back</span>
                     </button>
 
-                    <div className="flex items-center border-l border-slate-200 dark:border-zinc-800 pl-0.5 ml-0.5 gap-0.5">
+                    {/* 1px Precision Drag/Nudge Controls */}
+                    <div className="flex items-center border-l border-slate-200 dark:border-zinc-800 pl-0.5 ml-0.5 gap-0.5" title="Move 1px (Arrow keys, Shift for 10px)">
                       <button
                         type="button"
-                        onClick={(e) => handleBringForward(stamp, e)}
-                        className="w-4 h-4 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 cursor-pointer"
-                        title="Bring Forward 1 level (Ctrl+])"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const step = e.shiftKey ? 10 : 1;
+                          onUpdateStamp?.(stamp.id, { x: Math.max(0, stamp.x - step) });
+                        }}
+                        className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors"
+                        title="Nudge 1px Left (ArrowLeft, Shift for 10px)"
+                      >
+                        <ArrowLeft className="w-2.5 h-2.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const step = e.shiftKey ? 10 : 1;
+                          onUpdateStamp?.(stamp.id, { y: Math.max(0, stamp.y - step) });
+                        }}
+                        className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors"
+                        title="Nudge 1px Up (ArrowUp, Shift for 10px)"
                       >
                         <ArrowUp className="w-2.5 h-2.5" />
                       </button>
                       <button
                         type="button"
-                        onClick={(e) => handleSendBackward(stamp, e)}
-                        className="w-4 h-4 rounded hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 cursor-pointer"
-                        title="Send Backward 1 level (Ctrl+[)"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const step = e.shiftKey ? 10 : 1;
+                          onUpdateStamp?.(stamp.id, { y: Math.min(842, stamp.y + step) });
+                        }}
+                        className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors"
+                        title="Nudge 1px Down (ArrowDown, Shift for 10px)"
                       >
                         <ArrowDown className="w-2.5 h-2.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const step = e.shiftKey ? 10 : 1;
+                          onUpdateStamp?.(stamp.id, { x: Math.min(595, stamp.x + step) });
+                        }}
+                        className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors"
+                        title="Nudge 1px Right (ArrowRight, Shift for 10px)"
+                      >
+                        <ArrowRight className="w-2.5 h-2.5" />
                       </button>
                     </div>
                   </div>

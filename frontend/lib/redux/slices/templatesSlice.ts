@@ -129,7 +129,7 @@ export const approveTemplateAsync = createAsyncThunk<
   { rejectValue: string }
 >(
   "templates/approveTemplateAsync",
-  async ({ template, superadminName = "Superadmin Governance" }, { dispatch }) => {
+  async ({ template, superadminName = "Superadmin Governance" }, { dispatch, rejectWithValue }) => {
     try {
       const res = await templateApi.approveTemplate(
         template.id,
@@ -142,14 +142,16 @@ export const approveTemplateAsync = createAsyncThunk<
         })
       );
       return { templateId: template.id, superadminName, updatedTemplate: res?.data };
-    } catch {
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || `Failed to approve "${template.name}"`;
       dispatch(
         showGlobalToast({
-          message: `Template "${template.name}" approved!`,
-          type: "success",
+          message,
+          type: "error",
         })
       );
-      return { templateId: template.id, superadminName };
+      return rejectWithValue(message);
     }
   }
 );
@@ -163,7 +165,7 @@ export const rejectTemplateAsync = createAsyncThunk<
   { rejectValue: string }
 >(
   "templates/rejectTemplateAsync",
-  async ({ template, reason, superadminName = "Superadmin Governance" }, { dispatch }) => {
+  async ({ template, reason, superadminName = "Superadmin Governance" }, { dispatch, rejectWithValue }) => {
     try {
       await templateApi.rejectTemplate(template.id, reason);
       dispatch(
@@ -173,14 +175,16 @@ export const rejectTemplateAsync = createAsyncThunk<
         })
       );
       return { templateId: template.id, reason, superadminName };
-    } catch {
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || `Failed to reject "${template.name}"`;
       dispatch(
         showGlobalToast({
-          message: `Template "${template.name}" returned for revision.`,
-          type: "warning",
+          message,
+          type: "error",
         })
       );
-      return { templateId: template.id, reason, superadminName };
+      return rejectWithValue(message);
     }
   }
 );
@@ -190,7 +194,7 @@ export const rejectTemplateAsync = createAsyncThunk<
  */
 export const deleteTemplateAsync = createAsyncThunk<string, string, { rejectValue: string }>(
   "templates/deleteTemplateAsync",
-  async (id, { dispatch }) => {
+  async (id, { dispatch, rejectWithValue }) => {
     try {
       await templateApi.deleteTemplate(id);
       dispatch(
@@ -200,14 +204,16 @@ export const deleteTemplateAsync = createAsyncThunk<string, string, { rejectValu
         })
       );
       return id;
-    } catch {
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || "Failed to delete template blueprint";
       dispatch(
         showGlobalToast({
-          message: "Template blueprint deleted.",
+          message,
           type: "error",
         })
       );
-      return id;
+      return rejectWithValue(message);
     }
   }
 );
@@ -221,7 +227,7 @@ export const duplicateTemplateAsync = createAsyncThunk<
   { rejectValue: string }
 >(
   "templates/duplicateTemplateAsync",
-  async (id, { dispatch }) => {
+  async (id, { dispatch, rejectWithValue }) => {
     try {
       const res = await templateApi.cloneTemplate(id);
       dispatch(
@@ -231,14 +237,16 @@ export const duplicateTemplateAsync = createAsyncThunk<
         })
       );
       return { duplicatedTemplate: res?.data, originalId: id };
-    } catch {
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || "Failed to duplicate template blueprint";
       dispatch(
         showGlobalToast({
-          message: "Template blueprint duplicated to drafts.",
-          type: "success",
+          message,
+          type: "error",
         })
       );
-      return { originalId: id };
+      return rejectWithValue(message);
     }
   }
 );
@@ -248,7 +256,7 @@ export const duplicateTemplateAsync = createAsyncThunk<
  */
 export const resubmitTemplateAsync = createAsyncThunk<string, string, { rejectValue: string }>(
   "templates/resubmitTemplateAsync",
-  async (templateId, { dispatch }) => {
+  async (templateId, { dispatch, rejectWithValue }) => {
     try {
       await templateApi.resubmitTemplate(templateId);
       dispatch(
@@ -258,14 +266,16 @@ export const resubmitTemplateAsync = createAsyncThunk<string, string, { rejectVa
         })
       );
       return templateId;
-    } catch {
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || "Failed to resubmit template";
       dispatch(
         showGlobalToast({
-          message: "Template resubmitted for Superadmin review!",
-          type: "info",
+          message,
+          type: "error",
         })
       );
-      return templateId;
+      return rejectWithValue(message);
     }
   }
 );
@@ -279,7 +289,7 @@ export const updateTemplateRemarkAsync = createAsyncThunk<
   { rejectValue: string }
 >(
   "templates/updateTemplateRemarkAsync",
-  async ({ templateId, remarks }, { dispatch }) => {
+  async ({ templateId, remarks }, { dispatch, rejectWithValue }) => {
     try {
       await templateApi.updateTemplate(templateId, { description: remarks });
       dispatch(
@@ -289,14 +299,16 @@ export const updateTemplateRemarkAsync = createAsyncThunk<
         })
       );
       return { templateId, remarks };
-    } catch {
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message || err?.message || "Failed to update template remarks";
       dispatch(
         showGlobalToast({
-          message: "Template remark saved.",
-          type: "success",
+          message,
+          type: "error",
         })
       );
-      return { templateId, remarks };
+      return rejectWithValue(message);
     }
   }
 );

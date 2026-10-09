@@ -393,6 +393,7 @@ export interface LibraryChartCard {
   borderWidth?: number;
   borderRadius?: number;
   isTransparent?: boolean;
+  scale?: number;
 }
 
 export type BulletMarkerStyle =
@@ -614,6 +615,7 @@ export interface CanvasCellStyle {
   marginBottom?: number;
   marginLeft?: number;
   marginRight?: number;
+  scale?: number; // custom zoom factor (e.g. 0.5 to 2.0, default 1.0)
 }
 
 export interface CanvasCell {
@@ -672,6 +674,7 @@ export interface CanvasCoordinateStamp {
   layer: "front" | "back";
   zIndex?: number;
   locked?: boolean;
+  scale?: number;
   elementType?: "stamp" | "chart" | "metric-card" | "text" | "insight" | "badge-strip" | "divider" | "element";
   chart?: LibraryChartCard;
   metricCard?: LibraryMetricCard;

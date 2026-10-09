@@ -72,7 +72,8 @@ export function ChartBlock({
 
   if (!chart) return null;
 
-  const customHeight = chart.customHeight || cell.customHeight;
+  const customHeight = cell.customHeight ?? chart.customHeight;
+  const customWidth = cell.customWidth ?? chart.customWidth;
   const style = cell.style || {};
 
   const currentChartTypeMeta = CHART_TYPE_OPTIONS.find((c) => c.id === chart.chartType);
@@ -96,8 +97,13 @@ export function ChartBlock({
       : "Data & Points";
 
   // Dynamic responsive scaling based on customHeight and customWidth
-  const isUltraCompact = customHeight !== undefined && customHeight < 200;
-  const isCompact = (customHeight !== undefined && customHeight < 280) || isUltraCompact;
+  const isUltraCompact =
+    (customHeight !== undefined && customHeight < 190) ||
+    (customWidth !== undefined && customWidth < 280);
+  const isCompact =
+    (customHeight !== undefined && customHeight < 280) ||
+    (customWidth !== undefined && customWidth < 380) ||
+    isUltraCompact;
 
   const fontSize = style.fontSize || "base";
   const titleSizeClass = isUltraCompact
@@ -129,19 +135,21 @@ export function ChartBlock({
               : "text-[11px] sm:text-xs leading-relaxed line-clamp-2";
 
   const pClass = isUltraCompact
-    ? "p-2 gap-1"
+    ? "p-1.5 sm:p-2 gap-1"
     : isCompact
-      ? "p-2.5 sm:p-3 gap-1.5"
+      ? "p-2 sm:p-2.5 gap-1.5"
       : "p-4 gap-2";
 
   // Compute accurate overhead budget so child NEVER overflows the card
-  const padOverhead = isUltraCompact ? 16 : isCompact ? 22 : 32;
-  const titleOverhead = chart.title ? (isUltraCompact ? 18 : isCompact ? 22 : 28) : 0;
-  const descOverhead = chart.description ? (isUltraCompact ? 16 : isCompact ? 20 : 30) : 0;
+  const padOverhead = isUltraCompact ? 12 : isCompact ? 18 : 32;
+  const titleOverhead = chart.title ? (isUltraCompact ? 16 : isCompact ? 20 : 28) : 0;
+  // If height is tight (< 160px), keep description compact
+  const showDesc = Boolean(chart.description);
+  const descOverhead = showDesc ? (isUltraCompact ? 14 : isCompact ? 18 : 28) : 0;
   const totalOverhead = padOverhead + titleOverhead + descOverhead;
 
   const chartAreaHeight = customHeight
-    ? Math.max(50, customHeight - totalOverhead)
+    ? Math.max(36, customHeight - totalOverhead)
     : undefined;
 
   const startEdit = (target: "title" | "description") => {
@@ -158,9 +166,10 @@ export function ChartBlock({
   const isTransparent = Boolean(chart.isTransparent);
 
   const containerStyle: React.CSSProperties = {
-    height: customHeight ? `${customHeight}px` : "100%",
+    height: "100%",
     maxHeight: "100%",
-    width: chart.customWidth ? `${chart.customWidth}px` : "100%",
+    width: "100%",
+    maxWidth: "100%",
     backgroundColor: isTransparent ? "transparent" : (chart.backgroundColor || undefined),
     borderColor: chart.borderColor || undefined,
     borderWidth: chart.borderWidth !== undefined ? `${chart.borderWidth}px` : undefined,

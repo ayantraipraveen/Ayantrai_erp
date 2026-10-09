@@ -1,0 +1,340 @@
+"use client";
+
+import React, { useMemo, useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import {
+  fetchTemplates,
+  approveTemplateAsync,
+  rejectTemplateAsync,
+  deleteTemplateAsync,
+  duplicateTemplateAsync,
+  resubmitTemplateAsync,
+  updateTemplateRemarkAsync,
+  setTemplateSearchQuery,
+  setTemplateStatusFilter,
+  setTemplateSiteFilter,
+  setTemplateDateRange,
+  setTemplateViewMode,
+  setTemplateCurrentPage,
+  setTemplatePageSize,
+  resetTemplateFilters,
+  setTemplateSelectedId,
+  setTemplateReviewModalOpen,
+  setTemplateDeleteConfirmId,
+} from "@/lib/redux/slices/templatesSlice";
+import {
+  ReportTemplate,
+  showGlobalToast,
+} from "@/lib/redux/slices/reportModuleSlice";
+import {
+  DropdownOption,
+  DateRangeValue,
+  isDateWithinRange,
+} from "../../Component";
+import { Building, Filter, Clock, CheckCircle2, FileText, XCircle } from "lucide-react";
+
+/**
+ * Pure Redux Hook for Templates Module.
+ * Connects directly to dedicated templates Redux slice (templatesSlice) with ZERO prop drilling.
+ */
+export function useTemplates() {
+  const dispatch = useAppDispatch();
+
+  // State from dedicated templates slice
+  const {
+    templates,
+    isLoading,
+    searchQuery,
+    statusFilter,
+    siteFilter,
+    dateRange,
+    viewMode,
+    currentPage,
+    pageSize,
+    selectedTemplateId,
+    reviewModalOpen,
+    deleteConfirmId,
+    toastMessage,
+  } = useAppSelector((state) => state.templates);
+
+  // Cross-module state from reportModule slice
+  const { activeRole, sites, globalSections } = useAppSelector(
+    (state) => state.reportModule
+  );
+
+  // Fetch templates when search/filter/date parameters change
+  useEffect(() => {
+    dispatch(fetchTemplates());
+  }, [dispatch, searchQuery, statusFilter, siteFilter, dateRange]);
+
+  // Selected template object derived from selectedTemplateId
+  const selectedTemplate = useMemo(() => {
+    if (!selectedTemplateId) return null;
+    return templates.find((t) => t.id === selectedTemplateId) || null;
+  }, [templates, selectedTemplateId]);
+
+  // Counts
+  const totalCount = templates.length;
+  const pendingCount = useMemo(
+    () => templates.filter((t: { status: string; }) => t.status === "pending").length,
+    [templates]
+  );
+  const activeCount = useMemo(
+    () => templates.filter((t: { status: string; }) => t.status === "active").length,
+    [templates]
+  );
+  const draftCount = useMemo(
+    () => templates.filter((t: { status: string; }) => t.status === "draft").length,
+    [templates]
+  );
+  const rejectedCount = useMemo(
+    () => templates.filter((t: { status: string; }) => t.status === "rejected").length,
+    [templates]
+  );
+
+  // Status Filter Options for CustomDropdown
+  const statusFilterOptions: DropdownOption[] = useMemo(() => {
+    return [
+      {
+        value: "all",
+        label: "All Statuses",
+        badge: `${totalCount}`,
+        badgeColor: "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300",
+        icon: Filter,
+      },
+      {
+        value: "pending",
+        label: "Pending Approval",
+        badge: `${pendingCount}`,
+        badgeColor:
+          "bg-purple-500/20 text-purple-700 dark:text-[#9D61FF] border-purple-500/30",
+        icon: Clock,
+      },
+      {
+        value: "active",
+        label: "Active Templates",
+        badge: `${activeCount}`,
+        badgeColor:
+          "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+        icon: CheckCircle2,
+      },
+      {
+        value: "draft",
+        label: "Drafts",
+        badge: `${draftCount}`,
+        badgeColor: "bg-slate-500/20 text-slate-600 dark:text-zinc-400",
+        icon: FileText,
+      },
+      {
+        value: "rejected",
+        label: "Rejected",
+        badge: `${rejectedCount}`,
+        badgeColor:
+          "bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30",
+        icon: XCircle,
+      },
+    ];
+  }, [totalCount, pendingCount, activeCount, draftCount, rejectedCount]);
+
+  // Site Dropdown Options for Filter
+  const siteFilterOptions: DropdownOption[] = useMemo(() => {
+    return [
+      { value: "all", label: "All Industrial Sites" },
+      ...sites.map((s) => ({
+        value: s.id,
+        label: s.name,
+        description: s.location,
+        icon: Building,
+      })),
+    ];
+  }, [sites]);
+
+  // Site Dropdown Options for Builder
+  const siteBuilderOptions: DropdownOption[] = useMemo(() => {
+    return sites.map((s) => ({
+      value: s.id,
+      label: s.name,
+      description: `${s.location} • ${s.active_workers} Workers`,
+      icon: Building,
+    }));
+  }, [sites]);
+
+  // Filtered Templates
+  const filteredTemplates = useMemo(() => {
+    return templates.filter((t) => {
+      // Status filter
+      if (statusFilter !== "all" && t.status !== statusFilter) {
+        return false;
+      }
+      // Site filter
+      if (siteFilter !== "all" && t.site_id !== siteFilter) {
+        return false;
+      }
+      // Date range filter
+      if (!isDateWithinRange(t.created_at, dateRange)) {
+        return false;
+      }
+      // Search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = t.name.toLowerCase().includes(query);
+        const matchesDesc = t.description.toLowerCase().includes(query);
+        const matchesId = t.id.toLowerCase().includes(query);
+        const matchesSite = t.site_name.toLowerCase().includes(query);
+        const matchesAuthor = t.created_by.toLowerCase().includes(query);
+        if (
+          !matchesName &&
+          !matchesDesc &&
+          !matchesId &&
+          !matchesSite &&
+          !matchesAuthor
+        ) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [templates, statusFilter, siteFilter, dateRange, searchQuery]);
+
+  // Pagination calculations
+  const totalFilteredCount = filteredTemplates.length;
+  const totalPages = Math.max(1, Math.ceil(totalFilteredCount / pageSize));
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedTemplates = useMemo(() => {
+    const start = (validPage - 1) * pageSize;
+    return filteredTemplates.slice(start, start + pageSize);
+  }, [filteredTemplates, validPage, pageSize]);
+
+  const hasActiveFilters =
+    searchQuery.trim() !== "" ||
+    statusFilter !== "all" ||
+    siteFilter !== "all" ||
+    Boolean(
+      dateRange.startDate ||
+        dateRange.endDate ||
+        (dateRange.preset && dateRange.preset !== "all_time")
+    );
+
+  // Setters dispatching directly to Redux
+  const setSearchQuery = (query: string) =>
+    dispatch(setTemplateSearchQuery(query));
+  const setStatusFilter = (status: string) =>
+    dispatch(setTemplateStatusFilter(status));
+  const setSiteFilter = (site: string) =>
+    dispatch(setTemplateSiteFilter(site));
+  const setDateRange = (range: DateRangeValue) =>
+    dispatch(setTemplateDateRange(range));
+  const setViewMode = (mode: "table" | "grid") =>
+    dispatch(setTemplateViewMode(mode));
+  const setCurrentPage = (page: number) =>
+    dispatch(setTemplateCurrentPage(page));
+  const setPageSize = (size: number) =>
+    dispatch(setTemplatePageSize(size));
+  const resetFilters = () => dispatch(resetTemplateFilters());
+
+  const setSelectedTemplate = (tpl: ReportTemplate | null) =>
+    dispatch(setTemplateSelectedId(tpl ? tpl.id : null));
+  const setReviewModalOpen = (open: boolean) =>
+    dispatch(setTemplateReviewModalOpen(open));
+  const setDeleteConfirmId = (id: string | null) =>
+    dispatch(setTemplateDeleteConfirmId(id));
+
+  const showToast = (
+    msg: string,
+    type: "success" | "info" | "warning" | "error" = "info"
+  ) => {
+    dispatch(showGlobalToast({ message: msg, type }));
+  };
+
+  // Async Redux Actions
+  const handleApprove = async (tpl: ReportTemplate) => {
+    dispatch(approveTemplateAsync({ template: tpl }));
+  };
+
+  const handleReject = async (tpl: ReportTemplate, reason: string) => {
+    if (!reason.trim()) {
+      showToast("Please provide a reason for rejection.", "warning");
+      return;
+    }
+    dispatch(rejectTemplateAsync({ template: tpl, reason }));
+  };
+
+  const handleDelete = async (id: string) => {
+    dispatch(deleteTemplateAsync(id));
+  };
+
+  const handleDuplicate = async (id: string) => {
+    dispatch(duplicateTemplateAsync(id));
+  };
+
+  const handleResubmit = async (templateId: string) => {
+    dispatch(resubmitTemplateAsync(templateId));
+  };
+
+  const handleUpdateRemark = async (templateId: string, remarks: string) => {
+    dispatch(updateTemplateRemarkAsync({ templateId, remarks }));
+  };
+
+  return {
+    templates,
+    activeRole,
+    sites,
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    siteFilter,
+    setSiteFilter,
+    dateRange,
+    setDateRange,
+    viewMode,
+    setViewMode,
+    currentPage: validPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalFilteredCount,
+    paginatedTemplates,
+    resetFilters,
+    hasActiveFilters,
+    filteredTemplates,
+    totalCount,
+    pendingCount,
+    activeCount,
+    draftCount,
+    rejectedCount,
+    statusFilterOptions,
+    siteFilterOptions,
+    siteBuilderOptions,
+    selectedTemplate,
+    setSelectedTemplate,
+    reviewModalOpen,
+    setReviewModalOpen,
+    globalSections,
+    deleteConfirmId,
+    setDeleteConfirmId,
+    toastMessage,
+    showToast,
+    isLoading,
+    refreshTemplates: () => dispatch(fetchTemplates()),
+    handleApprove,
+    handleReject,
+    handleResubmit,
+    handleDelete,
+    handleDuplicate,
+    handleUpdateRemark,
+  };
+}
+
+/**
+ * Backwards compatibility wrapper (renders children directly, no context).
+ */
+export function TemplatesProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <>{children}</>;
+}

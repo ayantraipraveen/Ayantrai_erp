@@ -19,6 +19,7 @@ import {
   Clock,
   Eye,
   Sliders,
+  ZoomIn,
 } from "lucide-react";
 import { LibraryChartCard, GraphType, ChartDataPoint } from "@/lib/redux/slices/reportModuleSlice";
 import { CHART_TYPE_OPTIONS, PALETTE_RAMPS, MULTI_SERIES_CHART_CONFIG } from "../../constants/chartTypes";
@@ -355,12 +356,20 @@ export function ChartInspectorPopover({
                     <button
                       key={ramp.id}
                       type="button"
-                      onClick={() =>
-                        onUpdateChart({
+                      onClick={() => {
+                        const rampColors = [ramp.accent, "#3b82f6", "#10b981", "#f59e0b"];
+                        const patch: Partial<LibraryChartCard> = {
                           color: ramp.accent,
-                          colors: [ramp.accent, "#3b82f6", "#10b981", "#f59e0b"],
-                        })
-                      }
+                          colors: rampColors,
+                        };
+                        if (chart.series && chart.series.length > 0) {
+                          patch.series = chart.series.map((s, idx) => ({
+                            ...s,
+                            color: rampColors[idx] || s.color,
+                          }));
+                        }
+                        onUpdateChart(patch);
+                      }}
                       className={`flex items-center gap-1.5 px-1.5 py-1 rounded-md border text-[9px] transition-all cursor-pointer ${
                         isSelected
                           ? "bg-[#9D61FF]/10 border-[#9D61FF] text-[#9D61FF] font-bold"
@@ -397,12 +406,35 @@ export function ChartInspectorPopover({
               <div className="flex items-center gap-1">
                 <ColorSwatchPicker
                   value={chart.color || "#3b82f6"}
-                  onChange={(hex) => onUpdateChart({ color: hex })}
+                  onChange={(hex) => {
+                    const newColors = [...(chart.colors || [hex])];
+                    newColors[0] = hex;
+                    const patch: Partial<LibraryChartCard> = {
+                      color: hex,
+                      colors: newColors,
+                    };
+                    if (chart.series && chart.series.length > 0) {
+                      patch.series = chart.series.map((s, idx) => (idx === 0 ? { ...s, color: hex } : s));
+                    }
+                    onUpdateChart(patch);
+                  }}
                 />
                 <input
                   type="text"
                   value={chart.color || ""}
-                  onChange={(e) => onUpdateChart({ color: e.target.value })}
+                  onChange={(e) => {
+                    const hex = e.target.value;
+                    const newColors = [...(chart.colors || [hex])];
+                    newColors[0] = hex;
+                    const patch: Partial<LibraryChartCard> = {
+                      color: hex,
+                      colors: newColors,
+                    };
+                    if (chart.series && chart.series.length > 0) {
+                      patch.series = chart.series.map((s, idx) => (idx === 0 ? { ...s, color: hex } : s));
+                    }
+                    onUpdateChart(patch);
+                  }}
                   placeholder="Auto (#3B82F6)"
                   className="flex-1 px-1.5 py-0.5 rounded-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-[10px] font-mono text-slate-800 dark:text-zinc-200 focus:outline-none focus:border-[#9D61FF]"
                 />
@@ -446,7 +478,14 @@ export function ChartInspectorPopover({
                         onChange={(hex) => {
                           const newColors = [...(chart.colors || fallbackColors)];
                           newColors[sIdx] = hex;
-                          onUpdateChart({ colors: newColors });
+                          const patch: Partial<LibraryChartCard> = { colors: newColors };
+                          if (sIdx === 0) {
+                            patch.color = hex;
+                          }
+                          if (chart.series && chart.series.length > sIdx) {
+                            patch.series = chart.series.map((s, idx) => (idx === sIdx ? { ...s, color: hex } : s));
+                          }
+                          onUpdateChart(patch);
                         }}
                       />
                     </div>
@@ -1113,6 +1152,64 @@ export function ChartInspectorPopover({
               maxWidth={900}
               defaultWidth={450}
             />
+          </div>
+
+          {/* Zoom & Visual Scale (User Configurable) */}
+          <div className="pt-2 border-t border-slate-200/80 dark:border-zinc-800/80 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <ZoomIn className="w-3 h-3 text-[#9D61FF]" />
+                <span className="text-[9.5px] font-bold text-slate-800 dark:text-zinc-200">
+                  Chart Zoom & Scale
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9.5px] font-mono font-bold text-[#9D61FF] bg-purple-50 dark:bg-purple-950/50 px-1.5 py-0.5 rounded border border-purple-200 dark:border-purple-800">
+                  {Math.round((chart.scale ?? 1) * 100)}%
+                </span>
+                {chart.scale !== undefined && chart.scale !== 1 && (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateChart({ scale: 1 })}
+                    className="text-[8.5px] text-[#9D61FF] hover:underline cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[8.5px] text-slate-400 font-mono">50%</span>
+              <input
+                type="range"
+                min="0.5"
+                max="2.0"
+                step="0.05"
+                value={chart.scale ?? 1}
+                onChange={(e) => onUpdateChart({ scale: parseFloat(e.target.value) })}
+                className="flex-1 h-1.5 bg-slate-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[#9D61FF]"
+              />
+              <span className="text-[8.5px] text-slate-400 font-mono">200%</span>
+            </div>
+
+            {/* Quick zoom presets */}
+            <div className="grid grid-cols-6 gap-1 pt-0.5">
+              {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => onUpdateChart({ scale: preset })}
+                  className={`py-0.5 text-[8.5px] font-semibold rounded transition-colors cursor-pointer text-center ${
+                    Math.abs((chart.scale ?? 1) - preset) < 0.02
+                      ? "bg-[#9D61FF] text-white shadow-2xs font-bold"
+                      : "bg-slate-100 dark:bg-zinc-800 hover:bg-purple-100 dark:hover:bg-purple-950/40 text-slate-600 dark:text-zinc-300"
+                  }`}
+                >
+                  {Math.round(preset * 100)}%
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Container Background & Borders */}

@@ -29,7 +29,7 @@ export default function ChartRenderer({
   customFontSize,
 }: ChartRendererProps) {
   const chartColors = colors && colors.length > 0 ? colors : chart.colors || [];
-  const c0 = chartColors[0] || chart.color || color;
+  const c0 = chart.color || chartColors[0] || color;
   const c1 = chartColors[1] || "#10B981";
   const c2 = chartColors[2] || "#F59E0B";
   const c3 = chartColors[3] || "#F43F5E";
@@ -91,8 +91,9 @@ export default function ChartRenderer({
       if (chart.dataPoints.some((p) => p.secondaryValue !== undefined)) {
         secondaryValues = chart.dataPoints.map((p) => p.secondaryValue ?? 0);
       }
+      const safePalette = palette && palette.length > 0 ? palette : DEFAULT_SERIES_PALETTE;
       if (chart.dataPoints.some((p) => p.color)) {
-        pointColors = chart.dataPoints.map((p, i) => p.color || palette[i % palette.length]);
+        pointColors = chart.dataPoints.map((p, i) => p.color || safePalette[i % safePalette.length]);
       }
 
       // Determine series count from chart.series or dataPoints rowValues / values
@@ -191,7 +192,7 @@ export default function ChartRenderer({
 
   // Proportional scale factor continuous based on container height (reference: 240px)
   const heightRatio = height !== undefined
-    ? Math.min(1.35, Math.max(0.52, height / 240))
+    ? Math.min(1.4, Math.max(0.35, height / 240))
     : 1;
 
   // Custom font size scale factor (relative to standard 14px base)
@@ -202,10 +203,13 @@ export default function ChartRenderer({
   const isCompact = heightRatio < 0.85 || fontSize === "xs" || (customFontSize !== undefined && customFontSize <= 11);
   const isLarge = (height !== undefined && height > 340 && fontSize !== "xs" && fontSize !== "sm") || fontSize === "lg" || fontSize === "xl" || (customFontSize !== undefined && customFontSize >= 16);
 
-  // Effective scale combines custom toolbar font scale and container height ratio
-  const effectiveScale = customScale ? customScale * Math.min(1.15, Math.max(0.7, heightRatio)) : heightRatio;
+  // User-configured zoom scale factor (default 1.0)
+  const userZoom = (chart.scale !== undefined && chart.scale > 0) ? chart.scale : 1;
 
-  // Dynamic SVG font sizes scaled proportionally with container
+  // Effective scale combines custom toolbar font scale and container height ratio
+  const effectiveScale = customScale ? customScale * Math.min(1.15, Math.max(0.65, heightRatio)) : heightRatio;
+
+  // Dynamic SVG font sizes scaled proportionally with container and zoom
   const baseTick = fontSize === "xs" ? 5.2 : fontSize === "sm" ? 5.8 : fontSize === "lg" ? 7.5 : fontSize === "xl" ? 8.2 : 6.5;
   const svgTickSize = +(baseTick * effectiveScale).toFixed(1);
 
@@ -226,14 +230,14 @@ export default function ChartRenderer({
         ? "text-xs sm:text-sm"
         : "text-[10px]"
       : isUltraCompact
-      ? "text-[8px]"
+      ? "text-[7.5px] leading-tight"
       : isCompact
       ? "text-[9px]"
       : fontSize === "lg" || fontSize === "xl" || isLarge
       ? "text-xs"
       : "text-[10px] sm:text-[11px]";
 
-  const legendGapClass = isUltraCompact ? "gap-x-2 gap-y-0.5 py-0.5" : isCompact ? "gap-x-2.5 gap-y-1 pt-0.5" : "gap-x-3.5 gap-y-1 sm:gap-x-4 sm:gap-y-1.5 pt-1";
+  const legendGapClass = isUltraCompact ? "gap-x-1.5 gap-y-0.5 py-0.5" : isCompact ? "gap-x-2 gap-y-0.5 pt-0.5" : "gap-x-3.5 gap-y-1 sm:gap-x-4 sm:gap-y-1.5 pt-1";
   const legendDotClass = isUltraCompact ? "w-1.5 h-1.5" : isCompact ? "w-2 h-2" : "w-2.5 h-2.5";
   const chartWrapperClass = "w-full h-full min-h-0 flex-1 flex flex-col justify-center items-center overflow-hidden";
 
@@ -352,16 +356,19 @@ export default function ChartRenderer({
                   strokeLinecap="round"
                   strokeDasharray={sData.dash === "none" ? undefined : sData.dash}
                 />
-                {sData.points.map((pt, pIdx) => (
-                  <g key={pIdx}>
-                    <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={sData.sColor} strokeWidth="2" />
-                    {d.showValues && (
-                      <text x={pt.cx} y={pt.cy - 5} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={sData.sColor}>
-                        {formatDataValue(pt.val, d.unit, n > 6)}
-                      </text>
-                    )}
-                  </g>
-                ))}
+                {sData.points.map((pt, pIdx) => {
+                  const ptDotColor = (d.pointColors && d.pointColors[pIdx]) || chart.dataPoints?.[pIdx]?.color || sData.sColor;
+                  return (
+                    <g key={pIdx}>
+                      <circle cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={ptDotColor} strokeWidth="2" />
+                      {d.showValues && (
+                        <text x={pt.cx} y={pt.cy - 5} fontSize={svgValueSize} fontWeight="bold" textAnchor="middle" fill={ptDotColor}>
+                          {formatDataValue(pt.val, d.unit, n > 6)}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
               </g>
             ))}
             {d.xAxisTitle && (
@@ -393,7 +400,7 @@ export default function ChartRenderer({
         const length = pct * circumference;
         const offset = -accumulatedOffset;
         accumulatedOffset += length;
-        const segmentColor = d.pointColors?.[i] || [c0, c1, c2, c3, c4][i % 5];
+        const segmentColor = d.pointColors?.[i] || chart.dataPoints?.[i]?.color || DEFAULT_SERIES_PALETTE[i % DEFAULT_SERIES_PALETTE.length];
         return {
           val,
           pct: Math.round(pct * 100),
@@ -639,12 +646,17 @@ export default function ChartRenderer({
                   const vals = (d.allSeriesValues && d.allSeriesValues[sIdx]) || (sIdx === 0 ? d.values : sIdx === 1 ? (d.secondaryValues || []) : s.data || []);
                   const v = vals[i] ?? 0;
                   const pct = Math.max(0, Math.min(100, ((v - d.yMin) / yRange) * 100));
-                  const sColor = s.color || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+                  const sColor = s.color || chart.colors?.[sIdx] || chartColors[sIdx] || DEFAULT_SERIES_PALETTE[sIdx % DEFAULT_SERIES_PALETTE.length];
+                  // Chart-type-aware color behavior:
+                  // For horizontal bar (discrete categorical items), single series or primary series
+                  // accurately reflects the individual data point's custom color if set.
+                  const ptColor = d.pointColors?.[i] || chart.dataPoints?.[i]?.color;
+                  const barColor = (activeSeries.length === 1 || sIdx === 0) && ptColor ? ptColor : sColor;
                   return (
                     <div key={s.id || sIdx} className="w-full h-4 sm:h-5 bg-slate-100 dark:bg-zinc-800 rounded-r-md flex items-center">
                       <div
                         className="h-full flex items-center justify-end pr-2 rounded-r-md transition-all"
-                        style={{ width: `${pct}%`, backgroundColor: sColor }}
+                        style={{ width: `${pct}%`, backgroundColor: barColor }}
                       >
                         {d.showValues && (
                           <span className="text-[9px] sm:text-[10px] font-bold text-white whitespace-nowrap">
@@ -914,9 +926,12 @@ export default function ChartRenderer({
                     const h = Math.max(2, Math.min(88, ((val - d.yMin) / yRange) * 88));
                     const bx = startX + sIdx * (bw + barGap);
 
+                    const ptColor = d.pointColors?.[i] || chart.dataPoints?.[i]?.color;
+                    const barColor = (numSeries === 1 && ptColor) ? ptColor : sData.sColor;
+
                     return (
                       <React.Fragment key={sIdx}>
-                        <rect x={bx} y={114 - h} width={bw} height={h} fill={sData.sColor} rx="2" />
+                        <rect x={bx} y={114 - h} width={bw} height={h} fill={barColor} rx="2" />
                         {d.showValues && (
                           <text
                             x={bx + bw / 2}
@@ -924,7 +939,7 @@ export default function ChartRenderer({
                             fontSize={numSeries > 3 ? +(svgValueSize * 0.9).toFixed(1) : svgValueSize}
                             fontWeight="bold"
                             textAnchor="middle"
-                            fill={sData.sColor}
+                            fill={barColor}
                           >
                             {val}
                           </text>
@@ -997,7 +1012,7 @@ export default function ChartRenderer({
       return (
         <div className={chartWrapperClass}>
           {d.showLegend && (
-            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap max-w-full px-2`}>
+            <div className={`flex items-center justify-center ${legendGapClass} ${legendTextClass} font-mono font-medium flex-wrap max-w-full px-2 ${height && height < 110 ? "max-h-[18px] overflow-hidden" : ""}`}>
               {allSeriesData.map((sData, sIdx) => (
                 <div key={sData.s.id || sIdx} className="flex items-center gap-1.5 min-w-0 max-w-[140px] sm:max-w-none flex-shrink-0">
                   <span className={`${legendDotClass} rounded-full flex-shrink-0`} style={{ backgroundColor: sData.sColor }} />
@@ -1046,17 +1061,20 @@ export default function ChartRenderer({
                   strokeLinecap="round"
                   strokeDasharray={sData.dash === "none" ? undefined : sData.dash}
                 />
-                {sData.points.map((p, pIdx) => (
-                  <circle
-                    key={pIdx}
-                    cx={p.cx}
-                    cy={p.cy}
-                    r="3"
-                    fill="#fff"
-                    stroke={sData.sColor}
-                    strokeWidth="2"
-                  />
-                ))}
+                {sData.points.map((p, pIdx) => {
+                  const ptDotColor = (d.pointColors && d.pointColors[pIdx]) || chart.dataPoints?.[pIdx]?.color || sData.sColor;
+                  return (
+                    <circle
+                      key={pIdx}
+                      cx={p.cx}
+                      cy={p.cy}
+                      r="3"
+                      fill="#fff"
+                      stroke={ptDotColor}
+                      strokeWidth="2"
+                    />
+                  );
+                })}
               </g>
             ))}
             {d.xAxisTitle && (
@@ -1151,9 +1169,12 @@ export default function ChartRenderer({
             ))}
             <path d={areaD} fill={`url(#areagrad-${chart.id})`} />
             <path d={pathD} fill="none" stroke={c0} strokeWidth="2.5" strokeLinecap="round" />
-            {points.map((pt, i) => (
-              <circle key={i} cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={c0} strokeWidth="2" />
-            ))}
+            {points.map((pt, i) => {
+              const ptDotColor = (d.pointColors && d.pointColors[i]) || chart.dataPoints?.[i]?.color || c0;
+              return (
+                <circle key={i} cx={pt.cx} cy={pt.cy} r="3" fill="#fff" stroke={ptDotColor} strokeWidth="2" />
+              );
+            })}
             {d.xAxisTitle && (
               <text x="238" y="150" fontSize={svgTitleSize} fontWeight="600" textAnchor="middle" fill="currentColor" fillOpacity="0.6">{d.xAxisTitle}</text>
             )}
@@ -1228,12 +1249,13 @@ export default function ChartRenderer({
 
       const gaugeWClass = isUltraCompact ? "w-28 sm:w-32" : isCompact ? "w-36 sm:w-44" : "w-48 sm:w-56";
       const valSizeClass = isUltraCompact ? "text-lg sm:text-xl" : isCompact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl";
+      const gaugeColor = chart.dataPoints?.[0]?.color || d.pointColors?.[0] || c0;
 
       return (
         <div className="w-full h-full min-h-0 flex flex-col items-center justify-center relative overflow-hidden py-1">
           <svg viewBox="0 0 100 56" preserveAspectRatio="xMidYMid meet" className={`${gaugeWClass} h-auto max-h-full max-w-full block overflow-visible`}>
             <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="currentColor" strokeOpacity="0.12" strokeWidth="12" strokeLinecap="round" />
-            <path d={pathGauge} fill="none" stroke={c0} strokeWidth="12" strokeLinecap="round" />
+            <path d={pathGauge} fill="none" stroke={gaugeColor} strokeWidth="12" strokeLinecap="round" />
           </svg>
           <div className="text-center -mt-2 sm:-mt-3">
             <div className={`font-black ${valSizeClass} text-slate-800 dark:text-white leading-none`}>
@@ -1326,11 +1348,12 @@ export default function ChartRenderer({
           {pts.map((pt, i) => {
             const pct = Math.max(25, (pt.value / maxVal) * 100);
             const op = 1 - (i * 0.18);
+            const stageColor = pt.color || chart.dataPoints?.[i]?.color || chartColors[i % chartColors.length] || c0;
             return (
               <div
                 key={i}
                 className="h-7 sm:h-8 rounded-lg flex items-center justify-between px-3 transition-all"
-                style={{ width: `${pct}%`, backgroundColor: c0, opacity: Math.max(0.4, op) }}
+                style={{ width: `${pct}%`, backgroundColor: stageColor, opacity: Math.max(0.4, op) }}
               >
                 <span className="text-[10px] sm:text-xs truncate">{pt.label}</span>
                 <span className="text-[10px] sm:text-xs font-mono font-black">{pt.value.toLocaleString()}</span>
@@ -1367,15 +1390,16 @@ export default function ChartRenderer({
               })
               .join(" ");
 
-            return (
-              <div key={i} className="flex items-center gap-3 w-full px-2">
-                <span className={`text-[10px] font-bold text-slate-500 w-16 text-right truncate ${legendTextClass}`}>{s.label}</span>
-                <svg viewBox="0 0 100 32" className="flex-1 h-6 overflow-visible">
-                  <path d={ptsSvg} fill="none" stroke={s.color || c0} strokeWidth="2.2" strokeLinecap="round" />
-                </svg>
-                <span className="text-[10px] font-bold" style={{ color: s.color || c0 }}>↑</span>
-              </div>
-            );
+              const channelColor = s.color || chartColors[i % chartColors.length] || c0;
+              return (
+                <div key={i} className="flex items-center gap-3 w-full px-2">
+                  <span className={`text-[10px] font-bold text-slate-500 w-16 text-right truncate ${legendTextClass}`}>{s.label}</span>
+                  <svg viewBox="0 0 100 32" className="flex-1 h-6 overflow-visible">
+                    <path d={ptsSvg} fill="none" stroke={channelColor} strokeWidth="2.2" strokeLinecap="round" />
+                  </svg>
+                  <span className="text-[10px] font-bold" style={{ color: channelColor }}>↑</span>
+                </div>
+              );
           })}
         </div>
       );
@@ -1459,7 +1483,8 @@ export default function ChartRenderer({
               const isNeg = p.value < 0;
               const h = Math.min(60, Math.max(12, Math.abs(p.value) * 1.2));
               const y = isNeg ? 60 : 60 - h;
-              const barColor = p.color || (isNeg ? "#F43F5E" : "#10B981");
+              const ptColor = p.color || chart.dataPoints?.[i]?.color;
+              const barColor = ptColor || (isNeg ? "#F43F5E" : (i === pts.length - 1 ? c0 : "#10B981"));
 
               return (
                 <g key={i}>
@@ -1490,7 +1515,7 @@ export default function ChartRenderer({
             <div
               key={i}
               className={`rounded-lg p-2 flex items-end ${i === 0 ? "col-span-2 row-span-2" : i === 3 ? "col-span-3" : ""}`}
-              style={{ backgroundColor: item.color || [c0, c1, c2, c3][i % 4] }}
+              style={{ backgroundColor: item.color || chartColors[i % chartColors.length] || [c0, c1, c2, c3][i % 4] }}
             >
               <div className="truncate">
                 <div>{item.label}</div>
@@ -1715,7 +1740,7 @@ export default function ChartRenderer({
               const x = 56 + ((i + 0.5) / n) * 360;
               const norm = Math.max(0, Math.min(1, (v - d.yMin) / yRange));
               const barH = Math.max(3, norm * 88);
-              const barColor = d.pointColors?.[i] || c0;
+              const barColor = d.pointColors?.[i] || chart.dataPoints?.[i]?.color || c0;
 
               return (
                 <g key={i}>
@@ -1745,17 +1770,37 @@ export default function ChartRenderer({
   if (typeof height === "number") {
     return (
       <div
-        style={{ height: `${height}px`, maxHeight: "100%" }}
+        style={{ height: `${height}px`, maxHeight: "100%", width: "100%" }}
         className="w-full h-full min-h-0 flex-1 flex items-center justify-center overflow-hidden [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full"
       >
-        {renderChart()}
+        <div
+          style={{
+            transform: userZoom !== 1 ? `scale(${userZoom})` : undefined,
+            transformOrigin: "center center",
+            width: "100%",
+            height: "100%",
+          }}
+          className="w-full h-full min-h-0 flex-1 flex flex-col items-center justify-center transition-transform duration-100"
+        >
+          {renderChart()}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full min-h-0 max-h-full flex-1 flex items-center justify-center overflow-hidden [&>div]:!min-h-[60px] [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full">
-      {renderChart()}
+    <div className="w-full h-full min-h-0 max-h-full flex-1 flex items-center justify-center overflow-hidden [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full">
+      <div
+        style={{
+          transform: userZoom !== 1 ? `scale(${userZoom})` : undefined,
+          transformOrigin: "center center",
+          width: "100%",
+          height: "100%",
+        }}
+        className="w-full h-full min-h-0 flex-1 flex flex-col items-center justify-center transition-transform duration-100"
+      >
+        {renderChart()}
+      </div>
     </div>
   );
 }
