@@ -117,7 +117,7 @@ export function CanvasReportHeader({
                 title="Delete Report Header on this page completely"
               >
                 <Trash2 className="w-3 h-3" />
-                <span className="hidden sm:inline">Delete Header</span>
+                <span className="hidden sm:inline">Delete</span>
               </button>
             ) : null}
           </>

@@ -13,6 +13,7 @@ import {
   Underline,
   Minus,
   Plus,
+  CornerDownLeft,
 } from "lucide-react";
 
 export interface TitleFontOption {
@@ -645,6 +646,32 @@ useEffect(() => {
     applyStyleToSelectedText({ [styleProp]: newVal });
   };
 
+  // Insert a new line (line break) at current cursor position
+  const insertNextLine = () => {
+    if (!editorRef.current) return;
+    editorRef.current.focus();
+    restoreSelectionOffsets(editorRef.current, savedOffsetsRef.current);
+    try {
+      const ok = document.execCommand("insertLineBreak");
+      if (!ok) {
+        throw new Error("insertLineBreak failed");
+      }
+    } catch {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const br = document.createElement("br");
+        range.insertNode(br);
+        range.setStartAfter(br);
+        range.setEndAfter(br);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+    savedOffsetsRef.current = getSelectionOffsets(editorRef.current);
+  };
+
   // Commit and Save
   const handleSave = () => {
     if (!editorRef.current) return;
@@ -806,6 +833,18 @@ useEffect(() => {
               <Underline className="w-3 h-3" />
             </button>
           </div>
+
+          {/* Next Line / Line Break Button */}
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={insertNextLine}
+            className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 flex items-center gap-1 text-slate-700 dark:text-zinc-300 font-semibold cursor-pointer shrink-0"
+            title="Next Line / Line Break (Shift+Enter or Enter)"
+          >
+            <CornerDownLeft className="w-3 h-3 text-[#2563eb]" />
+            <span className="text-[11px]">Next Line</span>
+          </button>
 
           <div className="w-px h-5 bg-slate-200 dark:bg-zinc-800 shrink-0" />
 
@@ -1009,13 +1048,25 @@ useEffect(() => {
               return;
             }
           }
-          if (!multiline && e.key === "Enter") {
+          if (e.key === "Enter") {
+            if (e.shiftKey) {
+              e.preventDefault();
+              insertNextLine();
+              return;
+            }
+            if (multiline) {
+              if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                handleSave();
+                return;
+              }
+              e.preventDefault();
+              insertNextLine();
+              return;
+            }
             e.preventDefault();
             handleSave();
-          }
-          if (multiline && e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-            e.preventDefault();
-            handleSave();
+            return;
           }
           if (e.key === "Escape") {
             onCancel();
@@ -1027,7 +1078,7 @@ useEffect(() => {
           borderColor: editorBorderColor || undefined,
           backgroundColor: editorBgColor || undefined,
         }}
-        className={`w-full outline-none select-text dynamic-word-editor transition-all ${
+        className={`w-full outline-none select-text dynamic-word-editor transition-all whitespace-pre-wrap break-words ${
           multiline
             ? `min-h-[50px] p-2 rounded-lg border-2 ${editorBorderColor ? "" : "border-[#2563eb]"} ${editorBgColor ? "" : "bg-white/95 dark:bg-zinc-900/95"} flex-1`
             : `px-1 py-0 rounded ring-1 ring-[#2563eb] bg-blue-50/25 dark:bg-blue-950/25 min-h-0 max-w-full inline-block leading-tight`
@@ -1044,6 +1095,12 @@ useEffect(() => {
 export function getFallbackEyebrowHtml(eyebrow?: string, isDarkPaper?: boolean): string {
   const trimmed = (eyebrow || "").trim();
   if (!trimmed) return "";
+  if (trimmed.includes("\n")) {
+    return trimmed
+      .split("\n")
+      .map((line) => getFallbackEyebrowHtml(line, isDarkPaper))
+      .join("<br>");
+  }
   const parts = trimmed.split(/\s+/);
   if (parts.length <= 1) {
     const col = isDarkPaper ? "#38bdf8" : "#0d2562";
@@ -1062,6 +1119,12 @@ export function getFallbackEyebrowHtml(eyebrow?: string, isDarkPaper?: boolean):
 export function getFallbackTitleHtml(name?: string, isDarkPaper?: boolean): string {
   const trimmed = (name || "").trim();
   if (!trimmed) return "";
+  if (trimmed.includes("\n")) {
+    return trimmed
+      .split("\n")
+      .map((line) => getFallbackTitleHtml(line, isDarkPaper))
+      .join("<br>");
+  }
   const parts = trimmed.split(/\s+/);
   if (parts.length <= 1) {
     const col = isDarkPaper ? "#ffffff" : "#050a1a";
@@ -1124,16 +1187,23 @@ export function renderDynamicText(
     return (
       <span
         dangerouslySetInnerHTML={{ __html: html }}
-        className="inline select-text"
+        className="inline select-text whitespace-pre-wrap break-words"
         style={sectionTextColor ? { color: sectionTextColor } : undefined}
       />
     );
   }
-  return <span style={sectionTextColor ? { color: sectionTextColor } : undefined}>{plainText || ""}</span>;
+  return (
+    <span
+      style={sectionTextColor ? { color: sectionTextColor } : undefined}
+      className="whitespace-pre-wrap break-words"
+    >
+      {plainText || ""}
+    </span>
+  );
 }
 
 /**
- * Dual-tone eyebrow renderer with rich HTML support.
+ * Dual-tone eyebrow renderer with rich HTML support and multi-line preservation.
  */
 export function renderDynamicEyebrow(
   eyebrowHtml?: string,
@@ -1146,7 +1216,7 @@ export function renderDynamicEyebrow(
     return (
       <span
         dangerouslySetInnerHTML={{ __html: eyebrowHtml }}
-        className="inline select-text"
+        className="inline select-text whitespace-pre-wrap break-words"
         style={sectionTextColor ? { color: sectionTextColor } : undefined}
       />
     );
@@ -1155,7 +1225,20 @@ export function renderDynamicEyebrow(
   const trimmed = (eyebrow || "").trim();
   if (!trimmed) return null;
   if (sectionTextColor) {
-    return <span style={{ color: sectionTextColor }}>{trimmed}</span>;
+    return <span style={{ color: sectionTextColor }} className="whitespace-pre-wrap break-words">{trimmed}</span>;
+  }
+  if (trimmed.includes("\n")) {
+    const lines = trimmed.split("\n");
+    return (
+      <span className="whitespace-pre-wrap break-words inline-block">
+        {lines.map((line, lIdx) => (
+          <React.Fragment key={lIdx}>
+            {lIdx > 0 && <br />}
+            {renderDynamicEyebrow(undefined, line, sectionTextColor, isDarkPaper)}
+          </React.Fragment>
+        ))}
+      </span>
+    );
   }
   const parts = trimmed.split(/\s+/);
   if (parts.length <= 1) {
@@ -1172,7 +1255,7 @@ export function renderDynamicEyebrow(
 }
 
 /**
- * Robust title renderer supporting both custom rich HTML and fallback dual-tone.
+ * Robust title renderer supporting both custom rich HTML, multi-line line breaks, and fallback dual-tone.
  */
 export function renderDynamicTitle(
   titleHtml?: string,
@@ -1185,7 +1268,7 @@ export function renderDynamicTitle(
     return (
       <span
         dangerouslySetInnerHTML={{ __html: titleHtml }}
-        className="inline select-text"
+        className="inline select-text whitespace-pre-wrap break-words"
         style={sectionTextColor ? { color: sectionTextColor } : undefined}
       />
     );
@@ -1195,7 +1278,21 @@ export function renderDynamicTitle(
   if (!trimmed) return null;
 
   if (sectionTextColor) {
-    return <span style={{ color: sectionTextColor }}>{trimmed}</span>;
+    return <span style={{ color: sectionTextColor }} className="whitespace-pre-wrap break-words">{trimmed}</span>;
+  }
+
+  if (trimmed.includes("\n")) {
+    const lines = trimmed.split("\n");
+    return (
+      <span className="whitespace-pre-wrap break-words inline-block">
+        {lines.map((line, lIdx) => (
+          <React.Fragment key={lIdx}>
+            {lIdx > 0 && <br />}
+            {renderDynamicTitle(undefined, line, sectionTextColor, isDarkPaper)}
+          </React.Fragment>
+        ))}
+      </span>
+    );
   }
 
   const parts = trimmed.split(/\s+/);

@@ -608,6 +608,12 @@ textarea::-moz-selection {
   scrollbar-width: none !important;
 }
 
+/* ================= RICH TEXT CONTENTEDITABLE STYLING ================= */
+.dynamic-word-editor {
+  white-space: pre-wrap !important;
+  word-break: break-word;
+}
+
 /* ================= RICH TEXT CONTENTEDITABLE SELECTION ================= */
 /* Allow user to see real-time color changes on selected text without color override */
 [contenteditable]::selection,

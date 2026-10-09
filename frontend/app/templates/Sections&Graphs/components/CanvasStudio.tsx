@@ -1415,11 +1415,11 @@ export function CanvasStudio({
                                   patchPageOverride(page.pageIndex, { hideSectionTitle: false });
                                   dispatch(showGlobalToast({ message: `Section title restored on Page ${page.pageNumber}!`, type: "success" }));
                                 }}
-                                className="h-6 px-2 rounded-lg border border-purple-200 dark:border-purple-800/60 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-[#8B3DFF] text-[10.5px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                                className="h-7 mr-1 px-2 rounded-lg border border-purple-200 dark:border-purple-800/60 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-[#8B3DFF] text-[10.5px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
                                 title={`Restore section title on Page ${page.pageNumber}`}
                               >
                                 <Plus className="w-3 h-3" />
-                                <span>+ Add Section Title</span>
+                                <span>Section</span>
                               </button>
                             )}
                           </div>

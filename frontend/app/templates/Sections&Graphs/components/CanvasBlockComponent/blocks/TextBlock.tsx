@@ -304,7 +304,7 @@ export function TextBlock({
               lineHeight,
               color: textColor,
             }}
-            className="w-full h-full min-h-[40px] flex-1 select-text overflow-y-auto leading-relaxed text-slate-800 dark:text-zinc-200"
+            className="w-full h-full min-h-[40px] flex-1 select-text overflow-y-auto leading-relaxed text-slate-800 dark:text-zinc-200 whitespace-pre-wrap break-words"
             dangerouslySetInnerHTML={{
               __html: isContentEmpty
                 ? "<p class='text-sm text-slate-400 italic'>Empty text block — double click to type content.</p>"

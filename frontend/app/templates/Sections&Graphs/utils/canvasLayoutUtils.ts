@@ -352,26 +352,6 @@ export function resolveSectionCanvasRows(sec: LibrarySection): CanvasRow[] {
     });
   }
 
-  // Fallback text block if empty
-  if (rows.length === 0) {
-    rows.push({
-      id: `row-def-${ts}-${Math.random().toString(36).substr(2, 4)}`,
-      sectionName: sec.name,
-      pageBreakBefore: true,
-      cells: [
-        {
-          id: `cell-tb-${ts}`,
-          colSpan: 4,
-          blockType: "text",
-          textBlock: {
-            id: `tb-${ts}`,
-            content: `<p><strong>${sec.name}</strong></p><p>${sec.description || "Operational telemetry and safety analysis."}</p>`,
-          },
-        },
-      ],
-    });
-  }
-
   return rows;
 }
 
@@ -670,8 +650,12 @@ export function resolveSectionFloatingStamps(sec: LibrarySection): CanvasCoordin
 
   // Or resolve from base telemetry (metricCards, charts, keyInsights)
   const defaultRows = resolveSectionCanvasRows(sec);
-  const converted = convertRowsToFloatingStamps(defaultRows, 145, sec.name);
-  const decorativeStamps = existingStamps.filter((s) => !s.elementType || s.elementType === "stamp");
-  return [...decorativeStamps, ...converted];
+  if (defaultRows.length > 0) {
+    const converted = convertRowsToFloatingStamps(defaultRows, 145, sec.name);
+    const decorativeStamps = existingStamps.filter((s) => !s.elementType || s.elementType === "stamp");
+    return [...decorativeStamps, ...converted];
+  }
+
+  return existingStamps;
 }
 
