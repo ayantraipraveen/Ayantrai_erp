@@ -17,7 +17,23 @@ import {
   Edit3,
 } from "lucide-react";
 import { Tooltip, RejectionModal } from "../../Component";
-import { useTemplates } from "./TemplatesContext";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import {
+  selectPaginatedTemplatesInfo,
+  selectTemplateCurrentPage,
+  selectTemplatePageSize,
+  setCurrentPage,
+  setPageSize,
+  setSelectedTemplateId,
+  setReviewModalOpen,
+  setDeleteConfirmId,
+  resetFilters,
+  duplicateTemplateAsync,
+  approveTemplateAsync,
+  rejectTemplateAsync,
+  resubmitTemplateAsync,
+  updateTemplateRemarkAsync,
+} from "@/lib/redux/slices/templatesSlice";
 import TemplatePagination from "./TemplatePagination";
 import TemplateRemarkModal from "./TemplateRemarkModal";
 
@@ -26,31 +42,26 @@ import TemplateRemarkModal from "./TemplateRemarkModal";
  * Fully aligned with TemplatesTable in terms of features, review workflows, tooltips, and aesthetics.
  */
 export default function TemplatesGrid() {
-  const {
-    paginatedTemplates,
-    totalFilteredCount,
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalPages,
-    activeRole,
-    setSelectedTemplate,
-    handleDuplicate,
-    setReviewModalOpen,
-    setDeleteConfirmId,
-    resetFilters,
-    handleApprove,
-    handleReject,
-    handleResubmit,
-    handleUpdateRemark,
-  } = useTemplates();
+  const dispatch = useAppDispatch();
+  const { paginatedTemplates, totalFilteredCount, totalPages } = useAppSelector(
+    selectPaginatedTemplatesInfo
+  );
+  const currentPage = useAppSelector(selectTemplateCurrentPage);
+  const pageSize = useAppSelector(selectTemplatePageSize);
+  const activeRole = useAppSelector((s) => s.reportModule.activeRole);
 
   const [remarkModalTemplate, setRemarkModalTemplate] = useState<any | null>(null);
   const [rejectModalTemplate, setRejectModalTemplate] = useState<any | null>(null);
 
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
+
+  const handleDuplicate = (id: string) => dispatch(duplicateTemplateAsync(id));
+  const handleApprove = (tpl: any) => dispatch(approveTemplateAsync({ template: tpl }));
+  const handleReject = (tpl: any, reason: string) => dispatch(rejectTemplateAsync({ template: tpl, reason }));
+  const handleResubmit = (id: string) => dispatch(resubmitTemplateAsync(id));
+  const handleUpdateRemark = (id: string, remarks: string) =>
+    dispatch(updateTemplateRemarkAsync({ templateId: id, remarks }));
 
   return (
     <div className="w-full flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -72,7 +83,7 @@ export default function TemplatesGrid() {
               </div>
               <button
                 type="button"
-                onClick={resetFilters}
+                onClick={()=>dispatch(resetFilters())}
                 className="px-3.5 py-1.5 rounded-lg bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-xs font-semibold text-slate-800 dark:text-white transition-colors cursor-pointer"
               >
                 Reset All Filters
@@ -285,8 +296,8 @@ export default function TemplatesGrid() {
                       <button
                         type="button"
                         onClick={() => {
-                          setSelectedTemplate(template);
-                          setReviewModalOpen(true);
+                          dispatch(setSelectedTemplateId(template.id));
+                          dispatch(setReviewModalOpen(true));
                         }}
                         className="h-6 px-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#9D61FF]/50 text-slate-600 dark:text-zinc-400 hover:text-[#9D61FF] hover:bg-purple-500/10 transition-all flex items-center gap-1 font-medium text-[10px] cursor-pointer"
                       >
@@ -308,6 +319,7 @@ export default function TemplatesGrid() {
                       <button
                         type="button"
                         onClick={() => {
+                          dispatch(setSelectedTemplateId(template.id));
                           setRemarkModalTemplate(template);
                         }}
                         className={`h-6 w-6 rounded-lg border transition-all flex items-center justify-center cursor-pointer relative ${
@@ -348,7 +360,7 @@ export default function TemplatesGrid() {
                     <Tooltip content="Delete template" position="top" variant="danger">
                       <button
                         type="button"
-                        onClick={() => setDeleteConfirmId(template.id)}
+                        onClick={() => dispatch(setDeleteConfirmId(template.id))}
                         className="h-6 w-6 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-red-500/50 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all flex items-center justify-center cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -366,9 +378,9 @@ export default function TemplatesGrid() {
       {/* Pinned Bottom Reusable Pagination */}
       <TemplatePagination
         currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
+        setCurrentPage={(p) => dispatch(setCurrentPage(p))}
         pageSize={pageSize}
-        setPageSize={setPageSize}
+        setPageSize={(s) => dispatch(setPageSize(s))}
         totalPages={totalPages}
         totalFilteredCount={totalFilteredCount}
         startIndex={startIndex}

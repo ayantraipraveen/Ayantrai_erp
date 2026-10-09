@@ -2,14 +2,20 @@
 
 import React from "react";
 import { AlertCircle } from "lucide-react";
-import { useTemplates } from "./TemplatesContext";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import {
+  setDeleteConfirmId,
+  deleteTemplateAsync,
+  selectTemplateDeleteConfirmId,
+} from "@/lib/redux/slices/templatesSlice";
 
 /**
  * Confirmation modal for deleting a template blueprint.
- * Takes ZERO props - reads directly from TemplatesContext.
+ * Reads directly from Redux templates slice.
  */
 export default function DeleteTemplateModal() {
-  const { deleteConfirmId, setDeleteConfirmId, handleDelete } = useTemplates();
+  const dispatch = useAppDispatch();
+  const deleteConfirmId = useAppSelector(selectTemplateDeleteConfirmId);
 
   if (!deleteConfirmId) return null;
 
@@ -31,14 +37,14 @@ export default function DeleteTemplateModal() {
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
           <button
             type="button"
-            onClick={() => setDeleteConfirmId(null)}
+            onClick={() => dispatch(setDeleteConfirmId(null))}
             className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-zinc-700 text-xs font-medium hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
-            onClick={() => handleDelete(deleteConfirmId)}
+            onClick={() => dispatch(deleteTemplateAsync(deleteConfirmId))}
             className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition-colors cursor-pointer shadow-sm"
           >
             Confirm Delete

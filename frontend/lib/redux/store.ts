@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slices/authSlice";
 import reportModuleReducer from "./slices/reportModuleSlice";
 import watermarkStudioReducer from "./slices/watermarkStudioSlice";
+import templatesReducer from "./slices/templatesSlice";
 
 export const makeStore = () => {
   return configureStore({
@@ -9,6 +10,7 @@ export const makeStore = () => {
       auth: authReducer,
       reportModule: reportModuleReducer,
       watermarkStudio: watermarkStudioReducer,
+      templates: templatesReducer,
     },
     devTools: process.env.NODE_ENV !== "production",
   });

@@ -1,6 +1,8 @@
 "use client";
 
-import { useAppSelector } from "@/lib/redux/hooks";
+import React, { useEffect } from "react";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { fetchTemplates } from "@/lib/redux/slices/templatesSlice";
 import {
   TemplateMetricsBar,
   TemplateFilterToolbar,
@@ -15,9 +17,17 @@ import {
  * Modular, 100% PURE REDUX architecture with ZERO props drilling.
  */
 export default function TemplatesPage() {
+  const dispatch = useAppDispatch();
   const viewMode = useAppSelector(
-    (state) => state.reportModule.templateViewMode
+    (state) => state.templates?.viewMode || state.reportModule.templateViewMode
   );
+  const { searchQuery, statusFilter, siteFilter, dateRange } = useAppSelector(
+    (state) => state.templates
+  );
+
+  useEffect(() => {
+    dispatch(fetchTemplates());
+  }, [dispatch, searchQuery, statusFilter, siteFilter, dateRange]);
 
   return (
     <div className="animate-fadeIn w-full h-full flex-1 min-h-0 flex flex-col overflow-hidden">

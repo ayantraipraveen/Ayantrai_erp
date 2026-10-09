@@ -14,6 +14,9 @@ import { FileText, Layers } from "lucide-react";
  * Unified Layout for Templates, Sections & Graphs, and Telemetry Charts.
  * Houses the persistent sub-navigation switcher and breadcrumb navigation.
  */
+
+
+// from here everything is same as the previous code snippet you provided
 export default function TemplatesLayout({
   children,
 }: {
@@ -21,7 +24,9 @@ export default function TemplatesLayout({
 }) {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
-  const templates = useAppSelector((state) => state.reportModule.templates || []);
+  const templates = useAppSelector(
+    (state) => state.templates?.templates || state.reportModule.templates || []
+  );
   const sectionMeta = useAppSelector((state) => state.reportModule.sectionMeta);
   const librarySections = useAppSelector(
     (state) => state.reportModule.librarySections || []

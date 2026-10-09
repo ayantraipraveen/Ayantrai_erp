@@ -13,7 +13,7 @@ import {
   Sparkles,
   Edit3,
 } from "lucide-react";
-import { useAppSelector } from "@/lib/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   CoverPageData,
   DEFAULT_TOC_DATA,
@@ -22,7 +22,14 @@ import {
   CanvasRow,
   LibrarySection,
 } from "@/lib/redux/slices/reportModuleSlice";
-import { useTemplates } from "./TemplatesContext";
+import {
+  selectSelectedTemplate,
+  selectTemplateReviewModalOpen,
+  setReviewModalOpen,
+  setSelectedTemplateId,
+  approveTemplateAsync,
+  rejectTemplateAsync,
+} from "@/lib/redux/slices/templatesSlice";
 import { CanvasStudio } from "../Sections&Graphs/components/CanvasStudio";
 import {
   CanvasCoverPage,
@@ -43,15 +50,10 @@ import { getUploadedWatermarks } from "../Sections&Graphs/watermark/utils";
  * dynamically generated from template data in standard ISO A4 PDF format (595 × 842 pt).
  */
 export default function TemplateReviewModal() {
-  const {
-    selectedTemplate,
-    setSelectedTemplate,
-    reviewModalOpen,
-    setReviewModalOpen,
-    activeRole,
-    handleApprove,
-    handleReject,
-  } = useTemplates();
+  const dispatch = useAppDispatch();
+  const selectedTemplate = useAppSelector(selectSelectedTemplate);
+  const reviewModalOpen = useAppSelector(selectTemplateReviewModalOpen);
+  const activeRole = useAppSelector((s) => s.reportModule.activeRole);
 
   const librarySections = useAppSelector((s) => s.reportModule.librarySections || []);
   const watermarks = useAppSelector((s) => s.reportModule.watermarks || []);
@@ -198,12 +200,12 @@ export default function TemplateReviewModal() {
     setRejectionReason("");
     setIsFullscreen(false);
     setActiveTab("preview");
-    setReviewModalOpen(false);
-    setSelectedTemplate(null);
+    dispatch(setReviewModalOpen(false));
+    dispatch(setSelectedTemplateId(null));
   };
 
   const handleConfirmReject = () => {
-    handleReject(selectedTemplate, rejectionReason);
+    dispatch(rejectTemplateAsync({ template: selectedTemplate, reason: rejectionReason }));
     setShowRejectInput(false);
     setRejectionReason("");
   };
@@ -483,7 +485,7 @@ export default function TemplateReviewModal() {
 
                   <button
                     type="button"
-                    onClick={() => handleApprove(selectedTemplate)}
+                    onClick={() => dispatch(approveTemplateAsync({ template: selectedTemplate }))}
                     className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />

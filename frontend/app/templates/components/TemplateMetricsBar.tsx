@@ -3,14 +3,16 @@
 import React from "react";
 import Link from "next/link";
 import { Layers, Clock, CheckCircle2, FileCheck2 } from "lucide-react";
-import { useTemplates } from "./TemplatesContext";
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectTemplateCounts } from "@/lib/redux/slices/templatesSlice";
 
 /**
  * Summary KPI metrics strip for Templates module.
- * Takes ZERO props - reads directly from TemplatesContext / Redux.
+ * Reads directly from Redux templates & reportModule slices.
  */
 export default function TemplateMetricsBar() {
-  const { totalCount, pendingCount, activeCount, globalSections } = useTemplates();
+  const { totalCount, pendingCount, activeCount } = useAppSelector(selectTemplateCounts);
+  const globalSections = useAppSelector((state) => state.reportModule.globalSections);
 
   const totalSectionsCount = globalSections.length;
   const customSectionsCount = globalSections.filter((s) => s.isCustom).length;

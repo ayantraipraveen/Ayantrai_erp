@@ -4,33 +4,43 @@ import React from "react";
 import Link from "next/link";
 import { Search, X, Building, Filter, List, LayoutGrid, Plus } from "lucide-react";
 import { Tooltip, CustomDropdown, DateRangeFilter } from "../../Component";
-import { useTemplates } from "./TemplatesContext";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import {
+  selectTemplateSearchQuery,
+  selectTemplateStatusFilter,
+  selectTemplateSiteFilter,
+  selectTemplateDateRange,
+  selectTemplateViewMode,
+  selectStatusFilterOptions,
+  selectSiteFilterOptions,
+  selectHasActiveFilters,
+  selectFilteredTemplates,
+  setSearchQuery,
+  setStatusFilter,
+  setSiteFilter,
+  setDateRange,
+  setViewMode,
+  resetFilters,
+} from "@/lib/redux/slices/templatesSlice";
 
 /**
  * Filter and action toolbar for Templates module.
- * Takes ZERO props - reads directly from TemplatesContext.
+ * Reads directly from Redux templates slice.
  * Features a dedicated Status Dropdown filter, Site Dropdown filter, Date Range filter, instant search,
  * view mode toggle, and primary create action.
  */
 export default function TemplateFilterToolbar() {
-  const {
-    searchQuery,
-    setSearchQuery,
-    statusFilter,
-    setStatusFilter,
-    statusFilterOptions,
-    siteFilter,
-    setSiteFilter,
-    siteFilterOptions,
-    dateRange,
-    setDateRange,
-    resetFilters,
-    hasActiveFilters,
-    viewMode,
-    setViewMode,
-    filteredTemplates,
-    totalCount,
-  } = useTemplates();
+  const dispatch = useAppDispatch();
+  const searchQuery = useAppSelector(selectTemplateSearchQuery);
+  const statusFilter = useAppSelector(selectTemplateStatusFilter);
+  const siteFilter = useAppSelector(selectTemplateSiteFilter);
+  const dateRange = useAppSelector(selectTemplateDateRange);
+  const viewMode = useAppSelector(selectTemplateViewMode);
+  const statusFilterOptions = useAppSelector(selectStatusFilterOptions);
+  const siteFilterOptions = useAppSelector(selectSiteFilterOptions);
+  const hasActiveFilters = useAppSelector(selectHasActiveFilters);
+  const filteredTemplates = useAppSelector(selectFilteredTemplates);
+  const totalCount = useAppSelector((state) => state.templates.templates.length);
 
   return (
     <div className="p-0 bg-transparent">
@@ -43,14 +53,14 @@ export default function TemplateFilterToolbar() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => dispatch(setSearchQuery(e.target.value))}
               placeholder="Search blueprints by name, ID, or site..."
               className="w-full h-9 pl-9 pr-8 rounded-xl border border-slate-200 dark:border-zinc-800/90 bg-slate-50/80 dark:bg-[#0e1219]/90 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none focus:border-[#9D61FF]/80 focus:bg-white dark:focus:bg-[#0b0e14] transition-all shadow-sm"
             />
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery("")}
+                onClick={() => dispatch(setSearchQuery(""))}
                 className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"
               >
                 <X className="w-4 h-4" />
@@ -63,7 +73,7 @@ export default function TemplateFilterToolbar() {
             <CustomDropdown
               options={statusFilterOptions}
               value={statusFilter}
-              onChange={setStatusFilter}
+              onChange={(val) => dispatch(setStatusFilter(val))}
               icon={Filter}
               size="sm"
               placeholder="Filter by status..."
@@ -76,7 +86,7 @@ export default function TemplateFilterToolbar() {
             <CustomDropdown
               options={siteFilterOptions}
               value={siteFilter}
-              onChange={setSiteFilter}
+              onChange={(val) => dispatch(setSiteFilter(val))}
               icon={Building}
               size="sm"
               placeholder="Filter by site..."
@@ -88,7 +98,7 @@ export default function TemplateFilterToolbar() {
           <div className="min-w-36 max-w-[240px] w-auto h-9 flex-shrink-0">
             <DateRangeFilter
               value={dateRange}
-              onChange={setDateRange}
+              onChange={(range) => dispatch(setDateRange(range))}
               size="sm"
               placeholder="Filter by date..."
               className="h-9 w-full"
@@ -99,7 +109,7 @@ export default function TemplateFilterToolbar() {
           {hasActiveFilters && (
             <button
               type="button"
-              onClick={resetFilters}
+              onClick={() => dispatch(resetFilters())}
               className="h-9 px-3 rounded-xl border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 bg-slate-50 dark:bg-zinc-900 text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0 shadow-sm"
             >
               <X className="w-3.5 h-3.5" />
@@ -119,7 +129,7 @@ export default function TemplateFilterToolbar() {
             <Tooltip content="Table of Lists View" position="bottom">
               <button
                 type="button"
-                onClick={() => setViewMode("table")}
+                onClick={() => dispatch(setViewMode("table"))}
                 className={`h-7.5 px-2.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                   viewMode === "table"
                     ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-semibold"
@@ -134,7 +144,7 @@ export default function TemplateFilterToolbar() {
             <Tooltip content="Grid Blueprint View" position="bottom">
               <button
                 type="button"
-                onClick={() => setViewMode("grid")}
+                onClick={() => dispatch(setViewMode("grid"))}
                 className={`h-7.5 px-2.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                   viewMode === "grid"
                     ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-semibold"
