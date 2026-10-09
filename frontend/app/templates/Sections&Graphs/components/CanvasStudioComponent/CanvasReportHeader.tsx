@@ -45,9 +45,7 @@ export function CanvasReportHeader({
 
   return (
     <header
-      className={`group/report-header relative z-30 h-[56px] w-full px-7 border-b ${
-        isDark ? "border-zinc-800 bg-[#0c1017] text-white" : "border-slate-100 bg-white text-slate-900"
-      } flex items-center justify-between flex-shrink-0 select-none overflow-hidden`}
+      className={`group/report-header relative z-30 h-[56px] w-full px-7  flex items-center justify-between flex-shrink-0 select-none overflow-hidden`}
     >
       {/* Left: Sitesafe Shield Logo & Subtitle */}
       <div className="flex items-center gap-3">
