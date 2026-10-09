@@ -50,7 +50,7 @@ export function MarginPopover({
   return (
     <div
       onClick={(e) => e.stopPropagation()}
-      className="absolute top-8 left-0 w-80 max-h-[min(540px,calc(100dvh-15rem))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-3.5 z-[60] space-y-3 animate-fadeIn text-slate-800 dark:text-zinc-200"
+      className="w-80 max-h-[min(540px,calc(100dvh-15rem))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-3.5 space-y-3 animate-fadeIn text-slate-800 dark:text-zinc-200"
     >
       <div className="border-b border-slate-100 dark:border-zinc-800/80 pb-2">
         <h4 className="text-xs font-bold text-slate-900 dark:text-white">Page Margins & Section Padding</h4>

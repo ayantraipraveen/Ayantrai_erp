@@ -63,4 +63,7 @@ export interface CanvasContextRibbonProps {
   onSelectWatermark?: (watermarkId: string | null) => void;
   watermarkConfig?: WatermarkStampConfig;
   onUpdateWatermarkConfig?: (config: Partial<WatermarkStampConfig>) => void;
+
+  // Page Management
+  onAddPage?: () => void;
 }

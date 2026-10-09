@@ -54,7 +54,7 @@ export function CardBgPopover({
   const isCustomBg = Boolean(currentBg?.startsWith("#") || currentBg?.startsWith("rgb"));
 
   return (
-    <div className="absolute top-9 left-0 w-64 sm:w-72 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-3.5 z-50 space-y-3.5 animate-fadeIn">
+    <div className="w-64 sm:w-72 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-3.5 space-y-3.5 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2">
         <div className="flex items-center gap-2">

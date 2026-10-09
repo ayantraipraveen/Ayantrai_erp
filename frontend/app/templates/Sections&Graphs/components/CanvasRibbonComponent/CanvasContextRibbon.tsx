@@ -89,6 +89,7 @@ export function CanvasContextRibbon(props: CanvasContextRibbonProps) {
       canUndo={props.canUndo}
       canRedo={props.canRedo}
       onTogglePreview={props.onTogglePreview}
+      onAddPage={props.onAddPage}
     />
   );
 }

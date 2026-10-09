@@ -160,6 +160,7 @@ export interface CanvasStudioProps {
   beforeContent?: React.ReactNode;
   /** Rendered after the last content page inside the scroll desk (e.g. Back Cover) */
   afterContent?: React.ReactNode;
+  onAddPage?: () => void;
 }
 
 export interface HeaderTitleFormat {
@@ -236,4 +237,90 @@ export function formatRulerValue(
     return (px / factors.pxPerInch).toFixed(1);
   }
   return Math.round(px).toString();
+}
+
+/**
+ * Resolves the sequential type prefix for a CanvasCoordinateStamp.
+ */
+export function getStampTypePrefix(stamp: CanvasCoordinateStamp): string {
+  if (stamp.elementType === "chart" || Boolean(stamp.chart)) return "chart";
+  if (stamp.elementType === "text" || Boolean(stamp.textBlock)) return "text";
+  if (stamp.elementType === "metric-card" || Boolean(stamp.metricCard)) return "metric";
+  if (stamp.elementType === "insight" || Boolean(stamp.insight)) return "insight";
+  if (stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip)) return "badge";
+  if (stamp.elementType === "divider" || Boolean(stamp.divider)) return "divider";
+  return "stamp";
+}
+
+/**
+ * Scans a LibrarySection (and optional in-flight allocated IDs) to find the highest number
+ * matching `${prefix}-N` and returns `${prefix}-${maxNumber + 1}` (e.g., chart-1, chart-2, etc.).
+ */
+export function getNextSequentialId(
+  prefix: string,
+  section?: Partial<LibrarySection> | null,
+  allocatedIds?: Set<string> | string[]
+): string {
+  let maxNum = 0;
+  const regex = new RegExp(`^${prefix}-(\\d+)$`);
+
+  const checkId = (id?: string | null) => {
+    if (!id || typeof id !== "string") return;
+    const match = id.match(regex);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (!isNaN(num) && num > maxNum) {
+        maxNum = num;
+      }
+    }
+  };
+
+  // 1. Scan section.stamps
+  if (section?.stamps) {
+    for (const s of section.stamps) {
+      checkId(s.id);
+      checkId(s.sourceId);
+      checkId(s.chart?.id);
+      checkId(s.textBlock?.id);
+      checkId(s.metricCard?.id);
+      checkId(s.insight?.id);
+      checkId(s.badgeStrip?.id);
+      checkId(s.element?.sourceId);
+    }
+  }
+
+  // 2. Scan section.canvasRows
+  if (section?.canvasRows) {
+    for (const r of section.canvasRows) {
+      if (r.cells) {
+        for (const c of r.cells) {
+          checkId(c.id);
+          checkId(c.chart?.id);
+          checkId(c.textBlock?.id);
+          checkId(c.metricCard?.id);
+          checkId(c.insight?.id);
+          checkId(c.badgeStrip?.id);
+          if (c.stackedCells) {
+            for (const sc of c.stackedCells) {
+              checkId(sc.id);
+              checkId(sc.chart?.id);
+              checkId(sc.textBlock?.id);
+              checkId(sc.metricCard?.id);
+              checkId(sc.insight?.id);
+              checkId(sc.badgeStrip?.id);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Scan allocated IDs in current operation
+  if (allocatedIds) {
+    for (const id of allocatedIds) {
+      checkId(id);
+    }
+  }
+
+  return `${prefix}-${maxNum + 1}`;
 }

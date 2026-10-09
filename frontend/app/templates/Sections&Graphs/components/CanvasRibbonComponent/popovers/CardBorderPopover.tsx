@@ -65,6 +65,14 @@ export function CardBorderPopover({
   const [activeRadius, setActiveRadius] = useState<number>(numericRadius);
   const [activeWidth, setActiveWidth] = useState<number>(currentBorderWidth ?? 1);
 
+  useEffect(() => {
+    setActiveRadius(numericRadius);
+  }, [numericRadius]);
+
+  useEffect(() => {
+    setActiveWidth(currentBorderWidth ?? 1);
+  }, [currentBorderWidth]);
+
   const handleNativeColorInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setActiveHex(val);
@@ -91,7 +99,7 @@ export function CardBorderPopover({
   };
 
   return (
-    <div className="absolute top-9 left-0 w-80 max-h-[min(540px,calc(100vh-140px))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-4 z-50 space-y-4 animate-fadeIn">
+    <div className="w-80 max-h-[min(540px,calc(100vh-140px))] overflow-y-auto custom-scrollbar rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-4 space-y-4 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
         <div className="flex items-center gap-2">

@@ -1500,6 +1500,36 @@ export default function SectionCanvasEditor({
     [dispatch, sectionId, canvasActivePageIndex]
   );
 
+  const handleAddPage = useCallback(() => {
+    const currentStamps = section?.stamps || [];
+    const maxStampIdx = currentStamps.reduce((max, s) => Math.max(max, s.pageIndex ?? 0), 0);
+    const maxOvIdx = Object.keys(section?.pageOverrides || {}).reduce((max, k) => {
+      const idx = parseInt(k, 10);
+      return isNaN(idx) ? max : Math.max(max, idx);
+    }, 0);
+    const currentPages = Math.max(1, maxStampIdx + 1, maxOvIdx + 1);
+    const newPageIdx = currentPages;
+
+    const nextOverrides = {
+      ...(section?.pageOverrides || {}),
+      [newPageIdx]: { hideReportHeader: false },
+    };
+
+    dispatch(
+      updateLibrarySection({
+        id: sectionId,
+        changes: { pageOverrides: nextOverrides },
+        pageOverrides: nextOverrides,
+      })
+    );
+    setCanvasActivePageIndex(newPageIdx);
+    dispatch(showGlobalToast({ message: `New A4 page ${newPageIdx + 1} created`, type: "success" }));
+
+    setTimeout(() => {
+      document.getElementById(`canvas-page-${newPageIdx}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+  }, [dispatch, sectionId, section?.stamps, section?.pageOverrides]);
+
   // ── Cell Edit Trigger ───────────────────────────────────────────────────────
   const handleEditCell = useCallback(
     (cell: CanvasCell, rowId: string) => {
@@ -2352,6 +2382,7 @@ export default function SectionCanvasEditor({
         onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
+        onAddPage={handleAddPage}
       />
 
       {/* ── Main Studio Workspace ── */}
@@ -2429,6 +2460,7 @@ export default function SectionCanvasEditor({
           onReorderStacked={handleReorderStacked}
           activeViewPageIndex={canvasActivePageIndex}
           onViewPageIndexChange={setCanvasActivePageIndex}
+          onAddPage={handleAddPage}
           onEditHeader={() => {
             setEditName(section.name);
             setEditEyebrow(section.eyebrow);

@@ -10,6 +10,7 @@ import {
   Square,
   Ruler,
   Eye,
+  Plus,
 } from "lucide-react";
 import { UploadedSvgWatermark, WatermarkStampConfig } from "../../watermark/utils";
 import {
@@ -53,6 +54,7 @@ export interface GlobalCanvasRibbonProps {
   canUndo?: boolean;
   canRedo?: boolean;
   onTogglePreview: () => void;
+  onAddPage?: () => void;
 }
 
 export function GlobalCanvasRibbon({
@@ -82,6 +84,7 @@ export function GlobalCanvasRibbon({
   canUndo = false,
   canRedo = false,
   onTogglePreview,
+  onAddPage,
 }: GlobalCanvasRibbonProps) {
   const [paperColorMenuOpen, setPaperColorMenuOpen] = useState(false);
   const [sectionTextColorMenuOpen, setSectionTextColorMenuOpen] = useState(false);
@@ -165,18 +168,7 @@ export function GlobalCanvasRibbon({
           </div>
         )}
 
-        {/* Section info badge */}
-        <div className="flex min-w-0 shrink items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
-          <span className="max-w-[130px] shrink-0 truncate text-[10px] font-mono uppercase font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-md border border-sky-500/20">
-            {sectionEyebrow}
-          </span>
-          <span
-            className="min-w-0 truncate font-semibold text-slate-800 dark:text-zinc-200"
-            title={sectionName}
-          >
-            {sectionName}
-          </span>
-        </div>
+       
 
         <div className="w-px h-4 bg-slate-200 dark:bg-zinc-800 hidden sm:block" />
 
@@ -446,8 +438,19 @@ export function GlobalCanvasRibbon({
         </div>
       </div>
 
-      {/* Right controls: Clean preview */}
+      {/* Right controls: Add Page & Clean preview */}
       <div className="flex shrink-0 items-center gap-2">
+        {onAddPage && (
+          <button
+            type="button"
+            onClick={onAddPage}
+            className="h-7 shrink-0 whitespace-nowrap rounded-lg border border-purple-300 dark:border-purple-800/60 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-[#8B3DFF] px-2.5 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+            title="Create a New Blank A4 Page"
+          >
+            <Plus className="w-3.5 h-3.5 text-[#8B3DFF]" />
+            <span>New Page</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={onTogglePreview}

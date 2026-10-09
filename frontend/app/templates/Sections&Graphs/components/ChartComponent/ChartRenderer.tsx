@@ -1767,6 +1767,8 @@ export default function ChartRenderer({
     }
   };
 
+  const overflowClass = userZoom > 1 ? "overflow-visible" : "overflow-hidden";
+
   const scaledChart = (
     <div
       style={{
@@ -1775,13 +1777,11 @@ export default function ChartRenderer({
         width: "100%",
         height: "100%",
       }}
-      className="w-full h-full min-h-0 flex-1 flex flex-col items-center justify-center transition-transform duration-100"
+      className={`w-full h-full min-h-0 flex-1 flex flex-col items-center justify-center transition-transform duration-100 ${overflowClass}`}
     >
       {renderChart()}
     </div>
   );
-
-  const overflowClass = userZoom > 1 ? "overflow-visible" : "overflow-hidden";
 
   if (typeof height === "number") {
     return (

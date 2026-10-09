@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   DragEndEvent,
@@ -20,7 +21,7 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { Layers, Trash2, ChevronUp, ChevronDown, Plus } from "lucide-react";
+import { Layers, Trash2, ChevronUp, ChevronDown, Plus, Copy } from "lucide-react";
 import { useDispatch } from "react-redux";
 import {
   CanvasCell,
@@ -67,6 +68,8 @@ import {
   CanvasStudioProps,
   HeaderTitleFormat,
   DEFAULT_HEADER_TITLE_FORMAT,
+  getNextSequentialId,
+  getStampTypePrefix,
 } from "../utils";
 
 import {
@@ -132,6 +135,7 @@ export function CanvasStudio({
   onViewPageIndexChange,
   beforeContent,
   afterContent,
+  onAddPage: externalOnAddPage,
 }: CanvasStudioProps) {
   const dispatch = useDispatch();
   const rows = section.canvasRows || [];
@@ -142,12 +146,30 @@ export function CanvasStudio({
   const [pageOverrides, setPageOverrides] = useState<Record<number, PageConfigOverride>>(section.pageOverrides || {});
   const pageOverridesRef = useRef<Record<number, PageConfigOverride>>(section.pageOverrides || {});
 
+  const [manualPageCount, setManualPageCount] = useState<number>(() => {
+    const maxStampIdx = (section.stamps || []).reduce((max, s) => Math.max(max, s.pageIndex ?? 0), 0);
+    const maxOvIdx = Object.keys(section.pageOverrides || {}).reduce((max, k) => {
+      const idx = parseInt(k, 10);
+      return isNaN(idx) ? max : Math.max(max, idx);
+    }, 0);
+    return Math.max(1, maxStampIdx + 1, maxOvIdx + 1);
+  });
+
   useEffect(() => {
     if (section.pageOverrides) {
       setPageOverrides(section.pageOverrides);
       pageOverridesRef.current = section.pageOverrides;
     }
   }, [section.pageOverrides]);
+
+  useEffect(() => {
+    const maxStampIdx = (section.stamps || []).reduce((max, s) => Math.max(max, s.pageIndex ?? 0), 0);
+    const maxOvIdx = Object.keys(pageOverrides).reduce((max, k) => {
+      const idx = parseInt(k, 10);
+      return isNaN(idx) ? max : Math.max(max, idx);
+    }, 0);
+    setManualPageCount((prev) => Math.max(prev, maxStampIdx + 1, maxOvIdx + 1));
+  }, [section.stamps, pageOverrides]);
 
   const patchPageOverride = useCallback(
     (pageIdx: number, patch: Partial<PageConfigOverride>) => {
@@ -177,7 +199,7 @@ export function CanvasStudio({
       const idx = parseInt(k, 10);
       return isNaN(idx) ? max : Math.max(max, idx);
     }, 0);
-    const requiredPages = Math.max(1, maxStampPageIndex + 1, maxOverrideIndex + 1);
+    const requiredPages = Math.max(1, manualPageCount, maxStampPageIndex + 1, maxOverrideIndex + 1);
 
     const pagesList: PagePartition[] = [];
     for (let pIdx = 0; pIdx < requiredPages; pIdx++) {
@@ -192,7 +214,7 @@ export function CanvasStudio({
       });
     }
     return pagesList;
-  }, [pageNumber, activePageHeight, pageOverrides, section.stamps]);
+  }, [pageNumber, activePageHeight, manualPageCount, pageOverrides, section.stamps]);
 
   const computedTotalPages = useMemo(() => {
     return (
@@ -224,6 +246,7 @@ export function CanvasStudio({
   );
 
   const prevPagesLengthRef = useRef(pages.length);
+  const skipNextAutoSelectPageRef = useRef<boolean>(false);
   const deskScrollRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScrollingRef = useRef<boolean>(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -243,14 +266,18 @@ export function CanvasStudio({
     }
   }, [activeViewPageIndex]);
 
-  // Auto-scroll to newly created page if page count increases
+  // Auto-scroll to newly created page if page count increases (preserving duplicated page when not appended)
   useEffect(() => {
     if (pages.length > prevPagesLengthRef.current) {
-      const newPageIdx = pages.length - 1;
-      setActiveViewPageIndex(newPageIdx);
-      setTimeout(() => {
-        document.getElementById(`canvas-page-${newPageIdx}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 120);
+      if (skipNextAutoSelectPageRef.current) {
+        skipNextAutoSelectPageRef.current = false;
+      } else {
+        const newPageIdx = pages.length - 1;
+        setActiveViewPageIndex(newPageIdx);
+        setTimeout(() => {
+          document.getElementById(`canvas-page-${newPageIdx}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
+      }
     }
     prevPagesLengthRef.current = pages.length;
   }, [pages.length, setActiveViewPageIndex]);
@@ -691,9 +718,113 @@ export function CanvasStudio({
 
   const handleAddPage = useCallback(() => {
     const nextPageIndex = pages.length;
+    setManualPageCount(nextPageIndex + 1);
     patchPageOverride(nextPageIndex, { hideReportHeader: false });
+    setActiveViewPageIndex(nextPageIndex);
     dispatch(showGlobalToast({ message: `New A4 page ${nextPageIndex + 1} created`, type: "success" }));
-  }, [pages.length, patchPageOverride, dispatch]);
+    setTimeout(() => {
+      document.getElementById(`canvas-page-${nextPageIndex}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    if (externalOnAddPage) {
+      externalOnAddPage();
+    }
+  }, [pages.length, patchPageOverride, setActiveViewPageIndex, dispatch, externalOnAddPage]);
+
+  const handleDuplicatePage = useCallback(
+    (pageIndex: number) => {
+      const targetPage = pages[pageIndex];
+      const newPageIndex = pageIndex + 1;
+      const currentStamps = section.stamps || [];
+
+      // Shift stamps on pages after pageIndex
+      const shiftedStamps = currentStamps.map((s) => {
+        const p = s.pageIndex ?? 0;
+        if (p > pageIndex) {
+          return { ...s, pageIndex: p + 1 };
+        }
+        return s;
+      });
+
+      // Clone stamps on target page with sequential IDs matching across stamp, sourceId, and content
+      const allocatedIds = new Set<string>();
+
+      const clonedStamps: CanvasCoordinateStamp[] = currentStamps
+        .filter((s) => (s.pageIndex ?? 0) === pageIndex)
+        .map((s) => {
+          const prefix = getStampTypePrefix(s);
+          const newId = getNextSequentialId(prefix, section, allocatedIds);
+          allocatedIds.add(newId);
+
+          const cloned: CanvasCoordinateStamp = {
+            ...s,
+            id: newId,
+            sourceId: newId,
+            pageIndex: newPageIndex,
+          };
+
+          if (s.chart) {
+            cloned.chart = { ...s.chart, id: newId };
+          }
+          if (s.metricCard) {
+            cloned.metricCard = { ...s.metricCard, id: newId };
+          }
+          if (s.textBlock) {
+            cloned.textBlock = { ...s.textBlock, id: newId };
+          }
+          if (s.insight) {
+            cloned.insight = { ...s.insight, id: newId };
+          }
+          if (s.badgeStrip) {
+            cloned.badgeStrip = { ...s.badgeStrip, id: newId };
+          }
+          if (s.element) {
+            cloned.element = { ...s.element, sourceId: newId };
+          }
+
+          return cloned;
+        });
+
+      const updatedStamps = [...shiftedStamps, ...clonedStamps];
+
+      // Shift page overrides
+      const nextOverrides: Record<number, PageConfigOverride> = {};
+      Object.entries(pageOverridesRef.current).forEach(([k, val]) => {
+        const idx = parseInt(k, 10);
+        if (idx <= pageIndex) {
+          nextOverrides[idx] = val;
+        } else {
+          nextOverrides[idx + 1] = val;
+        }
+      });
+      nextOverrides[newPageIndex] = pageOverridesRef.current[pageIndex]
+        ? { ...pageOverridesRef.current[pageIndex] }
+        : {};
+
+      setManualPageCount(pages.length + 1);
+      dispatch(
+        updateLibrarySection({
+          id: section.id,
+          stamps: updatedStamps,
+          pageOverrides: nextOverrides,
+        })
+      );
+      setPageOverrides(nextOverrides);
+      pageOverridesRef.current = nextOverrides;
+
+      skipNextAutoSelectPageRef.current = true;
+      setActiveViewPageIndex(newPageIndex);
+      dispatch(
+        showGlobalToast({
+          message: `Page ${targetPage?.pageNumber || pageIndex + 1} duplicated as Page ${newPageIndex + 1}!`,
+          type: "success",
+        })
+      );
+      setTimeout(() => {
+        document.getElementById(`canvas-page-${newPageIndex}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+    },
+    [dispatch, section, pages, setActiveViewPageIndex]
+  );
 
   const handleConfirmDeletePage = useCallback(
     (targetPage: PagePartition) => {
@@ -730,6 +861,7 @@ export function CanvasStudio({
         }
       });
 
+      setManualPageCount((prev) => Math.max(1, prev - 1));
       dispatch(
         updateLibrarySection({
           id: section.id,
@@ -823,15 +955,15 @@ export function CanvasStudio({
 
   const handleAddBlockBeside = useCallback(
     (rowId: string, cellIndex: number, blockType: CanvasBlockType = "text") => {
-      const ts = Date.now();
       let newCell: CanvasCell;
       if (blockType === "metric-card") {
+        const newId = getNextSequentialId("metric", section);
         newCell = {
-          id: `cell-mc-${ts}`,
+          id: newId,
           colSpan: 1,
           blockType: "metric-card",
           metricCard: {
-            id: `mc-${ts}`,
+            id: newId,
             label: "New KPI Indicator",
             value: "96.5%",
             tintColor: "blue",
@@ -840,25 +972,27 @@ export function CanvasStudio({
           },
         };
       } else if (blockType === "insight") {
+        const newId = getNextSequentialId("insight", section);
         newCell = {
-          id: `cell-ki-${ts}`,
+          id: newId,
           colSpan: 1,
           blockType: "insight",
-          insight: { id: `ki-${ts}`, text: "Supervisory insight note." },
+          insight: { id: newId, text: "Supervisory insight note." },
         };
       } else {
+        const newId = getNextSequentialId("text", section);
         newCell = {
-          id: `cell-tb-${ts}`,
+          id: newId,
           colSpan: 1,
           blockType: "text",
-          textBlock: { id: `tb-${ts}`, content: "" },
+          textBlock: { id: newId, content: "" },
         };
       }
       dispatch(addCellToRow({ sectionId: section.id, rowId, cell: newCell, insertAtIndex: cellIndex }));
       handleSelectCell(newCell.id, rowId);
       dispatch(showGlobalToast({ message: "Added new column beside!", type: "success" }));
     },
-    [dispatch, section.id, handleSelectCell]
+    [dispatch, section, handleSelectCell]
   );
 
   // Drag Handlers
@@ -1249,13 +1383,11 @@ export function CanvasStudio({
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-slate-800 dark:text-zinc-200">
+                        <span className="font-bold text-xs text-slate-800 dark:text-zinc-200 w-[90px]">
                           Page {page.pageNumber} of {computedTotalPages}
                         </span>
-                        <span className="text-[11px] text-slate-400 dark:text-zinc-500 font-medium">
-                          &bull; {(section.stamps || []).filter((s) => (s.pageIndex ?? 0) === page.pageIndex).length} {((section.stamps || []).filter((s) => (s.pageIndex ?? 0) === page.pageIndex).length === 1) ? "element" : "elements"}
-                        </span>
-                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono bg-slate-100 dark:bg-zinc-800/80 px-1.5 py-0.5 rounded border border-slate-200/80 dark:border-zinc-700/60">
+                        
+                        <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-mono bg-slate-100 dark:bg-zinc-800/80 px-0.5 py-0.5 rounded border border-slate-200/80 dark:border-zinc-700/60">
                           A4 595×842
                         </span>
 
@@ -1292,41 +1424,63 @@ export function CanvasStudio({
                           </div>
                       </div>
 
-                      {pages.length > 1 && (
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleMovePageUp(page.pageIndex)}
-                            disabled={page.pageIndex === 0}
-                            className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                            title="Move Page Up"
-                          >
-                            <ChevronUp className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Move Up</span>
-                          </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={handleAddPage}
+                          className="h-7 px-2.5 rounded-lg border border-purple-200 dark:border-purple-800/60 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-[#8B3DFF] text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                          title="Add New A4 Page"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Add </span>
+                        </button>
 
-                          <button
-                            type="button"
-                            onClick={() => handleMovePageDown(page.pageIndex)}
-                            disabled={page.pageIndex === pages.length - 1}
-                            className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
-                            title="Move Page Down"
-                          >
-                            <ChevronDown className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Move Down</span>
-                          </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDuplicatePage(page.pageIndex)}
+                          className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                          title={`Duplicate Page ${page.pageNumber}`}
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Duplicate</span>
+                        </button>
 
-                          <button
-                            type="button"
-                            onClick={() => setPageToDelete(page)}
-                            className="h-7 px-2.5 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                            title={`Delete Page ${page.pageNumber}`}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Delete Page</span>
-                          </button>
-                        </div>
-                      )}
+                        {pages.length > 1 && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleMovePageUp(page.pageIndex)}
+                              disabled={page.pageIndex === 0}
+                              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Move Up"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Move</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleMovePageDown(page.pageIndex)}
+                              disabled={page.pageIndex === pages.length - 1}
+                              className="h-7 px-2 rounded-lg border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:pointer-events-none text-slate-700 dark:text-zinc-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Move Down"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Move</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setPageToDelete(page)}
+                              className="h-7 px-2.5 rounded-lg border border-rose-200 dark:border-rose-900/50 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                              title={`Delete Page ${page.pageNumber}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete </span>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -1789,6 +1943,7 @@ export function CanvasStudio({
         pagesCount={pages.length}
         activeViewPageIndex={activeViewPageIndex}
         onNavigatePage={handleNavigatePage}
+        onAddPage={handleAddPage}
         onDeleteCurrentPage={
           pages.length > 1
             ? () => {
@@ -1812,9 +1967,9 @@ export function CanvasStudio({
       />
 
       {/* ── Complete Page Delete Confirmation Modal ── */}
-      {pageToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white text-center">
+      {pageToDelete && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white text-center shadow-2xl">
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
             </div>
@@ -1850,7 +2005,8 @@ export function CanvasStudio({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
 

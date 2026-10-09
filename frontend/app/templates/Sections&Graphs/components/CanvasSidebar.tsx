@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Stamp,
   Check,
@@ -1107,7 +1108,7 @@ export function CanvasSidebar({
     <>
       <aside className="flex-shrink-0 w-72 flex flex-col border-r border-slate-200/90 dark:border-zinc-800 bg-white/95 dark:bg-[#090d14]/95 backdrop-blur-md overflow-hidden select-none z-10 transition-all duration-200">
         {/* Header */}
-        <div className="flex-shrink-0 p-4 border-b border-slate-100 dark:border-zinc-800/80 space-y-3">
+        <div className="flex-shrink-0 p-2 border-b border-slate-100 dark:border-zinc-800/80 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-md bg-[#9D61FF]/15 text-[#9D61FF] flex items-center justify-center">
@@ -1117,7 +1118,7 @@ export function CanvasSidebar({
                 Block Studio
               </span>
             </div>
-            <span className="text-[10px] font-mono text-purple-600 dark:text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded font-bold">
+            <span className="text-[9px] font-mono text-purple-600 dark:text-purple-400 bg-purple-500/10 px-1 py-0.5 rounded font-bold">
               {selectedCategory === "charts"
                 ? "25 Charts"
                 : selectedCategory === "text"
@@ -1143,7 +1144,7 @@ export function CanvasSidebar({
           </div>
 
           {/* Categories */}
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
+          <div className="flex items-center gap-0.5 overflow-x-auto no-scrollbar pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
             {availableCategories.map((cat) => {
               const label =
                 cat === "sections"
@@ -1169,7 +1170,7 @@ export function CanvasSidebar({
                       : undefined
                   }
                   onClick={() => setSelectedCategory(cat)}
-                  className={`h-7 px-2.5 rounded-lg text-[10px] font-bold capitalize transition-all cursor-pointer whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
+                  className={`h-6 px-1 rounded-md text-[10px] font-bold capitalize transition-all cursor-pointer whitespace-nowrap flex-shrink-0 flex items-center justify-center ${
                     selectedCategory === cat
                       ? "bg-[#9D61FF] text-white"
                       : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -1183,7 +1184,7 @@ export function CanvasSidebar({
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 pt-1.5 space-y-4">
 
           {/* ── REPORT SECTIONS & OUTLINE NAVIGATOR (Complete Report Format Only) ── */}
           {showReportSections && (selectedCategory === "sections" || selectedCategory === "all") && (
@@ -2266,9 +2267,9 @@ export function CanvasSidebar({
 
       {/* ── High-Definition Full Chart Preview Modal ── */}
       {/* ── Chart Full Preview Modal (Standard Enterprise Clean UI - No Box Shadow) ── */}
-      {previewingChart && (
+      {previewingChart && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fadeIn select-none"
+          className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-fadeIn select-none"
           onClick={() => setPreviewingChart(null)}
         >
           <div
@@ -2365,7 +2366,8 @@ export function CanvasSidebar({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

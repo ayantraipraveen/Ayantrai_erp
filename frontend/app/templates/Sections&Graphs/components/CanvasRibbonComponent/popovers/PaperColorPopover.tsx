@@ -47,7 +47,7 @@ export function PaperColorPopover({
   };
 
   return (
-    <div className="absolute top-8 left-0 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-4 z-50 space-y-4 animate-fadeIn">
+    <div className="w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 p-4 space-y-4 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800/80 pb-2.5">
         <div className="flex items-center gap-2">

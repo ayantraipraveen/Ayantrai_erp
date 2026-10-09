@@ -53,9 +53,13 @@ function getStampDimensions(stamp: CanvasCoordinateStamp): { width: number; heig
   const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : isBadgeStrip ? 547 : isDivider ? 547 : 120;
   const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 92 : isBadgeStrip ? 70 : isDivider ? 28 : 120;
 
+  const baseW = stamp.width || defaultW;
+  const baseH = stamp.height || defaultH;
+  const currentScale = stamp.scale ?? stamp.chart?.scale ?? 1;
+
   return {
-    width: stamp.width || defaultW,
-    height: stamp.height || defaultH,
+    width: !isChart && currentScale !== 1 ? Math.round(baseW * currentScale) : baseW,
+    height: !isChart && currentScale !== 1 ? Math.round(baseH * currentScale) : baseH,
   };
 }
 
@@ -206,6 +210,8 @@ export function CanvasStampsLayer({
     y: number;
     aspectRatio: number;
     isCard: boolean;
+    isChart: boolean;
+    scale: number;
   } | null>(null);
 
   // Rotating state
@@ -261,13 +267,16 @@ export function CanvasStampsLayer({
     const isInsight = stamp.elementType === "insight" || Boolean(stamp.insight);
     const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
     const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
-    const isCard = isChart || isText || isInsight || isMetric || isBadgeStrip;
+    const isDivider = stamp.elementType === "divider" || Boolean(stamp.divider);
+    const isElement = stamp.elementType === "element";
+    const isCard = isChart || isText || isInsight || isMetric || isBadgeStrip || isDivider || isElement;
 
-    const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : 120;
-    const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 92 : 120;
+    const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : isBadgeStrip ? 547 : isDivider ? 547 : 120;
+    const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 92 : isBadgeStrip ? 70 : isDivider ? 28 : 120;
 
     const w = stamp.width || defaultW;
     const h = stamp.height || defaultH;
+    const currentScale = stamp.scale ?? stamp.chart?.scale ?? 1;
 
     resizeStartPos.current = {
       mouseX: e.clientX,
@@ -278,6 +287,8 @@ export function CanvasStampsLayer({
       y: stamp.y,
       aspectRatio: w / Math.max(1, h),
       isCard,
+      isChart,
+      scale: currentScale,
     };
   };
 
@@ -325,18 +336,24 @@ export function CanvasStampsLayer({
         newX = Math.round(newX / 8) * 8;
         newY = Math.round(newY / 8) * 8;
 
-        // Page boundary clamps
-        newX = Math.max(8, Math.min(595 - 40, newX));
-        newY = Math.max(16, Math.min(842 - 30, newY));
+        const currentStamp = pageStampsRef.current.find((s) => s.id === draggingId);
+        const { width: sw, height: sh } = currentStamp
+          ? getStampDimensions(currentStamp)
+          : { width: 120, height: 120 };
+        const clamped = clampStampPosition(newX, newY, sw, sh, pageWidth, pageHeight);
 
-        onUpdateStamp(draggingId, { x: newX, y: newY });
+        onUpdateStamp(draggingId, { x: clamped.x, y: clamped.y });
       }
 
       // 2. Resize
       if (resizingId && resizeStartPos.current && onUpdateStamp && resizeCorner.current) {
-        const { mouseX, mouseY, width, height, x, y, aspectRatio, isCard } = resizeStartPos.current;
+        const { mouseX, mouseY, width, height, x, y, aspectRatio, isCard, isChart, scale } = resizeStartPos.current;
         const dx = (e.clientX - mouseX) / zoomFactor;
         const dy = (e.clientY - mouseY) / zoomFactor;
+
+        const isScaledNonChart = !isChart && typeof scale === "number" && scale > 0 && scale !== 1;
+        const deltaW = isScaledNonChart ? dx / scale : dx;
+        const deltaH = isScaledNonChart ? dy / scale : dy;
 
         let newW = width;
         let newH = height;
@@ -349,65 +366,68 @@ export function CanvasStampsLayer({
           const minH = 32;
 
           if (resizeCorner.current === "se") {
-            newW = Math.max(minW, width + dx);
-            newH = Math.max(minH, height + dy);
+            newW = Math.max(minW, width + deltaW);
+            newH = Math.max(minH, height + deltaH);
           } else if (resizeCorner.current === "sw") {
-            newW = Math.max(minW, width - dx);
-            newH = Math.max(minH, height + dy);
-            newX = x + (width - newW);
+            newW = Math.max(minW, width - deltaW);
+            newH = Math.max(minH, height + deltaH);
           } else if (resizeCorner.current === "ne") {
-            newW = Math.max(minW, width + dx);
-            newH = Math.max(minH, height - dy);
-            newY = y + (height - newH);
+            newW = Math.max(minW, width + deltaW);
+            newH = Math.max(minH, height - deltaH);
           } else if (resizeCorner.current === "nw") {
-            newW = Math.max(minW, width - dx);
-            newH = Math.max(minH, height - dy);
-            newX = x + (width - newW);
-            newY = y + (height - newH);
+            newW = Math.max(minW, width - deltaW);
+            newH = Math.max(minH, height - deltaH);
           } else if (resizeCorner.current === "s") {
-            newH = Math.max(minH, height + dy);
+            newH = Math.max(minH, height + deltaH);
           } else if (resizeCorner.current === "n") {
-            newH = Math.max(minH, height - dy);
-            newY = y + (height - newH);
+            newH = Math.max(minH, height - deltaH);
           } else if (resizeCorner.current === "e") {
-            newW = Math.max(minW, width + dx);
+            newW = Math.max(minW, width + deltaW);
           } else if (resizeCorner.current === "w") {
-            newW = Math.max(minW, width - dx);
-            newX = x + (width - newW);
+            newW = Math.max(minW, width - deltaW);
           }
         } else {
           // Proportional aspect-ratio resizing for decorative stamps
           if (resizeCorner.current === "se") {
-            newW = Math.max(30, width + dx);
+            newW = Math.max(30, width + deltaW);
             newH = Math.round(newW / aspectRatio);
           } else if (resizeCorner.current === "sw") {
-            newW = Math.max(30, width - dx);
+            newW = Math.max(30, width - deltaW);
             newH = Math.round(newW / aspectRatio);
-            newX = x + (width - newW);
           } else if (resizeCorner.current === "ne") {
-            newW = Math.max(30, width + dx);
+            newW = Math.max(30, width + deltaW);
             newH = Math.round(newW / aspectRatio);
-            newY = y + (height - newH);
           } else if (resizeCorner.current === "nw") {
-            newW = Math.max(30, width - dx);
+            newW = Math.max(30, width - deltaW);
             newH = Math.round(newW / aspectRatio);
-            newX = x + (width - newW);
-            newY = y + (height - newH);
           } else if (resizeCorner.current === "s") {
-            newH = Math.max(20, height + dy);
+            newH = Math.max(20, height + deltaH);
             newW = Math.round(newH * aspectRatio);
           } else if (resizeCorner.current === "n") {
-            newH = Math.max(20, height - dy);
+            newH = Math.max(20, height - deltaH);
             newW = Math.round(newH * aspectRatio);
-            newY = y + (height - newH);
           } else if (resizeCorner.current === "e") {
-            newW = Math.max(30, width + dx);
+            newW = Math.max(30, width + deltaW);
             newH = Math.round(newW / aspectRatio);
           } else if (resizeCorner.current === "w") {
-            newW = Math.max(30, width - dx);
+            newW = Math.max(30, width - deltaW);
             newH = Math.round(newW / aspectRatio);
-            newX = x + (width - newW);
           }
+        }
+
+        const isWest = resizeCorner.current === "sw" || resizeCorner.current === "nw" || resizeCorner.current === "w";
+        const isNorth = resizeCorner.current === "ne" || resizeCorner.current === "nw" || resizeCorner.current === "n";
+
+        const origVisibleW = isScaledNonChart ? Math.round(width * scale) : width;
+        const origVisibleH = isScaledNonChart ? Math.round(height * scale) : height;
+        const newVisibleW = isScaledNonChart ? Math.round(newW * scale) : newW;
+        const newVisibleH = isScaledNonChart ? Math.round(newH * scale) : newH;
+
+        if (isWest) {
+          newX = x + (origVisibleW - newVisibleW);
+        }
+        if (isNorth) {
+          newY = y + (origVisibleH - newVisibleH);
         }
 
         const finalW = Math.round(newW);
@@ -496,7 +516,7 @@ export function CanvasStampsLayer({
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [draggingId, resizingId, rotatingId, onUpdateStamp, zoom]);
+  }, [draggingId, resizingId, rotatingId, onUpdateStamp, zoom, pageWidth, pageHeight]);
 
   // Click outside to deselect & reset zoom menu on selection change
   useEffect(() => {
@@ -655,11 +675,14 @@ export function CanvasStampsLayer({
         const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : isBadgeStrip ? 547 : isDivider ? 547 : 120;
         const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 92 : isBadgeStrip ? 70 : isDivider ? 28 : 120;
 
-        const width = stamp.width || defaultW;
-        const height = stamp.height || defaultH;
+        const baseWidth = stamp.width || defaultW;
+        const baseHeight = stamp.height || defaultH;
         const rotation = stamp.rotation || 0;
         const opacity = (stamp.opacity ?? 100) / 100;
         const currentScale = stamp.scale ?? stamp.chart?.scale ?? 1;
+
+        const width = !isChart && currentScale !== 1 ? Math.round(baseWidth * currentScale) : baseWidth;
+        const height = !isChart && currentScale !== 1 ? Math.round(baseHeight * currentScale) : baseHeight;
 
         // Calculate layered stacking zIndex
         const baseZ = isBack ? (stamp.zIndex ?? 6) : (stamp.zIndex ?? 25);
@@ -693,17 +716,19 @@ export function CanvasStampsLayer({
               <div
                 style={{
                   opacity,
+                  width: (!isChart && currentScale !== 1) ? `${baseWidth}px` : "100%",
+                  height: (!isChart && currentScale !== 1) ? `${baseHeight}px` : "100%",
                   transform: (!isChart && currentScale !== 1) ? `scale(${currentScale})` : undefined,
-                  transformOrigin: "center center",
+                  transformOrigin: "top left",
                 }}
-                className="w-full h-full select-none overflow-hidden flex flex-col pointer-events-auto"
+                className="select-none overflow-hidden flex flex-col pointer-events-auto"
               >
                 <CanvasBlockRenderer
                   cell={{
                     id: stamp.sourceId || stamp.id,
                     colSpan: 1,
-                    customWidth: width,
-                    customHeight: height,
+                    customWidth: baseWidth,
+                    customHeight: baseHeight,
                     blockType: (stamp.elementType || (stamp.chart ? "chart" : stamp.metricCard ? "metric-card" : stamp.insight ? "insight" : stamp.textBlock ? "text" : stamp.badgeStrip ? "badge-strip" : stamp.divider ? "divider" : stamp.element ? "element" : "text")) as CanvasBlockType,
                     metricCard: stamp.metricCard ? { ...stamp.metricCard, customWidth: width, customHeight: height } : undefined,
                     chart: stamp.chart ? { ...stamp.chart, customWidth: width, customHeight: height, scale: currentScale } : undefined,
@@ -804,8 +829,6 @@ export function CanvasStampsLayer({
               <div
                 style={{
                   opacity,
-                  transform: currentScale !== 1 ? `scale(${currentScale})` : undefined,
-                  transformOrigin: "center center",
                 }}
                 className="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full select-none pointer-events-none"
                 dangerouslySetInnerHTML={{ __html: stamp.svgContent || stamp.element?.svgContent || "" }}

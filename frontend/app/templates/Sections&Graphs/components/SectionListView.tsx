@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   Layers,
   Search,
@@ -536,8 +537,8 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
       </div>
 
       {/* ================= MODAL: CREATE NEW SECTION ================= */}
-      {createModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+      {createModalOpen && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
               <div className="flex items-center gap-2">
@@ -626,12 +627,13 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ================= MODAL: DELETE CONFIRMATION ================= */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+      {deleteConfirmId && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-sm bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-5 space-y-4 animate-scaleUp text-slate-900 dark:text-white text-center">
             <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
               <Trash2 className="w-6 h-6" />
@@ -662,7 +664,8 @@ export default function SectionListView({ onSelectSection, onBackToTemplates }: 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

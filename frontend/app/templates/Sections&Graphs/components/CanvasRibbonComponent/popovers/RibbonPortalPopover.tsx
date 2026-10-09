@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 export interface RibbonPortalPopoverProps {
@@ -58,8 +58,20 @@ export function RibbonPortalPopover({
       top = rect.top - popoverH - offset;
     }
 
+    // Clamp top to viewport bounds
+    if (top + popoverH > window.innerHeight - 12) {
+      top = Math.max(12, window.innerHeight - popoverH - 12);
+    }
+    if (top < 12) top = 12;
+
     setCoords({ top, left });
   }, [anchorEl, align, offset]);
+
+  useLayoutEffect(() => {
+    if (isOpen && anchorEl) {
+      updateCoords();
+    }
+  }, [isOpen, anchorEl, updateCoords, children]);
 
   useEffect(() => {
     if (!isOpen || !anchorEl) {
@@ -67,10 +79,21 @@ export function RibbonPortalPopover({
       return;
     }
     updateCoords();
+
+    // Remeasure dynamically when popover element mounts or its measured size changes
+    let observer: ResizeObserver | null = null;
+    if (popoverRef.current && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => {
+        updateCoords();
+      });
+      observer.observe(popoverRef.current);
+    }
+
     const handleScrollOrResize = () => updateCoords();
     window.addEventListener("scroll", handleScrollOrResize, true);
     window.addEventListener("resize", handleScrollOrResize);
     return () => {
+      observer?.disconnect();
       window.removeEventListener("scroll", handleScrollOrResize, true);
       window.removeEventListener("resize", handleScrollOrResize);
     };

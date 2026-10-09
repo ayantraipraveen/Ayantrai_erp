@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Plus,
@@ -57,9 +58,10 @@ export function EditSectionHeaderModal({
   onSave,
 }: EditSectionHeaderModalProps) {
   if (!isOpen) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
       <div className="w-full max-w-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
           <h3 className="text-sm font-bold">Edit Section Header</h3>
@@ -137,7 +139,8 @@ export function EditSectionHeaderModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -176,9 +179,10 @@ export function MetricCardModal({
   onSave,
 }: MetricCardModalProps) {
   if (!isOpen) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
       <div className="w-full max-w-lg bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
           <h3 className="text-sm font-bold">
@@ -297,7 +301,8 @@ export function MetricCardModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -320,9 +325,10 @@ export function KeyInsightModal({
   onSave,
 }: KeyInsightModalProps) {
   if (!isOpen) return null;
+  if (typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
       <div className="w-full max-w-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
           <h3 className="text-sm font-bold">
@@ -373,7 +379,8 @@ export function KeyInsightModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -402,6 +409,7 @@ export function BadgeStripModal({
   }, [badgeStrip, isOpen]);
 
   if (!isOpen || !badgeStrip) return null;
+  if (typeof document === "undefined") return null;
 
   const currentBadge = badges[activeTabIdx] || badges[0];
 
@@ -433,8 +441,8 @@ export function BadgeStripModal({
     setActiveTabIdx((prev) => Math.max(0, Math.min(prev, badges.length - 2)));
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
       <div className="w-full max-w-xl bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 animate-scaleUp text-slate-900 dark:text-white">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 pb-3">
@@ -608,6 +616,7 @@ export function BadgeStripModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

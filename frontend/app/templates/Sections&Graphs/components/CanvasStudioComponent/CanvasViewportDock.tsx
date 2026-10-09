@@ -11,6 +11,7 @@ import {
   Ruler,
   Eye,
   Trash2,
+  Plus,
 } from "lucide-react";
 
 export interface CanvasViewportDockProps {
@@ -18,6 +19,7 @@ export interface CanvasViewportDockProps {
   activeViewPageIndex: number;
   onNavigatePage: (index: number) => void;
   onDeleteCurrentPage?: () => void;
+  onAddPage?: () => void;
   activeZoom: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
@@ -37,6 +39,7 @@ export function CanvasViewportDock({
   activeViewPageIndex,
   onNavigatePage,
   onDeleteCurrentPage,
+  onAddPage,
   activeZoom,
   onZoomIn,
   onZoomOut,
@@ -57,32 +60,47 @@ export function CanvasViewportDock({
 
   return (
     <div className="fixed bottom-4 right-8 z-40 flex items-center gap-1.5 bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 rounded-2xl px-3 py-1.5 backdrop-blur-md select-none text-xs">
-      {/* Page Navigator when multi-page */}
-      {pagesCount > 1 && (
+      {/* Page Navigator (Always accessible when not in preview mode) */}
+      {!activeIsPreview && (
         <>
           <div className="flex items-center gap-1 bg-slate-100 dark:bg-zinc-800 rounded-xl px-2 py-0.5 font-mono text-[11px] font-bold text-slate-700 dark:text-zinc-200">
-            <button
-              type="button"
-              onClick={() => onNavigatePage(Math.max(0, activeViewPageIndex - 1))}
-              disabled={activeViewPageIndex <= 0}
-              className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
-              title="Previous Page"
-            >
-              <ChevronUp className="w-3.5 h-3.5" />
-            </button>
+            {pagesCount > 1 && (
+              <button
+                type="button"
+                onClick={() => onNavigatePage(Math.max(0, activeViewPageIndex - 1))}
+                disabled={activeViewPageIndex <= 0}
+                className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
+                title="Previous Page"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+              </button>
+            )}
             <span className="px-1 text-[#8B3DFF]">
               Page {currentDisplayPage} / {pagesCount}
             </span>
-            <button
-              type="button"
-              onClick={() => onNavigatePage(Math.min(pagesCount - 1, activeViewPageIndex + 1))}
-              disabled={activeViewPageIndex >= pagesCount - 1}
-              className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
-              title="Next Page"
-            >
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-            {onDeleteCurrentPage && !activeIsPreview && (
+            {pagesCount > 1 && (
+              <button
+                type="button"
+                onClick={() => onNavigatePage(Math.min(pagesCount - 1, activeViewPageIndex + 1))}
+                disabled={activeViewPageIndex >= pagesCount - 1}
+                className="p-1 rounded hover:bg-white dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
+                title="Next Page"
+              >
+                <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {onAddPage && (
+              <button
+                type="button"
+                onClick={onAddPage}
+                className="p-1 ml-0.5 rounded text-[#8B3DFF] hover:bg-purple-100 dark:hover:bg-zinc-700 hover:text-purple-700 transition-colors cursor-pointer flex items-center gap-1 font-sans text-[11px] font-bold"
+                title="Add New Blank Page"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Add Page</span>
+              </button>
+            )}
+            {onDeleteCurrentPage && pagesCount > 1 && (
               <button
                 type="button"
                 onClick={onDeleteCurrentPage}
