@@ -296,7 +296,7 @@ async function seed() {
         metricCards: sec.metricCards as any,
         charts: sec.charts as any,
         keyInsights: sec.keyInsights as any,
-        canvasRows: (sec as any).canvasRows as any,
+        stamps: (sec as any).stamps as any,
       },
       create: {
         id: sec.id,
@@ -314,7 +314,7 @@ async function seed() {
         metricCards: sec.metricCards as any,
         charts: sec.charts as any,
         keyInsights: sec.keyInsights as any,
-        canvasRows: (sec as any).canvasRows as any,
+        stamps: (sec as any).stamps as any,
       },
     });
     console.log(`✅ Seeded Core Standard Section: [${sec.id}] ${sec.name}`);

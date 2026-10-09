@@ -183,8 +183,8 @@ export function MetricCardBlock({
 
   const iconContainerSize =
     card.iconShape === "none"
-      ? (card.iconSize || 14)
-      : Math.max(24, (card.iconSize || 14) + 10);
+      ? (card.iconSize || 15)
+      : Math.max(28, (card.iconSize || 15) + 12);
 
   const iconShapeClass =
     card.iconShape === "rounded"
@@ -198,7 +198,7 @@ export function MetricCardBlock({
       <div
         ref={containerRef}
         style={cardContainerStyle}
-        className={`group/metric-card relative w-full h-full min-h-0 rounded-xl border p-2 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${
+        className={`group/metric-card relative w-full h-full min-h-0 rounded-2xl border p-2.5 transition-all duration-200 select-none flex flex-col justify-between overflow-hidden ${
           !card.customBgColor ? `${ramp.bgLight} ${ramp.bgDark}` : ""
         } ${
           !card.customBorderColor ? `${ramp.borderLight} ${ramp.borderDark}` : ""
@@ -226,7 +226,7 @@ export function MetricCardBlock({
               height: `${iconContainerSize}px`,
               backgroundColor: card.customIconBg || undefined,
             }}
-            className={`${iconShapeClass} flex items-center justify-center shrink-0 mb-0.5 shadow-none ${!card.customIconBg && card.iconShape !== "none" ? (ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50") : ""
+            className={`${iconShapeClass} flex items-center justify-center shrink-0 mb-1 shadow-none ${!card.customIconBg && card.iconShape !== "none" ? (ramp.iconCircleBg || "bg-blue-100 dark:bg-blue-900/50") : ""
               } ${!card.customIconColor ? (ramp.iconColor || "text-blue-600 dark:text-blue-300") : ""
               }`}
           >
@@ -239,7 +239,7 @@ export function MetricCardBlock({
               color: card.customTextColor || undefined,
               fontSize: card.fontSizeLabel ? `${card.fontSizeLabel}px` : undefined,
             }}
-            className={`${labelFontSizeClass} font-bold text-slate-800 dark:text-zinc-200 ${editingField === "label" ? "" : "line-clamp-2 sm:line-clamp-1"
+            className={`${labelFontSizeClass} font-bold text-slate-800 dark:text-zinc-200 ${editingField === "label" ? "" : "line-clamp-2"
               } leading-tight mb-0.5`}
           >
             {!isPreview && editingField === "label" ? (
@@ -361,16 +361,16 @@ export function MetricCardBlock({
             </button>
 
             {/* Subtitle e.g. "vs. last month" */}
-            {card.trendSubtitle && !card.trendSubtitle.includes("(Lower is better)") && (
-              <span className="text-[9.5px] sm:text-[10px] text-slate-400 dark:text-zinc-500 font-normal">
-                {card.trendSubtitle}
-              </span>
-            )}
-            {!card.trendSubtitle && (
-              <span className="text-[9.5px] sm:text-[10px] text-slate-400 dark:text-zinc-500 font-normal">
-                vs. last month
-              </span>
-            )}
+            {(() => {
+              const cleanSub = (card.trendSubtitle || "vs. last month")
+                .replace(/\s*\(Lower is better\)/i, "")
+                .trim() || "vs. last month";
+              return (
+                <span className="text-[9.5px] sm:text-[10px] text-slate-400 dark:text-zinc-500 font-normal">
+                  {cleanSub}
+                </span>
+              );
+            })()}
           </div>
 
           {(card.trendSubtitle?.includes("(Lower is better)") || (isNegativeMetric && card.trendDirection === "down")) && (

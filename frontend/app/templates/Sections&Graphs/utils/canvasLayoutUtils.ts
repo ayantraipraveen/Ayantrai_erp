@@ -27,8 +27,8 @@ export function getDefaultBlockHeight(blockType?: string, cellOrVariant?: Canvas
     switch (variant) {
       case "vertical-takeaways": {
         const count = itemsCount ?? 4;
-        // Header + padding + item rows (each compact item is ~16px)
-        return Math.max(90, 28 + count * 16);
+        // Header + padding + item rows (each takeaway item is ~25px with title and description)
+        return Math.max(120, 42 + count * 26);
       }
       case "priority-actions": {
         const count = itemsCount ?? 4;
@@ -61,7 +61,7 @@ export function getDefaultBlockHeight(blockType?: string, cellOrVariant?: Canvas
     case "chart":
       return 360;
     case "metric-card":
-      return 92;
+      return 118;
     case "badge-strip":
       return 130;
     case "text":
@@ -299,23 +299,28 @@ export function resolveSectionCanvasRows(sec: LibrarySection): CanvasRow[] {
   const rows: CanvasRow[] = [];
   const ts = Date.now();
 
-  // 1. Metric Cards Row
+  // 1. Metric Cards: Chunk into rows of at most 4 cards (matching standard 4-column A4 grid)
   if (sec.metricCards && sec.metricCards.length > 0) {
-    const count = sec.metricCards.length;
-    const w = count === 1 ? 100 : count === 2 ? 50 : count === 3 ? 33.3 : count === 4 ? 25 : Math.floor(100 / count);
-    const colSpan = (count === 1 ? 4 : count === 2 ? 2 : 1) as 1 | 2 | 3 | 4;
-    rows.push({
-      id: `row-mc-${ts}-${Math.random().toString(36).substr(2, 4)}`,
-      sectionName: sec.name,
-      pageBreakBefore: true,
-      cells: sec.metricCards.map((card, cIdx) => ({
-        id: `cell-mc-${card.id || `${ts}-${cIdx}`}`,
-        colSpan,
-        customWidth: w,
-        blockType: "metric-card" as const,
-        metricCard: card,
-      })),
-    });
+    const chunkSize = 4;
+    for (let i = 0; i < sec.metricCards.length; i += chunkSize) {
+      const chunk = sec.metricCards.slice(i, i + chunkSize);
+      const count = chunk.length;
+      const w = count === 1 ? 100 : count === 2 ? 50 : count === 3 ? 33.3 : 25;
+      const colSpan = (count === 1 ? 4 : count === 2 ? 2 : 1) as 1 | 2 | 3 | 4;
+      rows.push({
+        id: `row-mc-${ts}-${Math.floor(i / chunkSize)}`,
+        sectionName: sec.name,
+        pageBreakBefore: rows.length === 0,
+        cells: chunk.map((card, cIdx) => ({
+          id: `cell-mc-${card.id || `${ts}-${i + cIdx}`}`,
+          colSpan,
+          customWidth: w,
+          customHeight: 118,
+          blockType: "metric-card" as const,
+          metricCard: card,
+        })),
+      });
+    }
   }
 
   // 2. Charts (one row per chart)
@@ -517,7 +522,7 @@ export function calculateSectionGroupPageNumbers(
  */
 export function convertRowsToFloatingStamps(
   rows: CanvasRow[],
-  startY = 145,
+  startY = 200,
   sectionName?: string
 ): CanvasCoordinateStamp[] {
   if (!rows || rows.length === 0) return [];
@@ -643,7 +648,7 @@ export function resolveSectionFloatingStamps(sec: LibrarySection): CanvasCoordin
 
   // Convert canvasRows if present
   if (sec.canvasRows && sec.canvasRows.length > 0) {
-    const converted = convertRowsToFloatingStamps(sec.canvasRows, 145, sec.name);
+    const converted = convertRowsToFloatingStamps(sec.canvasRows, 200, sec.name);
     const decorativeStamps = existingStamps.filter((s) => !s.elementType || s.elementType === "stamp");
     return [...decorativeStamps, ...converted];
   }
@@ -651,7 +656,7 @@ export function resolveSectionFloatingStamps(sec: LibrarySection): CanvasCoordin
   // Or resolve from base telemetry (metricCards, charts, keyInsights)
   const defaultRows = resolveSectionCanvasRows(sec);
   if (defaultRows.length > 0) {
-    const converted = convertRowsToFloatingStamps(defaultRows, 145, sec.name);
+    const converted = convertRowsToFloatingStamps(defaultRows, 200, sec.name);
     const decorativeStamps = existingStamps.filter((s) => !s.elementType || s.elementType === "stamp");
     return [...decorativeStamps, ...converted];
   }

@@ -628,21 +628,21 @@ export function InsightBlock({
                 ? "text-[11px] leading-relaxed"
                 : "text-[8.5px] sm:text-[9px] leading-[1.25]";
 
-      const spacingGap = insight.gap !== undefined ? `${insight.gap}px` : "2px";
+      const spacingGap = insight.gap !== undefined ? `${insight.gap}px` : "4px";
 
       return (
-        <div className="w-full h-auto min-h-fit space-y-0.5">
-          <div className="flex items-center justify-between pb-1 mb-1 border-b border-slate-200/80 dark:border-zinc-800">
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded bg-[#2563eb] text-white flex items-center justify-center font-bold shrink-0">
-                <FileText className="w-2.5 h-2.5" />
+        <div className="w-full h-auto min-h-fit space-y-1">
+          <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-200/80 dark:border-zinc-800">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md bg-[#2563eb] text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                <FileText className="w-3 h-3" />
               </div>
               <div>
                 {!isPreview && editingTarget === "title" ? (
                   <DynamicTextEditor
                     initialValue={insight.title || "Key Takeaways"}
-                    defaultFontSize={11}
-                    className="text-[11px] sm:text-xs font-black text-[#0f172a] dark:text-blue-400"
+                    defaultFontSize={12}
+                    className="text-[12px] sm:text-[12.5px] font-black text-[#0f172a] dark:text-blue-400"
                     onSave={(plain) => {
                       handleUpdate({ title: plain });
                       finishEdit();
@@ -653,7 +653,7 @@ export function InsightBlock({
                   <h3
                     onDoubleClick={() => startEdit("title")}
                     title={!isPreview ? "Double-click to edit heading" : undefined}
-                    className={`text-[11px] sm:text-xs font-black text-[#0f172a] dark:text-blue-400 tracking-tight leading-none cursor-text select-text ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}
+                    className={`text-[12px] sm:text-[12.5px] font-black text-[#0f172a] dark:text-blue-400 tracking-tight leading-none cursor-text select-text ${!isPreview ? "hover:underline hover:decoration-dotted" : ""}`}
                   >
                     {insight.title || "Key Takeaways"}
                   </h3>
@@ -692,13 +692,13 @@ export function InsightBlock({
                 <div
                   key={item.id}
                   onClick={() => setSelectedItemId(item.id)}
-                  className={`relative group/row flex items-start gap-1.5 ${takeawayFontSizeClass} text-slate-700 dark:text-zinc-300 py-[1px] cursor-pointer`}
+                  className={`relative group/row flex items-start gap-1.5 ${takeawayFontSizeClass} text-slate-700 dark:text-zinc-300 py-[1.5px] cursor-pointer`}
                 >
                   {renderBulletBadge({
                     item,
                     idx,
                     insight,
-                    defaultSize: 15,
+                    defaultSize: 16,
                     defaultBgClass: defaultColor,
                   })}
 
@@ -720,7 +720,7 @@ export function InsightBlock({
                         title={!isPreview ? "Double-click to format takeaway (Word style)" : undefined}
                         className={`select-text ${!isPreview ? "hover:bg-blue-500/5 rounded px-0.5 py-0 cursor-text transition-colors" : ""}`}
                       >
-                        {item.title && <b className="text-slate-900 dark:text-white mr-1 font-bold">{item.title}:</b>}
+                        {item.title && <b className="text-slate-900 dark:text-white mr-1.5 font-bold">{item.title}:</b>}
                         <span dangerouslySetInnerHTML={{ __html: item.text }} />
                       </div>
                     )}
@@ -1528,7 +1528,7 @@ export function InsightBlock({
 
   const defaultContainerClass =
     variant === "vertical-takeaways"
-      ? "rounded-xl border border-slate-200/80 dark:border-zinc-800 bg-[#f8fafc]/90 dark:bg-[#0c1017] px-3.5 py-1.5"
+      ? "rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-[#f8fafc]/90 dark:bg-[#0c1017] p-3.5"
       : variant === "quote-card"
       ? "rounded-2xl border border-blue-200/60 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/60 via-white to-sky-50/40 dark:from-blue-950/30 dark:via-zinc-950 dark:to-zinc-900 p-6"
       : variant === "vision-banner"
