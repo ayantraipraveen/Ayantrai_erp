@@ -67,6 +67,9 @@ import {
   Lightbulb,
   ThumbsUp,
   Star,
+  ArrowUp,
+  ArrowDown,
+  LogOut,
 } from "lucide-react";
 
 export interface MetricIconOption {
@@ -148,6 +151,9 @@ export const DYNAMIC_METRIC_ICONS: MetricIconOption[] = [
   { id: "Lightbulb", label: "Insight", category: "General", icon: Lightbulb },
   { id: "ThumbsUp", label: "Approved", category: "General", icon: ThumbsUp },
   { id: "Star", label: "Priority Star", category: "General", icon: Star },
+  { id: "ArrowUp", label: "Arrow Up", category: "KPI", icon: ArrowUp },
+  { id: "ArrowDown", label: "Arrow Down", category: "KPI", icon: ArrowDown },
+  { id: "LogOut", label: "Log Out / Early Exit", category: "Operations", icon: LogOut },
 ];
 
 export const DYNAMIC_METRIC_ICON_MAP: Record<string, React.ElementType> = DYNAMIC_METRIC_ICONS.reduce(

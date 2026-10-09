@@ -2,6 +2,7 @@
 
 import React from "react";
 import { LibraryChartCard, ChartDataPoint } from "@/lib/redux/slices/reportModuleSlice";
+import { getMetricIconComponent } from "../../utils";
 
 interface ChartRendererProps {
   chart: LibraryChartCard;

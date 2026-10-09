@@ -333,6 +333,8 @@ export interface ChartDataPoint {
   trend?: string; // KPI trend e.g. "+3.4%"
   trendDirection?: "up" | "down" | "no-change";
   rowValues?: (number | string)[]; // Matrix / Table row values
+  isTotal?: boolean; // Summary or Total row styling
+  customCellColors?: (string | undefined)[]; // Per-cell custom color override
 }
 
 export interface ChartAxisConfig {
@@ -391,7 +393,15 @@ export interface LibraryChartCard {
   matrixData?: number[][];
   matrixRowLabels?: string[];
   matrixColLabels?: string[];
-  tableColumns?: { id: string; label: string }[];
+  tableColumns?: {
+    id: string;
+    label: string;
+    icon?: string;
+    iconBg?: string;
+    iconColor?: string;
+    align?: "left" | "center" | "right";
+    width?: string;
+  }[];
   // Dynamic layout & container styling properties
   customHeight?: number;
   customWidth?: number;
