@@ -717,6 +717,10 @@ export function CanvasStudio({
   );
 
   const handleAddPage = useCallback(() => {
+    if (externalOnAddPage) {
+      externalOnAddPage();
+      return;
+    }
     const nextPageIndex = pages.length;
     setManualPageCount(nextPageIndex + 1);
     patchPageOverride(nextPageIndex, { hideReportHeader: false });
@@ -725,9 +729,6 @@ export function CanvasStudio({
     setTimeout(() => {
       document.getElementById(`canvas-page-${nextPageIndex}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 120);
-    if (externalOnAddPage) {
-      externalOnAddPage();
-    }
   }, [pages.length, patchPageOverride, setActiveViewPageIndex, dispatch, externalOnAddPage]);
 
   const handleDuplicatePage = useCallback(

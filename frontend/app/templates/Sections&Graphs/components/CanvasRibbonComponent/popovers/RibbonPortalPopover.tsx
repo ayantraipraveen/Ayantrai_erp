@@ -97,7 +97,7 @@ export function RibbonPortalPopover({
       window.removeEventListener("scroll", handleScrollOrResize, true);
       window.removeEventListener("resize", handleScrollOrResize);
     };
-  }, [isOpen, anchorEl, updateCoords]);
+  }, [isOpen, anchorEl, updateCoords, Boolean(coords)]);
 
   // Dismiss on clicking outside
   useEffect(() => {

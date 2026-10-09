@@ -262,7 +262,8 @@ export function getNextSequentialId(
   allocatedIds?: Set<string> | string[]
 ): string {
   let maxNum = 0;
-  const regex = new RegExp(`^${prefix}-(\\d+)$`);
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`^${escapedPrefix}-(\\d+)$`);
 
   const checkId = (id?: string | null) => {
     if (!id || typeof id !== "string") return;

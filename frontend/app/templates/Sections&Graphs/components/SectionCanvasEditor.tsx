@@ -1502,13 +1502,13 @@ export default function SectionCanvasEditor({
 
   const handleAddPage = useCallback(() => {
     const currentStamps = section?.stamps || [];
-    const maxStampIdx = currentStamps.reduce((max, s) => Math.max(max, s.pageIndex ?? 0), 0);
+    const maxStampIdx = currentStamps.reduce((max, s) => Math.max(max, (s.pageIndex ?? 0) + 1), 0);
     const maxOvIdx = Object.keys(section?.pageOverrides || {}).reduce((max, k) => {
       const idx = parseInt(k, 10);
-      return isNaN(idx) ? max : Math.max(max, idx);
+      return isNaN(idx) ? max : Math.max(max, idx + 1);
     }, 0);
-    const currentPages = Math.max(1, maxStampIdx + 1, maxOvIdx + 1);
-    const newPageIdx = currentPages;
+    const renderedPageCount = Math.max(1, partitionedCanvasPages.length, maxStampIdx, maxOvIdx);
+    const newPageIdx = renderedPageCount;
 
     const nextOverrides = {
       ...(section?.pageOverrides || {}),
@@ -1528,7 +1528,7 @@ export default function SectionCanvasEditor({
     setTimeout(() => {
       document.getElementById(`canvas-page-${newPageIdx}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 150);
-  }, [dispatch, sectionId, section?.stamps, section?.pageOverrides]);
+  }, [dispatch, sectionId, section?.stamps, section?.pageOverrides, partitionedCanvasPages.length]);
 
   // ── Cell Edit Trigger ───────────────────────────────────────────────────────
   const handleEditCell = useCallback(

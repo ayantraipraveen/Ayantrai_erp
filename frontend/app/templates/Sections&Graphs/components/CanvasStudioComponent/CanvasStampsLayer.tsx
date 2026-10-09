@@ -683,6 +683,8 @@ export function CanvasStampsLayer({
 
         const width = !isChart && currentScale !== 1 ? Math.round(baseWidth * currentScale) : baseWidth;
         const height = !isChart && currentScale !== 1 ? Math.round(baseHeight * currentScale) : baseHeight;
+        const posX = !isChart && currentScale !== 1 ? Math.round(stamp.x - (width - baseWidth) / 2) : stamp.x;
+        const posY = !isChart && currentScale !== 1 ? Math.round(stamp.y - (height - baseHeight) / 2) : stamp.y;
 
         // Calculate layered stacking zIndex
         const baseZ = isBack ? (stamp.zIndex ?? 6) : (stamp.zIndex ?? 25);
@@ -699,8 +701,8 @@ export function CanvasStampsLayer({
             onMouseDown={(e) => handleDragStart(e, stamp)}
             style={{
               position: "absolute",
-              left: `${stamp.x}px`,
-              top: `${stamp.y}px`,
+              left: `${posX}px`,
+              top: `${posY}px`,
               width: `${width}px`,
               height: `${height}px`,
               transform: `rotate(${rotation}deg)`,
