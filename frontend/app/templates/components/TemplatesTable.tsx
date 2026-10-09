@@ -19,7 +19,6 @@ import { Tooltip, RejectionModal } from "../../Component";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   selectPaginatedTemplatesInfo,
-  selectTemplateCurrentPage,
   selectTemplatePageSize,
   setCurrentPage,
   setPageSize,
@@ -42,17 +41,16 @@ import TemplateRemarkModal from "./TemplateRemarkModal";
  */
 export default function TemplatesTable() {
   const dispatch = useAppDispatch();
-  const { paginatedTemplates, totalFilteredCount, totalPages } = useAppSelector(
+  const { paginatedTemplates, totalFilteredCount, totalPages, validPage } = useAppSelector(
     selectPaginatedTemplatesInfo
   );
-  const currentPage = useAppSelector(selectTemplateCurrentPage);
   const pageSize = useAppSelector(selectTemplatePageSize);
   const activeRole = useAppSelector((state) => state.reportModule.activeRole);
 
   const [remarkModalTemplate, setRemarkModalTemplate] = React.useState<any | null>(null);
   const [rejectModalTemplate, setRejectModalTemplate] = React.useState<any | null>(null);
 
-  const startIndex = (currentPage - 1) * pageSize;
+  const startIndex = (validPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalFilteredCount);
 
   const handleDuplicate = (id: string) => dispatch(duplicateTemplateAsync(id));
@@ -401,7 +399,7 @@ export default function TemplatesTable() {
 
       {/* Pinned Reusable Pagination */}
       <TemplatePagination
-        currentPage={currentPage}
+        currentPage={validPage}
         setCurrentPage={(p) => dispatch(setCurrentPage(p))}
         pageSize={pageSize}
         setPageSize={(s) => dispatch(setPageSize(s))}

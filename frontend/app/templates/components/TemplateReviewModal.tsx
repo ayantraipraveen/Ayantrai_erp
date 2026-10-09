@@ -205,7 +205,11 @@ export default function TemplateReviewModal() {
   };
 
   const handleConfirmReject = () => {
-    dispatch(rejectTemplateAsync({ template: selectedTemplate, reason: rejectionReason }));
+    const trimmedReason = rejectionReason.trim();
+    if (!trimmedReason) {
+      return;
+    }
+    dispatch(rejectTemplateAsync({ template: selectedTemplate, reason: trimmedReason }));
     setShowRejectInput(false);
     setRejectionReason("");
   };

@@ -22,6 +22,7 @@ export interface TemplatesState {
   templates: ReportTemplate[];
   isLoading: boolean;
   error: string | null;
+  currentRequestId: string | null;
 
   // Search & Filter State
   searchQuery: string;
@@ -47,6 +48,7 @@ const initialState: TemplatesState = {
   templates: initialTemplates,
   isLoading: false,
   error: null,
+  currentRequestId: null,
 
   searchQuery: "",
   statusFilter: "all",
@@ -115,15 +117,6 @@ export const fetchTemplates = createAsyncThunk<
       console.warn("Using cached/seed templates:", err);
       return rejectWithValue(err.message || "Failed to fetch templates");
     }
-  },
-  {
-    condition: (_, { getState }) => {
-      const { templates } = getState();
-      if (templates.isLoading) {
-        return false;
-      }
-      return true;
-    },
   }
 );
 
@@ -543,17 +536,26 @@ export const templatesSlice = createSlice({
   },
   extraReducers: (builder) => {
     // fetchTemplates
-    builder.addCase(fetchTemplates.pending, (state) => {
+    builder.addCase(fetchTemplates.pending, (state, action) => {
       state.isLoading = true;
       state.error = null;
+      state.currentRequestId = action.meta.requestId;
     });
     builder.addCase(fetchTemplates.fulfilled, (state, action) => {
-      state.isLoading = false;
-      state.templates = action.payload;
+      if (state.currentRequestId === action.meta.requestId) {
+        state.isLoading = false;
+        state.templates = action.payload;
+        state.currentRequestId = null;
+      }
     });
     builder.addCase(fetchTemplates.rejected, (state, action) => {
-      state.isLoading = false;
-      state.error = action.payload || "Failed to fetch templates";
+      if (state.currentRequestId === action.meta.requestId) {
+        state.isLoading = false;
+        if (!action.meta.aborted) {
+          state.error = action.payload || "Failed to fetch templates";
+        }
+        state.currentRequestId = null;
+      }
     });
 
     // approveTemplateAsync

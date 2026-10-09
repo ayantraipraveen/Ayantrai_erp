@@ -26,7 +26,10 @@ export default function TemplatesPage() {
   );
 
   useEffect(() => {
-    dispatch(fetchTemplates());
+    const promise = dispatch(fetchTemplates());
+    return () => {
+      promise.abort();
+    };
   }, [dispatch, searchQuery, statusFilter, siteFilter, dateRange]);
 
   return (

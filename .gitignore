@@ -8,7 +8,17 @@ dist/
 *.log
 .DS_Store
 frontend/public/Dummy_report
-
+.agent/
+.gsd/
+GSD-STYLE.md
+adapters/
+.agents/
+.gemini/
+.antigravity
+.cache
+PROJECT_RULES.md
+.vscode
+.agent/
 # Architecture documents, generators & scripts
 scripts/
 diagrams/
