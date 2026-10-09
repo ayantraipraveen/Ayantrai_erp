@@ -261,6 +261,10 @@ export function getCellStyleClasses(style?: CanvasCell["style"]): {
     bgClass = "[&>div]:bg-white dark:[&>div]:bg-[#0c1017] [&>div]:border-slate-200 dark:[&>div]:border-zinc-800";
   } else if (style.cardBg === "slate") {
     bgClass = "[&>div]:bg-slate-50 dark:[&>div]:bg-zinc-900 [&>div]:border-slate-300 dark:[&>div]:border-zinc-700";
+  } else if (style.cardBg === "zinc") {
+    bgClass = "[&>div]:bg-zinc-50 dark:[&>div]:bg-zinc-900 [&>div]:border-zinc-200 dark:[&>div]:border-zinc-800";
+  } else if (style.cardBg === "blue") {
+    bgClass = "[&>div]:bg-blue-50/80 dark:[&>div]:bg-blue-950/30 [&>div]:border-blue-200 dark:[&>div]:border-blue-800/40";
   } else if (style.cardBg === "glass") {
     bgClass = "[&>div]:bg-white/75 dark:[&>div]:bg-zinc-900/75 [&>div]:backdrop-blur-md [&>div]:border-white/60 dark:[&>div]:border-zinc-700/60";
   } else if (style.cardBg === "purple") {

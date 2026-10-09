@@ -137,7 +137,7 @@ export function CanvasSectionHeader({
                   title="Delete Section Title on this page completely"
                 >
                   <Trash2 className="w-3 h-3" />
-                  <span className="hidden sm:inline">Delete Title</span>
+                  <span className="hidden sm:inline">Delete</span>
                 </button>
               ) : null}
 

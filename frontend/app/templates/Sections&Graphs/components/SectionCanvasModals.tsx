@@ -31,7 +31,6 @@ import {
 } from "@/lib/redux/slices/reportModuleSlice";
 import { BADGE_COLOR_PALETTES, BADGE_AVAILABLE_ICONS } from "./CanvasBlockComponent";
 import { PALETTE_RAMPS } from "./constants/chartTypes";
-import { DynamicTextEditor } from "./DynamicTitleEditor";
 
 // ================= MODAL 1: EDIT SECTION HEADER =================
 interface EditSectionHeaderModalProps {
@@ -74,19 +73,17 @@ export function EditSectionHeaderModal({
           </button>
         </div>
 
-        <div className="space-y-3 text-xs">
+        <div className="space-y-3.5 text-xs">
           <div>
             <label className="font-semibold text-slate-700 dark:text-zinc-300">
               Section Name *
             </label>
-            <DynamicTextEditor
-              initialValue={name}
-              initialHtml={name}
-              defaultFontSize={16}
-              className="font-bold text-sm"
-              placeholder="Section Name..."
-              onSave={(plain, html) => setName(html)}
-              onCancel={onClose}
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Statutory Compliance & Audit"
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-colors"
             />
           </div>
 
@@ -94,14 +91,12 @@ export function EditSectionHeaderModal({
             <label className="font-semibold text-slate-700 dark:text-zinc-300">
               Eyebrow Label (Small-caps report tag)
             </label>
-            <DynamicTextEditor
-              initialValue={eyebrow}
-              initialHtml={eyebrow}
-              defaultFontSize={12}
-              className="text-xs font-mono uppercase"
-              placeholder="Eyebrow..."
-              onSave={(plain, html) => setEyebrow(html)}
-              onCancel={onClose}
+            <input
+              type="text"
+              value={eyebrow}
+              onChange={(e) => setEyebrow(e.target.value)}
+              placeholder="e.g. STATUTORY COMPLIANCE & AUDIT"
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs font-mono uppercase text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] transition-colors"
             />
           </div>
 
@@ -109,15 +104,12 @@ export function EditSectionHeaderModal({
             <label className="font-semibold text-slate-700 dark:text-zinc-300">
               Description / Audit Scope
             </label>
-            <DynamicTextEditor
-              initialValue={description}
-              initialHtml={description}
-              defaultFontSize={13}
-              multiline={true}
-              className="text-xs leading-relaxed min-h-[50px]"
-              placeholder="Description..."
-              onSave={(plain, html) => setDescription(html)}
-              onCancel={onClose}
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Section description or audit scope..."
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs leading-relaxed text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] resize-none transition-colors"
             />
           </div>
         </div>
@@ -133,7 +125,8 @@ export function EditSectionHeaderModal({
           <button
             type="button"
             onClick={onSave}
-            className="px-4 py-2 rounded-xl bg-[#9D61FF] text-white text-xs font-bold cursor-pointer"
+            disabled={!name.trim()}
+            className="px-4 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold disabled:opacity-50 cursor-pointer transition-colors"
           >
             Save Header
           </button>
@@ -343,20 +336,17 @@ export function KeyInsightModal({
           </button>
         </div>
 
-        <div className="space-y-3 text-xs">
+        <div className="space-y-3.5 text-xs">
           <div>
             <label className="font-semibold text-slate-700 dark:text-zinc-300">
               Insight Sentence / Formatted Observation *
             </label>
-            <DynamicTextEditor
-              initialValue={text}
-              initialHtml={text}
-              defaultFontSize={13}
-              multiline={true}
-              className="text-xs leading-relaxed min-h-[70px]"
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={4}
               placeholder="e.g. Peak biometric check-in occurred between 08:30 AM and 08:50 AM with zero optical gate latency."
-              onSave={(plain, html) => setText(html)}
-              onCancel={onClose}
+              className="w-full mt-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-xs leading-relaxed text-slate-900 dark:text-white focus:outline-none focus:border-[#9D61FF] resize-none transition-colors"
             />
           </div>
         </div>
@@ -373,7 +363,7 @@ export function KeyInsightModal({
             type="button"
             onClick={onSave}
             disabled={!text.trim()}
-            className="px-4 py-2 rounded-xl bg-[#9D61FF] text-white text-xs font-bold disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#9D61FF] hover:bg-[#8B4CF0] text-white text-xs font-bold disabled:opacity-50 cursor-pointer transition-colors"
           >
             Save Insight
           </button>

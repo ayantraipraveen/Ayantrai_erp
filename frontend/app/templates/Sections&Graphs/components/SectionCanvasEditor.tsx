@@ -205,7 +205,21 @@ export default function SectionCanvasEditor({
   const [selectedCellId, setSelectedCellId] = useState<string | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [canvasActivePageIndex, setCanvasActivePageIndex] = useState<number>(0);
-  const [paperTone, setPaperTone] = useState<string>("white");
+  const [paperTone, setPaperTone] = useState<string>(() => section?.sectionStyle?.backgroundColor || "white");
+
+  useEffect(() => {
+    setPaperTone(section?.sectionStyle?.backgroundColor || "white");
+  }, [section?.id, section?.sectionStyle?.backgroundColor]);
+
+  const handleSetPaperTone = useCallback(
+    (tone: string) => {
+      setPaperTone(tone);
+      if (section?.id) {
+        dispatch(updateSectionStyle({ sectionId: section.id, style: { backgroundColor: tone } }));
+      }
+    },
+    [dispatch, section?.id]
+  );
   const [sectionTextColor, setSectionTextColor] = useState<string | undefined>(undefined);
   const [showGrid, setShowGrid] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
@@ -2353,7 +2367,7 @@ export default function SectionCanvasEditor({
         onDuplicate={handleDuplicateActive}
         onDelete={handleDeleteActive}
         paperTone={paperTone}
-        onSetPaperTone={setPaperTone}
+        onSetPaperTone={handleSetPaperTone}
         marginConfig={marginConfig}
         onUpdateMarginConfig={handleUpdateMarginConfig}
         sectionTextColor={sectionTextColor}

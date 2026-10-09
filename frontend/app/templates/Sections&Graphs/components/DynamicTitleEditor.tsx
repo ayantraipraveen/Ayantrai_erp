@@ -55,6 +55,7 @@ export interface DynamicTextEditorProps {
   isDarkPaper?: boolean;
   defaultFontSize?: number;
   multiline?: boolean;
+  showToolbar?: boolean;
   toolbarPosition?: "top" | "bottom" | "auto";
   toolbarAlign?: "left" | "right" | "center" | "auto";
   editorBorderColor?: string;
@@ -143,6 +144,7 @@ export function DynamicTextEditor({
   isDarkPaper,
   defaultFontSize = 14,
   multiline = false,
+  showToolbar = true,
   toolbarPosition = "auto",
   toolbarAlign = "auto",
   editorBorderColor,
@@ -668,7 +670,7 @@ useEffect(() => {
       className={`relative select-text w-full ${multiline ? "h-full flex flex-col min-h-0 flex-1" : "inline-block max-w-full"}`}
     >
       {/* ── Floating Word Formatting Toolbar (React Portal: Zero Layout Shift, Zero Clipping) ── */}
-      {mounted && typeof document !== "undefined" && toolbarCoords &&
+      {showToolbar && mounted && typeof document !== "undefined" && toolbarCoords &&
         createPortal(
           <div
             ref={toolbarRef}
