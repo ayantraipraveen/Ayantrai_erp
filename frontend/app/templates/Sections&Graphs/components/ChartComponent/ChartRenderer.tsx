@@ -1767,40 +1767,38 @@ export default function ChartRenderer({
     }
   };
 
+  const scaledChart = (
+    <div
+      style={{
+        transform: userZoom !== 1 ? `scale(${userZoom})` : undefined,
+        transformOrigin: "center center",
+        width: "100%",
+        height: "100%",
+      }}
+      className="w-full h-full min-h-0 flex-1 flex flex-col items-center justify-center transition-transform duration-100"
+    >
+      {renderChart()}
+    </div>
+  );
+
+  const overflowClass = userZoom > 1 ? "overflow-visible" : "overflow-hidden";
+
   if (typeof height === "number") {
     return (
       <div
         style={{ height: `${height}px`, maxHeight: "100%", width: "100%" }}
-        className="w-full h-full min-h-0 flex-1 flex items-center justify-center overflow-hidden [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full"
+        className={`w-full h-full min-h-0 flex-1 flex items-center justify-center ${overflowClass} [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full`}
       >
-        <div
-          style={{
-            transform: userZoom !== 1 ? `scale(${userZoom})` : undefined,
-            transformOrigin: "center center",
-            width: "100%",
-            height: "100%",
-          }}
-          className="w-full h-full min-h-0 flex-1 flex flex-col items-center justify-center transition-transform duration-100"
-        >
-          {renderChart()}
-        </div>
+        {scaledChart}
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full min-h-0 max-h-full flex-1 flex items-center justify-center overflow-hidden [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full">
-      <div
-        style={{
-          transform: userZoom !== 1 ? `scale(${userZoom})` : undefined,
-          transformOrigin: "center center",
-          width: "100%",
-          height: "100%",
-        }}
-        className="w-full h-full min-h-0 flex-1 flex flex-col items-center justify-center transition-transform duration-100"
-      >
-        {renderChart()}
-      </div>
+    <div
+      className={`w-full h-full min-h-0 max-h-full flex-1 flex items-center justify-center ${overflowClass} [&>div]:!min-h-0 [&>div]:!max-h-full [&>div]:!h-full [&>div]:!w-full`}
+    >
+      {scaledChart}
     </div>
   );
 }

@@ -42,6 +42,39 @@ export interface CanvasStampsLayerProps {
   layerFilter?: "all" | "back" | "front";
 }
 
+function getStampDimensions(stamp: CanvasCoordinateStamp): { width: number; height: number } {
+  const isChart = stamp.elementType === "chart" || Boolean(stamp.chart);
+  const isText = stamp.elementType === "text" || Boolean(stamp.textBlock);
+  const isInsight = stamp.elementType === "insight" || Boolean(stamp.insight);
+  const isMetric = stamp.elementType === "metric-card" || Boolean(stamp.metricCard);
+  const isBadgeStrip = stamp.elementType === "badge-strip" || Boolean(stamp.badgeStrip);
+  const isDivider = stamp.elementType === "divider" || Boolean(stamp.divider);
+
+  const defaultW = isChart ? 380 : isText ? 360 : isInsight ? 380 : isMetric ? 220 : isBadgeStrip ? 547 : isDivider ? 547 : 120;
+  const defaultH = isChart ? 250 : isText ? 120 : isInsight ? 130 : isMetric ? 92 : isBadgeStrip ? 70 : isDivider ? 28 : 120;
+
+  return {
+    width: stamp.width || defaultW,
+    height: stamp.height || defaultH,
+  };
+}
+
+function clampStampPosition(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  pageWidth: number = 595,
+  pageHeight: number = 842
+): { x: number; y: number } {
+  const maxX = Math.max(0, pageWidth - width);
+  const maxY = Math.max(0, pageHeight - height);
+  return {
+    x: Math.max(0, Math.min(maxX, x)),
+    y: Math.max(0, Math.min(maxY, y)),
+  };
+}
+
 /**
  * Precision Coordinate-based Floating Element Canvas Layer (100% Float-Only Architecture).
  * Renders rich telemetry cards (metrics, charts, insights, text, badge strips) and SVG decorative stamps
@@ -60,6 +93,8 @@ export function CanvasStampsLayer({
   onSendBackward,
   selectedStampId,
   onSelectStamp,
+  pageWidth = 595,
+  pageHeight = 842,
   zoom = 1,
   layerFilter = "all",
 }: CanvasStampsLayerProps) {
@@ -184,6 +219,9 @@ export function CanvasStampsLayer({
     if (layerFilter === "front") return s.layer !== "back";
     return true;
   });
+
+  const pageStampsRef = useRef(pageStamps);
+  pageStampsRef.current = pageStamps;
 
   // ── Drag to Move ───────────────────────────────────────────────────────────
   const handleDragStart = (e: React.MouseEvent, stamp: CanvasCoordinateStamp) => {
@@ -377,7 +415,7 @@ export function CanvasStampsLayer({
         const finalX = Math.round(newX);
         const finalY = Math.round(newY);
 
-        const currentStamp = pageStamps.find((s) => s.id === resizingId);
+        const currentStamp = pageStampsRef.current.find((s) => s.id === resizingId);
         const patch: Partial<CanvasCoordinateStamp> = {
           x: finalX,
           y: finalY,
@@ -460,8 +498,9 @@ export function CanvasStampsLayer({
     };
   }, [draggingId, resizingId, rotatingId, onUpdateStamp, zoom]);
 
-  // Click outside to deselect
+  // Click outside to deselect & reset zoom menu on selection change
   useEffect(() => {
+    setActiveZoomMenuId(null);
     if (!activeSelectedId) return;
     const handleDocClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
@@ -509,28 +548,32 @@ export function CanvasStampsLayer({
       if (e.key === "ArrowUp") {
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
-        const newY = Math.max(0, currentStamp.y - step);
+        const { width: sw, height: sh } = getStampDimensions(currentStamp);
+        const { y: newY } = clampStampPosition(currentStamp.x, currentStamp.y - step, sw, sh, pageWidth, pageHeight);
         onUpdateStamp?.(currentStamp.id, { y: newY });
         return;
       }
       if (e.key === "ArrowDown") {
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
-        const newY = Math.min(842, currentStamp.y + step);
+        const { width: sw, height: sh } = getStampDimensions(currentStamp);
+        const { y: newY } = clampStampPosition(currentStamp.x, currentStamp.y + step, sw, sh, pageWidth, pageHeight);
         onUpdateStamp?.(currentStamp.id, { y: newY });
         return;
       }
       if (e.key === "ArrowLeft") {
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
-        const newX = Math.max(0, currentStamp.x - step);
+        const { width: sw, height: sh } = getStampDimensions(currentStamp);
+        const { x: newX } = clampStampPosition(currentStamp.x - step, currentStamp.y, sw, sh, pageWidth, pageHeight);
         onUpdateStamp?.(currentStamp.id, { x: newX });
         return;
       }
       if (e.key === "ArrowRight") {
         e.preventDefault();
         const step = e.shiftKey ? 10 : 1;
-        const newX = Math.min(595, currentStamp.x + step);
+        const { width: sw, height: sh } = getStampDimensions(currentStamp);
+        const { x: newX } = clampStampPosition(currentStamp.x + step, currentStamp.y, sw, sh, pageWidth, pageHeight);
         onUpdateStamp?.(currentStamp.id, { x: newX });
         return;
       }
@@ -977,7 +1020,8 @@ export function CanvasStampsLayer({
                         onClick={(e) => {
                           e.stopPropagation();
                           const step = e.shiftKey ? 10 : 1;
-                          onUpdateStamp?.(stamp.id, { x: Math.max(0, stamp.x - step) });
+                          const { x: newX } = clampStampPosition(stamp.x - step, stamp.y, width, height, pageWidth, pageHeight);
+                          onUpdateStamp?.(stamp.id, { x: newX });
                         }}
                         className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors"
                         title="Nudge 1px Left (ArrowLeft, Shift for 10px)"
@@ -989,7 +1033,8 @@ export function CanvasStampsLayer({
                         onClick={(e) => {
                           e.stopPropagation();
                           const step = e.shiftKey ? 10 : 1;
-                          onUpdateStamp?.(stamp.id, { y: Math.max(0, stamp.y - step) });
+                          const { y: newY } = clampStampPosition(stamp.x, stamp.y - step, width, height, pageWidth, pageHeight);
+                          onUpdateStamp?.(stamp.id, { y: newY });
                         }}
                         className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors"
                         title="Nudge 1px Up (ArrowUp, Shift for 10px)"
@@ -1001,7 +1046,8 @@ export function CanvasStampsLayer({
                         onClick={(e) => {
                           e.stopPropagation();
                           const step = e.shiftKey ? 10 : 1;
-                          onUpdateStamp?.(stamp.id, { y: Math.min(842, stamp.y + step) });
+                          const { y: newY } = clampStampPosition(stamp.x, stamp.y + step, width, height, pageWidth, pageHeight);
+                          onUpdateStamp?.(stamp.id, { y: newY });
                         }}
                         className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors"
                         title="Nudge 1px Down (ArrowDown, Shift for 10px)"
@@ -1013,7 +1059,8 @@ export function CanvasStampsLayer({
                         onClick={(e) => {
                           e.stopPropagation();
                           const step = e.shiftKey ? 10 : 1;
-                          onUpdateStamp?.(stamp.id, { x: Math.min(595, stamp.x + step) });
+                          const { x: newX } = clampStampPosition(stamp.x + step, stamp.y, width, height, pageWidth, pageHeight);
+                          onUpdateStamp?.(stamp.id, { x: newX });
                         }}
                         className="w-4 h-4 rounded hover:bg-purple-100 dark:hover:bg-zinc-800 flex items-center justify-center text-slate-600 dark:text-zinc-300 hover:text-purple-600 cursor-pointer transition-colors"
                         title="Nudge 1px Right (ArrowRight, Shift for 10px)"
