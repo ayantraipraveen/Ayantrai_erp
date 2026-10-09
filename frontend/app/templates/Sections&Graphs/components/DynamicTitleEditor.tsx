@@ -461,11 +461,11 @@ useEffect(() => {
   return () => document.removeEventListener("mousedown", handler);
 }, []); // subscribes once
 
-  // Keep savedOffsetsRef synchronized whenever selection changes
+  // Keep savedOffsetsRef synchronized whenever selection changes (including collapsed caret movements)
   const handleSelectionChange = useCallback(() => {
     if (!editorRef.current) return;
     const offsets = getSelectionOffsets(editorRef.current);
-    if (offsets && offsets.start !== offsets.end) {
+    if (offsets) {
       savedOffsetsRef.current = offsets;
     }
   }, []);
@@ -650,23 +650,41 @@ useEffect(() => {
   const insertNextLine = () => {
     if (!editorRef.current) return;
     editorRef.current.focus();
-    restoreSelectionOffsets(editorRef.current, savedOffsetsRef.current);
+
+    // Check if the current selection is already inside editorRef.current
+    const sel = window.getSelection();
+    const isInsideEditor =
+      sel &&
+      sel.rangeCount > 0 &&
+      editorRef.current.contains(sel.getRangeAt(0).commonAncestorContainer);
+
+    if (isInsideEditor) {
+      // Preserve active selection and synchronize savedOffsetsRef to current position
+      const currentOffsets = getSelectionOffsets(editorRef.current);
+      if (currentOffsets) {
+        savedOffsetsRef.current = currentOffsets;
+      }
+    } else {
+      // Selection lost or outside (e.g. clicked toolbar button); restore saved selection
+      restoreSelectionOffsets(editorRef.current, savedOffsetsRef.current);
+    }
+
     try {
       const ok = document.execCommand("insertLineBreak");
       if (!ok) {
         throw new Error("insertLineBreak failed");
       }
     } catch {
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
+      const currentSel = window.getSelection();
+      if (currentSel && currentSel.rangeCount > 0) {
+        const range = currentSel.getRangeAt(0);
         range.deleteContents();
         const br = document.createElement("br");
         range.insertNode(br);
         range.setStartAfter(br);
         range.setEndAfter(br);
-        sel.removeAllRanges();
-        sel.addRange(range);
+        currentSel.removeAllRanges();
+        currentSel.addRange(range);
       }
     }
     savedOffsetsRef.current = getSelectionOffsets(editorRef.current);
@@ -1072,7 +1090,23 @@ useEffect(() => {
             onCancel();
           }
         }}
-        onKeyUp={(e) => e.stopPropagation()}
+        onKeyUp={(e) => {
+          e.stopPropagation();
+          if (editorRef.current) {
+            const offsets = getSelectionOffsets(editorRef.current);
+            if (offsets) {
+              savedOffsetsRef.current = offsets;
+            }
+          }
+        }}
+        onMouseUp={() => {
+          if (editorRef.current) {
+            const offsets = getSelectionOffsets(editorRef.current);
+            if (offsets) {
+              savedOffsetsRef.current = offsets;
+            }
+          }
+        }}
         style={{
           fontSize: `${defaultFontSize}px`,
           borderColor: editorBorderColor || undefined,
